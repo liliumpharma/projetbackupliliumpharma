@@ -1,0 +1,128 @@
+{% extends 'base.html'%}
+{%block title%} Register {%endblock title%}
+
+{% load accounts_extras %}
+{% load static %}
+{%block body%}
+
+
+
+<div class="container-fluid bg-gray py-3">
+
+
+
+
+
+          <form method="post">
+            {% csrf_token %}
+            <div class="container mb-4 py-3 shadow bg-light">
+              <h1 class="pt-4 text-day pb-3 text-center"> Créer <img src="{% static 'img/profile.png' %}" style="height:50px;-webkit-filter: grayscale(.5);filter: grayscale(.5);"> compte</h1>
+
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="pb-2 text-dark">
+                      <label class="text-secondary">Nom d'utilisateur:</label>
+                      {{ form.username|add_class:"form-control border-radius-30" }}
+                      {{ form.username.errors}}
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="pb-2 text-dark">
+                      <label class="text-secondary">E-mail:</label>
+                      {{ form.email|add_class:"form-control border-radius-30" }}
+                      {{ form.email.errors}}
+                    </div>
+                  </div>
+                  <div class="col-md-4 pb-2 text-dark">
+                    <label class="text-secondary">Telephone:</label>
+                    {{ profile_form.telephone|add_class:"form-control border-radius-30" }}
+                    {{ profile_form.telephone.errors}}
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-3">
+                    <div class="pb-2 text-dark">
+                      <label class="text-secondary">Nom:</label>
+                      {{ form.first_name|add_class:"form-control border-radius-30" }}
+                      {{ form.first_name.errors}}
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="pb-2 text-dark">
+                      <label class="text-secondary">Prénom:</label>
+                      {{ form.last_name|add_class:"form-control border-radius-30" }}
+                      {{ form.last_name.errors}}
+                    </div>
+                  </div>
+                  <div class="col-md-3 pb-2 text-dark">
+                    <label class="text-secondary">Wilaya:</label>
+                    {{ profile_form.wilaya|add_class:"form-control border-radius-30" }}
+                    {{ profile_form.wilaya.errors}}
+                  </div>
+                  <div class="col-md-3 pb-2 text-dark">
+                    <label class="text-secondary">Commune:</label>
+                    <div class="commune_result">
+
+                    </div>
+                    {{ profile_form.wilaya.errors}}
+                  </div>
+                </div>
+
+
+
+
+                <div class="row">
+                  <div class="col-md pb-2 text-dark">
+                    <label class="text-secondary">Adresse:</label>
+                    {{ profile_form.adresse|add_class:"form-control border-radius-30" }}
+                    {{ profile_form.adresse.errors}}
+                  </div>
+                  <div class="col-md-3">
+                    <div class="pb-2 text-dark">
+                      <label class="text-secondary">Mot de passe:</label>
+                      {{ form.password1|add_class:"form-control border-radius-30" }}
+                      {{ form.password1.errors}}
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="pb-2 text-dark">
+                      <label class="text-secondary">Confirmer mot de passe:</label>
+                      {{ form.password2|add_class:"form-control border-radius-30" }}
+                      {{ form.password2.errors}}
+                    </div>
+                  </div>
+                </div>
+
+
+                <div class="text-center py-4">
+                  <button type="submit" class="btn btn-day-outline text-uppercase"> <i class="fa fa-paper-plane"></i> je m'inscris</button>
+                </div>
+
+  {{form.errors}}
+
+            </div>
+          </form>
+
+</div>
+
+
+
+ {%endblock body%}
+
+
+ {% block scripts%}
+   <script>
+     $(document).ready(function(){
+       $('select[name=profile-wilaya]').change(function(){
+         $.get({
+           data:{"prefix":"profile-"},
+           url:"/commune/"+$(this).val(),
+           success:function(result){
+               $('.commune_result').html(result);
+           }
+
+         })
+       })
+     })
+   </script>
+  {%endblock scripts%}

@@ -1,0 +1,14 @@
+utils
+media
+gunicorn_error
+*.pyc
+*.pyo
+__pycache__
+__pycache__/
+**/migrations/*.py
+backup_server_11082025.tar.gz
+*.zip
+*.log
+*.gz
+*.sql
+idle

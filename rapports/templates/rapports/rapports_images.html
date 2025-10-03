@@ -1,0 +1,5 @@
+{% for rapport in rapports %}
+{% if rapport.image %}
+  <img src="{{rapport.image.url}}" alt=""><br>
+  {% endif %}
+{%endfor%}

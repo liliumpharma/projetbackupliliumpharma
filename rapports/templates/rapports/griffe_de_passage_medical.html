@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générer des Feuilles</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            margin: 0;       
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        label, input {
+            display: block;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 0;
+            }
+
+            .page {
+                page-break-after: always;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                position: relative;
+                border: 2.5px solid black;
+            }
+
+            header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+
+            .header-left, .header-right {
+                font-size: 20px;
+            }
+            .header-left {
+                margin-left:170px !important;
+            }
+            .header-right {
+                margin-right: 60px !important;
+            }
+
+            .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 2px solid black;
+                padding: 10px 20px;
+                box-sizing: border-box;
+            }
+            .header-center {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                top: 50%;
+                transform: translate(-50%, -380%);
+                text-align: center;
+            }
+
+            table {
+                margin: 0 auto;
+                border-collapse: collapse;
+                width: 100%;
+                margin-top: 23px;
+                padding-left: 20px;
+            }
+
+            td {
+                width: 120px;
+                height: 220px;
+                border: 1px solid black;
+            }
+
+            .qr-code {
+                width: 50px;
+                height:50px;
+            }
+
+            .date {
+                text-align: right;
+                font-size: 14px;
+            }
+            .col-12 {
+                display: flex;
+                justify-content: center; /* Centre l'image horizontalement */
+                align-items: center;     /* Centre l'image verticalement */
+                height: 100%;            /* Assurez-vous que la colonne occupe toute la hauteur disponible */
+            }
+
+            .qr-code {
+                max-width: 100%; /* Assurez-vous que l'image ne dépasse pas la largeur de la colonne */
+                height: auto;   /* Garder les proportions de l'image */
+            }
+            .logo {
+                height: 50px;
+                width: 50px; 
+                margin-bottom: 3px;  /* Garder les proportions de l'image */
+            }
+            form {
+                display: none;
+            }
+            h6.title {
+                text-align: center;
+                margin-top: 10px;
+                margin-bottom: 5px;
+                font-weight: bold;
+                font-size: 18px;
+            }
+        }
+
+        .date-cell {
+            position: relative; /* Positionner les enfants relativement à la cellule */
+        }
+
+        .date {
+            position: absolute; /* Positionner la date absolument par rapport à la cellule */
+            top: 0; /* Aligné en haut */
+            left: 0; /* Aligné à gauche */
+            margin: 5px; /* Ajouter un petit espace */
+        }
+    </style>
+</head>
+<body>
+
+    <form method="POST" action="{% url 'generate_pages_medical' %}">
+        <h1>Générer des Feuilles</h1>
+        {% csrf_token %}
+        <label for="search_user">Délégué :</label>
+        <select name="user-select" id="search_user" required></select>
+
+        <label for="date_debut">Date Début :</label>
+        <input type="date" id="date_debut" name="date_debut" required>
+
+        <label for="date_fin">Date Fin :</label>
+        <input type="date" id="date_fin" name="date_fin" required>
+
+        <button type="submit">Générer</button>
+    </form>
+
+    {% if pages %}
+    <div class="pages">
+        {% for page in pages %}
+            <div class="page">
+                <div class="col-12">
+                    <img src="/static/img/logo22.png" alt="LOGO" class="logo">
+                </div>
+
+                <h6 class="title mt-2">Griffe de passage des médecins</h6>
+                
+                <header>
+                    <div class="header-left">
+                        <strong>Date :</strong> {{ page.date }}
+                    </div>
+                    
+                    <div class="header-center">
+                        <img src="{{ page.qr_code_url }}" alt="QR Code" class="qr-code">
+                    </div>
+
+                    <div class="header-right">
+                        <strong>Nom:</strong> <span class="selected-user">{{ page.nom }}</span>
+                    </div>
+                </header>
+
+                <table>
+                    <tr>
+                        <td class="date-cell">
+                            <small class="date" style="font-size: 14px;"><small class="selected-user">{{ page.nom }}</small> | {{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date" style="font-size: 14px;"> <small class="selected-user">{{ page.nom }}</small> | {{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date" style="font-size: 14px;"> <small class="selected-user">{{ page.nom }}</small> | {{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date" style="font-size: 14px;"> <small class="selected-user">{{ page.nom }}</small> | {{ page.date }}</small>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="date-cell">
+                            <small class="date" style="font-size: 14px;"> <small class="selected-user">{{ page.nom }}</small> | {{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date" style="font-size: 14px;"> <small class="selected-user">{{ page.nom }}</small> | {{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date" style="font-size: 14px;"> <small class="selected-user">{{ page.nom }}</small> | {{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date" style="font-size: 14px;"> <small class="selected-user">{{ page.nom }}</small> | {{ page.date }}</small>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <script>
+        function users_under() {
+            fetch('https://app.liliumpharma.com/depenses/getting_users_under/')
+                .then((response) => response.json())
+                .then((data) => {
+                    const selectUser = document.getElementById("search_user");
+                    if (data.length === 1) {
+                        const userObject = data[0];
+                        const option = document.createElement("option");
+                        option.value = userObject.user;
+                        option.textContent = userObject.user;
+                        option.selected = true;
+                        selectUser.appendChild(option);
+                    } else {
+                        const option = document.createElement("option");
+                        option.value = "tous";
+                        option.textContent = "Tous";
+                        option.selected = true;
+                        selectUser.appendChild(option);
+                        data.forEach((userObject) => {
+                            const option = document.createElement("option");
+                            option.value = userObject.user;
+                            option.textContent = userObject.user;
+                            selectUser.appendChild(option);
+                        });
+                    }
+                    // Update the selected user on load
+                    updateSelectedUser();
+                });
+        }
+
+        function updateSelectedUser() {
+            const selectUser = document.getElementById("search_user");
+            if (selectUser.options.length > 0) {
+                //const selectedUserName = selectUser.options[selectUser.selectedIndex].text;
+
+                // Update all elements with class "selected-user"
+                //document.querySelectorAll(".selected-user").forEach((element) => {
+                    //element.textContent = selectedUserName;
+                //});
+
+                // Store the selected value in localStorage
+                localStorage.setItem("selectedUser", selectUser.value);
+            }
+        }
+
+        // Apply saved selection on page load
+        window.onload = function() {
+            const selectUser = document.getElementById("search_user");
+            const savedUser = localStorage.getItem("selectedUser");
+            
+            if (savedUser) {
+                selectUser.value = savedUser;
+                //updateSelectedUser(); // Call to update selected user display
+            }
+
+            // Call window.print() after loading the page
+            window.print();
+        }
+
+        //const selectUser = document.getElementById("search_user");
+        //selectUser.addEventListener("change", updateSelectedUser);
+        
+        users_under();
+    </script>
+
+</body>
+</html>
+
+
+<!-- <!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générer des Feuilles</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            margin: 0;       
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        label, input {
+            display: block;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 0;
+            }
+
+            .page {
+                page-break-after: always;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                height: 100%;
+                position: relative;
+                border: 2.5px solid black;
+            }
+
+            header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+
+            .header-left, .header-right {
+                font-size: 20px;
+            }
+            .header-left {
+                margin-left: 260px !important;
+            }
+            .header-right {
+                margin-right: 60px !important;
+            }
+
+            .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 2px solid black;
+                padding: 10px 20px;
+                box-sizing: border-box;
+            }
+            .header-center {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                top: 50%;
+                transform: translate(-50%, -380%);
+                text-align: center;
+            }
+
+            table {
+                margin: 0 auto;
+                border-collapse: collapse;
+                width: 100%;
+                margin-top: 23px;
+                padding-left: 20px;
+            }
+
+            td {
+                width: 120px;
+                height: 220px;
+                border: 1px solid black;
+            }
+
+            .qr-code {
+                width: 50px;
+                height:50px;
+            }
+
+            .date {
+                text-align: right;
+                font-size: 14px;
+            }
+            .col-12 {
+                display: flex;
+                justify-content: center; /* Centre l'image horizontalement */
+                align-items: center;     /* Centre l'image verticalement */
+                height: 100%;            /* Assurez-vous que la colonne occupe toute la hauteur disponible */
+            }
+
+            .qr-code {
+                max-width: 100%; /* Assurez-vous que l'image ne dépasse pas la largeur de la colonne */
+                height: auto;   /* Garder les proportions de l'image */
+            }
+            .logo {
+                height: 50px;
+                width: 50px; 
+                margin-bottom: 3px;  /* Garder les proportions de l'image */
+            }
+            form {
+                display: none;
+            }
+            h6.title {
+                text-align: center;
+                margin-top: 10px;
+                margin-bottom: 5px;
+                font-weight: bold;
+                font-size: 18px;
+            }
+        }
+
+        .date-cell {
+            position: relative; /* Positionner les enfants relativement à la cellule */
+        }
+
+        .date {
+            position: absolute; /* Positionner la date absolument par rapport à la cellule */
+            top: 0; /* Aligné en haut */
+            left: 0; /* Aligné à gauche */
+            margin: 5px; /* Ajouter un petit espace */
+        }
+    </style>
+</head>
+<body>
+
+    <form method="POST" action="{% url 'generate_pages_medical' %}">
+        <h1>Générer des Feuilles</h1>
+        {% csrf_token %}
+        <label for="date_debut">Délégué :</label>
+        <select name="user-select" id="search_user"></select>
+
+        <label for="date_debut">Date Début :</label>
+        <input type="date" id="date_debut" name="date_debut" required>
+
+        <label for="date_fin">Date Fin :</label>
+        <input type="date" id="date_fin" name="date_fin" required>
+
+        <button type="submit">Générer</button>
+    </form>
+
+    {% if pages %}
+    <div class="pages">
+        {% for page in pages %}
+            <div class="page">
+                <div class="col-12">
+                    <img src="/static/img/logo22.png" alt="LOGO" class="logo">
+                </div>
+
+                <h6 class="title mt-2">Griffe de passage des médecins</h6>
+                
+                <header>
+                    <div class="header-left">
+                        <strong>Date :</strong> {{ page.date }}
+                    </div>
+                    
+                    <div class="header-center">
+                        <img src="{{ page.qr_code_url }}" alt="QR Code" class="qr-code">
+                    </div>
+
+                    <div class="header-right">
+                        <strong>Nom:</strong> <span class="selected-user">{{ page.user_name }}</span>
+                    </div>
+                </header>
+
+                <table>
+                    <tr>
+                        <td class="date-cell">
+                            <small class="date">{{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date">{{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date">{{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date">{{ page.date }}</small>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="date-cell">
+                            <small class="date">{{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date">{{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date">{{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date">{{ page.date }}</small>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <script>
+        function users_under() {
+            fetch('https://app.liliumpharma.com/depenses/getting_users_under/')
+                .then((response) => response.json())
+                .then((data) => {
+                    const selectUser = document.getElementById("search_user");
+                    if (data.length === 1) {
+                        const userObject = data[0];
+                        const option = document.createElement("option");
+                        option.value = userObject.user;
+                        option.textContent = userObject.user;
+                        option.selected = true;
+                        selectUser.appendChild(option);
+                    } else {
+                        const option = document.createElement("option");
+                        option.value = "tous";
+                        option.textContent = "Tous";
+                        option.selected = true;
+                        selectUser.appendChild(option);
+                        data.forEach((userObject) => {
+                            const option = document.createElement("option");
+                            option.value = userObject.user;
+                            option.textContent = userObject.user;
+                            selectUser.appendChild(option);
+                        });
+                    }
+                    // Update the selected user on load
+                    updateSelectedUser();
+                });
+        }
+
+        function updateSelectedUser() {
+            const selectUser = document.getElementById("search_user");
+            if (selectUser.options.length > 0) {
+                const selectedUserName = selectUser.options[selectUser.selectedIndex].text;
+
+                // Update all elements with class "selected-user"
+                document.querySelectorAll(".selected-user").forEach((element) => {
+                    element.textContent = selectedUserName;
+                });
+
+                // Store the selected value in localStorage
+                localStorage.setItem("selectedUser", selectUser.value);
+            }
+        }
+
+        // Apply saved selection on page load
+        window.onload = function() {
+            const selectUser = document.getElementById("search_user");
+            const savedUser = localStorage.getItem("selectedUser");
+            
+            if (savedUser) {
+                selectUser.value = savedUser;
+                updateSelectedUser(); // Call to update selected user display
+            }
+
+            // Call window.print() after loading the page
+            window.print();
+        }
+
+        const selectUser = document.getElementById("search_user");
+        selectUser.addEventListener("change", updateSelectedUser);
+        
+        users_under();
+    </script>
+
+</body>
+</html> -->

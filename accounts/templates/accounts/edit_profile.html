@@ -1,0 +1,129 @@
+{% extends 'base.html'%}
+{%block title%} Modifer  mes info {%endblock title%}
+
+{% load accounts_extras %}
+
+{%block styles%}
+<style>
+.bg-night{background: #0064a2;}
+.bg-tomato{background: tomato;}
+.bg-gray{background: #e5e5e5;}
+a,a:visited{color:inherit;text-decoration: None !important;}
+a:hover{color:inherit}
+.nav-item{-webkit-transition: .5s all;-o-transition: .5s all;transition: .5s all;}
+.nav-item:hover{border-radius: 8px;}
+.border-r-20{border-radius: 20px}
+.auto-complete{z-index: 999;position: absolute;top: 100%;background: #fff;width: 100%;border:1px solid #ced4da}
+.auto-complete-item{padding: 3px;border-bottom:1px solid #ced4da }
+.auto-complete-item:hover{cursor: pointer;background: #e5e5e5;}
+.pointer{cursor: pointer;}
+</style>
+{%endblock styles%}
+
+{%block body%}
+
+{% include 'header.html'%}
+
+
+<div class="container">
+  <form method="post" enctype="multipart/form-data">
+    <div class="row">
+      <div class="col-md">
+        <h3 class='font-weight-light'>Modifier mes infos:</h3>
+      </div>
+      <div class="col-md-1">
+        <button class='btn-success btn ' type='submit'> Enregistrer</button>
+      </div>
+    </div>
+    {% csrf_token %}
+    <div class="container">
+      <div class="col-md-12">
+        <div class="row">
+          <div class="col-md-6 pt-0">
+
+            <div class="pb-2">
+              <label for="">E-mail:</label>
+              {{ userForm.email|add_class:"w-100 form-control border-radius-30 " }}
+              {{ userForm.email.errors}}
+            </div>
+
+
+            <div class="pb-2">
+              <label for="">Telephone:</label>
+              {{ form.telephone|add_class:"w-100 form-control border-radius-30 " }}
+              {{ form.telephone.errors}}
+            </div>
+
+            <div class="row">
+              <div class="col-md">
+                <div class="pb-2">
+                  <label for="">Wilaya:</label>
+                  {{ form.wilaya|add_class:"w-100 form-control border-radius-30 " }}
+                  {{ form.wilaya.errors}}
+                </div>
+              </div>
+              <div class="col-md">
+                <div class="pb-2">
+                  <label for="">Commune:</label>
+                  <div class="commune_result">
+                    <select name="profile-commune" class='w-100 form-control border-radius-30'>
+                        <option value="" selected>---------</option>
+                      {% for commune in request.user.userprofile.wilaya.commune_set.all %}
+                        <option value="{{commune.id}}" {% if commune == request.user.userprofile.commune %} selected {%endif%}>{{commune}}</option>
+                      {%endfor%}
+                    </select>
+                  </div>
+                  {{ form.commune.errors}}
+                </div>
+              </div>
+            </div>
+
+
+
+          </div>
+          <div class="col-md-6">
+
+            <div class="pb-2">
+              <label for="">Nom:</label>
+              {{ userForm.first_name|add_class:"w-100 form-control border-radius-30 " }}
+              {{ userForm.first_name.errors}}
+            </div>
+            <div class="pb-2">
+              <label for="">Prénom:</label>
+              {{ userForm.last_name|add_class:"w-100 form-control border-radius-30 " }}
+              {{ userForm.last_name.errors}}
+            </div>
+            <div class="pb-2">
+              <label for="">Adresse:</label>
+              {{ form.adresse|add_class:"w-100 form-control border-radius-30 " }}
+              {{ form.adresse.errors}}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+
+
+
+
+ {%endblock body%}
+
+{% block scripts%}
+  <script>
+    $(document).ready(function(){
+      $('select[name=profile-wilaya]').change(function(){
+        $.get({
+          data:{"prefix":"profile-"},
+          url:"/commune/"+$(this).val(),
+          success:function(result){
+              $('.commune_result').html(result);
+          }
+
+        })
+      })
+    })
+  </script>
+ {%endblock scripts%}

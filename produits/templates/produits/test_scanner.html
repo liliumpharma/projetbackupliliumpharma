@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner avec ajustement des bordures</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #canvas-container {
+            position: relative;
+            display: inline-block;
+        }
+        #canvas {
+            border: 1px solid #ddd;
+        }
+        #border {
+            position: absolute;
+            border: 2px dashed red;
+            pointer-events: none;
+        }
+        .handle {
+            width: 15px;
+            height: 15px;
+            background: green;
+            position: absolute;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+        #crop-button {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Scanner avec ajustement des bordures</h1>
+    <input type="file" id="upload" accept="image/*">
+    <div id="canvas-container">
+        <canvas id="canvas"></canvas>
+        <div id="border">
+            <div class="handle" id="handle-tl"></div>
+            <div class="handle" id="handle-tr"></div>
+            <div class="handle" id="handle-br"></div>
+            <div class="handle" id="handle-bl"></div>
+        </div>
+    </div>
+    <button id="crop-button">Crop Image</button>
+    <canvas id="cropped-canvas" style="display:none;"></canvas>
+    <script src="scanner.js"></script>
+</body>
+</html>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const uploadInput = document.getElementById('upload');
+    const canvas = document.getElementById('canvas');
+    const croppedCanvas = document.getElementById('cropped-canvas');
+    const ctx = canvas.getContext('2d');
+    const croppedCtx = croppedCanvas.getContext('2d');
+    const borderDiv = document.getElementById('border');
+    const handles = borderDiv.querySelectorAll('.handle');
+    let image = new Image();
+    let imageLoaded = false;
+    let draggingHandle = null;
+    let startX, startY, startWidth, startHeight, startLeft, startTop, startMouseX, startMouseY;
+
+    uploadInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                image.src = e.target.result;
+                image.onload = function() {
+                    canvas.width = image.width;
+                    canvas.height = image.height;
+                    ctx.drawImage(image, 0, 0);
+                    borderDiv.style.width = `${canvas.width}px`;
+                    borderDiv.style.height = `${canvas.height}px`;
+                    borderDiv.style.top = `${0}px`;
+                    borderDiv.style.left = `${0}px`;
+                    imageLoaded = true;
+                    setupBorderDragging();
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function setupBorderDragging() {
+        function onMouseMove(e) {
+            if (!imageLoaded || !draggingHandle) return;
+
+            const dx = e.clientX - startMouseX;
+            const dy = e.clientY - startMouseY;
+
+            if (draggingHandle.id === 'handle-tl') {
+                borderDiv.style.width = `${startWidth - dx}px`;
+                borderDiv.style.height = `${startHeight - dy}px`;
+                borderDiv.style.top = `${startTop + dy}px`;
+                borderDiv.style.left = `${startLeft + dx}px`;
+            } else if (draggingHandle.id === 'handle-tr') {
+                borderDiv.style.width = `${startWidth + dx}px`;
+                borderDiv.style.height = `${startHeight - dy}px`;
+                borderDiv.style.top = `${startTop + dy}px`;
+            } else if (draggingHandle.id === 'handle-br') {
+                borderDiv.style.width = `${startWidth + dx}px`;
+                borderDiv.style.height = `${startHeight + dy}px`;
+            } else if (draggingHandle.id === 'handle-bl') {
+                borderDiv.style.width = `${startWidth - dx}px`;
+                borderDiv.style.height = `${startHeight + dy}px`;
+                borderDiv.style.left = `${startLeft + dx}px`;
+            }
+        }
+
+        function onMouseDown(e) {
+            if (!imageLoaded) return;
+            draggingHandle = e.target;
+            startMouseX = e.clientX;
+            startMouseY = e.clientY;
+            startWidth = parseInt(getComputedStyle(borderDiv).width, 10);
+            startHeight = parseInt(getComputedStyle(borderDiv).height, 10);
+            startLeft = parseInt(getComputedStyle(borderDiv).left, 10);
+            startTop = parseInt(getComputedStyle(borderDiv).top, 10);
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', function() {
+                document.removeEventListener('mousemove', onMouseMove);
+                draggingHandle = null;
+            }, { once: true });
+        }
+
+        handles.forEach(handle => {
+            handle.addEventListener('mousedown', onMouseDown);
+        });
+    }
+
+    document.getElementById('crop-button').addEventListener('click', function() {
+        if (!imageLoaded) return;
+
+        const rect = borderDiv.getBoundingClientRect();
+        const canvasRect = canvas.getBoundingClientRect();
+        const scaleX = image.width / canvasRect.width;
+        const scaleY = image.height / canvasRect.height;
+
+        const x = (rect.left - canvasRect.left) * scaleX;
+        const y = (rect.top - canvasRect.top) * scaleY;
+        const width = rect.width * scaleX;
+        const height = rect.height * scaleY;
+
+        croppedCanvas.width = width;
+        croppedCanvas.height = height;
+        croppedCtx.drawImage(canvas, x, y, width, height, 0, 0, width, height);
+
+        const croppedImageURL = croppedCanvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = croppedImageURL;
+        link.download = 'cropped-image.png';
+        link.click();
+    });
+});
+
+</script>

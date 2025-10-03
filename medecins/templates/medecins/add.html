@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block body%}
+
+<div id="main" class="container py-3">
+    <div class="alert alert-success">
+       A: potentiel,  prescripteur fidèle   عنده مرضى كثير، و يصف بصفة دائمة, ومهم جدا في المنطقه  
+       <br/>B: nombres de malades élevé,  prescripteur de nos produits et les concurrents     عدد المرضى كبير،  يصف منتوجاتنا و منتوجات المنافسين 
+       <br/>C: nombre de malades faible, prescripteur  عدد مرضى قليل،  لكنه يصف بشكل قلبل( مره في الاسبوع)  
+       <br/>D: nombre de malades faibles,  prescription faible  عدد المرضى و الوصفات قليل جدا  
+
+    </div>
+  <form method="post">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-6 pb-2">
+        doctor or pharmacy name:
+        {{form.nom}}
+      </div>
+     <div class="col-md-6 pb-2">
+        responsable :
+        {{form.contact}}
+      </div>
+      <div class="col-md-6 pb-2">
+        specialite:
+        <select name="specialite" id="">
+          {% if request.user.userprofile.can_add_medecin %}
+            {% for sp in MEDICAL %}
+              <option value="{{sp}}">{{sp}}</option>
+            {% endfor %}
+          {% endif %}
+          {% if request.user.userprofile.can_add_client %}
+              {% for sp in COMMERCIAL %}
+                <option value="{{sp}}">{{sp}}</option>
+              {% endfor %}
+          {% endif %}
+        </select>
+      </div>
+      <div class="col-md-6 pb-2">
+        classification:
+        {{form.classification}}
+      </div>
+      <div class="col-md-6 pb-2">
+        telephone:
+        {{form.telephone}}
+      </div>
+      <div class="col-md-6 pb-2">
+        email:
+        {{form.email}}
+      </div>
+      <div class="col-md-6 pb-2">
+        wilaya:
+        {{ form.wilaya }}
+      </div>
+      
+      <div class="col-md-6 pb-2">
+        commune:
+        {{ form.commune }}
+      </div>
+      
+      <div class="col-md-6 pb-2">
+        adresse:
+        {{form.adresse}}
+      </div>
+      <div class="col-md-6 pb-2">
+        flag:
+        {{form.flag}}
+      </div>
+
+      <div class="col-md-6 pb-2">
+        <br>
+        <input type="submit" value="ajouter">
+      </div>
+    </div>
+  {{form.errors.as_p}}
+
+
+<div class="d-none">
+  {{form.commune}}
+</div>
+
+
+
+  </form>
+</div>
+
+{% endblock body%}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        // Attendre que le DOM soit chargé + que Select2 soit prêt
+        $('#id_wilaya').on('change.select2', function () {
+            var wilayaId = $(this).val();
+
+            $.ajax({
+                url: "{% url 'get_communes' %}",
+                data: {
+                    'wilaya': wilayaId
+                },
+                success: function (data) {
+                    var $communeSelect = $("#id_commune");
+                    $communeSelect.empty();
+
+                    $.each(data, function (index, commune) {
+                        $communeSelect.append(
+                            $("<option></option>").attr("value", commune.id).text(commune.nom)
+                        );
+                    });
+
+                    // Si Select2 est appliqué, il faut forcer le rafraîchissement
+                    $communeSelect.trigger('change.select2');
+                }
+            });
+        });
+    });
+</script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Scroll to the 'main' div when the page loads
+        document.getElementById('main').scrollIntoView({ behavior: 'smooth' });
+    });
+  </script>
+{% endblock scripts %}
+
+
+{% block styles %}
+<style>
+  input[type=email],input[type=text], select {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  input[type=submit] {
+    width: 100%;
+    background-color: #4CAF50;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  input[type=submit]:hover {
+    background-color: #45a049;
+  }
+  
+  
+</style>
+{% endblock styles %}

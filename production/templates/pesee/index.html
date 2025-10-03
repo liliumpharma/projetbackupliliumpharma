@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Commandes de Production</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      rel="stylesheet"
+      <link
+      href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Ajout d'un style propre */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f6f9;
+        padding: 20px;
+      }
+
+      .cards-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+
+      .card {
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        width: 400px;
+        padding: 20px;
+        transition: transform 0.3s;
+        cursor: pointer;
+      }
+
+      .card:hover {
+        transform: translateY(-10px);
+      }
+
+      .card-header {
+        display: block;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: bold;
+      }
+
+      .expand-icon {
+        cursor: pointer;
+      }
+
+      .expand-content {
+        display: none;
+        margin-top: 10px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      table,
+      th,
+      td {
+        border: 1px solid #ddd;
+      }
+
+      th,
+      td {
+        padding: 8px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #f4f6f9;
+      }
+
+      .receive-button,
+      .send-button,
+      .transfer-button {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: bold;
+        color: white;
+        text-align: center;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+
+      .receive-button {
+        background-color: blue; /* Style for "Réceptionner" button */
+      }
+
+      .transfer-button {
+        background-color: orange; /* Style for "Transférer" button */
+      }
+
+      .send-button {
+        background-color: green; /* Style for "Transférer" button */
+      }
+
+      /* Modal styles */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding-top: 60px;
+      }
+
+      .modal-content {
+        background-color: white;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+      }
+
+      .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+      }
+
+      .close:hover,
+      .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .status-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        margin-top: 10px;
+        font-family: "Special Elite", cursive;
+      }
+
+      .status-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 14px;
+        font-weight: bold;
+        color: white;
+      }
+
+      .status.waiting .status-circle {
+        background-color: orange;
+      }
+
+      .status.reception .status-circle {
+        background-color: blue;
+      }
+
+      .status.transfer .status-circle {
+        background-color: green;
+      }
+      .status {
+        max-width: 100%; /* Make sure the status takes up no more than the card width */
+        white-space: normal; /* Allow the text to wrap */
+        word-wrap: break-word; /* Ensure long words or URLs break and wrap */
+        overflow-wrap: break-word; /* Break long text to prevent overflow */
+        font-family: "Special Elite", cursive; /* Utilisation de la police spéciale */
+      }
+
+      .arrow {
+        margin: 0 10px;
+        font-size: 20px;
+        color: #aaa; /* Color for the arrow */
+      }
+
+      .status.waiting.active {
+        color: orange;
+      }
+
+      .status.reception.active {
+        color: blue;
+      }
+
+      .status.transfer.active {
+        color: green;
+      }
+      .expand-content {
+        display: none; /* Cacher par défaut */
+      }
+      /* Classe pour la bordure clignotante */
+      .waiting-border {
+        border: 2px solid orange;
+        animation: blink 1s infinite alternate;
+      }
+
+      @keyframes blink {
+        0% {
+          border-color: orange;
+        }
+        100% {
+          border-color: transparent;
+        }
+      }
+
+      /* Classe pour la bordure clignotante de 'Waiting' */
+      .waiting-border {
+        border: 2px solid orange;
+        animation: blink 1s infinite alternate;
+      }
+
+      /* Classe pour la bordure non clignotante de 'Réceptionnée' */
+      .reception-border {
+        border: 2px solid blue;
+        animation: none;
+      }
+
+      /* Classe pour la bordure non clignotante de 'Transférée' */
+      .transfer-border {
+        border: 2px solid green;
+        animation: none;
+      }
+
+      /* Animation de clignotement pour la bordure de 'Waiting' */
+      @keyframes blink {
+        0% {
+          border-color: orange;
+        }
+        100% {
+          border-color: transparent;
+        }
+      }
+
+      /* Classe pour 'Waiting' (clignote orange) */
+      .status.waiting.active {
+        color: orange;
+      }
+
+      /* Classe pour 'Réceptionnée' (bleu sans clignotement) */
+      .status.reception.active {
+        color: blue;
+      }
+
+      /* Classe pour 'Transférée' (vert sans clignotement) */
+      .status.transfer.active {
+        color: green;
+      }
+      .date-heure {
+        font-size: 12px;
+        color: #777;
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="date-heure" id="date-heure"></div>
+    <h1>Salle de pesee</h1>
+    <h4>Liste des Commandes de Production</h4>
+
+    <script>
+      // Fonction pour obtenir la date et l'heure actuelle
+      function afficherDateHeure() {
+        const now = new Date();
+        const options = {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+          second: "numeric",
+          hour12: false,
+        };
+        const formattedDate = now.toLocaleDateString("fr-FR", options);
+        document.getElementById("date-heure").textContent = formattedDate;
+      }
+
+      // Appeler la fonction pour afficher la date et l'heure
+      afficherDateHeure();
+    </script>
+    <div class="date-heure" id="date-heure"></div>
+
+    <script>
+      // Fonction pour obtenir la date et l'heure actuelle
+      function afficherDateHeure() {
+        const now = new Date();
+        const options = {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+          second: "numeric",
+          hour12: false,
+        };
+        const formattedDate = now.toLocaleDateString("fr-FR", options);
+        document.getElementById("date-heure").textContent = formattedDate;
+      }
+
+      // Appeler la fonction pour afficher la date et l'heure
+      afficherDateHeure();
+    </script>
+
+    <div class="loading">Chargement des commandes...</div>
+
+    <div class="cards-container" id="ordersContainer">
+      <!-- Les cartes de commandes de production seront ajoutées ici -->
+    </div>
+
+    <!-- Modal for transferring order -->
+    <div id="transferModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2>Transférer du order production <span id="id_op"></span></h2>
+        <h2>Bash <span id="op_bash"></span></h2>
+        <h2>Date: <span id="op_date"></span></h2>
+
+        <table id="transfer-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Item</th>
+              <th>Quantité Demandée (kg)</th>
+              <th>Quantité Transférée du stock</th>
+              <th>Estimated retour</th>
+              <th style="color: red">Quantité retournée</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Items will be dynamically added here -->
+          </tbody>
+        </table>
+        <button class="transfer-button" onclick="submitTransfer(orderId)">
+          Soumettre le transfert
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal for transferring order -->
+    <div id="sendModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2>
+          Envoie du order production à la salle matiére premiere pesee
+          <span id="id_op_send"></span>
+        </h2>
+        <h2>Bash Size: <span id="op_bsize_send"></span> KG</h2>
+
+        <table id="send-table">
+          <thead>
+            <tr>
+              <th>Bash Réf</th>
+              <th>ID Item</th>
+              <th>Item</th>
+              <th>Quantité Per Bash</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Items will be dynamically added here -->
+          </tbody>
+        </table>
+        <button class="send-button" onclick="submitSend()">
+          Envoyer vers salle MP Pesee
+        </button>
+      </div>
+    </div>
+
+    <script>
+      function openTransferModal(orderId, bash, date) {
+        const modal = document.getElementById("transferModal");
+        const op_id = document.getElementById("id_op");
+        const op_bash = document.getElementById("op_bash");
+        const op_date = document.getElementById("op_date");
+
+        op_id.textContent = orderId;
+        op_bash.textContent = bash;
+        op_date.textContent = date;
+
+        const transferTableBody = document.querySelector(
+          "#transfer-table tbody"
+        );
+
+        // Vider le contenu précédent du tableau du modal
+        transferTableBody.innerHTML = "";
+
+        // Sélectionner les lignes du tableau d'items de la carte
+        const itemRows = document.querySelectorAll(
+          `#item-table-${orderId} tbody tr`
+        );
+
+        const extractUnit = (value) => {
+          const match = value.match(/[a-zA-Z]+/); // Matches the unit (e.g., kg, g, mg)
+          return match ? match[0] : ""; // Return unit if found, or empty string
+        };
+
+        // Copier chaque ligne du tableau de la carte dans le tableau du modal
+        itemRows.forEach((row) => {
+          const item_id = row.cells[0].innerText; // Colonne "Item"
+          const item = row.cells[1].innerText; // Colonne "Item"
+          const quantity = row.cells[2].innerText; // Colonne "Quantité (kg)"
+          const quantity_from_stock = row.cells[3].innerText; // Colonne "Quantité (kg)"
+
+          // Créer une nouvelle ligne pour le tableau du modal
+          const newRow = document.createElement("tr");
+          let formattedQuantity = parseFloat(quantity).toString(); // Remove trailing zeros
+          let formattedQuantity2 = parseFloat(quantity_from_stock).toString(); // Remove trailing zeros
+
+          // Remove units (e.g., 'kg', 'g') and parse the numbers
+          let quantityValue = parseFloat(
+            quantity_from_stock.replace(/[a-zA-Z]/g, "")
+          );
+          let quantityToSubtract = parseFloat(
+            quantity.replace(/[a-zA-Z]/g, "")
+          );
+
+          // Check if both values are valid numbers before performing the subtraction
+          let formattedQuantit3 = 0; // Perform the subtraction
+          if (!isNaN(quantityValue) && !isNaN(quantityToSubtract)) {
+            formattedQuantit3 = quantityValue - quantityToSubtract; // Perform the subtraction
+          } else {
+            console.log("Invalid quantity values, cannot perform subtraction");
+          }
+
+          let quantityUnit = extractUnit(quantity);
+          let quantityUnitFromStock = extractUnit(quantity_from_stock);
+
+          newRow.innerHTML = `
+                    <td>${item_id}</td>
+                    <td>${item}</td>
+                    <td>${quantity}</td>
+                    <td>${quantity_from_stock}</td>
+                    <td>${formattedQuantit3} ${quantityUnit}</td>
+                    <td style="display: flex; align-items: center;">
+                       <input type="text" value="0" min="0" max="${quantity}" style="flex-grow: 1; margin-right: 10px;" />
+                       <p>${quantityUnit}</p>
+                     </td>
+                              `;
+
+          // Ajouter la nouvelle ligne au tableau du modal
+          transferTableBody.appendChild(newRow);
+        });
+
+        // Afficher le modal
+        modal.style.display = "block";
+
+        // Sauvegarder l'ID de la commande dans un attribut du bouton pour le transfert
+        const transferButton = modal.querySelector(".transfer-button");
+        transferButton.setAttribute("onclick", `submitTransfer(${orderId})`);
+      }
+
+      function openSendModal(
+        orderId,
+        bash,
+        date,
+        op_bsize_send,
+        divisionFactor = 1
+      ) {
+        const modal = document.getElementById("sendModal");
+        const op_id = document.getElementById("id_op_send");
+        const op_bsize = document.getElementById("op_bsize_send");
+
+        op_id.textContent = orderId;
+        op_bsize.textContent = op_bsize_send;
+
+        const transferTableBody = document.querySelector("#send-table tbody");
+
+        // Vider le contenu précédent du tableau
+        transferTableBody.innerHTML = "";
+
+        // Sélectionner les lignes du tableau d'items
+        const itemRows = document.querySelectorAll(
+          `#item-table-${orderId} tbody tr`
+        );
+
+        const extractUnit = (value) => {
+          const match = value.match(/[a-zA-Z]+/); // Extraire l'unité (kg, g, mg, etc.)
+          return match ? match[0] : "";
+        };
+
+        let maxQuantity = 0;
+        let result = 0;
+
+        // Calculer l'item avec la plus grande quantité
+        itemRows.forEach((row) => {
+          let quantity = parseFloat(
+            row.cells[2].innerText.replace(/[a-zA-Z]/g, "")
+          );
+          if (divisionFactor > 1) quantity /= divisionFactor;
+          if (quantity > maxQuantity) maxQuantity = quantity;
+        });
+
+        // Calculer le ratio de la plus grande quantité par la taille du bash
+        const bashSize = parseFloat(op_bsize_send);
+        result = maxQuantity / bashSize;
+
+        // Collecter tous les items et leurs informations dans un tableau
+        let items = [];
+        itemRows.forEach((row) => {
+          const item_id = row.cells[0].innerText;
+          const item = row.cells[1].innerText;
+          let quantity = parseFloat(
+            row.cells[2].innerText.replace(/[a-zAZ]/g, "")
+          );
+          const quantityUnit = extractUnit(row.cells[2].innerText);
+
+          if (divisionFactor > 1) quantity /= divisionFactor;
+
+          items.push({ item_id, item, quantity, quantityUnit });
+        });
+
+        // Calculer la quantité par ligne
+        const lines = [];
+        for (let j = 0; j < result; j++) {
+          items.forEach((itemData) => {
+            const lineQuantity = itemData.quantity / result;
+            lines.push({
+              item_id: itemData.item_id,
+              item: itemData.item,
+              quantity: lineQuantity.toFixed(2) + " " + itemData.quantityUnit,
+            });
+          });
+        }
+
+        // Suivi du premier item_id pour identifier les groupes
+        let firstItemId = null;
+        let currentGroupColor = "#E0F7FA"; // Couleur initiale (bleu clair)
+        let colorIndex = 0;
+        let groupItemId = null;
+
+        const colors = ["#E0F7FA", "#FFEB3B", "#A5D6A7", "#FFCDD2", "#BBDEFB"]; // Palette de couleurs
+        let groupNumber = 0; // Numéro de groupe pour chaque nouvelle couleur de fond
+        let previousColor = null; // Variable pour suivre la couleur précédente
+        let rowspanCount = 1; // Compteur pour rowspan
+
+        // Insérer les lignes dans le tableau
+        let cpt = 0;
+        let groupRefs = {}; // Référence des groupes par couleur
+        let groupLines = {}; // Lignes par groupe de couleur
+
+        lines.forEach((lineData, index) => {
+          let backgroundColor = currentGroupColor; // Couleur initiale ou mise à jour
+
+          // Si c'est le premier ID (première rencontre)
+          if (firstItemId === null) {
+            firstItemId = lineData.item_id; // Stocke l'ID du premier groupe
+            groupItemId = firstItemId; // Définit l'ID du groupe actuel
+            console.log(`Premier ID rencontré: ${firstItemId}`);
+          }
+
+          // Si on rencontre l'ID du groupe actuel
+          if (lineData.item_id === groupItemId) {
+            console.log(
+              `ID ${groupItemId} rencontré à nouveau, changement de couleur`
+            );
+            cpt++;
+
+            // Passer à la prochaine couleur pour ce groupe
+            colorIndex = (colorIndex + 1) % colors.length;
+            currentGroupColor = colors[colorIndex];
+            backgroundColor = currentGroupColor; // Applique la nouvelle couleur
+
+            // Assignation d'un nouveau numéro de groupe
+            groupNumber++;
+          } else {
+            backgroundColor = currentGroupColor; // Garde la couleur actuelle
+          }
+
+          const newRow = document.createElement("tr");
+
+          newRow.innerHTML = `
+      <td id="group-${groupNumber}">OF - ${orderId}/${cpt}</td>
+        <td>${lineData.item_id}</td>
+        <td>${lineData.item}</td>
+        <td>${lineData.quantity}</td>
+      `;
+
+          // Appliquer la couleur de fond à la ligne
+          newRow.style.backgroundColor = backgroundColor;
+
+          // Gérer les rowspan
+          if (!groupRefs[currentGroupColor]) {
+            groupRefs[currentGroupColor] = groupNumber; // Référence du groupe
+            groupLines[groupNumber] = [newRow]; // Démarrer un nouveau groupe de lignes
+          } else {
+            groupLines[groupNumber].push(newRow); // Ajouter la ligne au groupe existant
+          }
+
+          // Ajouter la ligne au tableau
+          transferTableBody.appendChild(newRow);
+        });
+
+        // Fusionner les lignes avec le même numéro de groupe (rowspan)
+        Object.keys(groupLines).forEach((groupId) => {
+          const group = groupLines[groupId];
+          group.forEach((row, rowIndex) => {
+            if (rowIndex === 0) {
+              const groupCell = row.querySelector(`#group-${groupId}`);
+              groupCell.setAttribute("rowspan", group.length); // Fusionner les lignes du groupe
+            } else {
+              const groupCell = row.querySelector(`#group-${groupId}`);
+              groupCell.remove(); // Retirer les cellules supplémentaires pour éviter le double affichage
+            }
+          });
+        });
+
+        // Afficher le modal
+        modal.style.display = "block";
+
+        // Sauvegarder l'ID de la commande pour le transfert
+        const transferButton = modal.querySelector(".transfer-button");
+        transferButton.setAttribute("onclick", `submitSend()`);
+      }
+
+      function closeModal() {
+        const modal = document.getElementById("transferModal");
+        modal.style.display = "none";
+      }
+
+      const baseUrl =
+        "https://app.liliumpharma.com/production/order-productions/pesee/";
+
+      async function fetchOrders() {
+        const loadingElement = document.querySelector(".loading");
+        const ordersContainer = document.querySelector("#ordersContainer");
+
+        try {
+          loadingElement.style.display = "none";
+
+          const response = await fetch(baseUrl);
+
+          if (!response.ok) {
+            throw new Error("Échec de la récupération des données");
+          }
+
+          const orders = await response.json();
+
+          if (orders.length > 0) {
+            ordersContainer.innerHTML = "";
+
+            orders.forEach((order) => {
+              console.log(order);
+              const card = document.createElement("div");
+              card.className = "card";
+              card.id = `order_${order.id}`;
+
+              // Appliquer une bordure clignotante si la location est 'waiting'
+              if (order.status === "waiting" && order.location === "pesee") {
+                card.classList.add("waiting-border");
+              } else if (
+                order.status === "received" &&
+                order.location === "pesee"
+              ) {
+                card.classList.add("reception-border");
+              } else if (
+                order.status === "transfered" ||
+                order.location != "pesee"
+              ) {
+                card.classList.add("transfer-border");
+              }
+
+              const addedDate = new Date(order.added);
+
+              const formattedDate =
+                addedDate.getFullYear() +
+                "-" +
+                ("0" + (addedDate.getMonth() + 1)).slice(-2) +
+                "-" +
+                ("0" + addedDate.getDate()).slice(-2) +
+                " " +
+                ("0" + addedDate.getHours()).slice(-2) +
+                ":" +
+                ("0" + addedDate.getMinutes()).slice(-2) +
+                ":" +
+                ("0" + addedDate.getSeconds()).slice(-2);
+
+              // Déterminer l'état actif en fonction de la localisation
+              const status = order.status;
+              const location = order.location;
+
+              const waitingActive =
+                status === "waiting" && location === "pesee" ? "active" : "";
+              const receptionActive =
+                status === "received" && location === "pesee" ? "active" : "";
+
+              const ProcessingActive =
+                status === "in_process" && location === "pesee" ? "active" : "";
+              const traiteActive = location === "mp_pesee" ? "active" : "";
+
+              // Affichage conditionnel des boutons en fonction de la localisation/état
+              let actionButtonHTML = "";
+              if (status === "waiting" && location === "pesee") {
+                actionButtonHTML = `<div class="receive-button" onclick="receiveOrder(${order.id})">Réceptionner</div>`;
+              } else if (status === "received" && location == "pesee") {
+                actionButtonHTML = `<div class="transfer-button" onclick="openTransferModal('${order.id}','${order.batch_number}','${formattedDate}')">Transférer</div>`;
+              } else if (status === "in_process" && location == "pesee") {
+                actionButtonHTML = `<div class="send-button" onclick="openSendModal('${order.id}','${order.batch_number}','${formattedDate}','${order.bash_size}')">Envoyer</div>`;
+              }
+
+              card.innerHTML = `
+                            <div style="font-weight: bold">
+                              <span>Order Production N° ${order.id} </span>
+                              </br>
+                              <span style="font-size:13px">${formattedDate}</span>
+                              <span class="expand-icon" onclick="toggleExpand(${order.id})">
+                                <i class="fas fa-chevron-down"></i>
+                              </span>
+                            </div>
+                                                 <!-- Statut avec flèches et couleurs -->
+        <div class="status-container">
+            <span class="status waiting ${waitingActive}">Waiting</span>
+            <span class="arrow">→</span>
+            <span class="status reception ${receptionActive}">Réceptionnée</span>
+
+            <span class="arrow">→</span>
+            <span class="status transfer ${ProcessingActive}">Processing</span>
+
+            <span class="arrow">→</span>
+            <span class="status transfer ${traiteActive}">Traité</span>
+        </div>
+
+                            <div class="card-body">
+                              <p><strong>Bash N° :</strong> ${order.batch_number}</p>
+                              <p><strong>Type de Processus :</strong> ${order.process_type}</p>
+                              <p><strong>Utilisateur :</strong> ${order.user}</p>
+                              <p><strong>Produit :</strong> ${order.produit}</p>
+                              <p><strong>Location :</strong> <span style="color:red">${order.location}</span></p>
+
+
+                            </div>
+                            <div class="expand-content" id="expand-${order.id}" style="display: none;">
+                              <table class="item-table" id="item-table-${order.id}">
+                                <thead>
+                                  <tr>
+                                    <th>ID</th>
+                                    <th>Item</th>
+                                    <th>Quantité</th>
+                                    <th>Quantité from stock</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <!-- Les items seront ajoutés ici dynamiquement -->
+                                </tbody>
+                              </table>
+                              ${actionButtonHTML}
+                            </div>
+                          `;
+
+              ordersContainer.appendChild(card);
+
+              // Fetch ItemOrderProduction for each order
+              fetchItemOrderProduction(order.id);
+            });
+          } else {
+            ordersContainer.innerHTML =
+              '<div class="error-message">Aucune commande trouvée.</div>';
+          }
+        } catch (error) {
+          loadingElement.style.display = "none";
+          const errorMessage = document.createElement("div");
+          errorMessage.className = "error-message";
+          errorMessage.textContent = "Erreur lors du chargement des données.";
+          document.body.appendChild(errorMessage);
+        }
+      }
+
+      // Fonction de bascule d'expansion
+      function toggleExpand(orderId) {
+        // Sélectionner l'élément d'expansion spécifique pour l'ordre
+        const expandElement = document.getElementById(`expand-${orderId}`);
+
+        // Vérifier l'état actuel de l'élément d'expansion
+        if (
+          expandElement.style.display === "none" ||
+          expandElement.style.display === ""
+        ) {
+          expandElement.style.display = "block"; // Afficher le contenu
+          const icon =
+            expandElement.previousElementSibling.querySelector(
+              ".expand-icon i"
+            );
+          icon.classList.remove("fa-chevron-down");
+          icon.classList.add("fa-chevron-up");
+        } else {
+          expandElement.style.display = "none"; // Masquer le contenu
+          const icon =
+            expandElement.previousElementSibling.querySelector(
+              ".expand-icon i"
+            );
+          icon.classList.remove("fa-chevron-up");
+          icon.classList.add("fa-chevron-down");
+        }
+      }
+
+      async function fetchItemOrderProduction(orderId) {
+        baseUrl2 =
+          "https://app.liliumpharma.com/production/item-order-productions-pesee/?id=" +
+          orderId;
+        try {
+          console.log(baseUrl2 + orderId);
+          const response = await fetch(`${baseUrl2}`);
+          const items = await response.json();
+
+          const itemTableBody = document.querySelector(
+            `#item-table-${orderId} tbody`
+          );
+          if (items.length > 0) {
+            items.forEach((item) => {
+              console.log("--------" + JSON.stringify(item));
+              const row = document.createElement("tr");
+              row.innerHTML = `
+                        <td>${item.id}</td>
+                        <td>${item.produit} ${item.item}</td>
+                        <td>${parseInt(item.qtt, 10)} ${item.unite}</td>
+                        <td>${parseInt(item.qtt_from_stock_to_weight, 10)} ${
+                item.unite
+              }</td>
+                      `;
+              itemTableBody.appendChild(row);
+            });
+          } else {
+            const row = document.createElement("tr");
+            row.innerHTML = `<td colspan="2">Aucun item trouvé.</td>`;
+            itemTableBody.appendChild(row);
+          }
+        } catch (error) {
+          console.error("Erreur de récupération des items:", error);
+        }
+      }
+
+      function toggleExpand(orderId) {
+        const expandContent = document.getElementById(`expand-${orderId}`);
+        const expandIcon = document.querySelector(
+          `#expand-${orderId} .expand-icon`
+        );
+
+        if (
+          expandContent.style.display === "none" ||
+          !expandContent.style.display
+        ) {
+          expandContent.style.display = "block";
+          expandIcon.innerHTML = '<i class="fas fa-chevron-up"></i>';
+        } else {
+          expandContent.style.display = "none";
+          expandIcon.innerHTML = '<i class="fas fa-chevron-down"></i>';
+        }
+      }
+
+      function receiveOrder(orderId, location) {
+        if (location === "pesee") {
+          // Trigger the transfer action
+          transferOrder(orderId);
+        } else {
+          // Trigger the reception action
+          receptionOrder(orderId);
+        }
+      }
+
+      function transferOrder(orderId) {
+        alert(`Commande ${orderId} transférée !`);
+        // Implement the transfer logic (e.g., update location to 'transferred')
+      }
+
+      function receptionOrder(orderId) {
+        // URL de l'API pour mettre à jour la location
+        const url = `https://app.liliumpharma.com/production/order-productions/pesee/${orderId}/receptionner/`;
+
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}", // Assurez-vous que le token CSRF est envoyé avec la requête
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.message === "Location mise à jour à pesee") {
+              // Mettre à jour la carte avec la nouvelle location
+              const orderCard = document.querySelector(`#order_${orderId}`);
+              const locationElement = orderCard.querySelector(".card-body p");
+              locationElement.textContent = `Location: ${data.new_location}`;
+
+              // Désactiver le bouton "Réceptionner" pour éviter un clic multiple
+              const receiveButton = orderCard.querySelector(".receive-button");
+              receiveButton.disabled = true;
+              receiveButton.textContent = "Réceptionnée";
+              location.reload();
+            } else {
+              alert(
+                "Une erreur est survenue lors de la mise à jour de la location."
+              );
+            }
+          })
+          .catch((error) => {
+            console.error("Erreur:", error);
+            alert("Erreur lors de la mise à jour de la location.");
+          });
+      }
+
+      window.onload = fetchOrders;
+
+      function submitTransfer(orderId) {
+        // URL de l'API pour effectuer le transfert
+        const url = `https://app.liliumpharma.com/production/order-productions/${orderId}/transfert_mp_pesee/`;
+
+        // Récupérer les quantités transférées de chaque item du tableau du modal
+        const transferTableRows = document.querySelectorAll(
+          "#transfer-table tbody tr"
+        );
+        const transferData = [];
+        let isValid = true; // Variable pour vérifier si le transfert est valide
+
+        transferTableRows.forEach((row) => {
+          const quantityTransferred = parseFloat(
+            row.querySelector("input").value
+          ); // Quantité transférée
+          const quantityFromStock = parseFloat(row.cells[3].innerText); // Quantité demandée
+          const quantityEstimatedRetour = parseFloat(row.cells[4].innerText); // Quantité demandée
+          const item_id = row.cells[0].innerText; // Nom de l'item
+          const item = row.cells[1].innerText; // Nom de l'item
+
+          // Vérifier que la quantité transférée ne dépasse pas la quantité demandée
+          if (
+            quantityTransferred > quantityFromStock ||
+            quantityTransferred > quantityEstimatedRetour
+          ) {
+            isValid = false;
+            // Si la quantité est invalide, mettre en surbrillance l'input et afficher un message d'erreur
+            row.querySelector("input").style.borderColor = "red"; // Mettre la bordure en rouge
+          } else {
+            row.querySelector("input").style.borderColor = ""; // Réinitialiser la couleur de la bordure
+          }
+
+          // Ajouter les données de transfert pour chaque item
+          transferData.push({
+            item_id: item_id,
+            item: item,
+            quantity_transferred: quantityTransferred,
+          });
+        });
+
+        // Si le transfert n'est pas valide, afficher un message et ne pas soumettre
+        if (!isValid) {
+          alert(
+            "La quantité transférée ne peut pas etre Superieure a la quantitée recu du stock ou a la quantité estimée retour."
+          );
+          return;
+        }
+
+        // Envoyer la requête pour effectuer le transfert
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}", // Assurez-vous que le token CSRF est inclus
+          },
+          body: JSON.stringify({
+            transfer_data: transferData, // Données de transfert
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            alert(`Commande ${orderId} transférée vers Tablette !`);
+            // Fermer le modal après le transfert
+            closeModal();
+
+            // Mettre à jour la carte avec la nouvelle location
+            const orderCard = document.querySelector(`#order_${orderId}`);
+            const locationElement = orderCard.querySelector(".card-body p");
+            locationElement.textContent = `Location: pesée`;
+
+            // Désactiver le bouton "Transférer" pour éviter un clic multiple
+            const transferButton = orderCard.querySelector(".transfer-button");
+            transferButton.disabled = true;
+            transferButton.textContent = "Transférée";
+          })
+          .catch((error) => {
+            console.error("Erreur:", error);
+            alert("Erreur lors du transfert.");
+          });
+      }
+
+      function submitSend() {
+        const tableRows = document.querySelectorAll("#send-table tbody tr"); // Récupérer toutes les lignes du tableau
+
+        console.log(
+          "[Log] Début de l'extraction des items du tableau... (pesee_front, line 994)"
+        );
+
+        let currentRef = ""; // Référence actuelle pour chaque groupe
+        let useInitialIndexes = true; // Indique si on utilise les index initiaux (pour le premier item du groupe)
+        const items = []; // Tableau pour stocker les items à envoyer
+
+        tableRows.forEach((row, index) => {
+          let refCell, itemIdCell, itemCell, quantityCell; // Déclaration des cellules
+
+          const rawRef =
+            row.querySelector("td:nth-child(1)")?.innerText.trim() || ""; // Colonne Réf (1ère colonne)
+
+          // Vérifier si une nouvelle référence de groupe est détectée
+          if (rawRef && /^OF\s*-\s*\d+\/\d+$/.test(rawRef)) {
+            if (rawRef !== currentRef) {
+              // Nouvelle référence de groupe
+              currentRef = rawRef;
+              useInitialIndexes = true; // Réinitialiser pour utiliser les index initiaux
+              console.log(
+                `[Log] Nouveau Groupe trouvé: ${currentRef} (pesee_front, line ${
+                  1014 + index
+                })`
+              );
+            }
+          }
+
+          // Déterminer les colonnes en fonction de la position de l'item dans le groupe
+          if (useInitialIndexes) {
+            // Pour le premier item d'un nouveau groupe
+            refCell = row.querySelector("td:nth-child(1)"); // Colonne Réf
+            itemIdCell = row.querySelector("td:nth-child(2)"); // Colonne Item ID
+            itemCell = row.querySelector("td:nth-child(3)"); // Colonne Item
+            quantityCell = row.querySelector("td:nth-child(4)"); // Colonne Quantité
+            useInitialIndexes = false; // Passer en mode "décalé" pour les items suivants du groupe
+          } else {
+            // Pour les items suivants du même groupe (décalage de -1)
+            refCell = row.querySelector("td:nth-child(0)"); // Colonne Réf (non utilisée ici)
+            itemIdCell = row.querySelector("td:nth-child(1)"); // Colonne Item ID
+            itemCell = row.querySelector("td:nth-child(2)"); // Colonne Item
+            quantityCell = row.querySelector("td:nth-child(3)"); // Colonne Quantité
+          }
+
+          const item_id = itemIdCell ? itemIdCell.innerText.trim() : "N/A"; // Valeur de la colonne Item ID
+          const item = itemCell ? itemCell.innerText.trim() : "N/A"; // Valeur de la colonne Item
+          const quantity = quantityCell ? quantityCell.innerText.trim() : "N/A"; // Quantité exacte
+
+          // Ajouter l'item au tableau
+          items.push({
+            group: currentRef,
+            item_id: item_id,
+            item: item,
+            quantity: quantity,
+          });
+
+          // Log de l'item
+          console.log(
+            `[Log] Item du Groupe ${currentRef}: Item ID: ${item_id}, Item: ${item}, Quantity: ${quantity} (pesee_front, line ${
+              1015 + index
+            })`
+          );
+        });
+
+        console.log(
+          "[Log] Fin de l'extraction des items du tableau. (pesee_front, line 1021)"
+        );
+
+        // Envoi des données via fetch POST
+        const url = "https://app.liliumpharma.com/production/create-item-bash/"; // Remplacez cette URL par la vôtre
+        console.log("----" + JSON.stringify(items));
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}", // Assurez-vous que le token CSRF est inclus
+          },
+          body: JSON.stringify({ items: items }),
+        })
+          .then((response) => {
+            if (response.ok) {
+              console.log("[Log] Données envoyées avec succès.");
+              return response.json();
+            } else {
+              console.error("[Error] Échec de l'envoi des données.");
+            }
+          })
+          .then((data) => {
+            console.log("[Log] Réponse du serveur :", data);
+          })
+          .catch((error) => {
+            console.error(
+              "[Error] Erreur lors de l'envoi des données :",
+              error
+            );
+          });
+      }
+    </script>
+  </body>
+</html>

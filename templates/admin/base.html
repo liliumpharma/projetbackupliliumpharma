@@ -1,0 +1,15 @@
+{% extends "admin/base.html" %}
+
+{% block extrajs %}
+    <style>
+        .select2{
+                min-width: 400px !important;
+                
+            }
+        li span{
+            color: black;
+        }
+    </style>
+    {{ block.super }}
+   {% include 'medecins/change_modal.html' %}
+{% endblock %}

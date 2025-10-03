@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Liste des Déplacements</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css"
+    />
+    <style>
+      body {
+        background-color: #f4f8f4;
+        font-family: Arial, sans-serif;
+      }
+      .header {
+        background-color: #28a745;
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .header img {
+        height: 50px;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 1.8rem;
+      }
+      .filters {
+        background-color: white;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+      .card {
+        margin: 15px;
+        border: 2px solid #28a745;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s;
+        background-color: white;
+      }
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+      }
+      .card-header {
+        padding: 15px;
+        font-size: 1.2rem;
+        background-color: white;
+        border-bottom: 2px solid #28a745;
+      }
+      .card-header span {
+        display: block;
+        margin: 5px 0;
+      }
+      .card-header .title {
+        font-weight: bold;
+        color: #28a745;
+      }
+      .card-header .subtitle {
+        font-weight: normal;
+        color: #555;
+      }
+      .card-body {
+        padding: 15px;
+        display: none;
+      }
+      .card.expanded .card-body {
+        display: block;
+      }
+      .toggle-icon {
+        font-size: 1.5rem;
+        color: #28a745;
+        float: right;
+        cursor: pointer;
+      }
+      .footer {
+        text-align: center;
+        margin: 20px 0;
+        font-size: 0.9rem;
+        color: #555;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <img src="{% static 'img/logo.png' %}" style="height: 80px" />
+      <h1>Liste des Demandes de Déplacement</h1>
+    </header>
+
+    <div class="row mt-3">
+      <div class="col-md-3 ms-auto">
+        <a
+          href="https://app.liliumpharma.com/deplacement/addfront/"
+          class="btn btn-success w-100"
+        >
+          Ajouter une demande de déplacement
+        </a>
+      </div>
+    </div>
+
+    <div class="container my-5">
+      <!-- Filters -->
+      <div class="filters mb-4">
+        <div class="row">
+          <div class="col-md-3">
+            <input
+              type="date"
+              id="filter-start-date"
+              class="form-control"
+              placeholder="Date de début"
+            />
+          </div>
+          <div class="col-md-3">
+            <input
+              type="date"
+              id="filter-end-date"
+              class="form-control"
+              placeholder="Date de fin"
+            />
+          </div>
+          <div class="col-md-2">
+            <input
+              type="number"
+              id="filter-nb-jours"
+              class="form-control"
+              placeholder="Nombre de jours"
+            />
+          </div>
+          <div class="col-md-2">
+            <input
+              type="number"
+              id="filter-nb-nuits"
+              class="form-control"
+              placeholder="Nombre de nuits"
+            />
+          </div>
+          <div class="col-md-2">
+            <button id="filter-btn" class="btn btn-success w-100">
+              Filtrer
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- List of Déplacements -->
+      <div id="deplacement-list" class="row">
+        <!-- Cards will be dynamically loaded here -->
+      </div>
+    </div>
+
+    <footer class="footer">
+      &copy; 2025 Gestion des Déplacements. Tous droits réservés.
+    </footer>
+    <script>
+      async function fetchDeplacements(filters = {}) {
+        try {
+          const queryString = new URLSearchParams(filters).toString();
+          const response = await fetch(
+            `https://app.liliumpharma.com/deplacement/api/?${queryString}`
+          );
+          if (!response.ok) throw new Error("Failed to fetch data");
+          return await response.json();
+        } catch (error) {
+          console.error(error);
+          alert("Erreur lors du chargement des déplacements.");
+        }
+      }
+
+      function renderDeplacementCard(deplacement) {
+        const nuitsDetailsHtml = deplacement.nuits_details
+          .map(
+            (nuit) => `
+              <p><strong>Nuit ${nuit.nuit}:</strong> Du ${nuit.start_date} au ${nuit.end_date}</p>
+            `
+          )
+          .join("");
+
+        const validateButton =
+          deplacement.status !== "processed" &&
+          (window.isSuperuser === "True" || window.userRole === "Office")
+            ? `<button class="btn btn-success validate-btn" onclick="event.stopPropagation(); updateStatus(${deplacement.id}, '${deplacement.status}', this.closest('.card'))">Valider</button>`
+            : "";
+
+        tarif_restauration = 2000;
+        tarif_hebergement = 7000;
+        total_restauration = tarif_restauration * deplacement.nb_jours;
+        total_hebergement = tarif_hebergement * deplacement.nb_nuits;
+        total_deplacement = 20 * deplacement.distance;
+        total_final =
+          total_hebergement + total_deplacement + total_restauration;
+
+        return `
+            <div class="col-md-4">
+              <div class="card" onclick="toggleCard(this)">
+                <div class="card-header">
+                  <span class="title">Demande de déplacement : ID ${deplacement.id}</span>
+                  <span class="subtitle">Pour: ${deplacement.user}</span>
+                  <span class="subtitle">Date début: <strong>${deplacement.start_date}</strong></span>
+                  <span class="subtitle">Date fin: <strong>${deplacement.end_date}</strong></span>
+                  <span class="subtitle">Status: <strong id="status_${deplacement.id}" class="status-value">${deplacement.status}</strong></span>
+                  <span class="toggle-icon">&#9662;</span>
+                </div>
+                <div class="card-body">
+                  <p><strong>Nombre de jours:</strong> ${deplacement.nb_jours}</p>
+                  <p><strong>Nombre de nuits:</strong> ${deplacement.nb_nuits}</p>
+                  <p><strong>Wilaya départ:</strong> ${deplacement.wilaya1}</p>
+                  <p><strong>Wilaya arrivée:</strong> ${deplacement.wilaya2}</p>
+                  <p><strong>Distance:</strong> ${deplacement.distance} km</p>
+                  <p><strong>Date création:</strong> ${deplacement.created_at}</p>
+                  <p><strong>Tarif final :</strong> ${total_final} DZD</p>
+                  <div>
+                    <h6>Détails des nuits:</h6>
+                    ${nuitsDetailsHtml}
+                    </div>
+                  ${validateButton}
+                </div>
+              </div>
+            </div>
+          `;
+      }
+
+      async function updateStatus(deplacementId, currentStatus, cardElement) {
+        try {
+          let nextStatus;
+
+          // Determine the next status
+          if (currentStatus === "waiting") {
+            nextStatus = "validated_by_supervisor";
+          } else if (currentStatus === "validated_by_supervisor") {
+            nextStatus = "validated_by_direction";
+          } else if (currentStatus === "validated_by_direction") {
+            nextStatus = "Traité";
+          } else {
+            alert("Status update not allowed");
+            return;
+          }
+
+          // Send PATCH request to update the status
+          const response = await fetch(
+            `https://app.liliumpharma.com/deplacement/api/${deplacementId}/update_status/`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken(), // Include CSRF token
+              },
+              body: JSON.stringify({ status: nextStatus }),
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to update status");
+          }
+
+          // Update the UI on success
+          const statusElement = document.getElementById(
+            `status_${deplacementId}`
+          );
+          if (statusElement) {
+            statusElement.textContent = nextStatus.replace(/_/g, " ");
+          }
+
+          // Optionally remove the button if no further actions are required
+          if (nextStatus === "processed") {
+            const validateButton = cardElement.querySelector(".validate-btn");
+            if (validateButton) validateButton.remove();
+          }
+        } catch (error) {
+          console.error("Error updating status:", error);
+          alert("Une erreur est survenue lors de la mise à jour du statut.");
+        }
+      }
+
+      function getCSRFToken() {
+        const cookieValue = document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("csrftoken="))
+          ?.split("=")[1];
+        return cookieValue;
+      }
+
+      async function loadDeplacements(filters = {}) {
+        const deplacementList = document.getElementById("deplacement-list");
+        deplacementList.innerHTML = "<p>Chargement...</p>";
+        const deplacements = await fetchDeplacements(filters);
+        if (deplacements && deplacements.length > 0) {
+          deplacementList.innerHTML = deplacements
+            .map(renderDeplacementCard)
+            .join("");
+        } else {
+          deplacementList.innerHTML = "<p>Aucun déplacement trouvé.</p>";
+        }
+      }
+
+      function toggleCard(cardElement) {
+        cardElement.classList.toggle("expanded");
+        const toggleIcon = cardElement.querySelector(".toggle-icon");
+        toggleIcon.innerHTML = cardElement.classList.contains("expanded")
+          ? "&#9650;"
+          : "&#9662;";
+      }
+
+      document.getElementById("filter-btn").addEventListener("click", () => {
+        const filters = {
+          start_date: document.getElementById("filter-start-date").value,
+          end_date: document.getElementById("filter-end-date").value,
+          nb_jours: document.getElementById("filter-nb-jours").value,
+          nb_nuits: document.getElementById("filter-nb-nuits").value,
+        };
+        loadDeplacements(filters);
+      });
+
+      // Pass user role dynamically
+      window.userRole = "{{ request.user.userprofile.rolee }}";
+      window.isSuperuser = "{{ request.user.is_superuser }}";
+
+      // Initial load
+      loadDeplacements();
+    </script>
+  </body>
+</html>

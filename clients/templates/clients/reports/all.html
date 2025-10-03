@@ -1,0 +1,220 @@
+{% load clients_extra %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sells Report</title>
+
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        * {
+            font-family: 'Times New Roman', Times, serif;
+            padding: 5px;
+        }
+
+        .header {
+            text-align: center;
+            font-size: xx-large;
+            font-style: bold;
+            margin-bottom: 10px
+        }
+
+        .logo {
+            width: 70px;
+            height: 70px
+        }
+
+        .title {
+            text-align: center;
+            font-size: x-large;
+        }
+
+
+        .region {
+            display: inline-block;
+            font-size: x-large;
+            font-weight: bold;
+        }
+
+        .user {
+            display: inline-block;
+            font-size: x-large;
+            font-weight: bold;
+        }
+
+        .achieve_percentage {
+            display: flex;
+            gap: 5px;
+            padding: 10px;
+            border: 2px solid green;
+            border-radius: 5px;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+            -ms-border-radius: 5px;
+            -o-border-radius: 5px;
+        }
+
+        .main_column {
+            width: 15%;
+            font-size: 20px;
+            font-weight: bold
+        }
+
+        .signature_block {
+            display: flex;
+            justify-content: space-between;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        table {
+            width: 100%;
+        }
+
+        th {
+            outline: thin solid;
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+
+        td {
+            outline: thin solid;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <img class="logo" src="/static/img/logo.png" alt="">
+        <div>LILIUM PHARMA</div>
+    </div>
+
+    <div class="title">
+        <div>Rapport des Ventes</div>
+        <b>{{ month }}, {{ year }}</b>
+    </div>
+
+
+
+
+    <div class="region_frame">
+        <div class="user">Délégué:</div>{{ data.user }}
+
+
+        <div>
+            <div class="region">Région(s):</div>
+            {% for wilaya in data.wilayas %}
+            {{ wilaya.nom }} |
+            {% endfor %}
+        </div>
+
+
+
+
+        <table>
+            <thead>
+                <th class="main_column">Products</th>
+                {% for product in data.products %}
+                <th>{{ product.nom }}</th>
+                {% endfor %}
+            </thead>
+
+            <tbody>
+
+                <tr style="background-color: #90EE90">
+                    <td class="main_column">Objectif</td>
+                    {% for t in data.targets %}
+                    <td>{{ t|thousand_separator }}</td>
+                    {% endfor %}
+                </tr>
+
+                <tr style="background-color: yellow">
+                    <td class="main_column">Prix</td>
+                    {% for p in data.prices %}
+                    <td>{{ p|thousand_separator }}</td>
+                    {% endfor %}
+
+                </tr>
+
+                <tr>
+                    <td class="main_column">Achevé (par unité)</td>
+                    {% for q in data.quantities %}
+                    <td><a href="{{ q.target_report_details_link }}" style="font-weight: bold" target="_blank">{{ q.total|thousand_separator }}</a></td>
+                    {% endfor %}
+
+                </tr>
+
+                <tr style="background-color: #90EE90">
+                    <td class="main_column">Total Objectif</td>
+                    {% for tt in data.total_targets %}
+                    <td>{{ tt|thousand_separator }}</td>
+                    {% endfor %}
+
+                </tr>
+
+                <tr style="background-color: pink">
+                    <td class="main_column">Total Achevé</td>
+                    {% for ta in data.total_achievements %}
+                    <td>{{ ta|thousand_separator }}</td>
+                    {% endfor %}
+
+                </tr>
+
+            </tbody>
+        </table>
+
+
+        <div style="display: flex; justify-content: flex-end; margin-top: 10px">
+
+            <div class="achieve_percentage">
+                <div>
+                    <div>Montant Objectif</div>
+                    <div>Montant Atteint</div>
+                    <div>Pourcentage d'Achévement</div>
+                </div>
+
+                <div style="text-align: end;">
+                    <div>{{ data.total_target|thousand_separator }} Da</div>
+                    <div>{{ data.total_reached|thousand_separator }} Da</div>
+                    <div>{{ data.percentage_reached }}%</div>
+                </div>
+
+            </div>
+        </div>
+
+
+    </div>
+
+
+    <div style="text-align: right">
+        <h4 class="h4" style="margin: 0">حسب القانون الداخلي للشركة</h4>
+        <div>
+                                                                 إذا حقق المندوب ثلاث أشهر متتالية _ كوارتر يضاف له راتب شهر كحوافز.
+            </br>إذا حقق المندوب ستة أشهر متتالية كواترين متتالين يحسب له راتب شهر إضافي كحوافز ويتم رفع الراتب 10000 دينار جزائري.
+                </br>إذا حقق المندوب السنة كاملة يحسب له راتب شهرين كحوافز او سفر خارج البلاد ويتم رفع الراتب 15000 دينار جزائري.
+            </div>
+        </div>
+    </div>
+
+
+    <div class="signature_block">
+        <span>Signature du Délégué</span>
+        <span>Signature du Superviseur</span>
+        <span>Signature du Country Manager</span>
+    </div>
+
+</body>
+
+</html>

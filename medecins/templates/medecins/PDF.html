@@ -1,0 +1,227 @@
+
+<!DOCTYPE html> {% load accounts_extras %}
+<html lang="ar">
+<head>
+  <meta charset="UTF-16">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link href="https://fonts.googleapis.com/css2?family=Lalezar&display=swap" rel="stylesheet">
+  <title>PDF</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <style>
+    @font-face {
+    font-family: "Galano";
+    src: url("https://app.liliumpharma.com/static/css/medium.otf") format("opentype");
+    }
+    @font-face {
+        font-family: "Galano";
+        src: url("https://app.liliumpharma.com/static/css/bold.otf") format("opentype");
+        font-weight: bold;
+    }
+    @font-face {
+        font-family: "Galano";
+        src: url("https://app.liliumpharma.com/static/css/light.otf") format("opentype");
+        font-weight: 100;
+    }
+
+    body 
+    {
+        margin-top: 30px;
+        font-family: Galano , sans-serif !important;
+        color:#3a3a3a;
+    }
+
+    th 
+    {
+      text-transform: uppercase;
+      font-weight: bold;
+      
+    }
+    .table td, .table th 
+    {
+      border: 1px solid #000 !important;
+    }
+</style>
+</head>
+<body>
+{% load static %}
+
+      <div class='container text-dark'>
+
+
+        <div class="row mb-4">
+          <div class="col-2">
+            <img src="https://app.liliumpharma.com/{% static 'img/logo.png' %}" style="height: 90px;">
+          </div>
+          <div class="col-10">
+            <h2 class="text-center">LILIUM PHARMA ALGERIE </h2>
+            <h2 class='text-center text-uppercase h4'> Liste  
+              <b>
+                {% if request.GET.specialite == "medicale" %} medicale {% elif request.GET.specialite == "commerciale" %} commerciale {% else %} des clients  {% endif %} 
+                {% if request.GET.visites == "0" %} non visitées {%endif%}
+                {% if request.GET.visites == "1" %} visitées {%endif%}
+                {% if request.GET.visites == "2" %} visites multiple {%endif%}
+              </b>
+            </h2>
+            <h5 class='text-center text-uppercase h4'>
+               {% if request.GET.mindate%}{{request.GET.mindate}} /{%endif%} {% if request.GET.maxdate%}{{request.GET.maxdate}}{%endif%} </b>
+                <br/> <small style="font-size: 16px;">Le: {% now "j F Y" %} </small> <small style="font-size: 10px;">{% now "H:i" %}</small>  </h5>
+          </div>
+        </div>
+
+
+
+        <div class="row pb-3">
+          <div class="col-6">
+              <h5 class=''><small><b> commerciale:</b>  <span class="text-secondary">{{ commerciale.first_name}} {{ commerciale.last_name}}</span></small></h5>
+              <h5 class=''><small><b> Poste:</b>  <span class="text-secondary">Délégué {{ commerciale.userprofile.speciality_rolee }}</span></small></h5>
+              <h5 class=''><small><b> Tél:</b>  <span class="text-secondary">{{ commerciale.userprofile.telephone }}</span></small></h5>
+              <h5 class=''><small><b> Wilaya:</b>  <span class="text-secondary">{{ wilaya }}</span></small></h5>
+              <h5 class=''><small><b> Commune:</b>  <span class="text-secondary">{{ commune }}</span></small></h5>
+              <!-- <h5 class=''><small><b> specialité:</b> {{request.GET.specialite}} </small></h5> -->
+
+          </div>
+          <!-- <div class="col-6">
+
+            <h5 class=''><small><b> classification:</b> {{request.GET.classification}} </small></h5>
+            <h5 class=''><small><b> priorité:</b> {{request.GET.priority}} </small></h5>
+          </div> -->
+        </div>
+        
+        <p class="text-secondary"><b>specialité: </b></p>
+          {% if details %}
+            <p class="text-secondary">{{ details|safe }}</p>
+          {% endif %}
+            <p class="text-secondary">{{details_commercial|safe}}</p>
+
+        <p class="text-secondary">
+          Détails par région :
+      </p>
+      <div class="d-flex">
+        {% if speciality_details_1 %}
+            <div class="table-container">
+                {{ speciality_details_1|safe }}
+            </div>
+        {% endif %}
+        
+        {% if speciality_details_2 %}
+            <div class="table-container">
+                {{ speciality_details_2|safe }}
+            </div>
+        {% endif %}
+    </div>
+    
+      
+      <style>
+          .d-flex {
+              display: flex;
+              justify-content: space-between; /* Ajuste l'espacement entre les tableaux */
+          }
+      
+          .table-container {
+              flex: 1; /* Chaque tableau prend la même largeur */
+              margin-right: 10px; /* Ajoute un espace entre les tableaux */
+          }
+      
+          .table-container:last-child {
+              margin-right: 0; /* Enlève l'espace après le dernier tableau */
+          }
+      
+          .table {
+              width: 100%; /* Utilise tout l'espace disponible */
+              border-collapse: collapse;
+              font-size: 10px; /* Réduit la taille de la police */
+          }
+      
+          .table th, .table td {
+              border: 1px solid #ddd;
+              padding: 2px; /* Réduit le padding pour compacter le tableau */
+              text-align: left;
+          }
+      
+          .table th {
+              background-color: #f2f2f2;
+              font-weight: bold; /* Pour garder la lisibilité */
+          }
+      </style>
+      
+        
+        
+
+      
+      <p class="text-secondary">
+        Détails par Client :
+    </p>
+
+        <table class="table table-sm table-bordered">
+          <thead>
+            <tr>
+              <th class="text-left">nom</th>
+              <th class="text-left" style="font-size: 13px">region</th>
+              <th class="text-left">spec</th>
+              <th class="text-left">contact</th>
+              <th class="text-left">adresse</th>
+              <th class="text-left">commercial</th>
+              <th class="text-left">Lilium 1</th>
+              <th class="text-left">Lilium 2</th>
+              <th class="text-left">Aniya</th>
+              <th class="text-left">Note</th>
+            </tr>
+          </thead>
+          <tbody>
+              {% for medecin in medecins %}
+                <tr>
+                  <td>
+                    {% if medecin.has_deal %}
+                      <span style="font-weight: bold; color: gold;">&dollar; </span>
+                    {% endif %}
+                    
+                    <span style="font-size: 18px;"><b>{{ medecin.id }} - {{ medecin.nom }}</b></span>
+
+                    
+                    <br>
+                    <p style="font-size: 14px;">
+                      <a target="_blank" href="https://app.liliumpharma.com/medecins/visites/PDF/{{medecin.id}}/?priority=&amp;mindate={% now 'Y' %}-01-01&amp;maxdate=&amp;produit=&amp;stock=">
+                        {{medecin.nbr_visites_year}} v cette année
+                      </a>
+                    </p>
+                    {% if request.GET.visites == "2" %}
+                    <br>
+                        cette periode
+                    {% endif %} 
+                  </td>
+ 
+                  <td style="font-size: 14px">{{medecin.medecin_wilaya_commune}}</td>
+                  <td>{{medecin.specialite}}
+                    {% if medecin.classification == "a" or medecin.classification == "b" or medecin.classification == "c" %}
+                    <span style="font-size: 14px; font-weight: bold; text-transform: uppercase;">
+                        {{ medecin.classification }}
+                    </span>
+                {% endif %}
+                
+                
+                
+                 {% if medecin.flag %} &#9872; {%endif %}</td>
+
+                  <td style="font-size: 14px;">{{medecin.email}} / {{medecin.telephone}}</td>
+                  <td style="font-size: 14px;">{{medecin.adresse}} {% if medecin.lat and medecin.lon %}<img src="https://app.liliumpharma.com/{% static 'img/location.png' %}" style="height: 14px;"/>{%endif%}</td>
+                  <td style="font-size: 14px;">{% if medecin.medecin_commercial_poste %}{{ medecin.medecin_commercial_poste }}{% else %}-{% endif %}</td>
+                  <td style="font-size: 14px;">{% if medecin.medecin_commercial_lilium_1 %}{{ medecin.medecin_commercial_lilium_1 }}{% else %}-{% endif %}</td>
+                  <td style="font-size: 14px;">{% if medecin.medecin_commercial_lilium_2 %}{{ medecin.medecin_commercial_lilium_2 }}{% else %}-{% endif %}</td>
+                  <td style="font-size: 14px;">{% if medecin.medecin_commercial_aniya %}{{ medecin.medecin_commercial_aniya }}{% else %}-{% endif %}</td>
+                
+                  <td>{% if medecin.note %}{{medecin.note}}{%endif%}</td>
+                </tr>
+            {%endfor%}
+          </tbody>
+        </table>
+      </div>
+      <div class="pt-2 container text-right">
+        <b>Signature et cachet:</b>
+      </div>
+
+
+
+
+</body>
+</html>

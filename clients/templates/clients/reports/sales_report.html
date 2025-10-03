@@ -1,0 +1,175 @@
+{% load clients_extra %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Report</title>
+
+    <style>
+
+        @page {
+            size: A4;
+        }
+
+        * {
+            font-family: 'Times New Roman', Times, serif
+        }
+
+        .header {
+            text-align: center;
+            font-size: xx-large;
+            font-style: bold;
+            margin-bottom: 10px
+        }
+
+        .logo {
+            width: 70px;
+            height: 70px
+        }
+
+        .title {
+            text-align: center;
+            font-size: x-large;
+            margin-bottom: 20px;
+        }
+
+        .region_frame {
+            padding: 15px;
+            border: 2px solid gray;
+            border-radius: 10px;
+        }
+
+        .region {
+            font-size: large;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .user {
+            font-size: medium;
+            margin-bottom: 10px;
+        }
+
+        .achieve_percentage {
+            display: flex;
+            gap: 5px;
+            padding: 10px;
+            border: 2px solid green;
+            border-radius: 5px;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+            -ms-border-radius: 5px;
+            -o-border-radius: 5px;
+        }
+
+
+        table {
+            width: 100%;
+        }
+
+        th {
+            outline: thin solid;
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+
+
+        td {
+            outline: thin solid;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            text-align: center;
+            width: 8%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <img class="logo" src="/static/img/logo.png" alt="">
+        <div>LILIUM PHARMA</div>
+    </div>
+
+    <div class="title">
+        <div>Rapport des Ventes</div>
+        <strong>{{ data.ordersource.source.name }} - {{ data.ordersource.date.month|month_to_french_name }}, {{ data.ordersource.date.year }}</strong>
+    </div>
+
+    <table>
+        <thead>
+            <th>Clients</th>
+            <th>Wilayas</th>
+            <th>Users</th>
+            {% for product in data.products %}
+                <th>{{ product.nom }}</th>
+            {% endfor %}
+        </thead>
+
+            <tbody>
+
+        {% for order in data.orders %}
+
+
+                <tr>
+                    <td>{{ order.order.client.name }}</td>
+                    <td>{{ order.order.client.wilaya.nom }}</td>
+
+                    <td style="text-align: left">
+                    {% for user_profile in order.user_profiles %}
+                        {{ user_profile.user.first_name }} {{ user_profile.user.last_name }}</br>
+                    {% endfor %}
+                    </td>
+
+                    {% for product in order.products_list %}
+                    <td>
+                        {% if product > 0 %}
+                        <div style="color: green; font-weight: bold">{{ product }}</div>
+                        {% else %}
+                        <div>{{ product }}</div>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                </tr>
+
+        {% endfor %}
+
+            <!-- Totals Row  -->
+
+            <tr>
+                <td style="outline: none"></td>
+                <td style="outline: none"></td>
+                <td style="background-color: yellow">Totaux</td>
+                {% for order in data.total_products %}
+                    <td style="background-color: yellow">{{ order }}</td>
+                {% endfor %}
+            </tr>
+
+            </tbody>
+
+            
+        </table>
+
+         <div style="display: flex; justify-content: flex-end; margin-top: 10px">
+
+            <div class="achieve_percentage">
+                <div>
+                    <div>Total</div>
+                </div>
+
+                <div style="text-align: end;">
+                    <div>{{ data.total|thousand_separator }} Product(s)</div>
+                </div>
+
+            </div>
+        </div>
+
+
+
+</body>
+
+</html>

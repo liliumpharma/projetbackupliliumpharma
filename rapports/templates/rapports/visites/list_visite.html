@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block body%}
+
+  <div id="main" class="container py-3">
+    <div class="flex-column col-12 col-md-3">
+        <label for="confirmation_filter">Utilisateur</label>
+        <select class="form-control" type="search" id="search_user">
+          <option value="-1" disabled>Choisir un utilisateur</option>
+        </select>
+      </div>
+
+    <hr/>
+
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th scope="col"></th>
+          <th scope="col">date</th>
+          <th scope="col">id</th>
+          <th scope="col">user</th>
+          <th scope="col">Medecin</th>
+        </tr>
+      </thead>
+      <tbody>
+          {% for visite in visites %}
+        <tr>
+          <td><input type="checkbox" class="row-checkbox"></td>
+          <td><small>{{visite.rapport.added}}</small></td>
+          <td><small>{{visite.id}}</small></td>
+          <td><small>{{visite.rapport.user.username}}</small></td>
+          <td><small>{{visite.medecin.nom}}</small></td>
+        </tr>
+        {%endfor%}
+      </tbody>
+    </table>
+
+
+
+  </div>
+
+  <div class="container pb-4">
+
+
+    <span class="current">
+        Page {{ medecins.number }} sur {{ medecins.paginator.num_pages }}.
+    </span>
+
+
+    <ul class="pagination">
+      {% if medecins.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page=1&cat={{request.GET.cat}}"> << </a>
+      </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ medecins.previous_page_number }}&cat={{request.GET.cat}}" tabindex="-1">{{ medecins.previous_page_number }}</a>
+        </li>
+        {% endif %}
+
+        <li class="page-item active">
+          <a class="page-link" href="#"> {{ medecins.number }}</a>
+        </li>
+        {% if medecins.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ medecins.next_page_number }}&cat={{request.GET.cat}}"> {{ medecins.next_page_number }} </a>
+        </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ medecins.paginator.num_pages }}&cat={{request.GET.cat}}" tabindex="-1"> >> </a>
+          </li>
+          {% endif %}
+      </ul>
+  </div>
+
+{% endblock body%}
+
+
+{% block scripts %}
+<script>
+  $(document).ready(function(){
+    $('.flag').click(function(){
+      var ths=$(this)
+      $.get({
+        url:ths.attr('data-url'),
+        success:function(st){
+          ths.toggleClass('text-danger')
+        }
+      })
+    })
+  })
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      // Scroll to the 'main' div when the page loads
+      document.getElementById('main').scrollIntoView({ behavior: 'smooth' });
+  });
+</script>
+<!-- FETCHING USERS UNDER -->
+<script>
+    function users_under(){
+        fetch('https://app.liliumpharma.com/depenses/getting_users_under/')
+      .then((response) => response.json())
+      .then((data) => {
+        const selectUser = document.getElementById("search_user");
+        if (data.length === 1) {
+          const userObject = data[0];
+          const option = document.createElement("option");
+          option.value = userObject.user;
+          option.textContent = userObject.user;
+          option.selected = true;
+          selectUser.appendChild(option);
+        } else {
+          const option = document.createElement("option");
+            option.value = "tous";
+            option.textContent = "Tous";
+            option.selected = true;
+            selectUser.appendChild(option);
+          data.forEach((userObject) => {
+            const option = document.createElement("option");
+            option.value = userObject.user;
+            option.textContent = userObject.user;
+            selectUser.appendChild(option);
+          });
+        }
+  
+      })
+    }
+    users_under()
+  </script>
+{%endblock scripts%}

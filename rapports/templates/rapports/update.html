@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="container pt-5">
+  <div class="alert alert-success" role="alert">
+    Veuillez ajouter la nouvelle photo du rapport
+  </div>
+  <form enctype="multipart/form-data" method="post">
+    {% csrf_token %}
+    <div class="my-2">{{form.image}}</div>
+    <div class="my-2">{{form.image2}}</div>
+    <button class="btn bg-green text-white my-3"><i class="fa fa-paper-plane"></i> Envoyer</button>
+  </form>
+  {{form.errors}}
+</div>
+{% endblock body %}

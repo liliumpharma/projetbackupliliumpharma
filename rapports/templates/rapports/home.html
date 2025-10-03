@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block body%}
+<p style="color: red;">TEST</p>
+<!-- {{request.user.userprofile.user_rapport_details}} -->
+<!-- <div id="main" class="container mt-4">
+    <div class="alert alert-success">
+                ادخال التقارير لغاية الساعة الثانية عشر ليلا  فقط .
+    <br/>    استخدام النموذج المقرر للتقرير مع مراعات اظهار الختم والتاريخ في التقرير .
+    <br/>    في حال الغياب لاي سبب ترسل نسخة  من طلب الاجازه , او نسخة من التقرير الطبي المرفق .
+    </div>
+  <div class="text-secondary pb-4">
+    <b class="text-green">{{ rapports|length }}</b> rapports (تقارير) en ce mois &nbsp;
+    <b class="text-green">{{ visitesnbr }}</b> visites (زيارات) en ce mois <br/>
+    {{details|safe}}
+  </div>
+
+
+</div> -->
+{% endblock body%}
+
+{% block scripts%}
+<script>
+  $(document).ready(function(){
+    $('.del').click(function(e){
+      e.preventDefault();
+      if (confirm("etes vous sur de bien vouloir supprimer"))
+         window.location.assign($(this).attr('href'))
+    })
+  })
+</script>
+<!-- <script>
+  document.addEventListener('DOMContentLoaded', function () {
+      // Scroll to the 'main' div when the page loads
+      document.getElementById('main').scrollIntoView({ behavior: 'smooth' });
+  });
+</script> -->
+
+{%endblock scripts%}

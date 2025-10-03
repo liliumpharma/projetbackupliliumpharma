@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block body %}
+<div id="main" class="container pt-5 text-secondary">
+    <div class="alert alert-success">
+        5: s'intéresse  ( visité mais pas de prescription )  مهتم ( تمت الزيارة و لا يوجد وصف
+        <br/>4: evalue    يقيم ( يقول يكتب و لا توحد وصفات
+        <br/>3: premier essai et utilise un peu      وصف للمرة الاولى و بشكل ضعيف
+        <br/>2: utilise nos produits et des concurrents  يستعمل منتوجاتنا و المنافسة
+        <br/>1: utilise beaucoup   , ambassadeur  يستعمل منتوجاتنا بكثرة
+        <br/>0: première visite (connaît) (  زيارة أولى ( يعرف
+    </div>
+  <div class="row">
+    <!-- <div class="col-md-4 mb-2">
+      wilaya:
+      <select class="form-control wilaya">
+        <option selected disabled  >---------</option>
+        {% for wilaya in wilayas %}
+          <option value="{{wilaya.id}}">{{wilaya}}</option>
+        {%endfor%}
+      </select>
+    </div> -->
+    <div class="col-md py-1 py-md-0">
+      <span>Nom medecin (اسم الطبيب):</span><br>
+      <div class='position-relative d-inline-block w-75' style="z-index:999;">
+        <input type="text" class='custom-input search-input' placeholder='Nom du medecin ici'>
+        <i class='fa fa-search px-3'></i>
+        <div class="search-result bg-white w-100 d-none">
+
+        </div>
+      </div>
+      <a href="#" class="btn btn-info"> <i class='fa fa-search d-inline d-md-none'></i><span class='d-md-inline d-none'>Rechercher</span></a>
+    </div>
+  </div>
+  <form enctype="multipart/form-data" method="post">
+    {% csrf_token %}
+    <input type="text" class="d-none" name="medecin" required>
+    <input type="hidden" name="produits">
+    <div class="row py-3">
+      <div class="col-md-12 mb-2">Priorité (الأولوية) :</div>
+      <div class="col-md-4 mb-2">
+        <select class="form-control" name="priority">
+          <option value="0">0</option>
+          {% for i in '01234'|make_list %}
+            <option value="{{ forloop.counter }}">{{ forloop.counter }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-12 mb-2">Liste des produits (المنتجات) :</div>
+    {% for produit in produits %}
+        <div class=" col-md-2 form-check mb-2 pl-5">
+          <input class="form-check-input produits" type="checkbox" value="{{produit.id}}" id="defaultCheck{{forloop.counter}}">
+          <input type="number" value="0" class="form-control produitsqtt">
+          <label class="form-check-label" for="defaultCheck{{forloop.counter}}">
+            {{produit}}
+          </label>
+
+        </div>
+    {%endfor%}
+      <div class="col-md-12 mb-2">
+          Observation (الملاحظة):
+          <textarea class="form-control" name="observation"  rows="4"></textarea>
+      </div>
+    </div>
+
+    <a class="btn bg-green text-white my-3" id="submit"><i class="fa fa-paper-plane"></i> Envoyer</a>
+  </form>
+  {{form.errors}}
+</div>
+
+
+{% endblock body %}
+
+
+{% block scripts %}
+<script>
+  $(document).ready(function(){
+    $('.search-input').keyup(function(){
+      var name=$(this).val()
+      if( name.length > 3) 
+      {
+        var result=''
+        $.get({
+          url:`/medecins/api/10/${name}`,
+          success:function(st){
+            $('.search-result').removeClass('d-none')
+            st.map((medecin)=>{
+              result+=`<div class="py-2  search-result-item  px-1" data-id="${medecin.id}" data-name="${medecin.nom}" data-spec="${medecin.specialite}"> 
+                <small class="text-day"> &lt;<b> ${medecin.specialite}  </b>&gt; </small>
+                <span class="text-green"> ${medecin.nom}</span>
+              </div>`
+            })
+            $('.search-result').html(result)
+  
+          }
+        })
+      }
+    })
+    $('.search-input').blur(function(){
+          setTimeout(function(){$('.search-result').addClass('d-none')},400)
+      })
+    $('body').on('click',".search-result-item",function (){
+      $('input[name="medecin"]').val($(this).attr("data-id"))
+      $('.search-input').val($(this).attr("data-name"))
+      if(['Pharmacie','Grossiste','SuperGros'].includes($(this).attr("data-spec"))==false)
+        {
+          $(".produitsqtt").val('0')
+          $(".produitsqtt").addClass("d-none")
+        }
+      else 
+      {
+        $(".produitsqtt").removeClass("d-none")
+      }  
+      $('.search-result').addClass('d-none')
+    })
+    $('.produits,.produitsqtt').change(function(){
+      var produits=[]
+      $('.produits').each(function(){
+       if($(this).is(':checked'))
+       produits.push($(this).val()+":"+$(this).next().val())
+      })
+      $('input[name="produits"]').val(produits.join(","))
+    })
+    $("#submit").click(function(){
+      if($("input[name=medecin").val()=="")
+        alert("veuillez choisir un medecin")
+      else 
+        $("form").submit()  
+    })
+  })
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      // Scroll to the 'main' div when the page loads
+      document.getElementById('main').scrollIntoView({ behavior: 'smooth' });
+  });
+</script>
+{%endblock scripts%}

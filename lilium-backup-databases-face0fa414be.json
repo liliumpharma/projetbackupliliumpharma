@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "lilium-backup-databases",
+  "private_key_id": "face0fa414bedd5881cc7e75cac271513e69ea67",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC57h0ztj2JL1lH\nR2cifpm6dJf4BJnYsBL+TkGNGqZGhJcj+dIaJ+CDbEt+UjsLjx2S9XGlV/QvbyZ6\n9HOXqIvbYGCl0DNtFo3HFOzG4Zkei5meV5N69N/kEhrCHPIWtM+XqfIT0kGT4qL/\nTXg9cOu+saQApBqQEIdz4uUe2T9m35cBuADXXkJ10HEfsE+IYgvTkXK6C3y963NE\nBf5I8lBJcWTDistnpxx906CXkiaRQEgipEZBU6IlU6VOZtTWL15Ylw+KUc4cFgKq\nBGsV9kJ3Wxo0Sda1PYaEtslx3UaPmlGnY18c9bqKDUsxXkwlvpeZuK4xd4lRzwwc\nPhMML/dfAgMBAAECggEASi/R1A/bptDPMSsy4iccpLKf7nS7hCPhODo2WpxvCwUd\nn1uvcwNFSHsd9kXOTHLqzHgFxAD/rCuP8ZB3TOSSBVMDzTVxR44vvOdDAKoEZBU0\nkuMDtBRf/0sgBSLyj4/OowfK0RDcXKsZ+X9KQk27qseLljvkY2ZM/bbjT/dEHoHb\nMCNPz3+2QvhENmtrVi7KHGatlsMMDEbq3X8rAdZqkAlq/Fh1SXqyJ/GtMPMaVzov\nDmI5HNoJJVVGVLgwlLO97exBzqqXHbjoDhrBmAPuzU2DVLLcdCVEgzSMADFE7JTB\nTIVwc8pI9NUo9dMwrboCInj+pALEI4WdQH9PCz9e0QKBgQDibFxKK8slq8CIWRkW\neUvnDXT5xmw6kdAgYSRPG3lvE/DJRQOPaaldwmj/FgJAKNxYeqJJKhHngPOAvB5v\n75Q8GKLZFD7VLcKK+M0upNQigHNe7LFZ4GrMLW9DUMQIvgdi1iOiHm+V8Rm9mGZs\nNAiqH5TOxsKlsG4kTaDiFLQJEQKBgQDSN6eTYS5oD9CMKW2I/z7JzLnxR4jZ8j08\nBdsEcT+G29tW8WwxhcMWd6wdK5+yscok+eHuiFfH39cHgqDrwdjHfcUs0uhQsGos\nI42serZhIh6VNbAoc9PzOGWNZVsTwMmYgxveU5N0av8i9OsGiqGhNZmcAPebCmbV\n4Xk+FGd5bwKBgBCarbHqwD0E+VuGXSaewogxHnDqsikhZEfbl9QNSbxxk+jOnNI5\nh2gOx7BdJtEZrf73D0uaQDHf7Pt10C2ZPh+iFt8gcvMjJe8XC8Tt5XiaPtupM+BJ\nasuKUWx4UcfqV5RR688JuFkgkyiqMmig8Dm5kyoOvVt1Mr6Kys+JgSJhAoGAVZrU\nYu/wNfA6vNkiAefvab40+kxnLlm3FfpMdkKn3AMsDvvBU2llSIDzVe2t2tcLuoMH\nvltHY92Dc0t+vIL0BEjzQo2gjTtKAS95QgO2wVdjnN+AHPkOFr2gnTPpIuIfNjwt\n3RursHzh6RpTmxZZO4zYQO8j5b8WoYJwHReyC4ECgYEAuUzSXedUOwUrpmHcjVpo\naTxVYJeQDCEucECsrbAFjXIdnqcqna8+7g9X8L/byTyDid2h2O771ONcKb8zrG38\n9bNhTMsECAV/7qdjFLim28zy5XefQKfuGLMBEb1zN6GRAJb8OsepqPyscojGMHxj\nbmvU25OXplW+dP/3zsQOPHk=\n-----END PRIVATE KEY-----\n",
+  "client_email": "backup-lilium@lilium-backup-databases.iam.gserviceaccount.com",
+  "client_id": "105600014751256701976",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/backup-lilium%40lilium-backup-databases.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

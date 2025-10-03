@@ -1,0 +1,238 @@
+{% extends 'BackOffice/baseadmin.html' %}
+{% load static %}
+{% block styles %}
+<link href="{% static '/admn/vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.9/dist/css/bootstrap-select.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.1/css/tempusdominus-bootstrap-4.min.css" />
+
+{% endblock styles %}
+
+
+{% block title %}Home Admin Accounts{% endblock title %}
+
+{% block body %}
+
+
+
+<div class="container" style='overflow-x: scroll;'>
+<div class="row">
+  <div class="col-md">
+    <h1 class="h3 mb-2 text-gray-800">Liste des payements <small class='text-warning font-weight-light'>({{payments_all_count}})</small></h1>
+  </div>
+
+</div>
+    <div class="py-3"></div>
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Liste des payments</h6>
+      </div>
+      <div class="container py-2">
+        <div class="row rtl">
+            <div class="col-md-10">
+              <form method='get'>
+                <div class="container">
+                  <div class="row">
+                    <div class="col-md">
+                      <b>entre le:</b>
+                      <div class="form-group">
+                          <div class="input-group date" id="datetimepicker7" data-target-input="nearest">
+                              <input type="text" name="mindate" value="{{request.GET.mindate}}" class="form-control datetimepicker-input filterr" data-target="#datetimepicker7">
+                              <div class="input-group-append" data-target="#datetimepicker7" data-toggle="datetimepicker">
+                                  <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                              </div>
+                          </div>
+                      </div>
+                    </div>
+                    <div class="col-md">
+                      <b>et :</b>
+                      <div class="form-group">
+                          <div class="input-group date" id="datetimepicker8" data-target-input="nearest">
+                              <input type="text"  name='maxdate' value="{{request.GET.maxdate}}" class="form-control datetimepicker-input filterr" data-target="#datetimepicker8">
+                              <div class="input-group-append" data-target="#datetimepicker8" data-toggle="datetimepicker">
+                                  <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                              </div>
+                          </div>
+                      </div>
+                    </div>
+                    {% if request.user.is_superuser %}
+                    <div class="col-md-3">
+                      <b>Mot Clé:</b>
+                      <input class='form-control' type="text" name='keyword'>
+                    </div>
+                    {%endif%}
+                    <div class="col-md-2">
+                      <br>
+                      <button class='btn btn-dark  text-white' type='submit'>Filtrer</button>
+                    </div>
+                  </div>
+                </div>
+
+              </form>
+            </div>
+        </div>
+
+      </div>
+      <hr>
+          <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+            <thead>
+              <tr>
+
+                <th class='bg-white'>heure</th>
+                {% if user.is_superuser %}
+                <th class='bg-white'>compte</th>
+                <th class='bg-white'>email</th>
+                <th class='bg-white'>adresse</th>
+                <th class='bg-white'>observation</th>
+                <th class='bg-white'>telephone</th>
+                {%endif%}
+                <th class='bg-white'>montant</th>
+              </tr>
+            </thead>
+            <tfoot>
+              <tr>
+
+                <th class='bg-white'>heure</th>
+                {% if user.is_superuser %}
+                <th class='bg-white'>compte</th>
+                <th class='bg-white'>email</th>
+                <th class='bg-white'>adresse</th>
+                <th class='bg-white'>observation</th>
+                <th class='bg-white'>telephone</th>
+                {%endif%}
+                <th class='bg-white'>montant</th>
+
+              </tr>
+            </tfoot>
+            <tbody>
+              {% for payment in payments %}
+              <tr>
+                <th class='bg-white'><small>{{payment.created}}</small></th>
+                {% if user.is_superuser %}
+                <th class='bg-white'><small>{{payment.user}}</small></th>
+                <th class='bg-white'><small>{{payment.user.email}}</small></th>
+                <th class='bg-white'><small>{{payment.user.userprofile.adresse}} {{payment.user.userprofile.wilaya}}</small></th>
+                <th class='bg-white'><small>{{payment.observation}}</small></th>
+                <th class='bg-white'><small>{{payment.user.userprofile.telephone}}</small> </th>
+                {%endif%}
+                <th class='bg-white'>{{payment.montant}}
+                  {% if request.user.is_superuser %}
+                  <small><a href="{%url 'DeletePaymentAdmin' payment.id %}"><i class="fa fa-times text-danger"></i></a></small>
+                  {%endif%}
+                </th>
+              </tr>
+              {%endfor %}
+            </tbody>
+          </table>
+
+
+    </div>
+
+
+</div>
+
+<div class="container">
+
+
+  <span class="current">
+      Page {{ payments.number }} sur {{ payments.paginator.num_pages }}.
+  </span>
+
+
+  <ul class="pagination">
+    {% if payments.has_previous %}
+    <li class="page-item">
+      <a class="page-link" href="?page=1&cat={{request.GET.cat}}&keyword={{ request.GET.keyword }}"> << </a>
+    </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ payments.previous_page_number }}&cat={{request.GET.cat}}&keyword={{ request.GET.keyword }}" tabindex="-1">{{ payments.previous_page_number }}</a>
+      </li>
+      {% endif %}
+
+      <li class="page-item active">
+        <a class="page-link" href="#"> {{ payments.number }}</a>
+      </li>
+      {% if payments.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ payments.next_page_number }}&cat={{request.GET.cat}}&keyword={{ request.GET.keyword }}"> {{ payments.next_page_number }} </a>
+      </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ payments.paginator.num_pages }}&cat={{request.GET.cat}}&keyword={{ request.GET.keyword }}" tabindex="-1"> >> </a>
+        </li>
+        {% endif %}
+    </ul>
+</div>
+
+<div class="modal fade" id="changeCatModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<form  method='post'>
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Effectuer un payement <span class='usrname'></span></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+
+          {%csrf_token%}
+          <input type="hidden" name='user'>
+          Montant:
+          <input type="text"  class='form-control' name='montant'>
+
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+        <button type="submit" class="btn btn-primary">Sauvgarder</button>
+      </div>
+    </div>
+  </div>
+  </form>
+</div>
+
+{% endblock body %}
+
+
+
+
+
+{% block scripts %}
+<!-- Page level plugins -->
+<script src="{% static '/admn/vendor/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static '/admn/vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/tempusdominus-bootstrap-4/5.0.1/js/tempusdominus-bootstrap-4.min.js"></script>
+
+<script src="{% static 'admn/js/list_table_commands.js' %}"></script>
+<script type="text/javascript">
+    $(function () {
+      $.fn.datetimepicker.Constructor.Default = $.extend({}, $.fn.datetimepicker.Constructor.Default, { icons: { time: 'fas fa-clock', date: 'fas fa-calendar', up: 'fas fa-arrow-up', down: 'fas fa-arrow-down', previous: 'fa fa-chevron-left', next: 'fa fa-chevron-right', today: 'far fa-calendar-check-o', clear: 'far fa-trash', close: 'far fa-times' } });
+        $('#datetimepicker7').datetimepicker({format: 'DD-MM-YYYY HH:mm'});
+        $('#datetimepicker8').datetimepicker({
+            useCurrent: false,
+            format: 'DD-MM-YYYY HH:mm',
+        });
+        $("#datetimepicker7").on("change.datetimepicker", function (e) {
+            $('#datetimepicker8').datetimepicker('minDate', e.date);
+        });
+        $("#datetimepicker8").on("change.datetimepicker", function (e) {
+            $('#datetimepicker7').datetimepicker('maxDate', e.date);
+        });
+    });
+</script>
+<script>
+  $(document).ready(function(){
+    $('.pymnt').click(function(){
+      $('.usrname').html($(this).attr('data-name'))
+      $('input[name=user]').val($(this).attr('data-id'))
+      $('#changeCatModal').modal('show')
+    })
+  })
+</script>
+
+
+<!-- Page level custom scripts -->
+
+
+{% endblock scripts %}

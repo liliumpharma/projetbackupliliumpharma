@@ -1,0 +1,64 @@
+{% extends "admin/change_list.html" %}
+{% load i18n static %}
+
+{% block object-tools-items %}
+
+
+    {{ block.super }}
+    <div >
+      <div>
+          <a id="export_bon_de_commande" class="btn btn-primary" style="margin-left: 150px;margin-top: 5px" href="http://app.liliumpharma.com/orders/export_excel">
+              Exporter Bons de commande Excel
+          </a>
+      </div>
+  
+      <div>
+          <a id="export_bon_de_sortie" class="btn btn-primary" style="margin-left: 150px;margin-top: 5px;" href="http://app.liliumpharma.com/orders/exit_orders_export_excel">
+              Exporter Bons de sortie Excel
+          </a>
+      </div>
+
+      <div>
+          <a id="Etat_de_stock_client" class="btn btn-primary" style="margin-left: 150px; margin-top: 5px;" href="http://app.liliumpharma.com/orders/EtatStockClientExcel">
+              Etat de stock client
+          </a>
+      </div>
+  </div>
+  
+
+        <script>
+
+          let url = new URL(window.location.href);
+          let month = url.searchParams.get("added__month");
+          let year = url.searchParams.get("added__year");
+          let element = document.getElementById("export_bon_de_commande");
+          let element_sortie = document.getElementById("export_bon_de_sortie");
+          let from_office = url.searchParams.get("from_company__exact");
+        
+          if (year && month) {
+            element.href = `http://app.liliumpharma.com/orders/export_excel?added__year=${year}&added__month=${month}&from_company__exact=${from_office}`;
+            console.log(from_office)
+            element_sortie.addEventListener("click", function(){
+              element_sortie.href = `http://app.liliumpharma.com/orders/exit_orders_export_excel?added__year=${year}&added__month=${month}`;
+            })
+          }
+        </script>
+
+
+
+
+        <script>
+          document.getElementById('import').parentElement.classList.remove("col-sm-4");
+          document.getElementById('import').parentElement.classList.add('col-sm-6');
+          document.getElementById('import').parentElement.previousSibling.previousSibling.classList.remove("col-sm-8");
+          document.getElementById('import').parentElement.previousSibling.previousSibling.classList.add('col-sm-6');
+          document.querySelectorAll("#changelist-search select").forEach((e,i)=>{
+            const label=document.createElement("label")
+              label.innerText = e.firstElementChild.text
+              e.firstElementChild.remove()  
+              e.parentElement.prepend(label)
+              e.parentElement.style.display = "block"
+          })
+        </script>
+{% endblock %}
+

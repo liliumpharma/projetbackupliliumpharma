@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css'%}">
+    <link rel="stylesheet" href="{% static 'css/toast/vanilla-toast.css'%}">
+    <!-- CSS Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- JS Select2 -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    {%block styles%}
+    {%endblock styles%}
+    <title>Ajouter Un Bon de Commande</title>
+  </head>
+  <style>
+    body {
+        font-family: 'Montserrat', sans-serif;
+        background-color: #f7f7f7;
+        margin: 0;
+        padding: 0;
+    }
+    
+    header {
+        background-color: #e0f0e9;
+        padding: 15px 30px;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .product-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 12px;
+        gap: 10px;
+    }
+    
+    .product-row label {
+        width: 150px;
+        margin: 0;
+    }
+    
+    .product-row input[type="number"] {
+        width: 100px;
+        margin-left: auto;
+    }
+    
+    .back-arrow a {
+        color: #333;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 18px;
+    }
+    
+    .back-arrow a:hover {
+        text-decoration: underline;
+    }
+    
+    header h1 {
+        margin: 0;
+        padding-left: 20px;
+        font-size: 22px;
+        color: #333;
+    }
+    
+    .bloc {
+        width: 95%;
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 25px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    
+    form label {
+        font-weight: 600;
+        display: block;
+        margin-bottom: 6px;
+    }
+    
+    form select,
+    form input[type="number"],
+    form textarea,
+    form input[type="file"] {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        margin-top: 4px;
+        margin-bottom: 16px;
+    }
+    
+    form input[type="checkbox"] {
+        margin-right: 8px;
+    }
+    
+    form button {
+        width: 100%;
+        padding: 10px;
+        font-weight: bold;
+        font-size: 16px;
+        border-radius: 6px;
+    }
+    
+    .success-message {
+        color: green;
+        font-size: 18px;
+        font-weight: bold;
+    }
+    
+    .error-message {
+        color: red;
+        font-size: 18px;
+        font-weight: bold;
+    }
+    
+    h4 {
+        margin-top: 20px;
+        margin-bottom: 10px;
+    }
+    /* Texte sélectionné */
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #28a745; /* texte vert */
+    font-weight: bold;
+    /*background-color: #e6f4ea;  fond vert clair */
+    border-radius: 4px;
+    padding: 4px 10px;
+    line-height: 1.6;
+    display: inline-block;
+}
+
+/* Garder le champ bien aligné */
+.select2-container--default .select2-selection--single {
+    display: flex;
+    align-items: center;
+    height: 38px; /* même hauteur qu’un input Bootstrap */
+    padding-left: 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
+/* X rouge (clear) */
+.select2-container--default .select2-selection--single .select2-selection__clear {
+    width: 30px;
+    color: red;
+    margin-left: -60px;
+    font-weight: bold;
+    margin-left: auto;
+    padding: 0 8px;
+    cursor: pointer;
+}
+
+    
+    
+    </style>
+    
+<header>
+    <div class="back-arrow">
+        <a onclick="goBack()"><i class="fas fa-arrow-left"></i></a>
+    </div>
+    <h1>Ajouter Un Bon De Commande</h1>
+</header>
+<div class="bloc">
+<form method="post" enctype="multipart/form-data" class="mt-3">
+    {% csrf_token %}
+    
+    {% if m == "Bon de Commande ajouter avec succes" %}
+        <p style="color: green; font-size:25px;">{{m}}</p>  
+    {% else %}    
+        <p style="color: red; font-size:25px;">{{m}}</p>       
+    {% endif %}
+    <div class="mb-3">
+        <label class="form-label" for="id_image">Ajouter Image de Bon de Commande</label>
+        <input type="file" name="image" id="id_image" class="form-control" required>
+    </div>
+    
+    <div id="preview-container" style="display: none; margin-top: 15px;">
+        <p><strong>Aperçu :</strong></p>
+        <img id="preview-image" src="" alt="Aperçu de l'image" style="max-width: 100%; max-height: 300px; border: 1px solid #ccc; padding: 5px;">
+    </div>
+    <br>
+    <div class="mb-3">
+        <label for="phar">Choisissez un pharmacie :</label>
+        <br>
+        <select name="phar" id="phar" style="border: solid 2px;" onchange="limitSelect()">
+        <option value="">-- Sélectionnez un pharmacie --</option>
+        {% for p in pha %}
+            <option value="{{ p.id }}">{{ p.nom }} ({{ p.specialite }})</option>
+        {% endfor %}
+        </select>
+    </div>
+    <br>
+    <div class="mb-3">
+        <label for="gros">Choisissez un grossiste :</label>
+        <br>
+        <select name="gros" id="gros" style="border: solid 2px;" onchange="limitSelect()">
+        <option value="">-- Sélectionnez un grossiste --</option>
+        {% for g in gro %}
+            <option value="{{ g.id }}">{{ g.nom }} ({{ g.specialite }})</option>
+        {% endfor %}
+        </select>
+    </div>
+<br>
+    <div class="mb-3">
+        <label for="sugros">Choisissez un super grossiste :</label>
+        <br>
+        <select name="sugros" id="sugros" style="border: solid 2px;" onchange="limitSelect()">
+        <option value="">-- Sélectionnez un super grossiste --</option>
+        {% for s in sugro %}
+            <option value="{{ s.id }}">{{ s.name }} (SuperGros)</option>
+        {% endfor %}
+        </select>
+    </div>
+
+    
+<br>
+    <h4>Produits  ...... Quantites</h4>
+    <p>(Pour saisir la quantite d'un produit <br>il faut cocher la case)</p>
+    {% for pr in pro %}
+    <div class="product-row">
+        <input type="checkbox" name="check_{{pr.nom}}" id="check_{{pr.nom}}" onchange="toggleInput('{{ pr.nom }}')">
+        <label for="enable_{{pr.nom}}" style="width: 120px;">{{pr.nom}} :</label>
+        <input type="number" id="enable_{{pr.nom}}" name="qtt_{{pr.nom}}" min="0" step="1" placeholder="" style="border: solid 2px; width:100px;" disabled>
+    </div>
+    {% endfor %}
+<br>
+
+    <div class="mb-3">
+        <label for="observations">Observations :</label><br>
+        <textarea id="observations" name="observations" rows="5" cols="40" placeholder="Ajoutez des remarques ici..." style="border: solid 2px;"></textarea>
+    </div>
+<br>
+
+<br>
+    <button type="submit" class="btn btn-primary">Envoyer</button>
+    <div id="loading-spinner" class="text-center" style="display: none; margin-bottom: 20px;">
+        <div class="spinner-border text-success" role="status" style="width: 3rem; height: 3rem;">
+            <span class="sr-only">Chargement...</span>
+        </div>
+        <p>Envoi en cours...</p>
+    </div>
+    
+</form>
+<script>
+    document.querySelector("form").addEventListener("submit", function() {
+        document.getElementById("loading-spinner").style.display = "block";
+    });
+</script>
+<script>
+    document.querySelector("form").addEventListener("submit", function() {
+        document.getElementById("loading-spinner").style.display = "block";
+        document.querySelector("button[type='submit']").disabled = true;
+    });
+    
+</script>
+
+</div>
+
+<script>
+function goBack() {
+    window.history.back();
+}
+</script>
+
+{% block scripts%}
+<script>
+  $(document).ready(function(){
+    $('.del').click(function(e){
+      e.preventDefault();
+      if (confirm("etes vous sur de bien vouloir suprimmer"))
+         window.location.assign($(this).attr('href'))
+    })
+  })
+</script>
+{%endblock scripts%}
+<script>
+    $(document).ready(function() {
+        $('#phar').select2({
+            placeholder: "-- Sélectionnez une pharmacie --",
+            allowClear: true
+        });
+    });
+</script>
+<script>
+    $(document).ready(function() {
+        $('#gros').select2({
+            placeholder: "-- Sélectionnez un grossiste --",
+            allowClear: true,
+            width: '100%'
+        });
+    });
+</script>
+<script>
+    $(document).ready(function() {
+        $('#sugros').select2({
+            placeholder: "-- Sélectionnez un super grossiste --",
+            allowClear: true
+        });
+    });
+</script>
+<script>
+    document.getElementById('id_image').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        const previewContainer = document.getElementById('preview-container');
+        const previewImage = document.getElementById('preview-image');
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                previewContainer.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        } else {
+            previewContainer.style.display = 'none';
+            previewImage.src = '';
+        }
+    });
+</script>
+<script>
+    function limitSelect() {
+        var selects = document.querySelectorAll('select');
+        var selectedCount = 0;
+        var emptySelects = [];
+
+        // Compter les sélections non vides et collecter les selects vides
+        selects.forEach(function(select) {
+            if (select.value !== "") {
+                selectedCount++;
+            } else {
+                emptySelects.push(select);
+            }
+        });
+
+        // Si plus de 2 sélections sont faites, désactiver et masquer le troisième select vide
+        if (selectedCount >= 2 && emptySelects.length > 0) {
+            var thirdEmptySelect = emptySelects[0];  // Choisir le premier select vide
+            thirdEmptySelect.disabled = true; // Désactiver le troisième select vide
+            thirdEmptySelect.style.display = 'none'; // Masquer le troisième select vide
+        } else {
+            // Réactiver et afficher tous les selects vides si moins de 2 sélections sont faites
+            emptySelects.forEach(function(select) {
+                select.disabled = false;
+                select.style.display = 'block';
+            });
+        }
+    }
+</script>
+<script>
+    function toggleInput(nom) {
+      var checkbox = document.getElementById('check_' + nom);
+      var input = document.getElementById('enable_' + nom);
+  
+      if (checkbox.checked) {
+        input.disabled = false;
+      } else {
+        input.disabled = true;
+        input.value = ""; // vide le champ quand décoché (optionnel)
+      }
+    }
+  </script>

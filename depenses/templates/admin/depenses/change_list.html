@@ -1,0 +1,26 @@
+{% extends "admin/change_list.html" %}
+{% load i18n static %}
+
+{% block object-tools-items %}
+    {{ block.super }}
+    <div class="d-flex justify-content-end" style="margin-left: 10px;">
+        <a id="export" class="btn btn-primary" href="http://app.liliumpharma.com/depenses/export/excel">
+          Export Excel
+        </a>
+      </div>
+      
+      <script>
+
+        let url = new URL(window.location.href);
+        let user = url.searchParams.get("user__id__exact");
+      
+        let element = document.getElementById("export");
+      
+        if (user) {
+          element.href = `http://app.liliumpharma.com/depenses/export/excel?user=${user}`;
+        }
+      </script>
+      
+      
+{% endblock %}
+

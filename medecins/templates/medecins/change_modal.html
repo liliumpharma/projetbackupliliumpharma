@@ -1,0 +1,156 @@
+<div
+  class="modal"
+  id="csv_modal"
+  role="dialog"
+  aria-labelledby="csv_modal"
+  aria-hidden="true"
+>
+  <form
+    method="post"
+    action="{% url 'ChangeUser' %}"
+    enctype="multipart/form-data"
+    class="userchangemedecin"
+  >
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Changement delegué</h5>
+          <button
+            type="button"
+            class="close"
+            data-dismiss="modal"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          {% csrf_token %}
+          <label for="csv">Move to : &nbsp;</label>
+          <input
+            type="text"
+            name="medecins"
+            class="medecins_list_modal d-none"
+            required
+          />
+          <select
+            name="changeusers"
+            required=""
+            id="id_users"
+            class="change_users"
+            multiple="multiple"
+          ></select>
+        </div>
+        <div class="modal-footer">
+          <a type="button" class="btn btn-secondary" data-dismiss="modal"
+            >annuler</a
+          >
+          <a class="btn btn-primary submit-change-user-medecin">Changer</a>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+  $(document).ready(function () {
+    fetch("{% url 'Usersapiadmin' %}")
+      .then((res) => res.json())
+      .then((res) => {
+        res.map((user) => {
+          $(".change_users").append(
+            `<option value="${user.id}">${user.username}</option>`
+          );
+        });
+        $(".modal .change_users").select2({ width: "100%" });
+      });
+    $(".submit-change-user-medecin").click(function (e) {
+      var medecins = "";
+      $(".action-select").each(function () {
+        if ($(this).is(":checked")) medecins += $(this).val() + ",";
+      });
+      $(".medecins_list_modal").val(medecins.replace(/,\s*$/, ""));
+      $(".userchangemedecin").submit();
+    });
+  });
+</script>
+
+{% comment %}
+<div
+  class="modal"
+  id="csv_modal"
+  role="dialog"
+  aria-labelledby="csv_modal"
+  aria-hidden="true"
+>
+  <form
+    method="post"
+    action="{% url 'ChangeMedecin' %}"
+    enctype="multipart/form-data"
+    class="userchangemedecin"
+  >
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Changement delegué</h5>
+          <button
+            type="button"
+            class="close"
+            data-dismiss="modal"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          {% csrf_token %}
+          <label for="csv">Move to : &nbsp;</label>
+          <input
+            type="text"
+            name="medecins"
+            class="medecins_list_modal d-none"
+            required
+          />
+          <select
+            name="changeusers"
+            required=""
+            id="id_users"
+            class="change_users"
+            multiple="multiple"
+          ></select>
+        </div>
+        <div class="modal-footer">
+          <a type="button" class="btn btn-secondary" data-dismiss="modal"
+            >annuler</a
+          >
+          <a class="btn btn-primary submit-change-user-medecin">Changer</a>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+  $(document).ready(function () {
+    console.log("modal");
+    fetch("{% url 'AllMedecinsApi' %}")
+      .then((res) => res.json())
+      .then((res) => {
+        res.map((user) => {
+          $(".change_users").append(
+            `<option value="${user.id}">${user.id} - ${user.medecin}</option>`
+          );
+        });
+        $(".modal .change_users").select2({ width: "100%" });
+      });
+    $(".submit-change-user-medecin").click(function (e) {
+      var medecins = "";
+      $(".action-select").each(function () {
+        if ($(this).is(":checked")) medecins += $(this).val() + ",";
+      });
+      $(".medecins_list_modal").val(medecins.replace(/,\s*$/, ""));
+      $(".userchangemedecin").submit();
+    });
+  });
+</script>
+{% endcomment %}

@@ -1,0 +1,93 @@
+/* Keyframes for left and right animations */
+@keyframes fadeInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Apply animation to navbar items */
+.navbar-nav li {
+  opacity: 0; /* Start hidden */
+  animation: fadeInRight 0.5s ease-in-out;
+  animation-fill-mode: both;
+}
+
+/* First two items - Left animation */
+.navbar-nav li:nth-child(-n + 2) {
+  animation: fadeInLeft 0.5s ease-in-out;
+}
+
+/* Last item (optional custom animation) */
+.navbar-nav li:last-child {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Quick access menu animations */
+.quick-access-menu {
+  opacity: 0;
+  visibility: hidden;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.quick-access:hover .quick-access-menu {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Sidebar hover effect */
+.sidebar a {
+  padding: 10px;
+  text-decoration: none;
+  color: #495057;
+  display: block;
+  transition: background-color 0.3s, transform 0.3s ease-in-out;
+}
+
+.sidebar a:hover {
+  background-color: #67cb57; /* Adjusted for a consistent gradient */
+  color: white;
+  transform: translateY(-5px);
+}
+
+/* General button animations */
+.butt {
+  border: none;
+  background-color: green;
+  border-radius: 5px;
+  color: white;
+  margin: 10px 15px;
+  padding: 15px;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.butto {
+  border: 1px solid green;
+  background-color: white;
+  border-radius: 3px;
+  color: green;
+}

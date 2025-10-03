@@ -1,0 +1,17 @@
+{% extends 'base.html'%}
+{%block title%} Edit Profile {%endblock title%}
+
+{% load accounts_extras %}
+
+{%block body%}
+
+{% if form %}
+<form method='post' class='pt-5'>
+  {% csrf_token %}
+  {{ form.email  }}
+  <button type="submit">Send</button>
+</form>
+{% else  %}
+{{message}}
+{% endif %}
+{%endblock body %}

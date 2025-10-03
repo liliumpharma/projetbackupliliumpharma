@@ -1,0 +1,28 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <title>React App</title>
+    <link
+      href="{% static 'micro_frontends/monthly_planning/build/static/css/main.cc88aa9c.css' %}"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+  {% if not request.GET.is_mobile %}
+  <script>
+    window.localStorage.setItem("token", "{{ token }}");
+  </script>
+  {% endif %}
+  <script
+    defer="defer"
+    src="{% static 'micro_frontends/monthly_planning/build/static/js/main.c7b55a99.js' %}"
+  ></script>
+</html>

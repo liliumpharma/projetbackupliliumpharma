@@ -1,0 +1,350 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+    <title>PDF</title>
+    <!-- <link href="{% static 'css/print.css' %}" rel="stylesheet"/> -->
+  </head>
+  <body> 
+    <style>
+      /* Common styles for both screen and print */
+      .bold-row td {
+        font-weight: bold;
+      }
+    
+      .bold-column {
+        font-weight: bold;
+      }
+    
+      .wilaya-separator {
+        background-color: green;
+      }
+    
+      .specialites-exclues-separator {
+        background-color: green;
+        /* Add your desired background color */
+      }
+    
+      /* Styles specific to print */
+      @media print {
+        @page {
+          size: landscape;
+        }
+    
+        .page-break {
+          page-break-after: always;
+        }
+    
+        .wilaya-separator,
+        .specialites-exclues-separator {
+          background-color: green !important;
+        }
+      }
+    </style>
+    
+    <div class="container pt-4">
+      <div class="d-flex flex-column align-items-center text-center">
+        <img src="{% static 'img/logo.png' %}" style="height: 80px;">
+        <h2 class="mb-3">LILIUM PHARMA ALGERIE</h2>
+      </div>
+      <h3 class="text-center">Liste des medecins par utilisateur | قائمة مفصلة للأطباء</h3>
+      <h3 id="user" class="text-center d-none">-</h3>
+    </div>
+    <div class="col-12" style="font-size: 23px;">
+      <div class="container mt-3 col-12">
+        <div class="row mb-3" style="font-size: 22px;">
+          <div class="col-6 col-sm-3 mb-2" style="margin-left: 10px;">
+            <b>User:</b>
+            <span id="username"></span>
+            <br>
+          </div>
+          <div class="col-6 col-sm-3 mb-2 mb-sm-0" style="margin-left: auto;">
+            <b>DATE:</b>
+            <span id="date"></span>
+            <br>
+          </div>
+          <div class="col-6 col-sm-3 mb-2 mb-sm-0" style="margin-left: auto;">
+            <b>Role:</b>
+            <span id="role"></span>
+            <br>
+          </div>
+        </div>
+      </div>
+      <style>
+.style-personnalise {
+    border-collapse: collapse; /* Enlève les bordures entre les cellules */
+    width:5%; /* Définit la largeur du tableau à 50% */
+
+    /* Ajoutez d'autres styles personnalisés si nécessaire */
+}
+
+.style-personnalise td, .style-personnalise th {
+    border: none; /* Enlève les bordures des cellules */
+    padding: 5px; /* Ajustez l'espacement interne si nécessaire */
+    text-align: left; /* Ajustez l'alignement du texte si nécessaire */
+}
+table td {
+    width: 30px;
+}
+
+      </style>
+      <div id="resumé" class="col-12">
+        <h4 style="color: green; font-weight: bold;">Récapitulatif:</h4>
+        <table class="table style-personnalise" id="tableauTotal" style="font-size: 15px;"></table>
+      </div>
+      <h4 class="mt-2 mb-4" style="color: green; font-weight: bold;">Médical :</h4>
+      <div style="display: block; margin: 0; padding: 0;width: 60%;">
+
+        <div id="medical" class="col-12 mt-2" style="margin: 0; padding: 0; border: none;">
+            <table class="table table-bordered" id="tableauParWilaya" style="font-size: 15px; width: 100%; border-collapse: collapse; margin: 0; padding: 0;">
+            </table>
+        </div>
+        <h4 class="mt-2 mb-4" style="color: green; font-weight: bold;">Commercial :</h4>
+        <div id="commercial" class="col-12 mt-2" style="margin: 0; padding: 0;">
+            <h4 style="color: green; font-weight: bold; margin: 0; padding: 0;"></h4>
+            <table class="table table-bordered" id="tableauParSpecialitesExclues" style="font-size: 15px; width: 100%; border-collapse: collapse; margin: 0; padding: 0;">
+            </table>
+        </div>
+    
+    </div>
+    
+    
+    </div>
+    
+    
+    </div>
+  </body>
+  <script>
+    // Set the current date
+    const currentDate = new Date();
+    const day = currentDate.getDate();
+    const month = currentDate.getMonth() + 1;
+    const year = currentDate.getFullYear();
+    // Formate la date comme "dd-mm-yyyy"
+    const formattedDate = `${day < 10 ? '0' : ''}${day}-${month < 10 ? '0' : ''}${month}-${year}`;
+    document.getElementById('date').textContent = formattedDate;
+    const urlParams = new URLSearchParams(window.location.search);
+    const user = urlParams.get('user');
+    fetch('https://app.liliumpharma.com/medecins/api/StatisticMedecinsPerUser?user=' + user).then((response) => response.json()).then((data) => {
+      console.log(data);
+      // Assuming all_specialite_count is present in data
+    var all_specialite_count = data.all_specialite_count;
+
+    var table = document.getElementById("tableauTotal");
+
+// Add a header row
+var headerRow = table.insertRow(0);
+var headerCell1 = headerRow.insertCell(0);
+var headerCell2 = headerRow.insertCell(1);
+
+// Add data rows
+for (var i = 0; i < all_specialite_count.length; i++) {
+    var row = table.insertRow(i + 1);
+    var cell1 = row.insertCell(0);
+    var cell2 = row.insertCell(1);
+
+    var countSpan = document.createElement("span");
+    countSpan.innerText = all_specialite_count[i].count;
+
+    // Populate cells with data
+    cell1.innerText = all_specialite_count[i].specialite;
+    cell2.appendChild(countSpan);
+    cell2.innerHTML += "/" + all_specialite_count[i].user_count;
+
+    // Check if count is less than 50% of user_count
+    if (all_specialite_count[i].count < 0.5 * all_specialite_count[i].user_count) {
+        // Add a class to the span for orange color
+        countSpan.classList.add("orange-text");
+    }
+}
+
+
+
+
+
+      // Afficher le nom d'utilisateur
+      document.getElementById('username').textContent = data.username;
+      document.getElementById('role').textContent = data.role;
+      const tableauParWilaya = document.getElementById('tableauParWilaya');
+      const divMedical = document.getElementById('medical');
+      if (data.role == "Commercial") {
+        divMedical.classList.add("d-none")
+      }
+      const excludedSpecialities = ['Pharmacie', 'Grossiste', 'SuperGros'];
+      // Filter specialities based on the exclusion list
+      const specialites = [];
+      for (const wilayaData of Object.values(data.specialite_per_wilaya)) {
+        for (const specialiteData of wilayaData) {
+          if (!excludedSpecialities.includes(specialiteData.specialite) && !specialites.includes(specialiteData.specialite)) {
+            specialites.push(specialiteData.specialite);
+          }
+        }
+      }
+      const tableauData = [];
+      // Header row for specialites (excluding specified specialities)
+      const specialiteHeaderRow = ['Specialités', ...specialites];
+      tableauData.push({
+        data: specialiteHeaderRow,
+        isBold: true
+      });
+      Object.keys(data.specialite_per_wilaya).forEach((wilayaName, wilayaIndex) => {
+        // Add a green background color before each wilaya (except the first one)
+        if (wilayaIndex > 0) {
+          const separatorRow = Array(specialites.length + 1).fill('');
+          tableauData.push({
+            data: separatorRow,
+            isBold: false,
+            isSeparator: true
+          });
+        }
+        // Row for wilaya (in bold)
+        const wilayaRow = [wilayaName];
+        specialites.forEach((specialite) => {
+          const count = data.specialite_per_wilaya[wilayaName].find(s => s.specialite === specialite)?.count || '-';
+          const allCount = data.specialite_per_wilaya[wilayaName].find(s => s.specialite === specialite)?.all_count || '-';
+          const countString = count + '/' + allCount;
+          wilayaRow.push(countString);
+        });
+        tableauData.push({
+          data: wilayaRow,
+          isBold: true
+        });
+        // Rows for communes within the wilaya
+        if (data.specialite_per_commune) {
+          const communesWithinWilaya = data.specialite_per_commune.filter(entry => entry.wilaya === wilayaName);
+          communesWithinWilaya.forEach((entry) => {
+            const communeRow = [entry.commune];
+            specialites.forEach((specialite) => {
+              const countCommune = entry.specialites.find(s => s.specialite === specialite)?.count || '-';
+              const allCountCommune = entry.specialites.find(s => s.specialite === specialite)?.all_count || '-';
+              const countStringCommune = countCommune + '/' + allCountCommune;
+              communeRow.push(countStringCommune);
+            });
+            tableauData.push({
+              data: communeRow,
+              isBold: false
+            });
+          });
+        }
+      });
+      tableauData.forEach(({
+        data,
+        isBold,
+        isSeparator
+      }, rowIndex) => {
+        const tr = tableauParWilaya.insertRow(rowIndex);
+        data.forEach((cell, cellIndex) => {
+          const td = tr.insertCell(cellIndex);
+          td.textContent = cell;
+          if (cellIndex === 0) {
+            td.style.width = '100px';
+          }
+          if (isBold && cellIndex === 0) {
+            td.classList.add('bold-column');
+          }
+          if (isSeparator) {
+            tr.classList.add('wilaya-separator');
+          }
+        });
+        if (isBold) {
+          tr.classList.add('bold-row');
+        }
+      });
+      
+      const tableauParSpecialitesExclues = document.getElementById('tableauParSpecialitesExclues');
+      // Filter specialities based on the exclusion list
+      const excludedSpecialitie = ['Pharmacie', 'Grossiste', 'SuperGros'];
+      const specialitesExclues = [];
+      for (const wilayaData of Object.values(data.specialite_per_wilaya)) {
+        for (const specialiteData of wilayaData) {
+          if (excludedSpecialitie.includes(specialiteData.specialite) && !specialitesExclues.includes(specialiteData.specialite)) {
+            specialitesExclues.push(specialiteData.specialite);
+          }
+        }
+      }
+      const tableauDataExclues = [];
+      // Header row for specialites (excluding specified specialities)
+      const specialiteHeaderRowExclues = ['Specialités', ...specialitesExclues];
+      tableauDataExclues.push({
+        data: specialiteHeaderRowExclues,
+        isBold: true
+      });
+      Object.keys(data.specialite_per_wilaya).forEach((wilayaName, wilayaIndex) => {
+        // Add a green background color before each wilaya (except the first one)
+        if (wilayaIndex > 0) {
+          const separatorRow = Array(specialitesExclues.length + 1).fill('');
+          tableauDataExclues.push({
+            data: separatorRow,
+            isBold: false,
+            isSeparator: true
+          });
+        }
+        // Row for wilaya (in bold)
+        const wilayaRowExclues = [wilayaName];
+        if (tableauData.length === 0) {
+          wilayaRowExclues.push(wilayaName);
+        }
+        
+        specialitesExclues.forEach((specialite) => {
+          const count = data.specialite_per_wilaya[wilayaName].find(s => s.specialite === specialite)?.count || '-';
+          const allCount = data.specialite_per_wilaya[wilayaName].find(s => s.specialite === specialite)?.all_count || '-';
+          const countString = count + '/' + allCount;
+          wilayaRowExclues.push(countString);
+        });
+        
+        tableauDataExclues.push({
+          data: wilayaRowExclues,
+          isBold: true
+        });
+        // Rows for communes within the wilaya
+        if (data.specialite_per_commune) {
+          const communesWithinWilaya = data.specialite_per_commune.filter(entry => entry.wilaya === wilayaName);
+          communesWithinWilaya.forEach((entry) => {
+            const communeRowExclues = [entry.commune];
+            specialitesExclues.forEach((specialite) => {
+              const countCommune = entry.specialites.find(s => s.specialite === specialite)?.count || '-';
+              const allCountCommune = entry.specialites.find(s => s.specialite === specialite)?.all_count || '-';
+              const countStringCommune = countCommune + '/' + allCountCommune;
+              communeRowExclues.push(countStringCommune);
+            });
+            tableauDataExclues.push({
+              data: communeRowExclues,
+              isBold: false
+            });
+          });
+        }
+      });
+      tableauDataExclues.forEach(({
+        data,
+        isBold,
+        isSeparator
+      }, rowIndex) => {
+        const tr = tableauParSpecialitesExclues.insertRow(rowIndex);
+        // Add green background before each wilaya (except the first one)
+        if (isSeparator) {
+          tr.classList.add('specialites-exclues-separator');
+        }
+        data.forEach((cell, cellIndex) => {
+          const td = tr.insertCell(cellIndex);
+          td.textContent = cell;
+          if (cellIndex === 0) {
+            td.style.width = '20px';
+          }
+          if (isBold && cellIndex === 0) {
+            td.classList.add('bold-column');
+          }
+        });
+        if (isBold) {
+          tr.classList.add('bold-row');
+        }
+      });
+    });
+  </script>
+</html>

@@ -1,0 +1,527 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/styles.css'%}">
+  <link rel="stylesheet" href="{% static 'css/toast/vanilla-toast.css'%}">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+
+  {%block styles%}
+  {%endblock styles%}
+  <title>{% block title %}{%endblock title%}</title>
+  <script>
+    // Attendez que le document soit chargé
+    document.addEventListener("DOMContentLoaded", function() {
+        // Récupérez l'élément avec l'ID "main"
+        var mainElement = document.getElementById("main");
+        if (mainElement) {
+            // Faites défiler la page jusqu'à cet élément
+            mainElement.scrollIntoView();
+        }
+    });
+</script>
+<script>
+// Define chargerContenuPDF function outside of $(document).ready()
+function chargerContenuPDF() {
+      
+
+    var monthUrll = getMonthFromUrl();
+    var userUrll = getUserFromUrl();
+
+    const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/get-monthly-evaluation/?month=' + monthUrll+ '&user='+userUrll;
+    // ECRIRE LES ERRORS EN ARABE
+    fetch(apiUrl)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          vanillaToast.error("ATTENTION: L'utilisateur n'a pas d'évaluation pour le mois choisi تنبيه: ليس لدى المستخدم أي تقييم للشهر المختار");
+
+        }
+      })
+      .then(data => {
+        id= JSON.parse(data)[0]
+        console.log(id==undefined)
+        console.log(id==undefined);
+        if (id != undefined) {
+            $.ajax({
+                url: "https://app.liliumpharma.com/monthly_evaluation/monthly_evaluations/" + id + "/",
+                type: "GET",
+                success: function(response) {
+                    // Inject the PDF content into a specific element on your page
+                    $("#pdf-container").html(response);
+                    $("#pdf-container").removeClass("d-none"); // Remove the d-none class to display the container
+                    $("#pdf-container")[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error loading PDF content:", error);
+                    vanillaToast.error("ATTENTION: L'utilisateur n'a pas d'évaluation pour le mois choisi تنبيه: ليس لدى المستخدم أي تقييم للشهر المختار");
+                    $("#pdf-container").addClass("d-none"); // Add the d-none class to hide the container
+                    $("#main")[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                }
+            });
+        } else {
+            vanillaToast.error("ATTENTION: L'utilisateur n'a pas d'évaluation pour le mois choisi تنبيه: ليس لدى المستخدم أي تقييم للشهر المختار");
+            $("#pdf-container").addClass("d-none"); // Add the d-none class to hide the container
+            $("#main")[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        }
+
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
+        if (error.message === 'Evaluation not found for the selected month.') {
+          vanillaToast.error("ATTENTION: L'utilisateur n'a pas d'évaluation pour le mois choisi تنبيه: ليس لدى المستخدم أي تقييم للشهر المختار");
+        }
+      });
+}
+</script>
+
+<script>
+function viewEvaluation(userId) {
+    var currentUrl = window.location.href;
+    var urlParams = new URLSearchParams(currentUrl.split('?')[1]);
+    var month = urlParams.get('month');
+    var userParam = userId; // Utilisez le paramètre passé à la fonction
+
+    var monthUrl = month;
+    var userUrl = userParam;
+
+
+
+
+
+
+
+    const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/get-monthly-evaluation/?month=' + monthUrl+ '&user='+userUrl;
+    // ECRIRE LES ERRORS EN ARABE
+    fetch(apiUrl)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          vanillaToast.error("ATTENTION: L'utilisateur n'a pas d'évaluation pour le mois choisi تنبيه: ليس لدى المستخدم أي تقييم للشهر المختار");
+
+        }
+      })
+      .then(data => {
+        id= JSON.parse(data)[0]
+        if (id != undefined) {
+          console.log(id)
+          var idUrl = 'https://app.liliumpharma.com/monthly_evaluation/monthly_evaluations/' + id + '/';
+          window.open(idUrl, '_blank');
+        }
+
+      })
+
+}
+
+  </script>
+
+
+<style>
+  @media (max-width: 576px) {
+    .card-body {
+      flex-direction: column;
+      align-items: center;
+      margin: 0px;
+      width:100%;
+    }
+    .card-body h5 {
+      font-size: 15px;
+      color: black !important
+    }
+    .card-title.text-right {
+      text-align: left;
+    }
+  }
+</style>
+<style>
+  .sup_div{
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+  .card{
+    margin-bottom: 15px;
+  }
+</style>
+<!-- Q1 -->
+<style>
+  /* Style pour les boutons radio */
+input[type="radio"] {
+  /* Cacher le bouton radio par défaut */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  outline: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* Style pour le cercle du bouton radio */
+input[type="radio"]::before {
+  content: '';
+  display: inline-block;
+  width: 15px; /* Ajustez la taille du cercle ici */
+  height: 15px; /* Ajustez la taille du cercle ici */
+  border-radius: 50%; /* Rendre le cercle arrondi */
+  border: 2px solid green; /* Couleur et épaisseur de la bordure */
+  margin-right: 5px; /* Marge à droite du cercle */
+}
+
+/* Style pour le cercle du bouton radio lorsque coché */
+input[type="radio"]:checked::before {
+  background-color: green; /* Couleur de fond lorsque coché */
+}
+
+</style>
+</head>
+<body>
+  <div id="backButton" class="d-inline-block p-2 rounded col-12" style="cursor: pointer;background-color: green;color: white;">
+    <span class="align-middle">Back</span>
+  </div>
+
+<script>
+  document.getElementById("backButton").addEventListener("click", function() {
+    window.history.back(); // This line takes the user back to the previous page
+});
+
+</script>
+{% block body %}{%endblock body%}
+<!-- <div class="card">
+  <div class="card-body">
+      <h5 class="card-title">Rubrique disponible uniquement du 01 au 05 de chaque mois</h5>
+  </div>
+</div> -->
+
+<!-- <div id="timing" class="d-none"> -->
+  <div id="timing">
+
+<div id="pdf-container">
+  <!-- Le contenu PDF sera chargé ici -->
+</div>
+
+<script src="{% static 'js/jquery.min.js'%}"></script>
+<script src="{% static 'js/toast/vanilla-toast.js'%}"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+{% block scripts %}{%endblock scripts%}
+<div id="main" class="text-center">
+    <h4 class="mr-3 font-weight-bold">Formulaire d'Évaluation Des Superviseurs</h4>
+</div>
+<div class="d-flex mt-3 mb-4" style="justify-content: space-between;">
+
+</div>
+<div class="col-12">
+  <div class="alert alert-success" role="alert" style="display: flex; flex-wrap: wrap;">
+    <div class="col-md-6" style="box-sizing: border-box; padding: 5px;">
+      <h4 class="alert-heading">Important!</h4>
+      <p class="card-text">Avant de commencer Vous devez vérifier le mois séléctionné</p>
+    </div>
+    <div class="col-md-6" style="box-sizing: border-box; padding: 5px; word-break: break-all;">
+      <h4 class="alert-heading text-md-right">!هام</h4>
+      <p class="card-text text-md-right">قبل أن تبدأ يجب عليك التحقق من الشهر المحدد</p>
+    </div>
+  </div>
+</div>
+
+
+
+<div id="pdf-container">
+  <!-- Le contenu de pdf.html sera chargé ici -->
+</div>
+
+
+
+<div id="header">
+  <form method="post">
+    <div class="col-md-6 d-flex mt-5">
+      <label for="monthSelect" style="font-weight: bold; margin-right:10px" >Mois</label>
+      <select class="form-control " id="monthSelect" disabled>
+      </select>
+    </div>
+</div>
+
+<div class="card bg-white m-4">
+  <div class="card-body d-flex" style="justify-content: space-between;">
+    <h5 class="card-title font-weight-bold text-left h5">Comment est-ce que vous évaluez le travail du Superviseur</h5>
+    <h5 class="card-title font-weight-bold text-center h5"> <span id="name"></span></h5>
+
+    <h5 class="card-title font-weight-bold text-right" >كيف تقيم عمل السوبرفايزر ؟</h5>
+  </div>
+  <div class="d-flex justify-content-center d-sm-block" style="margin-left: 60px;margin-right: 60px;">
+    <div class="mb-3">
+        <input type="radio" id="Excellent" name="qualite" value="Excellent">
+        <label for="tres-bon">Excellent</label><br>
+    </div>
+
+    <div class="mb-3">
+        <input type="radio" id="Bon" name="qualite" value="Bon">
+        <label for="moyen">Bon</label><br>
+    </div>
+  
+    <div>
+        <input type="radio" id="Mauvais" name="qualite" value="Mauvais">
+        <label for="mauvais">Mauvais</label><br>
+    </div>
+</div>
+
+</div>
+
+<style>
+  #floatingDiv {
+  position: fixed;
+  height: 55px;
+  bottom: 40px;
+  left: 6%;
+  transform: translateX(-50%);
+  background-color: green;
+  color: white;
+  border-radius: 5px;
+  z-index: 9999;
+}
+
+</style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Scroll to the 'main' div when the page loads
+        document.getElementById('main').scrollIntoView({ behavior: 'smooth' });
+    });
+  </script>
+
+
+<div class="d-flex justify-content-between w-100">
+  <h4 style="color: green; margin-left: 10px;">Merci !</h4>
+  <h4 style="color: green; margin-right: 20px;">! شكرا</h4>
+</div>
+
+<!-- Ajoutez le lien vers Font Awesome si vous n'avez pas déjà ajouté -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<div style="background-color: green; height: 70px; display: flex; align-items: center;">
+  <a id="submit" class="btn col-12" type="" style="color: white;">
+    <strong style="margin-top: 40px;">Valider l'évaluation</strong>
+  </a>
+</div>
+
+</div>
+
+
+
+</body> 
+<div>{{ errors }}</div>
+
+
+<script>
+urlParams = new URLSearchParams(window.location.search);
+
+// Récupérer la valeur du paramètre "month"
+const userParam = urlParams.get('user');
+span = document.getElementById("name")
+span.textContent=userParam
+
+
+</script>
+
+
+
+
+
+<script>
+  const monthSelect = document.getElementById("monthSelect");
+
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1;
+  const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1; // Calculer le mois précédent
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const monthUrl = urlParams.get('month');
+
+  if (!monthUrl) {
+    const baseUrl = window.location.href.split('?')[0]; 
+    const newUrl = `${baseUrl}?month=${previousMonth}`; // Utiliser le mois précédent par défaut
+    history.replaceState({}, document.title, newUrl);
+  }
+
+  for (let i = 0; i < currentMonth; i++) {
+    const option = document.createElement("option");
+    option.value = i + 1; 
+    option.textContent = getMonthName(i); // Fonction pour obtenir le nom du mois
+    monthSelect.appendChild(option);
+  }
+
+  function getMonthName(monthIndex) {
+    const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+    return monthNames[monthIndex];
+  }
+
+  if (monthUrl && 1 <= monthUrl <= 12) {
+    monthSelect.value = monthUrl;
+    monthSelect.selectedIndex = monthUrl - 1;
+  } else {
+    monthSelect.value = previousMonth; // Sélectionner le mois précédent par défaut
+    monthSelect.selectedIndex = previousMonth - 1; // Sélectionner l'option correspondant au mois précédent
+  }
+  
+  function updateURL() {
+    const selectedMonth = monthSelect.value-1;
+
+    const baseUrl = window.location.href.split('?')[0];
+    const urlParams = new URLSearchParams(window.location.search);
+
+    if (urlParams.has('user')) {
+        urlParams.set('user', selectedUser); // Remplacer la valeur du paramètre "user" dans l'URL
+    } else {
+        urlParams.append('user', selectedUser);
+    }
+
+
+
+    const newUrl = baseUrl + '?' + urlParams.toString();
+    history.replaceState({}, document.title, newUrl);
+    chargerContenuPDF();
+  }
+</script>
+
+
+
+
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      // Scroll to the 'main' div when the page loads
+      document.getElementById('main').scrollIntoView({ behavior: 'smooth' });
+  });
+</script>
+
+
+
+
+
+
+<!-- PREPARING DATA -->
+<script>
+
+  function getMonthFromUrl() {
+    var url = window.location.href; // Obtenez l'URL actuelle
+    var monthIndex = url.indexOf("month="); // Trouvez l'index du paramètre "month"
+
+    if (monthIndex !== -1) {
+        // Si le paramètre "month" est trouvé dans l'URL
+        var month = url.substring(monthIndex + 6, monthIndex + 8); // Récupérez le mois à partir de l'URL
+        return parseInt(month); // Convertir la chaîne en nombre entier
+    } else {
+        // Si le paramètre "month" n'est pas trouvé dans l'URL
+        return null;
+    }
+}
+function getUserFromUrl() {
+    var url = window.location.href; // Obtenez l'URL actuelle
+    var userIndex = url.indexOf("user="); // Trouvez l'index du paramètre "user"
+
+    if (userIndex !== -1) {
+        // Si le paramètre "user" est trouvé dans l'URL
+        var user = url.substring(userIndex + 5); // Récupérez l'utilisateur à partir de l'URL
+        return user; // Retourne l'utilisateur
+    } else {
+        // Si le paramètre "user" n'est pas trouvé dans l'URL
+        return null;
+    }
+}
+
+</script>
+
+<script>
+  // Assurez-vous d'appeler cette fonction après le chargement du DOM
+document.addEventListener("DOMContentLoaded", function() {
+    // Obtenez une référence aux éléments select
+    const monthSelect = document.getElementById('monthSelect');
+
+    // Ajoutez un gestionnaire d'événements pour le changement de sélection
+    monthSelect.addEventListener('change', updateURL);
+});
+
+</script>
+
+
+  <script>
+  function updateButtonState() {
+    var radioButtons = document.querySelectorAll('input[name="qualite"]');
+    var submitButton = document.getElementById("submit");
+    var isRadioButtonChecked = false;
+
+    for (var i = 0; i < radioButtons.length; i++) {
+      if (radioButtons[i].checked) {
+        isRadioButtonChecked = true;
+        break;
+      }
+    }
+
+    if (isRadioButtonChecked) {
+      submitButton.classList.remove("disabled");
+    } else {
+      submitButton.classList.add("disabled");
+    }
+  }
+
+  var radioButtons = document.querySelectorAll('input[name="qualite"]');
+  for (var i = 0; i < radioButtons.length; i++) {
+    radioButtons[i].addEventListener("change", updateButtonState);
+  }
+
+  updateButtonState();
+</script>
+
+<!-- #PREPARING DATA -->
+<script>
+  document.getElementById("submit").addEventListener("click", getAnswers);
+
+  var csrfToken = '{{ csrf_token }}';
+
+  function getAnswers() {
+
+          var qualiteValue = document.querySelector('input[name="qualite"]:checked').value;
+
+          var postData = {
+              csrfmiddlewaretoken: csrfToken,
+              q1: qualiteValue,
+          };
+
+          var month = getMonthFromUrl();
+          if (month !== null) {
+              postData.month = month;
+          }
+
+          var monthUrll = getMonthFromUrl();
+          var userUrll = getUserFromUrl();
+
+          $.ajax({
+              url: '/monthly_evaluation/AddMonthlyEvaluationDirectionToSup/?month=' + monthUrll + '&user=' +userUrll,
+              type: 'POST',
+              data: postData,
+              success: function(response) {
+                  vanillaToast.success('SUCCESS');
+                  setTimeout(function() {
+                    window.location.href = "https://app.liliumpharma.com/monthly_evaluations_front";
+                  }, 1000);
+              },
+              error: function(xhr, status, error) {
+                  vanillaToast.error("ATTENTION: Votre évaluation a déjà été soumise  تنبيه: لقد قمت بإضافة تقييمك قبل");
+              }
+          });
+
+  }
+</script>
+
+</html>

@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}  Downloads {% endblock%}
+
+
+{% block body %} 
+<div id="main" class="h3 py-3 text-center"> Liste des fichiers a telecharger </div>
+<div class="container py-3">
+    {% for download in downloads  %}
+        <a href="{{download.attachement.url}}" class="d-block border-bottom py-2" target="_blank"> <i class="fas fa-download text-secondary"></i>  {{download.id}} - {{download.link_name}} </a>
+    {% endfor %}
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Scroll to the 'main' div when the page loads
+        document.getElementById('main').scrollIntoView({ behavior: 'smooth' });
+    });
+  </script>
+ {% endblock%}

@@ -1,0 +1,145 @@
+{% load static %}
+{% load clients_extra %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sells Report</title>
+
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        * {
+            font-family: 'Times New Roman', Times, serif;
+            padding: 5px;
+        }
+
+        .header {
+            text-align: center;
+            font-size: xx-large;
+            font-style: bold;
+            margin-bottom: 10px
+        }
+
+        .logo {
+            width: 70px;
+            height: 70px
+        }
+
+        .title {
+            text-align: center;
+            font-size: x-large;
+        }
+
+        .region {
+            display: inline-block;
+            font-size: large;
+            font-weight: bold;
+        }
+
+        .main_column {
+            width: 15%;
+            font-size: 20px;
+            font-weight: bold
+        }
+
+        table {
+            width: 100%;
+        }
+
+        th {
+            outline: thin solid;
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+
+        td {
+            padding-top: 5px;
+            padding-bottom: 5px;
+            outline: thin solid;
+            text-align: center;
+        }
+        
+        .no-border {
+            outline: none;
+        }
+
+    </style>
+</head>
+
+<body>
+    
+    <div class="header">
+        <img class="logo" src="/static/img/logo.png" alt="">
+        <div>LILIUM PHARMA</div>
+    </div>
+
+    <div class="title">
+        <div>Détails du Rapport de Vente du <b>Produit {{ data.product }}</b></div>
+        <b>{{ month }}, {{ year }}</b>
+    </div>
+
+
+    <div class="region_frame">
+
+        <div class="region">
+            <div>Délégué: {{ data.user }}</div>
+            <div style="color: red">Remarque: Tapez sur le nom du Super Grossiste pour consulter le fichier joint.</div>
+        </div>
+        <div style="background-color:#2ca030;padding:10px; display: inline-flex;font-weight: bold;">
+            <a href="https://app.liliumpharma.com/admin/clients/ordersource/?date__month={{m}}&date__year={{year}}&year={{year}}" style="color:#fff;text-decoration: none;">
+                attachments filter
+            </a>
+        </div>
+        <table>
+            <thead>
+                <th>Super Grossiste</th>
+                <th>Grossiste</th>
+                <th>Adresse</th>
+                <th>Quantité</th>
+            </thead>
+
+            <tbody>
+
+                {% for order_client in data.order_client %}
+                <tr>
+                    <td>
+                        {% if order_client.order__source__attachement_file %}
+                        <a style="color: blue; font-weight: bold;" href="/media/{{ order_client.order__source__attachement_file }}">
+                            {{order_client.order__source__source__name|thousand_separator }} 
+                        </a><span>{{ order_client.order__source__date.month }}/{{ order_client.order__source__date.year }}</span>
+                        {% else %}
+                        <div style="display: inline-block; color: blue; font-weight: bold;">{{order_client.order__source__source__name|thousand_separator }} 
+                            <!-- (No Attachement)  -->
+                            </div><span>{{ order_client.order__source__date.month }}/{{ order_client.order__source__date.year }}</span>
+                        {% endif %}
+                        
+                    </td>
+                    <td>{{ order_client.order__client__name|thousand_separator }}</td>
+                    <td>{{ order_client.order__client__wilaya__nom }}</td>
+                    <td style="background-color: #90EE90">{{ order_client.total|thousand_separator }}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <td class="no-border"></td>
+                    <td class="no-border"></td>
+                    <td style="background-color: yellow; font-weight: bold">TOTAL</td>
+                    <td style="background-color: yellow; font-weight: bold">{{ data.total_quantity }}</td>
+                </tr>
+
+            </tbody>
+        </table>
+
+    </div>
+
+
+</body>
+
+</html>

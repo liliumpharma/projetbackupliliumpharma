@@ -1,0 +1,776 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/styles.css'%}">
+    <link rel="stylesheet" href="{% static 'css/toast/vanilla-toast.css'%}">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+  
+    {%block styles%}
+    {%endblock styles%}
+    <title>{% block title %}{%endblock title%}</title>
+    <!-- // Initialize Cloudinary -->
+    <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
+
+    <script type="text/javascript">
+      var cloudinary = cloudinary || {};
+      cloudinary.setCloudName('YOUR_CLOUD_NAME');
+      // Set the upload preset
+      var uploadPreset = 'YOUR_UPLOAD_PRESET';
+    </script>
+
+    <style>
+      .d-none {
+      display: none !important;
+    }
+    </style>
+  </head>
+
+<body>
+<script src="{% static 'js/jquery.min.js'%}"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+<script src="{% static 'js/toast/vanilla-toast.js'%}"></script>
+
+{% block scripts %}{%endblock scripts%}
+{% csrf_token %}
+<div id="liste"  style="padding: 5px;">
+  <div class="d-flex flex-column justify-content-between align-items-center">
+
+
+
+    <div class="d-flex justify-content-between align-items-center col-12" style="background-color: green;">
+    <!-- Icône Home à gauche -->
+    <a href="https://app.liliumpharma.com" class="ms-3">
+      <i class="bi bi-house-door" style="font-size: 1.5rem; color: white;"></i>
+      <h5 style="color: white; margin: 0; display: inline-block; font-family: 'Arial', sans-serif; font-size: 1.2rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding-left: 10px;">Home</h5>
+    </a>
+    
+
+      
+      <!-- Logo au milieu avec les titres en dessous -->
+      <div class="d-flex flex-column align-items-center" style="padding:4px">
+        <img src="https://app.liliumpharma.com/static/img/icons/logo-2.png" alt="Logo" style="height: 30px;">
+        <div class="d-flex align-items-center">
+          <h6 style="color: white; margin: 0;font-size:10px">LILIUM PHARMA</h6>
+        </div>
+        <div class="d-flex align-items-center">
+          <h5 style="color: white; margin: 0;">Liste Rapports   |   </h5>
+          <h5 style="color: white; margin: 0;">قائمه التقارير</h5>
+        </div>
+      </div>
+
+              
+      <style>
+        .small-text {
+            font-size: 0.8rem;
+        }
+    </style>
+    
+    <div class="user-info">
+        <span class="date small-text"  style="color:white">{% now "l jS F Y" %}</span>
+        <div class="user-details">
+            <i class="fa fa-user"  style="color:white"></i>
+            <span class="username small-text"  style="color:white">{{ user }}</span>
+            <a href="{% url 'logout' %}" class="logout-link small-text" style="color:white">
+                <i class="fas fa-sign-out-alt"></i> Déconnexion
+            </a>
+        </div>
+    </div>
+    
+      
+      <!-- Espace à droite pour équilibrer l'alignement -->
+    </div>
+    
+
+
+  </div>
+  <!-- <button id="add_spend" class="btn btn-success col-12 d-block" style="text-align: center;">
+    <a href="#new_spend" style="color: white;">+ Ajouter une nouvelle dépense</a>
+    <br>
+    <a href="#new_spend" style="color: white;">إضافة ورقة مصروف +</a>
+  </button> -->
+  <div class="mt-4">
+
+        <div id="filter" class="d-flex flex-column mt-5 mb-4">
+            <!-- First Row: 3 Filters -->
+            <div class="d-flex justify-content-between mb-3">
+                <div class="flex-column col-12 col-md-3">
+                    <label for="county_filter">Country</label>
+                    <select name="county_filter" id="county_filter" class="form-control">
+                        <option value="-1" disabled selected>Algérie</option>
+
+                    </select>
+                  </div>
+                  <!--
+                  <div class="flex-column col-12 col-md-3">
+                    <label for="family_filter">Family</label>
+                    <select name="family_filter" id="family_filter" class="form-control">
+                      <option value="-1" disabled selected>Choisir une famille</option>
+                       Les options seront ajoutées ici 
+                    </select>
+                  </div>
+                -->
+                  <div class="flex-column col-12 col-md-3">
+                    <label for="family_filter">Family</label>
+                    <select name="family_filter" id="family_filter" class="form-control">
+                      <!--<option value="-1" disabled >Choisir une famille</option>-->
+                      <option value="1" selected>ALL</option>
+                      <!-- Les options seront ajoutées ici -->
+                    </select>
+                  </div>
+                  
+                  <script>
+                    // 🔁 Créer un petit loader
+                    const miniLoader = document.createElement('div');
+                    miniLoader.id = 'mini-loader';
+                    miniLoader.innerHTML = `<div class="spinner"></div>`;
+                    document.body.appendChild(miniLoader);
+
+                    // 🔁 Style du loader
+                    const style = document.createElement('style');
+                    style.textContent = `
+                      #mini-loader {
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        z-index: 9999;
+                        display: none;
+                      }
+                      .spinner {
+                        width: 40px;
+                        height: 40px;
+                        border: 4px solid #ccc;
+                        border-top-color: #4CAF50;
+                        border-radius: 50%;
+                        animation: spin 0.8s linear infinite;
+                      }
+                      @keyframes spin {
+                        to { transform: rotate(360deg); }
+                      }
+                    `;
+                    document.head.appendChild(style);
+
+                    document.addEventListener('DOMContentLoaded', function() {
+                      const familySelect = document.getElementById('family_filter');
+                      const userSelect = document.getElementById('search_user');
+                  
+                      // Fetch pour obtenir les familles et remplir le select
+                      fetch('https://app.liliumpharma.com/accounts/families/')
+                        .then(response => response.json())
+                        .then(data => {
+                          data.families.forEach(family => {
+                            //const option = document.createElement('option');
+                            //option.value = family;
+                            //option.textContent = family;
+                            //familySelect.appendChild(option);
+                          });
+                          // ➕ Déclenchement immédiat avec la valeur actuelle (par ex. "all")
+                          familySelect.dispatchEvent(new Event('change'));
+                        })
+                        .catch(error => {
+                          console.error('Error fetching families:', error);
+                        });
+                  
+                      // Lorsqu'une famille est sélectionnée, récupérer les utilisateurs associés
+                      familySelect.addEventListener('change', function() {
+                        const selectedFamily = familySelect.value;
+                  
+                        // Vider les options précédentes des utilisateurs
+                        userSelect.innerHTML = '<option value="-1" disabled>Choisir un utilisateur</option>';
+                  
+                        // Faire une requête pour obtenir les utilisateurs par famille
+                        fetch(`https://app.liliumpharma.com/accounts/api/users-by-family/?family=${selectedFamily}`)
+                          .then(response => response.json())
+                          .then(users => {
+                            users.forEach(user => {
+                              const option = document.createElement('option');
+                              option.value = user.id;
+                              option.textContent = user.username;
+                              userSelect.appendChild(option);
+                            });
+                          })
+                          .catch(error => {
+                            console.error('Error fetching users:', error);
+                          });
+                      });
+                    });
+
+                    
+                  </script>
+                  
+
+              <div class="flex-column col-12 col-md-3">
+                <label for="search_user">Utilisateur</label>
+                <select class="form-control" id="search_user">
+                  <option value="-1" disabled>Choisir un utilisateur</option>
+                  <!-- Ajouter des options d'utilisateur ici -->
+                </select>
+              </div>
+            </div>
+          
+            <!-- Second Row: 3 Filters -->
+            <div class="d-flex justify-content-between mb-3">
+              <div class="flex-column col-12 col-md-3">
+                <label for="date_debut">Date début</label>
+                <input class="form-control" type="date" id="date_debut">
+              </div>
+              <div class="flex-column col-12 col-md-3">
+                <label for="date_fin">Date fin</label>
+                <input class="form-control" type="date" id="date_fin">
+              </div>
+              
+              <script>
+              // Helper function to format the date as 'YYYY-MM-DD'
+              function formatDate(date) {
+                let d = new Date(date);
+                let month = '' + (d.getMonth() + 1);
+                let day = '' + d.getDate();
+                let year = d.getFullYear();
+              
+                if (month.length < 2) month = '0' + month;
+                if (day.length < 2) day = '0' + day;
+              
+                return [year, month, day].join('-');
+              }
+              
+              // Set default dates (yesterday for date_debut and today for date_fin)
+              const dateDebutInput = document.getElementById('date_debut');
+              const dateFinInput = document.getElementById('date_fin');
+              
+              // Get today's date
+              let today = new Date();
+              // Get yesterday's date
+              let yesterday = new Date(today);
+              yesterday.setDate(today.getDate() - 1);
+              
+              // Set default values
+              dateDebutInput.value = formatDate(yesterday);  // Yesterday's date
+              dateFinInput.value = formatDate(today);        // Today's date
+              
+              // Ensure date_fin cannot be earlier than date_debut
+              dateDebutInput.addEventListener('change', function() {
+                if (dateFinInput.value < dateDebutInput.value) {
+                  dateFinInput.value = dateDebutInput.value; // Adjust date_fin if it becomes earlier than date_debut
+                }
+              });
+              
+              dateFinInput.addEventListener('change', function() {
+                if (dateFinInput.value < dateDebutInput.value) {
+                  alert('La date de fin ne peut pas être inférieure à la date de début.');
+                  dateFinInput.value = dateDebutInput.value; // Reset date_fin if it's set earlier than date_debut
+                }
+              });
+              </script>
+              
+              <div class="flex-column col-12 col-md-3">
+                <label for="note_filter">Daily evaluation</label>
+                <select name="note_filter" id="note_filter" class="form-control">
+                    <option value="">None</option>
+                    <option value="1">★</option>
+                    <option value="2">★★</option>
+                    <option value="3">★★★</option>
+                    <option value="4">★★★★</option>
+                    <option value="5">★★★★★</option>
+                </select>
+            </div>
+            
+            </div>
+
+          
+            <!-- Search Button -->
+            <div class="d-flex justify-content-center mt-3">
+              <button class="btn btn-primary" id="search_button">Search</button>
+            </div>
+          </div>
+          
+          <script>
+            document.getElementById("search_button").addEventListener("click", function () {
+              // Afficher le petit loader
+              document.getElementById('mini-loader').style.display = 'block';
+              const container = document.getElementById('parentElementId');
+              container.innerHTML = '';
+          
+              // Récupérer les valeurs des filtres
+              const commercial = document.getElementById("search_user").value;
+              const family = document.getElementById("family_filter").value;
+              const note = document.getElementById("note_filter").value;
+              const country = document.getElementById("county_filter").value;
+              const mindate = document.getElementById("date_debut").value;
+              const maxdate = document.getElementById("date_fin").value;
+              const total = document.getElementById("total");
+
+              const recap = document.getElementById("recap");
+          
+              // Créer un objet contenant les filtres
+              const params = new URLSearchParams({
+                commercial: commercial !== '-1' ? commercial : '',
+                family: family !== '-1' ? family : '',
+                note: note !== '-1' ? note : '',
+                country: country !== '-1' ? country : '',
+                mindate: mindate || '',
+                maxdate: maxdate || ''
+              });
+          
+              function getDayOfWeek(dateString) {
+                const daysOfWeek = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+                const date = new Date(dateString);
+                const dayIndex = date.getDay();
+                return daysOfWeek[dayIndex];
+              }
+
+
+
+
+              function addBlinkingCSS() {
+                const style = document.createElement('style');
+                style.innerHTML = `
+                    @keyframes blinker {
+                        50% {
+                            opacity: 0;
+                        }
+                    }
+                    .blinking {
+                        animation: blinker 1s linear infinite;
+                    }
+                `;
+                document.head.appendChild(style);
+                }
+            
+                // Call the function to inject the CSS
+                addBlinkingCSS();
+            
+          
+              // Construire l'URL avec les paramètres
+              const apiUrl = `https://app.liliumpharma.com/rapports/api?${params.toString()}`;
+          
+              // Faire la requête fetch en utilisant la méthode GET
+              fetch(apiUrl, { method: 'GET' })
+                .then(response => {
+                  if (!response.ok) {
+                    throw new Error('Erreur dans la récupération des données');
+                  }
+                  return response.json();
+                })
+                .then(data => {
+                  console.log("Cacher le loader");
+document.getElementById('mini-loader').style.display = 'none';
+                  const itemsToDisplay2 = data.result || [];
+                  document.getElementById('id_empty_recap').innerHTML = '';  // Vider les liens
+                  document.getElementById('total2').textContent = ''; 
+
+                      // Exclure les éléments ayant tasks.length > 0
+                      const filteredItems = itemsToDisplay2.filter(item => item.tasks.length === 0);
+
+                      filteredItems.forEach((item) => {
+                      
+                        // Filtrer les rapports avec moins de 4 visites
+                        const rapportsWithLessThanFourVisites = filteredItems.filter(rapport => rapport.visites.length < 6);
+                        // Récupérer des dates distinctes de `added`
+                        const distinctAddedDates = [...new Set(rapportsWithLessThanFourVisites.map(rapport => rapport.added))];
+
+                        // Créer des liens cliquables pour chaque date distincte `added`
+                        const rapportLinks = [];
+let done = 0;
+
+rapportsWithLessThanFourVisites.forEach(rapport => {
+  fetch(`https://app.liliumpharma.com/rapports/api/user/${rapport.user}/`, {
+    method: 'GET',
+    credentials: 'same-origin',
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest'
+    }
+  })
+    .then(res => res.json())
+    .then(data => {
+      const nomComplet = `${data.last_name} ${data.first_name}`;
+      const lien = `<a href="#card_${rapport.id}" style="color: green; text-decoration: underline; font-size: 13px">
+        ${rapport.added} (${nomComplet})
+      </a>`;
+      rapportLinks.push(lien);
+    })
+    .catch(() => {
+      const lien = `<a href="#card_${rapport.id}" style="color: green; text-decoration: underline; font-size: 13px">
+        ${rapport.id} (Inconnu)
+      </a>`;
+      rapportLinks.push(lien);
+    })
+    .finally(() => {
+      done++;
+      if (done === rapportsWithLessThanFourVisites.length) {
+
+        
+        // Tous les fetchs sont terminés
+        document.getElementById('id_empty_recap').innerHTML = rapportLinks.join(' - ') || '-';
+        document.getElementById('total2').textContent = rapportsWithLessThanFourVisites.length;
+        total2.textContent = rapportsWithLessThanFourVisites.length;
+      }
+      
+    });
+ 
+});
+
+                        
+
+                        
+                      });
+
+
+                  
+                  total.textContent = data.length
+                  recap.textContent = data.other
+                  const container = document.getElementById('parentElementId');
+                  const itemsToDisplay = data.result || [];
+          
+                  itemsToDisplay.forEach((item) => {
+                    const dayOfWeek = getDayOfWeek(item.added);
+          
+                    // Créer la carte
+                    const card = document.createElement('div');
+                    card.classList.add('card');
+                    card.style.display = 'block';
+                    card.style.backgroundColor = '#CFCFCF';
+                    card.style.marginTop = '10px';
+                    card.style.marginBottom = '10px';
+                    card.id = `card_${item.id}`;
+                    card.style.padding = '10px';
+          
+                    // Créer les étoiles pour la note
+                    let stars = '';
+                    for (let i = 1; i <= 5; i++) {
+                      stars += `<span class="fa fa-star ${i <= item.note ? 'checked' : ''}" data-value="${i}" data-id="${item.id}" style="color: ${i <= item.note ? 'gold' : 'gray'}; cursor: pointer;"></span>`;
+                      rating = item.note
+
+                    }
+          
+                    const attachementLink = item.attachement !== "null"
+                      ? `<a href="${item.url}" target="_blank">Voir l'attachement</a>`
+                      :  '<span style="color: red;">Aucun attachement</span>';
+
+                    const noteText = rating < 1 ? '<b class="clignote">Note:</b>' : 'Note 1 :';
+                    const noteText2 = rating < 1 ? '<b class="clignote">Note:</b>' : 'Daily evaluation :';
+
+
+                    let commentsHTML = '';
+                    if (item.comments && item.comments.length > 0) {
+                        commentsHTML += item.comments.map(comment => `
+                            <li>
+                              <strong>${comment.user.username}</strong>: ${comment.comment} <span style="font-size:8px">(Ajouté le: ${new Date(comment.added).toLocaleDateString()})</span>
+                            </li>
+                        `).join('');
+                        commentsHTML += '</ul></div>';
+                    } else {
+                        commentsHTML = '<div><h6 class="text-left" style="color:red;">Pas de commentaires</h6></div>';
+                    }
+
+
+
+
+                    let image1HTML = '';
+
+
+                    if (item.image) {
+                        image1HTML = `<img src="${item.image}" alt="Image 1" style="display: block; width: 150px; height: 150px; border: 1px solid black; cursor: pointer;">`;
+                        console.log(" - - - - >"+image1HTML)
+                    } else if (item.tasks.length > 0) {
+                        image1HTML = `<img src="https://app.liliumpharma.com/static/img/logo22.png" alt="Default Image 1" style="display: block; width: 150px; height: 150px; border: 1px solid black; cursor: pointer;">`;
+                    } else {
+                        image1HTML = `<img class="blinking" src="https://app.liliumpharma.com/static/img/croix-rouge.jpg" alt="Default Image 1" style="display: block; width: 150px; height: 150px; border: 1px solid black; cursor: pointer;">`;
+                    }
+
+                    if (item.image2) {
+                      image2HTML = `<img src="${item.image2}" alt="Image 2" style="display: block; width: 150px; height: 150px; border: 1px solid black; cursor: pointer;">`;
+                  } else if (item.tasks.length > 0) {
+                      image2HTML = ``;
+                  } else {
+                      image2HTML = `<img class="blinking" src="https://app.liliumpharma.com/static/img/croix-rouge.jpg" alt="Default Image 1" style="display: block; width: 150px; height: 150px; border: 1px solid black; cursor: pointer;">`;
+                  }
+                    
+                    // Créer l'HTML de la carte
+                    card.innerHTML = `
+                      <div class="d-flex" style="background-color: white;">
+                        <div class="col-auto col-md-1 align-self-center">
+                          <a href="${item.image ? item.image : '#'}" target="_blank">
+                            ${image1HTML}
+                          </a>
+                          <p>image 2 :</p>
+                          <a href="${item.image2}" target="_blank">
+                            ${image2HTML}
+                          </a>
+                        </div>
+                        <div class="col-md-10" style="margin-top: 10px; margin-bottom: 10px; margin-left:100px">
+                          <div class="card">
+                            <div class="card-header d-flex justify-content-between" style="background-color: #228B22;">
+                              <h6 class="text-left font-weight-bold" style="color:white;">
+                                <a href="https://app.liliumpharma.com/admin/rapports/rapport/${item.id}/change/" style="color:blue; font-size:10px; " target="_blank" style="color:blue; text-decoration: none;"> ID: <span id="id_spend_${item.id}">${item.id}</span> </a> |
+                                <strong> Nom: <span id="id_spend_${item.commercial.nom}">${item.commercial.nom}</span> </strong> |
+                                <strong> Date: <span id="id_spend_${item.added}">${dayOfWeek}, ${item.added}</span> </strong>
+                              </h6>
+                            </div>
+                            <div class="card-body">
+                              <div style="display: flex; justify-content: space-between;">
+                                <div>
+                                  <h6 class="text-left"><span id="card_date">${item.details}</span></h6>
+                                </div>
+                                <a href="https://app.liliumpharma.com/rapports/PDF/${item.id}" target="_blank">
+                                  <img src="/static/img/printer.png" alt="Print" style="color: white" width="25px" height="25px">
+                                </a>
+                              </div>
+                            <div id="to_display_${item.id}" class="d-none">
+                              <div class="row">
+                                <div class="col-md-12">
+                                Données Mensuelle: </br>${item.commercial.other_details}
+                                </div>
+                                <div class="col-md-6">
+                                </div>
+                              </div>                              
+                              </div>
+                            <div>
+                              ${item.tasks && item.tasks.length > 0 ? `
+                                <div>
+                                  <h6 class="text-left"><strong>Tâches :</strong></h6>
+                                  <ul>
+                                    ${item.tasks.map(task => `
+                                      <li>
+                                        <strong>${task.task}</strong> (ID: ${task.id}) - ${task.completed ? 'Complété' : 'Non complété'}
+                                      </li>
+                                    `).join('')}
+                                  </ul>
+                                </div>
+                              ` : ''}
+                            </div>
+                            <div class="col-12">
+                              <button class="btn btn-outline" style="color: transparent; position: relative; margin-left:45%" onclick="display_details(${item.id})">
+                                <div class="position-absolute top-50 start-50 translate-middle d-flex align-items-center">
+                                  <img id="return_${item.id}" src="/static/img/down.png" alt="see_more" width="20px" height="20px" style="margin-right: 8px;">
+                                  <p style="color: black; margin-bottom: 0;">More</p>
+                                </div>
+                              </button>
+                            </div>
+                              <div class="d-flex">
+                                <b class="text-left;"><strong>Commentaire: </strong></b>
+                                <div class="d-flex" style="margin-left:60px" >
+                                  <h6 style="color:black"><strong>${noteText2}</strong></h6>
+                                  <div class="star-rating">${stars}</div>
+                                </div>
+                              </div>
+                              <div id="administration_comment_${item.id}"></div>
+                                        ${commentsHTML} <!-- Display comments here -->
+
+                                <div class="d-flex">
+                                  <textarea class="form-control" id="comment_${item.id}" rows="1"></textarea>
+                                  <button id="send_comment_${item.id}" class="btn send-comment-button" style="background-color: transparent; border: none" onclick="add_comment(${item.id})">
+                                    <img src="/static/img/icons/envoyer.png" width="20px" height="20px" alt="send button">
+                                  </button>
+                                </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>`;
+          
+                    container.appendChild(card);
+          
+                    // Ajoutez les événements de clic sur les étoiles pour noter
+                    document.querySelectorAll('.fa-star').forEach(star => {
+                      star.addEventListener('click', function () {
+                        const rating = this.getAttribute('data-value');
+                        const reportId = this.getAttribute('data-id');
+                        
+                        // Mettre à jour la note sur le serveur
+                        fetch(`https://app.liliumpharma.com/rapports/${reportId}/note/set/?note=${rating}`, {
+                          method: 'GET'
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                          // Mettre à jour l'interface utilisateur
+                          const stars = document.querySelectorAll(`.fa-star[data-id="${reportId}"]`);
+                          stars.forEach((star, index) => {
+                            if (index < rating) {
+                              star.classList.add('checked');
+                              star.style.color = 'gold';
+                            } else {
+                              star.classList.remove('checked');
+                              star.style.color = 'gray';
+                            }
+                          });
+                        })
+                        .catch(error => console.error('Erreur lors de la mise à jour de la note:', error));
+                      });
+                    });
+          
+                  });
+                })
+                .catch((error) => {
+                  console.error('Erreur lors de la récupération des données:', error);
+                });
+            });
+          </script>
+
+          <script>
+            function display_details(spendId) {
+              var informations = document.getElementById("to_display_" + spendId);
+              var imgElement = document.getElementById("return_"+spendId);
+            
+            
+              // Change the image source based on the current source
+              if (imgElement.src.includes("down.png")) {
+                imgElement.src = "/static/img/up.png";
+              } else {
+                imgElement.src = "/static/img/down.png";
+              }
+                // Ajoutez le code pour afficher/masquer les informations ici
+                if (informations.classList.contains("d-block")) {
+                informations.classList.remove("d-block");
+                informations.classList.add("d-none");
+              } else {
+                informations.classList.remove("d-none");
+                informations.classList.add("d-block");
+              }
+            }
+          </script>
+
+          <script>
+            function add_comment(rapportId) {
+              // Capture the comment and other necessary data
+              const comment = document.getElementById(`comment_${rapportId}`).value;
+              const administrationCommentDiv = document.getElementById(`administration_comment_${rapportId}`);
+              // Get the CSRF token from the meta tag
+              const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+              const token = localStorage.getItem('authToken');  // Assuming the token is stored in localStorage
+          
+              // Get the current date
+              const currentDate = new Date();
+              const year = currentDate.getFullYear();
+              const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+              const day = String(currentDate.getDate()).padStart(2, '0');
+              const formattedDate = `${year}-${month}-${day}`;
+          
+              // Prepare the data for the request
+              const formData = {
+                csrfmiddlewaretoken: csrfToken,  // Add your CSRF token
+                rapport: rapportId,
+                comment: comment
+              };
+            
+              // Send the comment to the server using AJAX
+              $.ajax({
+                url: '/rapports/comment/api',  // Ensure this matches your API URL
+                type: 'POST',
+                data: formData,
+                success: function (response) {
+                  // Create the new comment element
+                  const commentHTML = `
+                    <li>
+                      <strong>${response.user.username}</strong>: ${response.comment} <span style="font-size:10px">(Ajouté le: ${formattedDate})</span>
+                    </li>
+                  `;
+                  
+                  // Check if there are existing comments
+                  const existingComments = administrationCommentDiv.querySelector('ul');
+                  
+                  if (existingComments) {
+                    // Append the new comment to the existing list
+                    existingComments.innerHTML += commentHTML;
+                  } else {
+                    // If no existing comments, create the list and add the first comment
+                    const commentsHTML = `<div><h6 class="text-left"><strong>Nouveau Commentaires :</strong></h6><ul>${commentHTML}</ul></div>`;
+                    administrationCommentDiv.innerHTML = commentsHTML;
+                  }
+            
+                  // Clear the comment input field after successful submission
+                  document.getElementById(`comment_${rapportId}`).value = '';
+            
+                  // Success message
+                  vanillaToast.success('Votre commentaire a été enregistré avec succès.');
+                },
+                error: function (xhr, status, error) {
+                  vanillaToast.error("Erreur lors de l'enregistrement du commentaire.");
+                }
+              });
+            }
+          </script>
+          
+          
+          
+          
+          
+          
+
+          
+          
+    <div class="d-flex" style="justify-content: space-between;">
+      <div>
+        <h5 class="text-left" style="color:green"><u> Nombre de rapports:</u>(<span id="total">0</span>)</h5>
+        <h6 class="text-left" style="color:red"><u> Nombre de rapports vide:</u>(<span id="total2">0</span>) <span id="id_empty_recap"></span></h6>
+      </div>
+          
+      <div style="display: flex; justify-content: flex-end; margin-bottom:10px; margin-right:20px">
+        <img id="export_pdf_button" src="/static/img/printer.png" alt="Print" style="color: white" width="40px" height="40px">
+      </div>
+      
+      <script>
+        document.getElementById("export_pdf_button").addEventListener("click", function(event) {
+          event.preventDefault();  // Prevent the default behavior (like a link redirect)
+      
+          // Récupérer les valeurs des filtres
+          const commercial = document.getElementById("search_user").value;
+          const mindate = document.getElementById("date_debut").value;
+          const maxdate = document.getElementById("date_fin").value;
+      
+          // Créer un objet contenant les filtres, avec des valeurs par défaut ou vides si non sélectionnées
+          const params = new URLSearchParams({
+            commercial: commercial !== '-1' ? commercial : '',   // Ignorer les valeurs par défaut
+            mindate: mindate || '',  // Si la date de début est vide, mettre une chaîne vide
+            maxdate: maxdate || ''   // Si la date de fin est vide, mettre une chaîne vide
+          });
+      
+          // Construire l'URL pour l'export PDF en utilisant les paramètres sélectionnés
+          const pdfUrl = `https://app.liliumpharma.com/rapports/SPDF/?${params.toString()}`;
+          
+        
+          // Ouvrir un nouvel onglet avec l'URL PDF
+          window.open(pdfUrl, '_blank');
+      
+          // Vous pouvez également loguer l'URL si nécessaire
+          console.log("Export URL:", pdfUrl);
+        });
+      </script>
+        </div>
+
+    <div style="justify-content: space-between;">
+      <b class="text-left">Récapitulatif: </b><span id="recap"></span>
+    </div>
+
+  </div>
+
+  <div id="parentElementId"></div>
+</div>
+
+  </div>
+
+
+</body> 
+
+<div>{{ errors }}</div>
+
+
+
+
+
+
+
+
+
+</html>

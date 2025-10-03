@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+{% load custom_filters %}
+{% load static %}
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Congés des utilisateurs</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f4f4;
+      }
+
+      header {
+        display: flex;
+        flex-direction: column; /* Organise les éléments en colonne */
+        align-items: center; /* Centre les éléments horizontalement */
+        text-align: center; /* Centre le texte dans le div */
+      }
+      
+      .subtitle {
+        font-size: 0.8em; /* Texte plus petit */
+        color: #808080;  /* Gris */
+        margin-top: 5px;  /* Espace entre le h1 et le texte */
+      }
+
+      header img {
+        width: 80px;
+        height: auto;
+        margin-right: 20px;
+      }
+
+      header h1 {
+        flex: 1;
+        text-align: center;
+        font-size: 24px;
+        color: #333;
+      }
+
+      .green-line {
+        border-top: 3px solid #28a745;
+        margin: 20px 0;
+      }
+
+      .table-container {
+        width: 90%;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #fff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        border-radius: 5px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 16px;
+      }
+
+      th,
+      td {
+        padding: 12px;
+        text-align: left;
+        border: 1px solid #ddd;
+      }
+
+      th {
+        background-color: #f7f7f7;
+        color: #333;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+
+      td {
+        color: #555;
+      }
+
+      td:last-child {
+        font-weight: bold;
+      }
+
+      .footer {
+        text-align: center;
+        margin-top: 40px;
+        font-size: 12px;
+        color: #888;
+      }
+
+      .signatures {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 40px;
+        padding: 0 20px;
+      }
+
+      .signature {
+        width: 45%;
+        text-align: center;
+        border-top: 1px solid #000;
+        padding-top: 20px;
+      }
+
+      /* Print-specific styles */
+      @media print {
+        body {
+          background-color: #fff;
+          margin: 0;
+          padding: 0;
+        }
+
+        header h1 {
+          font-size: 22px;
+          margin: 0;
+        }
+
+        .green-line {
+          border-top: 3px solid #28a745;
+          margin: 10px 0;
+        }
+
+        .table-container {
+          width: 100%;
+          margin: 20px 0;
+          padding: 0;
+          box-shadow: none;
+          border-radius: 0;
+        }
+
+        table {
+          font-size: 12px;
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        th,
+        td {
+          padding: 6px;
+          text-align: left;
+          border: 1px solid #ddd;
+        }
+
+        th {
+          background-color: #f7f7f7;
+          color: #333;
+        }
+
+        td {
+          color: #333;
+        }
+
+        .footer {
+          display: none; /* Hide footer for print */
+        }
+
+        .signatures {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 40px;
+          padding: 0 20px;
+        }
+
+        .signature {
+          width: 45%;
+          text-align: center;
+          border-top: 1px solid #000;
+          padding-top: 20px;
+        }
+      }
+
+      .red-bold {
+        color: red;
+        font-weight: bold;
+      }
+    
+    </style>
+  </head>
+  <body>
+    <header>
+      <img
+        src="{% static 'img/logo.png' %}"
+        alt="Logo EURL LILIUM PHARMA"
+        class="logo"
+      />
+      <div>
+        <h1>LILIUM PHARMA ALGERIE</h1>
+        <p class="subtitle">Production de produits diététiques, Nutritionnels et de Régime</p>
+      </div>
+    </header>
+
+    <div class="green-line"></div>
+
+    <div class="table-container">
+      <h2 style="text-align: center">
+        Liste des congés & absences de : {{ date_infos.starting_date }} à {{ date_infos.ending_date }}
+      </h2>
+      <table>
+        <thead>
+          <tr>
+            <th>N°</th>
+            <th>Utilisateur</th>
+            <th>Pc Paie ID</th>
+            <th>Company</th>
+            <th>Absences</th>
+            {% for leave_type in leave_types %}
+            <th>{{ leave_type }}</th>
+            {% endfor %}
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td>{{ forloop.counter }}</td> <!-- Sequential number for each user -->
+            <td>{{ user.username }}</td>
+            <td class="{% if user.pc_paie_id is None %}red-bold{% endif %}">
+              {{ user.pc_paie_id }}
+            </td>
+            <td>{{ user.company }}</td>
+            <td>{{ user.absence_days }} Jours</td>
+            {% for leave_type in leave_types %}
+            <td>
+              {{ user.leaves_by_type|default_if_none:0|get_item:leave_type }}
+              Jours
+            </td>
+            {% endfor %}
+            <td>{{ user.total_days }} Jours</td>
+          </tr>
+          {% endfor %}
+            <!-- Ligne pour afficher les totaux -->
+            <tr>
+              <td colspan="4" style="text-align:right; font-weight:bold;">Total</td>
+              <td>{{ total_absence_days }} Jours</td>
+              {% for leave_type in leave_types %}
+              <td>{{ total_by_leave_type|get_item:leave_type }} Jours</td>
+              {% endfor %}
+              <td>{{ globale_total_days }} Jours</td>
+            </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="signatures">
+      <div class="signature">
+        <p>Cachet & Signature RH</p>
+        </br>
+        </br>
+        </br>
+        <p style="height: 60px">_________________________</p>
+      </div>
+      <div class="signature">
+        <p>Cachet & Signature Directeur</p>
+        </br>
+        </br>
+        </br>
+        <p style="height: 60px">_________________________</p>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>&copy; 2024 Lilium Pharma Algérie. Tous droits réservés.</p>
+    </div>
+  </body>
+</html>

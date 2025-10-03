@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Success</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <style>
+        .success-container {
+            max-width: 800px;
+            margin: auto;
+            padding: 2rem;
+            border-radius: 8px;
+            background: #f9f9f9;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn-primary {
+            background-color: #427b3b; /* Vert clair */
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #10B981; /* Vert plus foncé */
+        }
+        .rtl {
+            direction: rtl;
+            text-align: right;
+        }
+        .lang-section {
+            margin-bottom: 2rem;
+        }
+        .form-section {
+            margin-top: 2rem;
+        }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #427b3b; /* Vert clair */
+            color: #fff;
+            padding: 1rem;
+            text-align: center;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .navbar a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+        .navbar svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+        .spacer {
+            margin-top: 4rem; /* Spacing for content below the fixed navbar */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="navbar">
+        <a href="https://app.liliumpharma.com/admin/downloads/downloadable/">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="text-white">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Retour à l'administration  |   العودة إلى الإدارة
+        </a>
+    </div>
+    <div class="spacer"></div> 
+    <div class="success-container">
+        <svg class="mx-auto h-12 w-12 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <div class="lang-section">
+            <h1 class="text-2xl font-bold mb-4 text-center">
+                Téléchargement réussi !
+            </h1>
+            <p class="text-lg mb-6 text-center">
+                Vos fiches de paie ont été téléchargées avec succès et sont désormais disponibles pour consultation.
+            </p>
+        </div>
+        <div class="lang-section rtl">
+            <h1 class="text-2xl font-bold mb-4 text-center">
+                تم رفع الملفات بنجاح!
+            </h1>
+            <p class="text-lg mb-6 text-center">
+                تم تحميل كشوف الرواتب بنجاح وهي الآن متاحة للمراجعة.
+            </p>
+        </div>
+
+        <div class="text-center">
+            <a href="https://app.liliumpharma.com/admin/downloads/downloadable/" class="btn-primary py-2 px-4 rounded-md text-lg font-semibold">
+                Retour à l'administration / العودة إلى الإدارة
+            </a>
+        </div>
+
+        <div class="text-center mt-6">
+            <a href="{% url 'upload_folder' %}" class="btn-primary py-2 px-4 rounded-md text-lg font-semibold">
+                Télécharger un autre fichier ZIP / تحميل ملف ZIP آخر
+            </a>
+        </div>        
+    </div>
+</body>
+</html>

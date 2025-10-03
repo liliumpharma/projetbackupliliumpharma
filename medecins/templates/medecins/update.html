@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block body%}
+
+<div class="container py-3">
+        <div class="alert alert-success">
+       A: potentiel,  prescripteur fidèle   عنده مرضى كثير، و يصف بصفة دائمة, ومهم جدا في المنطقه  
+       <br/>B: nombres de malades élevé,  prescripteur de nos produits et les concurrents     عدد المرضى كبير،  يصف منتوجاتنا و منتوجات المنافسين 
+       <br/>C: nombre de malades faible, prescripteur  عدد مرضى قليل،  لكنه يصف بشكل قلبل( مره في الاسبوع)  
+       <br/>D: nombre de malades faibles,  prescription faible  عدد المرضى و الوصفات قليل جدا  
+
+    </div>
+  <form method="post">
+    {% csrf_token %}
+    <div class="row">
+      <div class="col-md-6 pb-2">
+         doctor or pharmacy name:
+        {{form.nom}}
+      </div>
+     <div class="col-md-6 pb-2">
+        responsable:
+        {{form.contact}}
+      </div>
+      <div class="col-md-6 pb-2">
+        specialite:
+        {{form.specialite}}
+      </div>
+      <div class="col-md-6 pb-2">
+        classification:
+        {{form.classification}}
+      </div>
+      <div class="col-md-6 pb-2">
+        telephone:
+        {{form.telephone}}
+      </div>
+      <div class="col-md-6 pb-2">
+        email:
+        {{form.email}}
+      </div>
+      <div class="col-md-6 pb-2">
+        Nouvelle wilaya:
+        <select class="wilaya">
+          <option disabled selected> choisir</option>
+        </select>
+        <small class="text-info">Si la wilaya n'est pas selectioné le systeme gardera l'ancienne wilaya du medecin</small>
+      </div>
+      <div class="col-md-6 pb-2">
+        Nouvelle commune:
+        <select class="commune">
+          <option disabled selected> choisir</option>
+        </select>
+      </div>
+      <small class="text-info">Si la commune n'est pas selectioné le systeme gardera l'ancienne commune du medecin</small>
+      <div class="col-md-6 pb-2">
+        adresse:
+        {{form.adresse}}
+      </div>
+      <div class="col-md-6 pb-2">
+        flag:
+        {{form.flag}}
+      </div>
+      <div class="col-md-6 pb-2">
+        <br>
+          {{form.errors.as_p}}
+        <input type="submit" value="sauvgarder">
+      </div>
+    </div>
+
+
+
+<div class="d-none">
+  {{form.commune}}
+
+</div>
+
+
+
+  </form>
+</div>
+
+{% endblock body%}
+
+{% block scripts %}
+   <script>
+    $(document).ready(function(){
+      var pays;
+      get_wilayas=async()=>{
+        await fetch('/regions/pays/api')
+        .then(response=>response.json())
+        .then(response=>{
+          pays=response
+          console.log(pays)
+          $('.wilaya').append(
+            pays{% if request.user.userprofile.commune.wilaya.pays.id == 1 %}[0]{%else%}[1]{%endif%}.wilayas_list.map(wilaya=>(
+              `<option value="${wilaya.id}">${wilaya.nom}</option>`
+            ))
+          )
+        })
+      }
+      get_wilayas();
+    $('.wilaya').change(function(){
+        $('.commune').html('')
+      pays{% if request.user.userprofile.commune.wilaya.pays.id == 1 %}[0]{%else%}[1]{%endif%}.wilayas_list.map(wilaya=>{
+        if(wilaya.id==$(this).val())
+        {
+          $('#id_commune option[value="'+wilaya.communes[0].id+'"]').prop('selected', true);
+          $('.commune').append(wilaya.communes.map(commune=>(
+          `<option value="${commune.id}">${commune.nom}</option>`
+        )))
+        }
+      })
+
+    })
+    $('.commune').change(function(){
+      $('#id_commune option[value="'+$(this).val()+'"]').prop('selected', true);
+    })
+    })
+  </script>
+{% endblock scripts %}
+
+
+{% block styles %}
+<style>
+  input[type=email],input[type=text], select {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  input[type=submit] {
+    width: 100%;
+    background-color: #4CAF50;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  input[type=submit]:hover {
+    background-color: #45a049;
+  }
+</style>
+{% endblock styles %}

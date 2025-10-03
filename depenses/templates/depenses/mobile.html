@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/styles.css'%}">
+    <link rel="stylesheet" href="{% static 'css/toast/vanilla-toast.css'%}">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
+
+  
+    {%block styles%}
+    {%endblock styles%}
+    <title>{% block title %}{%endblock title%}</title>
+  </head>
+<body>
+{% block body %}{%endblock body%}
+<script src="{% static 'js/jquery.min.js'%}"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+<script src="{% static 'js/toast/vanilla-toast.js'%}"></script>
+{% block scripts %}{%endblock scripts%}
+{% csrf_token %}
+<style>
+  @keyframes blink {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.blinking-btn {
+  animation: blink 1.5s infinite; /* You can adjust the duration and other properties */
+}
+
+</style>
+<div id="liste"  style="padding: 5px;">
+  <div class="d-flex flex-column justify-content-between align-items-center">
+
+    <div class="col-12 text-end" style="background-color: green;">
+      <h2 style="color: white; text-align: center; margin: 0;">Dépenses</h2>
+      <h2 style="color: white; text-align: center; margin: 0;">مصاريف</h2>
+    </div>
+
+  </div>
+
+  
+  
+
+  <!-- <button id="add_spend" class="btn btn-success col-12 d-block" style="text-align: center;">
+    <a href="#new_spend" style="color: white;">+ Ajouter une nouvelle dépense</a>
+    <br>
+    <a href="#new_spend" style="color: white;">إضافة ورقة مصروف +</a>
+  </button> -->
+  <style>
+    @media (max-width: 600px) {
+  #filter .col-12 {
+    width: 100%;
+  }
+}
+
+  </style>
+  <div class="mt-4">
+    <div id="filter" class="mt-5 mb-4">
+      <div class="col-12 mb-3">
+        <label for="search_user">Utilisateur</label>
+        <select class="form-control" type="search" id="search_user">
+          <option value="-1" disabled>Choisir un utilisateur</option>
+        </select>
+      </div>
+      <div class="col-12 mb-3">
+        <label for="status_filter">Confirmation</label>
+        <select name="confirmation_filter" id="status_filter" class="form-control">
+          <option value="1">Tout</option>
+          <option value="2">Confirmé</option>
+          <option value="3">En attente</option>
+          <option value="3">Traité</option>
+        </select>
+      </div>
+      <div class="col-12 mb-3">
+        <label for="date_debut">Date début</label>
+        <input class="form-control" type="date" id="date_debut">
+      </div>
+      <div class="col-12 mb-3">
+        <label for="date_fin">Date fin</label>
+        <input class="form-control" type="date" id="date_fin">
+      </div>
+    </div>
+    <div class="d-flex" style="justify-content: space-between;">
+      <h5 class="text-left" style="color:green"><u> Liste de vos dépenses:</u>(<span id="total">0</span>)</h5>
+      <h5 class="text-right" style="color:green"><u>(<span id="total2">0</span>):قائمة النفقات الخاصة بك</u></h5>
+    </div>
+  </div>
+  <div class="row col-12 " style="margin-top: 3px; margin-right: auto; margin-left: auto;">
+    <button id="add_spend" class="btn btn-success text-end blinking-btn" style="padding: -30px;width: 100%;">
+      <a href="#new_spend" style="color: white;">+ Ajouter une nouvelle dépense</a>
+      <br>
+      <a href="#new_spend" style="color: white;">إضافة مصروف +</a>
+    </button>
+  </div>
+  <div id="parentElementId"></div>
+</div>
+
+  <form id="myForm" enctype="multipart/form-data">
+
+    <div id="container" class="container" style="display: none;">
+      <div class="d-flex">
+        <img id="return" src="/static/img/return.png" alt="Print" style="color: white; margin-right: 5px;" width="35px" height="35px" >
+        <h4 class="text-left font-weight-bold mb-4">Nouvelle dépense !</h4>
+      </div>
+      <div id="new_spend" class="d-flex flex-column flex-md-row mb-3">
+        <h4 id="month" class="text-left font-weight-bold">Modèle de dépenses pour le mois :</h4>
+      </div>
+
+      <div class="card border-success" style="padding: 5px;">
+        <h5 style="margin-left: auto; margin-right: auto;">Partie 1</h5>
+        <!-- PARTIE1 -->
+        <div id="partie1">
+          <div class="mb-3">
+            <div class="d-flex flex-column flex-md-row mb-3">
+              <div class="col-md-4 custom-mobile-width order-1 order-md-1">
+                <h5  id="inscrit" class="card-title font-weight-bold text-left">Inscrit sur le logiciel N°: </h5>
+              </div>
+              <div class="col-md-4 custom-mobile-width order-3 order-md-2">
+                <input id="log_number" class="form-control" type="number" oninput="this.value = this.value.replace(/[^0-9]/g, '');" >
+              </div>
+              <div class="col-md-4 custom-mobile-width order-2 order-md-3">
+                <h5 class="card-title font-weight-bold text-right">:مسجل على البرنامج رقم</h5>
+              </div>
+            </div>
+
+
+            <div class="d-flex flex-column flex-md-row mb-3"> 
+
+              <div class="col-md-4 custom-mobile-width order-1 order-md-1">
+                <h5 class="card-title font-weight-bold text-left">Type de dépense : </h5>
+              </div>
+              <div class="col-md-4 custom-mobile-width order-3 order-md-2">
+                <select name="spend_type_select" id="spend_type" class="form-control">
+                  <option value="0">------</option>
+                  <option value="1">Déplacement</option>
+                  <option value="2">Semi-déplacement</option>
+                  <option value="3">Autre</option>
+                </select>
+              </div>
+              <div class="col-md-4 custom-mobile-width order-2 order-md-3">
+                <h5 class="card-title font-weight-bold text-right"> : نوع المصروف</h5>
+              </div>
+            </div>
+          </div>
+          <div class="mt-2">
+            <textarea class="form-control mb-3" style="display: none;" name="custom_spend_type" id="textareaOption" cols="30" rows="5" placeholder="Entrez ici la raison de votre dépense"></textarea>
+          </div>
+          <div id="deplacement" class="flex-column flex-md-row mb-3" style="padding: 20px; align-items: center;display: none;">
+            <label for="depart">Wilaya de départ:</label>
+            <select id="depart" class="form-control">
+              <option value="1" disabled selected>Choisir une wilaya</option>
+            </select>
+
+            <br>
+
+            <label for="arrivee">Wilaya d'arrivée:</label>
+            <select id="arrivee" class="form-control">
+              <option value="1" disabled selected>Choisir une wilaya</option>
+            </select>
+
+            <br>
+
+            <div class="d-flex" style="text-align: center; justify-content: center;">
+              <p class="text-center">Distance: <span style="color: green; margin-right: 3px;" id="dist">-</span></p>
+              <p class="text-center">Marge: <span style="color: green;  margin-left: 3px;" id="marge">-</span></p>
+            </div>
+            <p class="text-center">Distance approximative : <span style="color: green;" id="distance">-</span></p>
+            <div id="alert_deplacement" class="alert alert-danger" role="alert" style="display: none;">
+              <h6>Vous devez utiliser le type de dépense DEPLACEMENT pour les distances de plus de 100km</h6>
+              <h6>في المسافات التي تتجاوز 100 كم DEPLACEMENT يجب عليك استخدام نوع المصروف </h6>
+            </div>
+
+            <div id="alert_semi_deplacement" class="alert alert-danger" role="alert" style="display: none;">
+              <h6>Vous devez utiliser le type de dépense SEMI-DEPLACEMENT pour les distances de moins de 100km</h6>
+              <h6>في المسافات التي لا تتجاوز 100 كم SEMI-DEPLACEMENT يجب عليك استخدام نوع المصروف </h6>
+            </div>
+
+          </div>
+
+
+          <div class="d-flex flex-column flex-md-row mb-3">
+            <div class="col-md-4 custom-mobile-width order-1 order-md-1">
+              <h5 id="name" class="card-title font-weight-bold text-left">Versé à (le bénéficiaire) : </h5>
+            </div>
+            <div class="col-md-4 custom-mobile-width order-3 order-md-2">
+              <input id="name_input" type="text" class="form-control" placeholder="Nom du bénéficiaire">
+            </div>
+            <div class="col-md-4 custom-mobile-width order-2 order-md-3">
+              <h5 class="card-title font-weight-bold text-right"> : يصرف لـ (المستفيد)</h5>
+            </div>
+          </div>
+          <div class="d-flex flex-column flex-md-row mb-3">
+            <div class="col-md-4 custom-mobile-width order-1 order-md-1">
+              <h5 class="card-title font-weight-bold text-left">Attachement : </h5>
+            </div>
+            <div class="col-md-4 custom-mobile-width order-3 order-md-2">
+              <input type="file" id="attachment" name="attachment">
+            </div>
+            <div class="col-md-4 custom-mobile-width order-2 order-md-3">
+              <h5 class="card-title font-weight-bold text-right" >  : الورقة الثبوتية </h5>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PARTIE 2 -->
+        <div class="card border-success mt-4" style="padding: 5px;">
+          <h5 style="margin-left: auto; margin-right: auto;">Partie 2</h5>
+          <div class="d-flex flex-column flex-md-row mb-3">
+            <div class="col-md-4 custom-mobile-width order-1 order-md-1">
+              <h5>Tarif dépensé :</h5>
+            </div>
+            <div class="d-flex flex-column flex-md-row custom-mobile-width order-3 order-md-2">
+              <h5>دج</h5>
+              <input id="numberInput" class="form-control" type="text" placeholder="Tarif en dinars Algerien | السعر بالدينار الجزائري" oninput="this.value = this.value.replace(/[^0-9.,]/g, '');">
+              <h5>DA</h5>
+            </div>
+            <div class="col-md-4 custom-mobile-width order-2 order-md-3 justify-content-end">
+              <h5 class="card-title font-weight-bold text-right">المبلغ المدفوع</h5>
+            </div>
+            
+          </div>
+          <p class="text-center">Tarif en lettres : <span style="color: green; font-weight: 800;" id="letterOutput">-</span></p>
+          <!-- <textarea class="form-control mt-2" id="letterOutput" rows="3" placeholder="Tarif en lettre" readonly></textarea> -->
+        </div>
+
+      <!-- PARTIE 3 -->
+        <div class="card border-success mt-4" style="padding: 5px;">
+          <h5 style="margin-left: auto; margin-right: auto;">Partie 3</h5>
+          <div class="d-flex">
+            <div class="col-6">
+              <h5 class="card-title font-weight-bold text-left">Mode de paiement:</h5>
+            </div>
+            <div class="col-6">
+              <h5 class="card-title font-weight-bold text-right"> : طريقة الدفع</h5>
+            </div>
+          </div>
+          <div class="d-flex flex-column flex-md-row mb-3"  style="margin-left: auto; margin-right: auto;">
+            <div class="form-check d-flex justify-content-between">
+              <div class="col-md-6">
+                <input class="form-check-input" type="radio" name="options" id="option1" value="option1">
+                <label class="form-check-label" for="option1">Virement bancaire</label>
+              </div>
+            
+              <div class="col-md-4">
+                <input class="form-check-input" type="radio" name="options" id="option2" value="option2">
+                <label class="form-check-label" for="option2">Chéque</label>
+              </div>
+            
+              <div class="col-md-4">
+                <input class="form-check-input" type="radio" name="options" id="option3" value="option3">
+                <label class="form-check-label" for="option3">Espèces</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      <!-- PARTIE 4 -->
+        <div class="card border-success mt-4" style="padding: 5px;">
+          <h5 style="margin-left: auto; margin-right: auto;">Partie 4</h5>
+          <div class="d-flex flex-column flex-md-row mb-3">
+            <h5>La nature de la dépense :</h5>
+            <h5 class="ml-auto">طبيعة المصروف</h5>
+          </div>
+          <textarea id="nature_depense" name="nature_depense" class="form-control mt-2" id="nature_depense" cols="30" rows="5" placeholder="Ecrire ici la nature de la dépense" ></textarea>
+
+        </div>
+        <div style="align-items: center; ">
+          <button id="vali" type="submit" class="btn btn-success col-12 mt-5" style="align-self: center; text-align: center;">
+            <a href="" style="color: white;">Valider la dépense !</a>
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+  </div>
+
+<style>
+.clignotant {
+  animation: clignoter 1s infinite;
+  color: red;
+}
+
+@keyframes clignoter {
+  0% {
+    opacity: 1;
+    color: red;
+  }
+  50% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+    color: red;
+  }
+}
+
+</style>
+
+</body> 
+
+<div>{{ errors }}</div>
+
+<script>
+  var h4Element = document.getElementById("today");
+  var currentDate = new Date();
+  var formattedDate = currentDate.toISOString().slice(0, 10);
+  h4Element.textContent += formattedDate;
+</script>
+<script>
+  var monthElement = document.getElementById("month");
+  var currentMonth = new Date().getMonth() + 1 ;
+  monthElement.textContent +="    "+currentMonth;
+</script>
+<script>
+  var selectOption = document.getElementById("spend_type");
+  var textareaOption = document.getElementById("textareaOption");
+  var deplacement = document.getElementById("deplacement");
+
+  selectOption.addEventListener("change", function() {
+    // Obtenez la valeur de l'option sélectionnée
+    var selectedOption = selectOption.value;
+
+    if (selectedOption === "3") {
+      textareaOption.style.display = "block";
+    } else {
+      textareaOption.style.display = "none";
+    }
+
+    if (selectedOption === "1" || selectedOption === "2") {
+      deplacement.style.display = "block";
+    } else {
+      deplacement.style.display = "none";
+    }
+
+  });
+ form = document.getElementById("container")
+ base_container = document.getElementById("liste")
+ var add_spend = document.getElementById("add_spend").addEventListener("click", function(){
+  base_container.style.display="none"
+  form.style.display="block"
+  this.style.display="none"
+  location.href="#new_spend"
+ })
+ var return_spend = document.getElementById("return").addEventListener("click", function(){
+  base_container.style.display="block"
+  form.style.display="none"
+  this.style.display="none"
+  add_spend_2 = document.getElementById("add_spend")
+  add_spend_2.style.display="block"
+  location.href="#new_spend"
+ })
+ 
+</script>
+
+<!-- SCRIPT DE CALCUL DES DISTANCE ENTRE LES WILAYAS -->
+<script>
+  var selectOption = document.getElementById("spend_type");
+  var textareaOption = document.getElementById("textareaOption");
+  var deplacement = document.getElementById("deplacement");
+  var departSelect = document.getElementById("depart");
+  var arriveeSelect = document.getElementById("arrivee");
+  var distanceSpan = document.getElementById("distance");
+  var dist = document.getElementById("dist");
+  var mar = document.getElementById("marge");
+  var alert_deplacement = document.getElementById("alert_deplacement");
+  var alert_semi_deplacement = document.getElementById("alert_semi_deplacement");
+
+  function chargerJSON(callback) {
+    const xhr = new XMLHttpRequest();
+    xhr.overrideMimeType("application/json");
+    xhr.open('GET', '/static/wilaya_position.json', true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        callback(xhr.responseText);
+      }
+    };
+    xhr.send(null);
+  }
+
+  chargerJSON(function (response) {
+    const wilayas = JSON.parse(response);
+
+    function calculerDistance() {
+      const depart = departSelect.value;
+      const arrivee = arriveeSelect.value;
+
+      const lat1 = wilayas[depart].latitude;
+      const lon1 = wilayas[depart].longitude;
+      const lat2 = wilayas[arrivee].latitude;
+      const lon2 = wilayas[arrivee].longitude;
+
+      const R = 6371; // Rayon de la Terre en km
+      const dLat = deg2rad(lat2 - lat1);
+      const dLon = deg2rad(lon2 - lon1);
+
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distance = R * c;
+
+      if (distance < 100 && selectOption.value == "1") {
+        distanceSpan.style.color = "red";
+        distanceSpan.classList.add("clignotant");
+        alert_deplacement.style.display="block"
+      } else {
+        distanceSpan.classList.remove("clignotant");
+        alert_deplacement.style.display="none"
+        distanceSpan.style.color = "green";
+      }
+
+      if (distance > 100 && selectOption.value == "2") {
+        distanceSpan.style.color = "red";
+        distanceSpan.classList.add("clignotant");
+        alert_semi_deplacement.style.display="block"
+      } else {
+        if((distance < 100 && selectOption.value == "2")){
+          distanceSpan.classList.remove("clignotant");
+          alert_semi_deplacement.style.display="none"
+          distanceSpan.style.color = "green";
+        }
+      }
+
+      marge = (distance / 10).toFixed(2);
+        
+      distance_total = (parseFloat(distance.toFixed(2)) + parseFloat(marge)).toFixed(2);
+      dist.textContent = distance.toFixed(2) + " km"; // Formatage de distance
+      mar.textContent = marge + " km"; // Formatage de marge
+      distanceSpan.textContent = distance_total + " km"; // Formatage de distance_total
+
+    }
+
+    function deg2rad(deg) {
+      return deg * (Math.PI / 180);
+    }
+
+    selectOption.addEventListener("change", function() {
+      var selectedOption = selectOption.value;
+
+      if (selectedOption === "3") {
+        textareaOption.style.display = "block";
+      } else {
+        textareaOption.style.display = "none";
+      }
+
+      if (selectedOption === "1" || selectedOption === "2") {
+        deplacement.style.display = "block";
+      } else {
+        deplacement.style.display = "none";
+      }
+
+      calculerDistance();
+    });
+
+    departSelect.addEventListener("change", calculerDistance);
+    arriveeSelect.addEventListener("change", calculerDistance);
+    selectOption.dispatchEvent(new Event("change"));
+  });
+</script>
+<!-- --------------------------- -->
+
+<!-- SCRIPT POUR CHARGER LES WILAYA DANS LES SELECT  -->
+<script>
+  const departSelect_ = document.getElementById("depart");
+  const arriveeSelect_ = document.getElementById("arrivee");
+  const distanceSpan_ = document.getElementById("distance");
+
+  // Fonction pour charger le fichier JSON
+  function chargerJSONN(callback) {
+    const xhr = new XMLHttpRequest();
+    xhr.overrideMimeType("application/json");
+    xhr.open('GET', '/static/wilaya.json', true);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          callback(JSON.parse(xhr.responseText));
+        } else {
+          console.error("Erreur lors du chargement du fichier JSON.");
+        }
+      }
+    };
+    xhr.send(null);
+  }
+
+  // Fonction pour ajouter les options au menu déroulant
+  function ajouterOptions(selectElement, wilayas) {
+    wilayas.forEach(function (wilaya) {
+      const option = document.createElement("option");
+      option.value = wilaya;
+      option.text = wilaya;
+      selectElement.appendChild(option);
+    });
+  }
+
+  // Charger les wilayas et ajouter les options au chargement de la page
+  document.addEventListener("DOMContentLoaded", function () {
+    chargerJSONN(function (data) {
+      console.log(data)
+      if (data && data.wilayas && Array.isArray(data.wilayas)) {
+        const wilayasList = data.wilayas;
+        ajouterOptions(departSelect_, wilayasList);
+        ajouterOptions(arriveeSelect_, wilayasList);
+      } else {
+        console.error("Le fichier JSON ne contient pas les données attendues.");
+      }
+    });
+  });
+</script>
+<!-- ------------------------------------ -->
+
+<!-- SCRIPT POUR CONVERTIR LES TARIFS EN LETTRES -->
+<script>
+    function convertToWords(number) {
+      const words = [
+        "", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix",
+        "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"
+      ];
+    
+      const tensWords = [
+        "", "", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante-dix", "quatre-vingt", "quatre-vingt-dix"
+      ];
+    
+      const unitWords = [
+        "", "mille", "million", "milliard"
+      ];
+    
+      let result = "";
+    
+      if (number === "0") {
+        result = "zéro";
+      } else {
+        const num = parseFloat(number.replace(',', '.'));
+        let integerPart = Math.floor(num);
+        const decimalPart = Math.round((num - integerPart) * 100);
+      
+        let unitIndex = 0;
+      
+        while (integerPart > 0) {
+          const currentPart = integerPart % 1000;
+        
+          if (currentPart > 0) {
+            if (result !== "") {
+              result = " et " + result;
+            }
+          
+            if (currentPart < 20) {
+              result = words[currentPart] + " " + unitWords[unitIndex] + " " + result;
+            } else {
+              const hundreds = Math.floor(currentPart / 100);
+              const tens = Math.floor((currentPart % 100) / 10);
+              const ones = currentPart % 10;
+            
+              let partResult = "";
+            
+              if (hundreds > 0) {
+                partResult = words[hundreds] + " cent";
+              }
+            
+              if (tens === 7 || tens === 9) {
+                if (ones === 0) {
+                  partResult += " " + tensWords[tens];
+                } else {
+                  partResult += " " + tensWords[tens - 1] + "-" + words[10 + ones];
+                }
+              } else {
+                if (tens > 0) {
+                  partResult += " " + tensWords[tens];
+                }
+                if (ones > 0) {
+                  partResult += "-" + words[ones];
+                }
+              }
+            
+              result = partResult + " " + unitWords[unitIndex] + " " + result;
+            }
+          }
+        
+          integerPart = Math.floor(integerPart / 1000);
+          unitIndex++;
+        }
+      
+        if (decimalPart > 0) {
+          if (result !== "") {
+            result += " et ";
+          }
+          result += decimalPart + "/100 dinars";
+        }
+      }
+    
+      document.getElementById("letterOutput").textContent = result + "DINARS ALGERIEN";
+    }
+
+
+
+      // Récupérer l'élément d'entrée
+      const numberInput = document.getElementById("numberInput");
+
+    // Ajouter un gestionnaire d'événements pour l'événement "input"
+    numberInput.addEventListener("input", function() {
+      // Appeler la fonction de conversion lorsque l'entrée change
+      convertToWords(this.value);
+    });
+</script>
+<!-- ------------------------------------------------- -->
+
+
+
+<!----------------------------- VALIDATION DEPENSE -->
+<script>
+  function confirmation(spendId) {
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  const btn_validate = document.getElementById("valider_div")
+  if (confirm("Voulez-vous vraiment confirmer cette dépense ?")) {
+    fetch(`api/confirm_spend/${spendId}/`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken,
+      },
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.message === "Statut de la dépense mis à jour avec succès.") {
+        btn_validate.classList.add("d-none")
+        alert("La dépense a été confirmée !");
+        change_status(spendId)
+        } else {
+              alert("Impossible de mettre à jour le statut de la dépense.");
+            }
+          })
+          .catch(error => {
+            console.error('Erreur lors de la mise à jour du statut de la dépense :', error);
+          });
+          } else {
+            alert("La dépense n'a pas été confirmée.");
+          }
+          // window.location.reload()
+      }
+  function change_status(spendId){
+    var statusCard = document.getElementsByName("status_"+spendId)
+    var newContent = `Status : <span style="color: green;"><i class="fas fa-check-circle" style="color: green;"></i> Confirmé</span>`;
+    statusCard[0].innerHTML = newContent;
+    filterCardsByStatus()
+  }
+</script>
+<!----------- FETCHING SPENDS ------------->
+<style>
+  /* Style de l'icône grise */
+.gray-icon {
+    color: gray; /* Vous pouvez personnaliser la couleur grise selon vos préférences */
+}
+.comment-card {
+    background-color: #f0f0f0;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    display: flex;
+    position: relative;
+    margin-top: 10px; /* Ajout du margin-top de 5px */
+
+}
+
+/* Style de la div contenant les informations de l'utilisateur et de la date */
+.user-info {
+    text-align: right;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}
+
+/* Style de la div contenant l'icône et le commentaire */
+.comment-content {
+    display: flex;
+    align-items: center;
+    margin-top: 15px;
+}
+
+/* Style pour le texte en petit (user et date) */
+.small-text {
+    font-size: 12px;
+    color: gray;
+}
+
+.gray-icon {
+    margin-right: 14px; /* Ajout du margin-right de 4px */
+}
+</style>
+<script>
+  let cardCounter = 1;
+  document.addEventListener("DOMContentLoaded", function() {
+    fetch('https://app.liliumpharma.com/depenses/spends/')
+    .then((response) => response.json())
+    .then((data) => {
+      total = document.getElementById("total")
+      total2 = document.getElementById("total2")
+      length = data.length-1
+      Total= data[length].total;
+      total.textContent = Total
+      total2.textContent = Total
+        const parentElement = document.getElementById('parentElementId'); 
+
+        const itemsToDisplay = data.slice(0, -1);
+
+        itemsToDisplay.forEach((item) => {
+            const card = document.createElement('div');
+            card.classList.add('card');
+            card.style.display = 'block'
+            card.style.backgroundColor = '#CFCFCF'
+            card.style.marginTop = '10px'
+            card.style.marginBottom = '10px'
+            card.id = `card_${cardCounter}`;
+            cardCounter++;
+            card.style.padding = '10px';
+              const attachementLink = item.attachement !== "null"
+                ? `<a href="${item.attachement}" target="_blank">Voir l'attachement</a>`
+                :  '<span style="color: red;">Aucun attachement</span>';
+
+            const administrationCommentDiv = document.createElement('div');
+            administrationCommentDiv.id = `administration_comment_${item.id}`;
+            card.innerHTML = `
+            <div class="d-flex" style="background-color: white;">
+              <div class="col-md-11" style="margin-top: 10px; margin-bottom: 10px;">
+                <div class="card">
+                  <div class="card-header d-flex justify-content-between" style="background-color: #228B22;">
+                    <h6 class="text-left font-weight-bold" style="color:white"> <strong> ID:<span id="id_spend_${item.id}"> ${item.id}</span>  </strong></h6>
+                    ${item.status.toLowerCase() !== "confirmé" ? `
+                      <div id="valider_div" style="background-color:white; width: 78px; border-radius: 20px; display: flex; align-items: center; justify-content: center;">
+                        <button id="valider" class="btn" style="background-color: transparent; border: none;" onclick="confirmation(${item.id})">
+                          <h6 class="text-left font-weight-bold" style="color: #228B22; text-align: center; margin: 0;">Valider</h6>
+                        </button>
+                      </div>
+                    ` : ''}
+                  </div>
+                  <div class="card-body">
+                    <div style="display: flex; justify-content: space-between;">
+                      <div>
+                        <h6 class="text-left "><strong>Date: </strong><span id="card_date">${item.added}</span></h6>
+                        <h6 class="text-left"><strong>Ajouté par: </strong><h6 id="card_user">${item.user}</h6></h6>
+                      </div>
+                      <button id="print" class="btn" style="background-color: transparent; border: none;" onclick="print(${item.id})">
+                        <img src="/static/img/printer.png" alt="Print" style="color: white" width="25px" height="25px">
+                      </button>
+                    </div>
+                    <h6 class="text-left"><strong>Type de dépense: </strong>${item.spend_type}</h6>
+                    <h6 class="text-left"><strong>Tarif dépensé: </strong>${item.price} DA</h6>
+                    <h6 class="text-left"><strong>Attachement: </strong>${attachementLink}</h6>
+
+                    <hr style="border-color: green;">
+                    <div id="to_display_${item.id}" class="d-none">
+                      <div class="row">
+                        <div class="col-md-6">
+                          <h6 class="text-left font-weight-bold"><strong>Inscrit sur le logiciel N°: </strong>${item.log_number}</h6>
+                          <h6 class="text-left"> <strong> Pour le bénéficiaire: </strong>${item.spender}</h6>
+                        </div>
+                        <div class="col-md-6">
+                          <h6 class="text-left"> <strong> Nature de la dépense: </strong>${item.nature_depense || "-"}</h6>
+                          <h6 class="text-left"> <strong> Mode de paiement : </strong>${item.way_of_payment}</h6>
+                        </div>
+                      </div>
+                      <hr style="border-color: green;">
+                      ${item.spend_type.toLowerCase() === "autre" ? 
+                        `<h6 class="text-left"><strong>Autre type de dépense:</strong> ${item.other_spend_reason}</h6>` :
+                        `<div>
+                           <h6 class="text-left"><strong>Départ:</strong> ${item.departure}</h6>
+                           <h6 class="text-left"><strong>Arrivée:</strong> ${item.arrival}</h6>
+                           <h6 class="text-left"><strong>Distance:</strong> ${item.distance}</h6>
+                        </div>`
+                      }
+                      <hr style="border-color: green;">
+                      <h6 class="text-left"> <strong> Tarif dépensé: </strong>${item.price} DA</h6>
+                      <h6 class="text-left"> <strong> Tarif en lettres: </strong>${item.price_in_letters || "-"}</h6>
+                      <h6 name="status_${item.id}" id="status_card" class="text-left"> <strong> Status: </strong>
+                        ${item.status.toLowerCase() === "confirmé" ? 
+                          `<span style="color: green;"><i class="fas fa-check-circle" style="color: green;"></i> ${item.status}</span>` :
+                          `<span style="color: #ff6700;"><i class="fas fa-exclamation-circle" style="color: #ff6700;"></i> ${item.status}</span>`
+                        }
+                      </h6>
+                      <hr style="border-color: green;">
+                      <h6 id="" class="text-left"> <strong> Administration Comment: </strong></h6>
+                      <div id="administration_comment_${item.id}"></div>
+                      <div class="d-flex">
+                        <textarea class="form-control" id="comment_${item.id}" rows="1"></textarea>
+                        <button id="send_comment_${cardCounter}" class="btn send-comment-button" style="background-color: transparent; border: none" onclick="add_comment(${item.id})">
+                          <img src="/static/img/icons/envoyer.png" width="20px" height="20px" alt="send button">
+                        </button>
+                      </div>
+                    </div>
+                    <button class="btn btn-outline" style="color: transparent; position: relative;  margin-left:50%" onclick="display_details(${item.id})">
+                      <div class="position-absolute top-50 start-50 translate-middle" style="color: white;">
+                        <img id="return_${item.id}" src="/static/img/down.png" alt="see_more" width="20px" height="20px">
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            `;
+            // FETCHING ADMINISTRATION COMMENTS FOR CARDCOUNTER CARD
+            fetch('https://app.liliumpharma.com/depenses/api/GetSpendComment/?id='+item.id)
+            .then((response) => response.json())
+            .then((data) => {
+              const itemsToDisplay = data.slice(0, -1);
+              const administrationCommentDiv = document.getElementById(`administration_comment_${item.id}`);
+
+
+              data.forEach((commentData) => {
+                const comment = commentData.comment;
+              const date = commentData.date;
+              const user = commentData.user;
+
+              // Create a new div element for each comment
+              const commentDiv = document.createElement('div');
+              commentDiv.classList.add('comment');
+
+              // Create a card element for the comment content
+              const commentCard = document.createElement('div');
+              commentCard.classList.add('comment-card');
+
+              // Create a div for the user and date info
+              const userInfoDiv = document.createElement('div');
+              userInfoDiv.classList.add('user-info');
+
+              // Create a text element for the user (small)
+              const userText = document.createElement('span');
+              userText.textContent = `Ajouté par: ${user}   |`;
+              userText.classList.add('small-text');
+
+              // Create a text element for the date (small)
+              const dateText = document.createElement('span');
+              dateText.textContent = `  Le: ${date}`;
+              dateText.classList.add('small-text');
+
+              // Create a div for the comment content
+              const commentContentDiv = document.createElement('div');
+              commentContentDiv.classList.add('comment-content');
+
+              // Create a user icon element (e.g., a font-awesome icon)
+              const userIcon = document.createElement('i');
+              userIcon.classList.add('fa', 'fa-user', 'gray-icon');
+
+              // Create a text element for the comment content
+              const commentText = document.createElement('span');
+              commentText.textContent = comment;
+
+              // Append the user icon to the commentContentDiv
+              commentContentDiv.appendChild(userIcon);
+
+              // Append the comment text to the commentContentDiv
+              commentContentDiv.appendChild(commentText);
+
+              // Append the user and date info to the userInfoDiv
+              userInfoDiv.appendChild(userText);
+              userInfoDiv.appendChild(dateText);
+
+              // Append the userInfoDiv and commentContentDiv to the commentCard
+              commentCard.appendChild(userInfoDiv);
+              commentCard.appendChild(commentContentDiv);
+
+              // Append the comment card to the comment div
+              commentDiv.appendChild(commentCard);
+
+              // Append the comment div to the administrationCommentDiv
+              administrationCommentDiv.appendChild(commentDiv);
+      });
+
+            })
+              
+            // APPEND CARD
+            parentElement.appendChild(card);
+        });
+      
+    })
+    .catch((error) => {
+        console.error('Erreur lors de la récupération des données :', error);
+    });
+    
+})
+</script>
+<!--------------- FILTER ------------------>
+<!-- // Fonction de filtrage des cartes -->
+<script>
+const dateDebutInput = document.getElementById("date_debut");
+const dateFinInput = document.getElementById("date_fin");
+
+dateDebutInput.addEventListener("input", function(){
+  filterCards();
+  filterCardsByStatus()
+});
+dateFinInput.addEventListener("input", function(){
+  filterCards();
+  filterCardsByStatus()
+});
+function filterCards() {
+  let counter = 0; // Compteur pour les cartes avec display: block
+
+  const today = new Date();
+  const startOfYear = new Date(today.getFullYear(), 0, 1); // Le 1er janvier de l'année courante
+  const endOfYear = new Date(today.getFullYear(), 11, 31); // Le 31 décembre de l'année courante
+
+  const dateDebutValue = dateDebutInput.valueAsDate || startOfYear;
+  const dateFinValue = dateFinInput.valueAsDate || endOfYear;
+
+  for (let i = 1; i <= cardCounter; i++) {
+    const card = document.getElementById(`card_${i}`);
+    
+    if (!card) continue; // Si la carte n'existe pas, passez à la suivante
+
+    const cardDateElement = card.querySelector("#card_date");
+    const cardDateText = cardDateElement.textContent;
+    
+    const cardDate = new Date(cardDateText);
+    if (
+      (dateDebutValue && dateFinValue && cardDate >= dateDebutValue && cardDate <= dateFinValue) || // Les deux dates sont sélectionnées
+      (dateDebutValue && !dateFinValue && cardDate >= dateDebutValue) || // Seule la date de début est sélectionnée
+      (!dateDebutValue && dateFinValue && cardDate <= dateFinValue) // Seule la date de fin est sélectionnée
+    ) {
+      card.style.display = "block";
+      counter++; // Incrémente le compteur
+    } else {
+      card.style.display = "none";
+    }
+  }
+
+  // Affiche le nombre total de cartes filtrées
+  const total = document.getElementById("total");
+  const total2 = document.getElementById("total2");
+  total.textContent = counter;
+  total2.textContent = counter;
+}
+
+filterCards();
+
+
+
+
+// Fonction de filtrage des cartes par statut
+function filterCardsByStatus() {
+  
+  filterCards()
+  let counter = 0; // Compteur pour les cartes avec display: block
+
+  const statusFilter = document.getElementById("status_filter").value;
+  // Parcourez les cartes en utilisant leur ID
+  for (let i = 1; i <= cardCounter; i++) {
+    const card = document.getElementById(`card_${i}`);
+    
+    if (!card) continue; // Si la carte n'existe pas, passez à la suivante
+
+    // Vérifiez si la carte a un style "display: block"
+    if (card.style.display === "block") {
+      // Récupérez le statut de la carte en fonction de son ID "status_card"
+      const cardStatusElement = card.querySelector("#status_card");
+      const cardStatusText = cardStatusElement.textContent.trim();
+      console.log(cardStatusText)
+
+      // Filtrer en fonction du statut sélectionné
+      if (
+        (statusFilter === "1" || // Afficher tout
+         (statusFilter === "2" && cardStatusText.includes("Confirmé")) || // Afficher les confirmés
+         (statusFilter === "3" && cardStatusText.includes("Non confirmé"))) // Afficher les non confirmés
+      ) {
+        card.style.display = "block";
+        counter++; // Incrémente le compteur
+
+      } else {
+        card.style.display = "none";
+      }
+    }
+  }
+  
+    // Affiche le nombre total de cartes filtrées
+  const total = document.getElementById("total");
+  const total2 = document.getElementById("total2");
+  total.textContent = counter;
+  total2.textContent = counter;
+}
+
+function filter_per_user() {
+  let counter = 0
+  const select = document.getElementById("search_user");
+  const search = select.value.toLowerCase();
+  filterCardsByStatus()
+
+  for (let i = 1; i <= cardCounter; i++) {
+    const card = document.getElementById(`card_${i}`);
+
+    if (!card) continue; // Si la carte n'existe pas, passez à la suivante
+
+    const cardUser = card.querySelector("#card_user").textContent.toLowerCase();
+
+
+    if (search === "tous") {
+      // Réinitialisez l'affichage de toutes les cartes
+      card.classList.remove("d-none");
+      counter++;
+    } else if (card.style.display === "block" && cardUser.includes(search)) {
+      card.classList.remove("d-none");
+      counter ++
+      continue;
+    } else {
+      card.classList.add("d-none");
+    }
+  }
+  const total = document.getElementById("total");
+  const total2 = document.getElementById("total2");
+  total.textContent = counter;
+  total2.textContent = counter;
+}
+
+
+document.getElementById("search_user").addEventListener("change", function() {
+  filterCardsByStatus()
+  filterCards()
+  filter_per_user()
+});
+
+// Écoutez les changements d'événements sur le filtre de statut
+document.getElementById("status_filter").addEventListener("change", function(){
+filterCards()
+filterCardsByStatus()
+});
+
+// Appelez la fonction de filtrage par statut initialement pour afficher les cartes en fonction de la sélection par défaut
+filterCardsByStatus();
+
+</script>
+
+
+
+<!-- PREPARING POST REQUEST DATAS -->
+<script>
+  var csrfToken = '{{ csrf_token }}';
+log_number = document.getElementById("log_number")
+spendTypeSelect = document.getElementById("spend_type")
+depart = document.getElementById("depart")
+arrivee = document.getElementById("arrivee")
+distance = document.getElementById("distance")
+name_input = document.getElementById("name_input")
+other_spend_reason = document.getElementById("textareaOption")
+var radioButtons = document.getElementsByName('options');
+nature_depense = document.getElementById('nature_depense');
+numberInputs = document.getElementById('numberInput');
+letterOutput = document.getElementById('letterOutput');
+
+
+  // Récupérez le formulaire par son ID
+  const formulaire = document.getElementById("myForm");
+  const vali = document.getElementById("vali");
+  var logNumberInput = document.getElementById("log_number");
+  var nameInput = document.getElementById("name_input");
+  vali.addEventListener("click", function(event) {
+      event.preventDefault();
+
+      // Récupérez le texte de l'option sélectionnée
+      var selectedIndex = spendTypeSelect.selectedIndex;
+
+      var selectedText = spendTypeSelect.options[selectedIndex].text;
+
+      ALL_OKAY = true
+      // EMPTY FIELDS VERIFICATIONS
+      // Fonction pour gérer la classe "is-invalid" et "is-valid" sur le champ de texte "nature_depense"
+      function handleNatureDepense() {
+          if (nature_depense.value.trim() === '') {
+              ALL_OKAY = false
+              nature_depense.classList.add('is-invalid');
+              nature_depense.classList.remove('is-valid');
+              nature_depense.scrollIntoView({ behavior: 'smooth' });
+              console.log("Le champ nature_depense est vide.");
+          } else {
+              nature_depense.classList.remove('is-invalid');
+              nature_depense.classList.add('is-valid');
+          }
+      }
+      handleNatureDepense()
+      nature_depense.addEventListener('input', handleNatureDepense);
+      nature_depense.addEventListener('blur', handleNatureDepense);
+
+     // Fonction pour gérer la classe "is-invalid" et "is-valid" sur les boutons radio
+     function handleRadioButtons() {
+          var selected = false; // Indicateur pour savoir si une option est sélectionnée
+          for (var i = 0; i < radioButtons.length; i++) {
+              if (radioButtons[i].checked) {
+                  selected = true;
+                  break;
+              }
+          }
+        
+          if (selected) {
+              // Si au moins une option est sélectionnée, retirez la classe "is-invalid" de tous les boutons radio
+              for (var i = 0; i < radioButtons.length; i++) {
+                  radioButtons[i].classList.remove('is-invalid');
+                  radioButtons[i].classList.remove('clignotant');
+              }
+            
+          } else {
+              // Si aucune option n'est sélectionnée, ajoutez la classe "is-invalid" à tous les boutons radio
+              for (var i = 0; i < radioButtons.length; i++) {
+                  radioButtons[i].classList.add('is-invalid');
+                  ALL_OKAY = false
+
+              }
+            
+              // Pour clignoter, vous pouvez ajouter une classe "blink" (à personnaliser avec des animations CSS)
+              for (var i = 0; i < radioButtons.length; i++) {
+                  radioButtons[i].classList.add('clignotant');
+              }
+            
+              console.log("Aucune option radio sélectionnée.");
+          }
+      }
+
+        // Écoutez l'événement "input" pour les boutons radio
+        for (var i = 0; i < radioButtons.length; i++) {
+            radioButtons[i].addEventListener('input', handleRadioButtons);
+        }
+      
+      handleRadioButtons(); // Appelez la fonction une fois pour définir l'état initial
+
+      // TARIF
+      function handleNumberInputs() {
+          if (numberInputs.value.trim() === '') {
+              ALL_OKAY = false
+              numberInputs.classList.add('is-invalid');
+              numberInputs.classList.remove('is-valid');
+              numberInputs.scrollIntoView({ behavior: 'smooth' });
+              console.log("Le champ numberInputs est vide.");
+          } else {
+              numberInputs.classList.remove('is-invalid');
+              numberInputs.classList.add('is-valid');
+          }
+      }
+
+      handleNumberInputs()
+      numberInputs.addEventListener('input', handleNumberInputs);
+      numberInputs.addEventListener('blur', handleNumberInputs);
+
+      // Fonction pour gérer la classe "is-invalid" et "is-valid" sur le champ de saisie "name_input"
+      function handleNameInput() {
+          if (name_input.value.trim() === '') {
+              ALL_OKAY = false
+              name_input.classList.add('is-invalid');
+              name_input.classList.remove('is-valid');
+              name_input.scrollIntoView({ behavior: 'smooth' });
+              console.log("Le champ name_input est vide.");
+          } else {
+              name_input.classList.remove('is-invalid');
+              name_input.classList.add('is-valid');
+          }
+      }
+
+      handleNameInput();
+      name_input.addEventListener('input', handleNameInput);
+      name_input.addEventListener('blur', handleNameInput);
+
+      // Fonction pour gérer la classe "is-invalid" sur le textarea "other_spend_reason"
+      function handleSpendType() {
+              if (selectedIndex == 3 && other_spend_reason.value.trim().length==0) {
+                ALL_OKAY = false
+                other_spend_reason.classList.add('is-invalid');
+                other_spend_reason.scrollIntoView({ behavior: 'smooth' });
+
+              } else {
+                if(selectedIndex == 3 && other_spend_reason.value.trim().length>0){
+                  other_spend_reason.classList.remove('is-invalid');
+                  other_spend_reason.classList.add('is-valid');
+                }
+              }
+              if (((selectedIndex == 1 || selectedIndex == 2) && (depart.value == 1 || arrivee.value == 1)) || distance.textContent == "0 km") {
+                  ALL_OKAY = false
+                  depart.classList.add('is-invalid');
+                  arrivee.classList.add('is-invalid');
+                  depart.scrollIntoView({ behavior: 'smooth' });
+                  arrivee.scrollIntoView({ behavior: 'smooth' });
+
+              } else {
+                if ((selectedIndex == 1 || selectedIndex == 2) && (depart.value != 1 || arrivee.value != 1)) {
+
+                  depart.classList.remove('is-invalid');
+                  arrivee.classList.remove('is-invalid');
+                  depart.classList.add('is-valid');
+                  arrivee.classList.add('is-valid');
+                }}
+
+          }
+
+          handleSpendType(); 
+          other_spend_reason.addEventListener('input', handleSpendType);
+          other_spend_reason.addEventListener('blur', handleSpendType);
+          spendTypeSelect.addEventListener('change', handleSpendType);
+          depart.addEventListener('change', handleSpendType);
+          arrivee.addEventListener('change', handleSpendType);
+
+      function handleSpend() {
+          if (spendTypeSelect.value === "0") {
+              ALL_OKAY = false;
+              spendTypeSelect.classList.add("is-invalid");
+              spendTypeSelect.scrollIntoView({ behavior: 'smooth' });
+
+          } else {
+              spendTypeSelect.classList.remove("is-invalid");
+              spendTypeSelect.classList.add("is-valid");
+          }
+      }
+
+      handleSpend(); // Appelez la fonction initialement pour définir l'état initial
+      spendTypeSelect.addEventListener('change', handleSpend);
+
+
+
+      // Fonction pour gérer la classe "is-invalid" et "is-valid" sur log_number
+      function handleLogNumber() {
+          if (log_number.value.trim() === '') {
+              ALL_OKAY = false
+              log_number.classList.add('is-invalid');
+              log_number.classList.remove('is-valid');
+              log_number.scrollIntoView({ behavior: 'smooth' });
+              console.log("Le champ log_number est vide.");
+          } else {
+              log_number.classList.remove('is-invalid');
+              log_number.classList.add('is-valid');
+          }
+      }
+
+      handleLogNumber()
+      log_number.addEventListener('input', handleLogNumber);
+      log_number.addEventListener('blur', handleLogNumber);
+      
+
+      type_dep = true
+      if (distance.classList.contains("clignotant")) {
+        ALL_OKAY = false;
+        type_dep = false;
+        distance.scrollIntoView({ behavior: 'smooth' });
+
+      }
+
+      
+      // CONSOLE LOG POUR AFFICHER LE RADIO 
+      for (var i = 0; i < radioButtons.length; i++) {
+          if (radioButtons[i].checked) {
+              way_of_payment = radioButtons[i].nextElementSibling.textContent;
+              break;
+          }
+      }
+
+      if(ALL_OKAY ){
+
+          if(selectedIndex == 3){
+            var postData = {    
+             csrfmiddlewaretoken: csrfToken,
+             log_number: log_number.value,
+             spend_type: selectedText,
+             departure:"-",
+             arrival:"-",
+             distance:distance.textContent,
+             other_spend_reason: other_spend_reason.value,
+             spender: name_input.value,
+             attachment: "-",
+             price: numberInputs.value,
+             price_in_letters: letterOutput.textContent,
+             way_of_payment: way_of_payment,
+             nature_depense:nature_depense.value
+            };
+          }else{
+            var postData = {    
+             csrfmiddlewaretoken: csrfToken,
+             log_number: log_number.value,
+             spend_type: selectedText,
+             departure:depart.value,
+             arrival:arrivee.value,
+             distance:distance.textContent,
+             other_spend_reason: "-",
+             spender: name_input.value,
+             attachment: "-",
+             price: numberInputs.value,
+             price_in_letters: letterOutput.textContent,
+             way_of_payment: way_of_payment,
+             nature_depense:nature_depense.value,
+            };
+          }
+
+          $.ajax({
+            url: 'https://app.liliumpharma.com/depenses/api/AddSpend',
+            type: 'POST',
+            data: postData,
+            success: function (response) {
+              vanillaToast.success('Votre dépense a été enregistrée avec succès. | .تم تسجيل مصاريفك بنجاح');
+              setTimeout(function() {
+                location.reload();
+              }, 3000); 
+
+            },
+            error: function (xhr, status, error) {
+            vanillaToast.error("ERREUR !");
+            }
+          });
+
+      }else{
+        if(!type_dep){
+          vanillaToast.error("ATTENTION : Veuillez verifier le type de dépense. | .تنبيه: يُرجى التحقق من نوع المصروفات");
+        }else{
+        vanillaToast.error("ATTENTION : Veuillez remplir les champs manquants. | .تنبيه: يجب ملء الحقول الناقصة");
+        }
+      }
+
+    });
+
+
+
+</script>
+
+<!-- PRINT DEPENSE -->
+<script>
+  function print(spendId) {
+    const apiUrl = 'https://app.liliumpharma.com/depenses/print/?id=' + spendId;
+    console.log(apiUrl);
+
+    fetch(apiUrl)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Spend not found .');
+        }
+      })
+      .then(data => {
+        if (data.url) {
+          // Mettre à jour l'URL de la page actuelle avec celle de la réponse
+          window.location.href = data.url;
+        } else {
+          console.log('URL not provided in response.');
+        }
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
+        if (error.message === 'Evaluation not found for the selected month.') {
+          vanillaToast.error("ATTENTION: Vous n'avez pas d'évaluation pour le mois choisi");
+        }
+      });}
+</script>
+
+<!--ADMINISTRATION COMMENT -->
+<script>
+  var userUsername = "{{ user.username }}";
+</script>
+<script>
+  function add_comment(spendId) {
+    id = document.getElementById("id_spend_"+spendId)
+    comment = document.getElementById("comment_"+spendId)
+    const administrationCommentDiv = document.getElementById("administration_comment_"+spendId);
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const day = String(currentDate.getDate()).padStart(2, '0');
+    const formattedDate = `${year}-${month}-${day}`;
+    const commentData = {
+        comment: comment.value, // Remplacez par la valeur réelle du commentaire
+        date: formattedDate, // Remplacez par la date réelle
+        user: userUsername // Remplacez par le nom de l'utilisateur réel
+    };
+
+    // Créez les éléments HTML pour afficher le commentaire
+    const commentDiv = document.createElement('div');
+    commentDiv.classList.add('comment');
+
+    const commentCard = document.createElement('div');
+    commentCard.classList.add('comment-card');
+
+    const userInfoDiv = document.createElement('div');
+    userInfoDiv.classList.add('user-info');
+
+    const userText = document.createElement('span');
+    userText.textContent = `Ajouté par: ${commentData.user}   |`;
+    userText.classList.add('small-text');
+
+    const dateText = document.createElement('span');
+    dateText.textContent = `  Le: ${commentData.date}`;
+    dateText.classList.add('small-text');
+
+    const commentContentDiv = document.createElement('div');
+    commentContentDiv.classList.add('comment-content');
+
+    const userIcon = document.createElement('i');
+    userIcon.classList.add('fa', 'fa-user', 'gray-icon');
+
+    const commentText = document.createElement('span');
+    commentText.textContent = commentData.comment;
+
+    commentContentDiv.appendChild(userIcon);
+    commentContentDiv.appendChild(commentText);
+
+    userInfoDiv.appendChild(userText);
+    userInfoDiv.appendChild(dateText);
+
+    commentCard.appendChild(userInfoDiv);
+    commentCard.appendChild(commentContentDiv);
+
+    commentDiv.appendChild(commentCard);
+
+    // Ajoutez le commentaire à l'élément "administration_comment"
+    administrationCommentDiv.appendChild(commentDiv);
+
+    var postData = {    
+             csrfmiddlewaretoken: csrfToken,
+             spend : id.textContent,
+             comment : comment.value
+    }
+    $.ajax({
+            url: 'api/AddSpendComment',
+            type: 'POST',
+            data: postData,
+            success: function (response) {
+              vanillaToast.success('Votre commentaire a été enregistrée avec succès. | .تم تسجيل ملاحظتك بنجاح');
+              setTimeout(function() {
+                // location.reload();
+              }, 3000); 
+
+            },
+            error: function (xhr, status, error) {
+            vanillaToast.error("ERREUR");
+            }
+          });
+    
+;}
+</script>
+
+<!-- DISPLAY SPEND DETAILS  -->
+<script>
+function display_details(spendId) {
+  var informations = document.getElementById("to_display_" + spendId);
+  var imgElement = document.getElementById("return_"+spendId);
+
+
+  // Change the image source based on the current source
+  if (imgElement.src.includes("down.png")) {
+    imgElement.src = "/static/img/up.png";
+  } else {
+    imgElement.src = "/static/img/down.png";
+  }
+    // Ajoutez le code pour afficher/masquer les informations ici
+    if (informations.classList.contains("d-block")) {
+    informations.classList.remove("d-block");
+    informations.classList.add("d-none");
+  } else {
+    informations.classList.remove("d-none");
+    informations.classList.add("d-block");
+  }
+}
+
+</script>
+
+<!-- FETCHING USERS UNDER -->
+<script>
+  function users_under(){
+      fetch('https://app.liliumpharma.com/depenses/getting_users_under/')
+    .then((response) => response.json())
+    .then((data) => {
+      const selectUser = document.getElementById("search_user");
+      if (data.length === 1) {
+        const userObject = data[0];
+        const option = document.createElement("option");
+        option.value = userObject.user;
+        option.textContent = userObject.user;
+        option.selected = true;
+        selectUser.appendChild(option);
+      } else {
+        const option = document.createElement("option");
+          option.value = "tous";
+          option.textContent = "Tous";
+          option.selected = true;
+          selectUser.appendChild(option);
+        data.forEach((userObject) => {
+          const option = document.createElement("option");
+          option.value = userObject.user;
+          option.textContent = userObject.user;
+          selectUser.appendChild(option);
+        });
+      }
+
+    })
+  }
+  users_under()
+</script>
+</html>

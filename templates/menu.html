@@ -1,0 +1,48 @@
+{% load static %}
+
+<!-- menu.html -->
+<div class="vertical-nav">
+    <!-- Section 1 -->
+    <div class="nav-section">
+       <h3>Section 1</h3>
+       <ul>
+          <li class="nav-item text-center">
+             <a class="nav-link" href="{% url 'depenses_front'%}">
+                <img class="styled-img" src="{% static 'img/icons/spends.png' %}" />
+                <br /> Dépenses <br>مصاريف
+             </a>
+          </li>
+          <!-- Ajouter d'autres éléments de la section 1 si nécessaire -->
+       </ul>
+    </div>
+ 
+    <!-- Section 2 -->
+    <div class="nav-section">
+       <h3>Section 2</h3>
+       <ul>
+          <!-- Ajouter des éléments de la section 2 si nécessaire -->
+       </ul>
+    </div>
+ 
+    <!-- Ajouter d'autres sections si nécessaire -->
+ </div>
+<style>
+    /* styles.css */
+.vertical-nav {
+   display: flex;
+}
+
+.nav-section {
+   margin-right: 20px; /* Ajuster la marge selon vos besoins */
+}
+
+.nav-item {
+   list-style: none;
+}
+
+.nav-link {
+   text-decoration: none;
+   color: #333; /* Couleur du texte */
+}
+
+</style> 

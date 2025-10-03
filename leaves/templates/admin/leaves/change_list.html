@@ -1,0 +1,15 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+    {{ block.super }}
+
+    {% if request.GET.added__year %}
+            <a id="reportButton" class="btn btn-primary" href="{% url 'ReportView' %}?added__year={{ request.GET.added__year }}&added__month={{ request.GET.added__month }}" target="_blank">
+                Rapport Des Congés
+            </a>
+    {% else %}
+            <span class="btn btn-primary disabled">
+                Rapport Des Congés
+            </span>
+    {% endif %}
+{% endblock %}

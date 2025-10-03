@@ -1,0 +1,15 @@
+<!-- templates/admin/input_filter.html -->
+
+{% load i18n %}
+
+
+
+      <label>{% blocktrans with filter_title=title %} By {{ filter_title }} {% endblocktrans %}</label>
+        <input
+           type="text"
+           value="{{ spec.value|default_if_none:'' }}"
+           name="{{ spec.parameter_name }}"
+           class="form-control"
+           />
+        <br>
+

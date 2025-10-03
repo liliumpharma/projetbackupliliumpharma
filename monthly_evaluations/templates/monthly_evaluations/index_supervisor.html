@@ -1,0 +1,1873 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/styles.css'%}">
+  <link rel="stylesheet" href="{% static 'css/toast/vanilla-toast.css'%}">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+
+  {%block styles%}
+  {%endblock styles%}
+  <title>{% block title %}{%endblock title%}</title>
+  <script>
+    // Attendez que le document soit chargé
+    document.addEventListener("DOMContentLoaded", function() {
+        // Récupérez l'élément avec l'ID "main"
+        var mainElement = document.getElementById("main");
+        if (mainElement) {
+            // Faites défiler la page jusqu'à cet élément
+            mainElement.scrollIntoView();
+        }
+    });
+</script>
+<script>
+// Define chargerContenuPDF function outside of $(document).ready()
+function chargerContenuPDF() {
+      
+
+    var monthUrll = getMonthFromUrl();
+    var userUrll = getUserFromUrl();
+
+    const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/get-monthly-evaluation/?month=' + monthUrll+ '&user='+userUrll;
+    // ECRIRE LES ERRORS EN ARABE
+    fetch(apiUrl)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          vanillaToast.error("ATTENTION: L'utilisateur n'a pas d'évaluation pour le mois choisi تنبيه: ليس لدى المستخدم أي تقييم للشهر المختار");
+
+        }
+      })
+      .then(data => {
+        id= JSON.parse(data)[0]
+        if (id != undefined) {
+            $.ajax({
+                url: "https://app.liliumpharma.com/monthly_evaluation/monthly_evaluations/" + id + "/",
+                type: "GET",
+                success: function(response) {
+                    // Inject the PDF content into a specific element on your page
+                    $("#pdf-container").html(response);
+                    $("#pdf-container").removeClass("d-none"); // Remove the d-none class to display the container
+                    $("#pdf-container")[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error loading PDF content:", error);
+                    vanillaToast.error("ATTENTION: L'utilisateur n'a pas d'évaluation pour le mois choisi تنبيه: ليس لدى المستخدم أي تقييم للشهر المختار");
+                    $("#pdf-container").addClass("d-none"); // Add the d-none class to hide the container
+                    $("#main")[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                }
+            });
+        } else {
+            vanillaToast.error("ATTENTION: L'utilisateur n'a pas d'évaluation pour le mois choisi تنبيه: ليس لدى المستخدم أي تقييم للشهر المختار");
+            $("#pdf-container").addClass("d-none"); // Add the d-none class to hide the container
+            $("#main")[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        }
+
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
+        if (error.message === 'Evaluation not found for the selected month.') {
+          vanillaToast.error("ATTENTION: L'utilisateur n'a pas d'évaluation pour le mois choisi تنبيه: ليس لدى المستخدم أي تقييم للشهر المختار");
+        }
+      });
+}
+</script>
+
+<script>
+function viewEvaluation(userId) {
+    var currentUrl = window.location.href;
+    var urlParams = new URLSearchParams(currentUrl.split('?')[1]);
+    var month = urlParams.get('month');
+    var userParam = userId; // Utilisez le paramètre passé à la fonction
+
+    var monthUrl = month;
+    var userUrl = userParam;
+
+
+
+
+
+
+
+    const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/get-monthly-evaluation/?month=' + monthUrl+ '&user='+userUrl;
+    // ECRIRE LES ERRORS EN ARABE
+    fetch(apiUrl)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          vanillaToast.error("ATTENTION: L'utilisateur n'a pas d'évaluation pour le mois choisi تنبيه: ليس لدى المستخدم أي تقييم للشهر المختار");
+
+        }
+      })
+      .then(data => {
+        id= JSON.parse(data)[0]
+        if (id != undefined) {
+          console.log(id)
+          var idUrl = 'https://app.liliumpharma.com/monthly_evaluation/monthly_evaluations/' + id + '/';
+          window.open(idUrl, '_blank');
+        }
+
+      })
+
+}
+
+  </script>
+
+
+<style>
+  @media (max-width: 576px) {
+    .card-body {
+      flex-direction: column;
+      align-items: center;
+      margin: 0px;
+      width:100%;
+    }
+    .card-body h5 {
+      font-size: 15px;
+      color: black !important
+    }
+    .card-title.text-right {
+      text-align: left;
+    }
+  }
+</style>
+<style>
+  .sup_div{
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+  .card{
+    margin-bottom: 15px;
+  }
+</style>
+<!-- Q1 -->
+<style>
+  /* Style pour les boutons radio */
+input[type="radio"] {
+  /* Cacher le bouton radio par défaut */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  outline: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* Style pour le cercle du bouton radio */
+input[type="radio"]::before {
+  content: '';
+  display: inline-block;
+  width: 15px; /* Ajustez la taille du cercle ici */
+  height: 15px; /* Ajustez la taille du cercle ici */
+  border-radius: 50%; /* Rendre le cercle arrondi */
+  border: 2px solid green; /* Couleur et épaisseur de la bordure */
+  margin-right: 5px; /* Marge à droite du cercle */
+}
+
+/* Style pour le cercle du bouton radio lorsque coché */
+input[type="radio"]:checked::before {
+  background-color: green; /* Couleur de fond lorsque coché */
+}
+
+</style>
+</head>
+<body>
+  <div id="backButton" class="d-inline-block p-2 rounded col-12" style="cursor: pointer;background-color: green;color: white;">
+    <span class="align-middle">Back</span>
+  </div>
+
+<script>
+  document.getElementById("backButton").addEventListener("click", function() {
+    window.history.back(); // This line takes the user back to the previous page
+});
+
+</script>
+{% block body %}{%endblock body%}
+<!-- <div class="card">
+  <div class="card-body">
+      <h5 class="card-title">Rubrique disponible uniquement du 01 au 05 de chaque mois</h5>
+  </div>
+</div> -->
+
+<!-- <div id="timing" class="d-none"> -->
+  <div id="timing">
+
+<div id="pdf-container">
+  <!-- Le contenu PDF sera chargé ici -->
+</div>
+
+<script src="{% static 'js/jquery.min.js'%}"></script>
+<script src="{% static 'js/toast/vanilla-toast.js'%}"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+{% block scripts %}{%endblock scripts%}
+<div id="main" class="text-center mt-4">
+    <h4 class="mr-3 font-weight-bold">Formulaire d'Évaluation du Superviseur</h4>
+    <h4 class="mr-3 mt-4">{{ request.user.first_name }} {{ request.user.last_name }}</h4>
+
+</div>
+
+
+
+<div class="d-flex mt-3 mb-4" style="justify-content: space-between;">
+
+</div>
+<div class="col-12">
+  <div class="alert alert-success" role="alert" style="display: flex; flex-wrap: wrap;">
+    <div class="col-md-6" style="box-sizing: border-box; padding: 5px;">
+      <h4 class="alert-heading">Important!</h4>
+      <p class="card-text">Avant de commencer Vous devez vérifier le mois séléctionné</p>
+    </div>
+    <div class="col-md-6" style="box-sizing: border-box; padding: 5px; word-break: break-all;">
+      <h4 class="alert-heading text-md-right">!هام</h4>
+      <p class="card-text text-md-right">قبل أن تبدأ يجب عليك التحقق من الشهر المحدد</p>
+    </div>
+  </div>
+</div>
+
+
+
+
+<div id="pdf-container">
+  <!-- Le contenu de pdf.html sera chargé ici -->
+</div>
+
+
+<style>
+  .bouton-lien {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    font-size: 18px;
+    text-decoration: none;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    margin: 20px;
+}
+
+.bouton-lien:hover {
+    background-color: white;
+    border: 1px solid green;
+    color: #45a049;
+}
+
+.bouton-lien:active {
+    background-color: #398439;
+}
+
+</style>
+<div id="header">
+  <form method="post">
+    <div class="d-flex col-12">
+
+      <div class="col-md-4 d-block mt-5">
+        <label for="monthSelect" style="font-weight: bold; margin-right:10px" >Mois</label>
+        <select class="form-control " id="monthSelect" onchange="updateURLL()">
+        </select>
+      </div>
+  
+
+      <div class="col-md-4 d-block mt-5">
+        <label for="typeSelect" style="font-weight: bold; margin-right:10px" >Type</label>
+        <select class="form-control " id="typeSelect">
+          <option value="1">Délégué</option>
+          <option value="2">Direction</option>
+        </select>
+      </div>
+
+      <div class="col-md-4 d-block mt-5">
+        <label for="monthSelect" style="font-weight: bold; margin-right:10px" >Family</label>
+        <select class="form-control " id="monthSelect" >
+          <option value="">Lilium1</option>
+        </select>
+      </div>
+
+    </div>
+    <!-- <a href="https://app.liliumpharma.com/monthly_evaluation/MonthlyEvaluationFrontSupToDirection/" class="bouton-lien">
+      Évaluer La Directrice Marketing
+      <span class="arabic-text">تقييم مدير التسويق</span>
+    </a> -->
+<!-- 
+   
+    <a href="#" class="bouton-lien" onclick="showmyevals(); return false;">
+      Voir Mes Évaluations
+      <span class="arabic-text">عرض تقييماتي</span>
+    </a>
+  
+    <a href="#" class="bouton-lien" onclick="showDelegatEvals(); return false;">
+      Voir/Evaluer les délégués
+      <span class="arabic-text">عرض / تقييم المندوبين</span>
+    </a> -->
+    
+
+    <script>
+      function showmyevals() {
+        document.getElementById("userTable").classList.add("d-none");
+        document.getElementById("myEvalsTable").classList.remove("d-none");
+      }
+      function showDelegatEvals() {
+        document.getElementById("userTable").classList.remove("d-none");
+        document.getElementById("myEvalsTable").classList.add("d-none");
+      }
+
+
+      document.getElementById('typeSelect').addEventListener('change', function () {
+        var selectedValue = this.value;
+
+        if (selectedValue === '2') {
+            showmyevals();
+        } else if (selectedValue === '1') {
+          console.log("here")
+            showDelegatEvals();
+        }
+    });
+
+    </script>
+    
+
+
+
+    <div class="col-md-12 d-flex mt-2">
+      <table class="table table-bordered d-none" id="myEvalsTable">
+          <thead>
+              <tr>
+                  <th>ID</th>
+                  <th>Nom d'utilisateur</th>
+                  <th>Le Superviseur à Évalué La Direction</th>
+                  <th>La Direction à évalué le supérviseur</th>
+                  <th>Action</th>
+              </tr>
+          </thead>
+          <tbody>
+              <!-- Les utilisateurs seront ajoutés ici dynamiquement -->
+          </tbody>
+      </table>
+  </div>
+
+
+
+    <div class="col-md-12 d-flex mt-2">
+      <table class="table table-bordered" id="userTable">
+          <thead>
+              <tr>
+                  <th>Nom d'utilisateur</th>
+                  <th>Le délégué a évalué son superviseur</th>
+                  <th>Le délégué a effectué son évaluation</th>
+                  <!-- <th>Pourcentage Delegate Evaluation</th> -->
+                  <th>Le Superviseur a évalué son délégué</th>
+                  <th>Le Direction à consulté l'évaluation</th>
+
+                  <th>Action</th>
+              </tr>
+          </thead>
+          <tbody>
+              <!-- Les utilisateurs seront ajoutés ici dynamiquement -->
+          </tbody>
+      </table>
+  </div>
+</div>
+
+
+  
+<!-- MEDICAL -->
+<div id="main-container" class="d-none">
+
+  <style>
+    .custom-btn {
+      padding: 8px 12px;
+      background-color: green;
+      color: white; 
+      border: none; 
+      border-radius: 4px; 
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+  
+    .custom-btn:hover {
+      background-color: darkgreen;
+    }
+  </style>
+  
+  <a id="hideEvaluation" class="custom-btn" style="margin-top: 5px; margin-bottom: 5px;color: white;">
+    Cacher l'évaluation / إخفاء التقييم
+  </a>
+  <a id="showEvaluation" class="custom-btn d-none" style="margin-top: 5px; margin-bottom: 5px;color: white;">
+    Afficher l'évaluation / إظهار التقييم
+  </a>
+  <script>
+    document.getElementById("hideEvaluation").addEventListener("click", function() {
+      document.getElementById("pdf-container").classList.add("d-none");
+      document.getElementById("hideEvaluation").classList.add("d-none");
+      document.getElementById("showEvaluation").classList.remove("d-none");
+      window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top
+    });
+  
+    document.getElementById("showEvaluation").addEventListener("click", function() {
+      document.getElementById("pdf-container").classList.remove("d-none");
+      document.getElementById("hideEvaluation").classList.remove("d-none");
+      document.getElementById("showEvaluation").classList.add("d-none");
+      window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll to top
+    });
+  </script>
+    
+    <div class="card bg-white">
+      <h6 class="text-center">Question</h6>
+      <div class="sup_div">
+        <div class=" d-flex" style="justify-content: space-between;">
+          <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Avez-vous discuté l'évaluation avec le délégué et vous êtes-vous assuré que les réponses sont correctes et en accord ses réponses ?</h5>
+          <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">هل ناقشت المندوب في التقييم و متاكد من صحة الاجابات و موافق عليها ؟</h5>
+        </div>
+        <div class="container" style="margin-top: 10px; margin-left: 45%;">
+          <button type="button" class="btn btn-toggle" id="oui" value="oui">Oui</button>
+          <button type="button" class="btn btn-toggle" id="non" value="non">Non</button>
+      </div>
+      
+      <style>
+          .btn-toggle {
+              background-color: white;
+              color: green;
+              border: 2px solid green;
+              padding: 10px 20px;
+              margin: 5px;
+          }
+      
+          .btn-toggle.active {
+              background-color: green;
+              color: white;
+              border: 2px solid green;
+          }
+      </style>
+          
+      <script>
+        var selectedButtonValue = ""; 
+    
+        $(document).ready(function() {
+            $('.btn-toggle').click(function() {
+                $('.btn-toggle').removeClass('active');
+                $(this).addClass('active');
+                
+                // Récupérer la valeur du bouton sélectionné
+                selectedButtonValue = $(this).val();
+                
+                // Log the valeur du bouton sélectionné dans la console
+                console.log("Valeur du bouton sélectionné : " + selectedButtonValue);
+            });
+        });
+  
+    </script>
+      
+  
+    </div>
+
+
+    <div class="card bg-white">
+      <h6 class="text-center">Question</h6>
+      <div class="sup_div">
+          <div class=" d-flex" style="justify-content: space-between;">
+              <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Résumer les problèmes les plus importants lors de l'évaluation du délégué ainsi que la votre proposition pour la résolution du problème ?</h5>
+              <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">لخص اهم المشاكل في تقييم المندوب مع طريقة الحل للمشكلة</h5>
+          </div>
+  
+          <!-- Bouton "Ajouter" -->
+          <button type="button" class="btn btn-primary mt-3" id="ajouterQuestion" style="background-color: white; color: green; border: 1px solid green;margin-left: 45%;"> + Ajouter un problème</button>
+  
+          <!-- Conteneur pour les questions -->
+          <div id="questionsContainer" class="mt-3">
+              <!-- Les questions seront ajoutées ici -->
+          </div>
+  
+      </div>
+  </div>
+  
+  <script>
+    var answersJSON = ""; // Déclaration de la variable globale
+    var questionCounter = 1; // Déclaration de la variable globale pour le compteur de questions
+
+
+    $(document).ready(function() {
+        var answers = {}; // Objet pour stocker les réponses
+
+        // Compteur pour générer des ID uniques pour les champs textarea
+
+        // Lorsque le bouton "Ajouter" est cliqué
+        $('#ajouterQuestion').click(function() {
+            // Créez les champs textarea pour la question et la solution
+            var questionField = '<div class="form-group"><textarea class="form-control" id="question' + questionCounter + '" placeholder="Problème"></textarea></div>';
+            var solutionField = '<div class="form-group"><textarea class="form-control" id="solution' + questionCounter + '" placeholder="Solution"></textarea></div>';
+
+            // Ajoutez les champs textarea au conteneur des questions
+            $('#questionsContainer').append(questionField + solutionField);
+
+            // Incrémentez le compteur
+            questionCounter++
+
+        });
+
+    });
+</script>
+
+  
+  
+  <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+    <h4>Connaissances produit  |  معرفة المنتج</h4>
+  </div>
+  <!-- Q1 -->
+
+  <!-- --------1------------ -->
+
+  <div class="card bg-white">
+    <h6 class="text-center">Question 1</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Connaissance pathologie et motif de prescription </h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">معرفة الأمراض المتعلقة بالمنتج ودواعي كتابته</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_1" name="options_1" value="option1">
+        <label for="option1_1">Verifié</label><br>
+
+        <input type="radio" id="option2_1" name="options_1" value="option2">
+        <label for="option2_1">Non Verifié</label><br>
+      </div>
+    </div>
+
+  </div>
+  <!-- --------2------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 2</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Connaissance des Caractéristiques produit</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">معرفة خصائص المنتج</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_2" name="options_2" value="option1">
+        <label for="option1_2">Verifié</label><br>
+
+        <input type="radio" id="option2_2" name="options_2" value="option2">
+        <label for="option2_2">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------3------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 3</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Connaissance des mécanismes d'action</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">معرفة آليات عمل المنتج و مكوناته</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_3" name="options_3" value="option1">
+        <label for="option1_3">Verifié</label><br>
+
+        <input type="radio" id="option2_3" name="options_3" value="option2">
+        <label for="option2_3">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------4------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 4</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Connaissance études, données et références scientifiques</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">معرفة الدراسات والبيانات والمراجع العلمية</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_4" name="options_4" value="option1">
+        <label for="option1_4">Verifié</label><br>
+
+        <input type="radio" id="option2_4" name="options_4" value="option2">
+        <label for="option2_4">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------5------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 6</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Positionnement produit vis-à-vis les concurrents </h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">تحديد الخصائص التي يتميز بها المنتج مقارنة بخصائص المنتجات المنافسة</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_5" name="options_5" value="option1">
+        <label for="option1_5">Verifié</label><br>
+
+        <input type="radio" id="option2_5" name="options_5" value="option2">
+        <label for="option2_5">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- SECTION 2 -->
+  <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+    <h4>Porte feuille medecins  |  قائمة الأطباء </h4>
+  </div>
+  <!-- --------6------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 7</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;"> Ratio spécialités ciblée / le nombre globale des medecins</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important"> نسبة التخصصات المستهدفة / إجمالي عدد الأطباء</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_6" name="options_6" value="option1">
+        <label for="option1_6">Verifié</label><br>
+
+        <input type="radio" id="option2_6" name="options_6" value="option2">
+        <label for="option2_6">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------7------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 6</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;"> Ratio nombre des potentiels a/ le nombre globale des medecins</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important"> نسبة عدد الأطباء المهمين / إجمالي عدد الأطباء</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_7" name="options_7" value="option1">
+        <label for="option1_7">Verifié</label><br>
+
+        <input type="radio" id="option2_7" name="options_7" value="option2">
+        <label for="option2_7">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------8------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 7</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Informations medecins (contact, spécialité, potentialité, adresse et adresse mail)</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">معلومات الأطباء (رقم الهاتف، التخصص، الأهمية، العنوان، وعنوان البريد الإلكتروني)</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_8" name="options_8" value="option1">
+        <label for="option1_8">Verifié</label><br>
+
+        <input type="radio" id="option2_8" name="options_8" value="option2">
+        <label for="option2_8">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------9------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 8</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">cycles des visites (nombre de visites par medecins, durée entre 2 visites)</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">جولات المندوب (عدد الزيارات لكل طبيب، المدة بين زيارتين)</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_9" name="options_9" value="option1">
+        <label for="option1_9">Verifié</label><br>
+
+        <input type="radio" id="option2_9" name="options_9" value="option2">
+        <label for="option2_9">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------10------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 9</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Couverture secteur</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">تغطية المنطقة</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_10" name="options_10" value="option1">
+        <label for="option1_10">Verifié</label><br>
+
+        <input type="radio" id="option2_10" name="options_10" value="option2">
+        <label for="option2_10">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3 -->
+  <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+    <h4>Visite medicale   |   الزيارة الطبية </h4>
+  </div>
+
+  <!-- --------11------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 11</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Communication et adaptation des types de présentations au profil du médecin</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">طريقة التواصل مع الطبيب وتكييف أنواع العروض التقديمية مع شخصية الطبيب</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_11" name="options_11" value="option1">
+        <label for="option1_11">Verifié</label><br>
+
+        <input type="radio" id="option2_11" name="options_11" value="option2">
+        <label for="option2_11">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------12------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 12</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Préparation avant la visite (fiche médecin) </h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">التحضير قبل الزيارة (ورقة الطبيب)</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_12" name="options_12" value="option1">
+        <label for="option1_12">Verifié</label><br>
+
+        <input type="radio" id="option2_12" name="options_12" value="option2">
+        <label for="option2_12">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------13------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 13</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;"> Traitement des objections medecins </h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">معالجة اعتراضات الأطباء</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_13" name="options_13" value="option1">
+        <label for="option1_13">Verifié</label><br>
+
+        <input type="radio" id="option2_13" name="options_13" value="option2">
+        <label for="option2_13">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------14------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 14</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;"> Traitement des d'objections pharmaciens </h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">معالجة اعتراضات الصيادلة</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_14" name="options_14" value="option1">
+        <label for="option1_14">Verifié</label><br>
+
+        <input type="radio" id="option2_14" name="options_14" value="option2">
+        <label for="option2_14">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------15------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 15</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Timing d'introduction </h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">إدارة الوقت</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_15" name="options_15" value="option1">
+        <label for="option1_15">Verifié</label><br>
+
+        <input type="radio" id="option2_15" name="options_15" value="option2">
+        <label for="option2_15">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- SECTION 4 -->
+  <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+    <h4>Planning   |    البرنامج </h4>
+  </div>
+
+  <!-- --------16------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 16</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Ciblage medecins spécialités</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important"> استهداف التخصصات المهمة</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_16" name="options_16" value="option1">
+        <label for="option1_16">Verifié</label><br>
+
+        <input type="radio" id="option2_16" name="options_16" value="option2">
+        <label for="option2_16">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------17------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 17</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Ciblage medecins potentialités</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">استهداف الأطباء المهمين</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_17" name="options_17" value="option1">
+        <label for="option1_17">Verifié</label><br>
+
+        <input type="radio" id="option2_17" name="options_17" value="option2">
+        <label for="option2_17">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------18------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 18</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Ciblage secteur</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">استهداف المناطق المهمة</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_18" name="options_18" value="option1">
+        <label for="option1_18">Verifié</label><br>
+
+        <input type="radio" id="option2_18" name="options_18" value="option2">
+        <label for="option2_18">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------19------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 19</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Planning hebdomadaire </h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">ادخال البرنامج الأسبوعي</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_19" name="options_19" value="option1">
+        <label for="option1_19">Verifié</label><br>
+
+        <input type="radio" id="option2_19" name="options_19" value="option2">
+        <label for="option2_19">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------20------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 20</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Timing d'introduction </h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">احترام توقيت ادخال البرنامج </h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_20" name="options_20" value="option1">
+        <label for="option1_20">Verifié</label><br>
+
+        <input type="radio" id="option2_20" name="options_20" value="option2">
+        <label for="option2_20">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- SECTION 5 -->
+  <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+    <h4>Rapport   |    التقرير</h4>
+  </div>
+
+  <!-- --------20------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 21</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Nombre des présentations/ produit</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important"> عدد العروض التقديمية لكل منتج</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_21" name="options_21" value="option1">
+        <label for="option1_20">Verifié</label><br>
+
+        <input type="radio" id="option2_21" name="options_21" value="option2">
+        <label for="option2_21">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------21------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 22</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;"> Informations récoltées Medecins</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">المعلومات المجمعة عن الأطباء</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_22" name="options_22" value="option1">
+        <label for="option1_22">Verifié</label><br>
+
+        <input type="radio" id="option2_22" name="options_22" value="option2">
+        <label for="option2_22">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------22------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 23</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Informations récoltées pharmacies (état de stock + medecins prescripteurs) </h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">المعلومات المجمعة عن الصيدليات (حالة المخزون + الأطباء الدين يكتبون المنتج)</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_23" name="options_23" value="option1">
+        <label for="option1_23">Verifié</label><br>
+
+        <input type="radio" id="option2_23" name="options_23" value="option2">
+        <label for="option2_23">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------23------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 24</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Conformité des griffes de passages (date + clarté)</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">انسجام ورقة ختومات الزيارات (تاريخ + وضوح)</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_24" name="options_24" value="option1">
+        <label for="option1_24">Verifié</label><br>
+
+        <input type="radio" id="option2_24" name="options_24" value="option2">
+        <label for="option2_24">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------24------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 25</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Timing d'introduction </h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">احترام توقيت ادخال التقرير</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_25" name="options_25" value="option1">
+        <label for="option1_25">Verifié</label><br>
+
+        <input type="radio" id="option2_25" name="options_25" value="option2">
+        <label for="option2_25">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- SECTION 6 -->
+  <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+    <h4>Ethique professionnelle   |    الأخلاقيات المهنية</h4>
+  </div>
+  <!-- --------21------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 26</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Engagement et Intégrité</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">الالتزام و النزاهة</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_26" name="options_26" value="option1">
+        <label for="option1_26">Verifié</label><br>
+
+        <input type="radio" id="option2_26" name="options_26" value="option2">
+        <label for="option2_26">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------22------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 27</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Confidentialité</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">الحفاظ على اسرار الشركة</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_27" name="options_27" value="option1">
+        <label for="option1_27">Verifié</label><br>
+
+        <input type="radio" id="option2_27" name="options_27" value="option2">
+        <label for="option2_27">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------23------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 28</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Transparence</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">الشفافية</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_28" name="options_28" value="option1">
+        <label for="option1_28">Verifié</label><br>
+
+        <input type="radio" id="option2_28" name="options_28" value="option2">
+        <label for="option2_28">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------24------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 29</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;"> Conflits d'intérêts</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">تضارب المصالح</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_29" name="options_29" value="option1">
+        <label for="option1_29">Aucun conflit</label><br>
+
+        <input type="radio" id="option2_29" name="options_29" value="option2">
+        <label for="option2_29">Conflit avéré</label><br>
+      </div>
+    </div>
+  </div>
+  <!-- --------25------------ -->
+  <div class="card bg-white">
+    <h6 class="text-center">Question 30</h6>
+    <p style="margin-left:15px; color: red;margin-bottom: 0;">* Champ obligatoire | 0.5pt</p>
+    <div class="sup_div">
+      <div class=" d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%; color: black !important; margin: 0;">Relations avec les professionnels de la santé</h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;color: black !important">علاقة المندوب مع الأطباء</h5>
+      </div>
+
+      <div class="container" style="margin-top: 10px;">
+        <input type="radio" id="option1_30" name="options_30" value="option1">
+        <label for="option1_30">Verifié</label><br>
+
+        <input type="radio" id="option2_30" name="options_30" value="option2">
+        <label for="option2_30">Non Verifié</label><br>
+      </div>
+    </div>
+  </div>
+
+
+<style>
+  #floatingDiv {
+  position: fixed;
+  height: 55px;
+  bottom: 40px;
+  left: 6%;
+  transform: translateX(-50%);
+  background-color: green;
+  color: white;
+  border-radius: 5px;
+  z-index: 9999;
+}
+
+</style>
+  <!-- Div flottant pour afficher la note -->
+  <div class="d-block" id="floatingDiv">
+    <div class="d-flex">
+      <h6>Note Actuelle :</h6>
+      <h6 id="score">0</h6>
+    </div>
+    <div class="d-flex">
+      <h6>Soit :</h6>
+      <h6 id="score_perc">0</h6>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Scroll to the 'main' div when the page loads
+        document.getElementById('main').scrollIntoView({ behavior: 'smooth' });
+    });
+  </script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+  var radioButtons = document.querySelectorAll("input[type='radio']");
+  var totalQuestions = radioButtons.length / 2;
+
+  radioButtons.forEach(function(radioButton) {
+    radioButton.addEventListener("change", function() {
+      calculateScore();
+    });
+  });
+
+  function calculateScore() {
+    var score = 0;
+    var scorePercentage = 0;
+
+    radioButtons.forEach(function(radioButton) {
+      if (radioButton.checked) {
+        var groupName = radioButton.getAttribute("name");
+        var correctAnswer = document.querySelector("input[type='radio'][name='" + groupName + "'][value='option1']");
+        
+        if (radioButton === correctAnswer) {
+          score += 0.5;
+        }
+      }
+    });
+
+    scorePercentage = (score / (totalQuestions * 0.5)) * 100;
+
+    document.getElementById("score").textContent = score + "/" + (totalQuestions * 0.5);
+    document.getElementById("score_perc").textContent = score+"%";
+    document.getElementById("floatingDiv").style.display = "block";
+  }
+});
+
+</script>
+
+
+<div class="d-flex justify-content-between w-100">
+  <h4 style="color: green; margin-left: 10px;">Merci !</h4>
+  <h4 style="color: green; margin-right: 20px;">! شكرا</h4>
+</div>
+<div class="col text-center" style="margin-top: 5px; margin-bottom: 10px;">
+  <a href="#" id="scrollToTop" class="scroll-to-top">
+    <span style="font-size: 20px;">Aller en haut</span>
+    <i class="fa fa-arrow-up fas-bounce"></i>
+    <span style="font-size: 20px;" class="arabic-text">العودة للأعلى</span>
+  </a>
+</div>
+<!-- Ajoutez le lien vers Font Awesome si vous n'avez pas déjà ajouté -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<div style="background-color: green; height: 70px; display: flex; align-items: center;">
+  <a id="submit" class="btn col-12" type="" style="color: white;">
+    <strong style="margin-top: 40px;">Valider l'évaluation</strong>
+  </a>
+</div>
+
+
+</div>
+</div>
+
+
+<!-- <script>
+    var currentDatee = new Date();
+    var currentDayy = currentDatee.getDate();
+    var card = document.querySelector('.card');
+
+    if (currentDayy >= 1 && currentDayy <= 13) {
+        document.getElementById("timing").classList.remove("d-none");
+        card.classList.add("d-none");
+    } else {
+        document.getElementById("timing").classList.add("d-none");
+        card.classList.remove("d-none");
+    }
+</script> -->
+<style>
+  .vbutton {
+  /* Styles pour ressembler à un bouton */
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: #f0f0f0;
+  color: #888;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: bold;
+  cursor:default /* Curseur non autorisé pour montrer qu'il est désactivé */
+}
+
+.view-button {
+  /* Styles pour ressembler à un bouton */
+  display: inline-block;
+  color: blue;
+  cursor: pointer; /* Définir le curseur sur pointer */
+}
+
+.view-button:hover {
+  /* Styles pour le survol */
+  text-decoration: underline; /* Souligner le texte lorsque survolé */
+}
+
+
+.vbutton.disabled {
+  /* Styles pour le bouton désactivé */
+  opacity: 0.5; /* Opacité réduite pour montrer qu'il est désactivé */
+}
+
+</style>
+</body> 
+<div>{{ errors }}</div>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+  const scrollToTopBtn = document.getElementById("scrollToTop");
+
+  window.addEventListener("scroll", function () {
+    if (window.scrollY > 100) {
+      scrollToTopBtn.classList.add("show");
+    } else {
+      scrollToTopBtn.classList.remove("show");
+    }
+  });
+
+  scrollToTopBtn.addEventListener("click", function (e) {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+});
+</script>
+
+<script>
+  const monthSelect = document.getElementById("monthSelect");
+  const userSelect = document.getElementById("userSelect");
+
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1;
+  const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1; // Calculer le mois précédent
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const monthUrl = urlParams.get('month');
+
+  if (!monthUrl) {
+    const baseUrl = window.location.href.split('?')[0]; 
+    // const newUrl = `${baseUrl}?month=${previousMonth}`; // Utiliser le mois précédent par défaut
+    history.replaceState({}, document.title, newUrl);
+  }
+
+  for (let i = 0; i < currentMonth; i++) {
+    const option = document.createElement("option");
+    option.value = i + 1; 
+    option.textContent = getMonthName(i); // Fonction pour obtenir le nom du mois
+    // monthSelect.appendChild(option);
+  }
+
+  function getMonthName(monthIndex) {
+    const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+    return monthNames[monthIndex];
+  }
+
+  if (monthUrl && 1 <= monthUrl <= 12) {
+    monthSelect.value = monthUrl;
+    monthSelect.selectedIndex = monthUrl - 1;
+  } else {
+    monthSelect.value = previousMonth; // Sélectionner le mois précédent par défaut
+    monthSelect.selectedIndex = previousMonth - 1; // Sélectionner l'option correspondant au mois précédent
+  }
+
+  function updateURL() {
+    const selectedMonth = monthSelect.value-1;
+    const selectedUser = userSelect.value;
+    console.log(userSelect)
+
+    const baseUrl = window.location.href.split('?')[0];
+    const urlParams = new URLSearchParams(window.location.search);
+
+    if (urlParams.has('user')) {
+        urlParams.set('user', selectedUser); // Remplacer la valeur du paramètre "user" dans l'URL
+    } else {
+        urlParams.append('user', selectedUser);
+    }
+
+
+
+    const newUrl = baseUrl + '?' + urlParams.toString();
+    history.replaceState({}, document.title, newUrl);
+    chargerContenuPDF();
+  }
+</script>
+
+
+
+<!-- BUTTON PRINT -->
+<!-- <script>
+  const printButton = document.getElementById('imprimer-bouton');
+  const monthUrl_2 = urlParams.get('month');
+
+  printButton.addEventListener('click', function() {
+    const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/print_evaluation/?month=' + monthUrl_2;
+    console.log(apiUrl);
+
+    fetch(apiUrl)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Evaluation not found for the selected month.');
+        }
+      })
+      .then(data => {
+        if (data.url) {
+          // Mettre à jour l'URL de la page actuelle avec celle de la réponse
+          window.location.href = data.url;
+        } else {
+          console.log('URL not provided in response.');
+        }
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
+        if (error.message === 'Evaluation not found for the selected month.') {
+          vanillaToast.error("ATTENTION: Vous n'avez pas d'évaluation pour le mois choisi");
+        }
+      });
+  });
+</script> -->
+
+
+
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      // Scroll to the 'main' div when the page loads
+      document.getElementById('main').scrollIntoView({ behavior: 'smooth' });
+  });
+</script>
+
+<!-- FETCHING USERS UNDER -->
+<script>
+  
+  function updateUserTable(users) {
+      var tableBody = document.querySelector('#userTable tbody');
+      // Efface le contenu existant de la table
+      tableBody.innerHTML = '';
+      // Parcours la liste des utilisateurs et les ajoute au tableau
+      users.forEach(function(user) {
+        var row = document.createElement('tr');
+        console.log(user.own_perc)
+
+        var usernameCell = document.createElement('td');
+        usernameCell.textContent = user.user;
+        row.appendChild(usernameCell);
+
+        // Colonne 2 : Evaluation du délégué
+        var delegateEvalCell = document.createElement('td');
+        var delegateEvalIcon = document.createElement('i');
+        delegateEvalIcon.className = user.has_eval ? 'fas fa-check text-success' : 'fas fa-times text-danger';
+        delegateEvalCell.appendChild(delegateEvalIcon);
+        row.appendChild(delegateEvalCell);
+
+        // Colonne combinée : Evaluation du délégué + Pourcentage
+        var combinedEvalAndPercentageCell = document.createElement('td');
+
+        // Création de l'icône pour l'évaluation du délégué
+        var delegateEvalIcon = document.createElement('i');
+        delegateEvalIcon.className = user.has_eval ? 'fas fa-check text-success' : 'fas fa-times text-danger';
+        combinedEvalAndPercentageCell.appendChild(delegateEvalIcon);
+
+        // Ajout du pourcentage de l'utilisateur s'il existe
+        console.log(user.user +" -- >"+user.own_perc)
+        if (typeof user.own_perc === 'string') {
+            var percentageValue = user.own_perc.replace('%', ''); // Retirer le signe de pourcentage (%)
+            var ownPercentageText = document.createElement('span'); // Créer un élément <span>
+            ownPercentageText.textContent = ' ' + percentageValue + '/100'; // Ajout de "/100"
+            ownPercentageText.style.fontSize = 'larger'; // Définir une taille de texte plus grande
+            ownPercentageText.style.marginLeft = '5px'; // Ajouter une marge à gauche
+            ownPercentageText.style.fontWeight = 'bold'; // Définir la police en gras
+            
+            combinedEvalAndPercentageCell.appendChild(ownPercentageText);
+        } else {
+            // Si own_perc est null ou n'est pas une chaîne, affichez un message par défaut
+            var placeholderText = document.createTextNode(" ");
+            combinedEvalAndPercentageCell.appendChild(placeholderText);
+        }
+
+        // Ajout de la cellule combinée à la ligne
+        row.appendChild(combinedEvalAndPercentageCell);
+
+
+
+
+
+
+
+        // Création d'une seule cellule pour les deux colonnes combinées
+        var combinedCell = document.createElement('td');
+        combinedCell.classList.add('d-flex'); // Ajout de la classe flexbox
+
+        // Contenu de la colonne 5 : Direction a consulté l'eval;
+        var pourcentageEvalIcon = document.createElement('p');
+        pourcentageEvalIcon.textContent = user.pourcentage+"/15";
+        pourcentageEvalIcon.style.fontSize = '18px';
+        pourcentageEvalIcon.style.fontWeight = 'bold'; // Définir la police en gras
+
+
+        // Contenu de la colonne 3 : Evaluation du superviseur
+        var supervisorEvalIcon = document.createElement('i');
+        supervisorEvalIcon.className = user.has_sup_eval ? 'fas fa-check text-success' : 'fas fa-times text-danger';
+
+        // Ajout du contenu des deux colonnes à la cellule combinée
+        // Ajout d'une marge pour séparer les deux éléments
+        combinedCell.appendChild(supervisorEvalIcon);
+        combinedCell.innerHTML += '<div style="margin-left: 5px;"></div>';
+        combinedCell.appendChild(pourcentageEvalIcon);
+
+        // Ajout de la cellule combinée à la ligne
+        row.appendChild(combinedCell);
+
+
+
+        // Colonne 4 : Direction a consulté l'eval;
+        var directionEvalCell = document.createElement('td');
+        var directionEvalIcon = document.createElement('i');
+        directionEvalIcon.className = user.has_direction_eval ? 'fas fa-check text-success' : 'fas fa-times text-danger';
+        directionEvalCell.appendChild(directionEvalIcon);
+        row.appendChild(directionEvalCell);
+
+        // Colonne 5 : Direction a consulté l'eval;
+        // var pourcentageEvalCell = document.createElement('td');
+        // var pourcentageEvalIcon = document.createElement('p');
+        // pourcentageEvalIcon.textContent = user.pourcentage+" %";
+        // pourcentageEvalCell.appendChild(pourcentageEvalIcon);
+        // row.appendChild(pourcentageEvalCell);
+
+        // Colonne 6 : Bouton "Evaluer" ou lien vers une autre vue
+        var actionCell = document.createElement('td');
+
+        if (user.has_eval && user.has_sup_eval) {
+            // Créez un lien de vue alternative "View"
+            var viewLink = document.createElement('a');
+            viewLink.textContent = 'View';
+            actionCell.appendChild(viewLink);
+            viewLink.onclick = function() {
+              user=user.user
+              viewEvaluation(user)
+            }
+        } else {
+
+
+          if (!user.has_eval) {
+            // Créez un lien de vue alternative "View"
+            var viewLink = document.createElement('a');
+            viewLink.textContent = '-';
+            actionCell.appendChild(viewLink);
+
+        }else{
+
+            // Créez le bouton "Evaluer"
+            var evaluateButton = document.createElement('a');
+            evaluateButton.classList.add('vbutton');
+            evaluateButton.textContent = 'Évaluer';
+            evaluateButton.onclick = function() {
+                const baseUrl = window.location.href.split('?')[0];
+                const urlParams = new URLSearchParams(window.location.search);
+            
+                if (urlParams.has('user')) {
+                    urlParams.set('user', user.user);
+                } else {
+                    urlParams.append('user', user.user);
+                }
+              
+                const newUrl = baseUrl + '?' + urlParams.toString();
+                history.replaceState({}, document.title, newUrl);
+                chargerContenuPDF();
+                document.getElementById("header").classList.add("d-none");
+                document.getElementById("main-container").classList.remove("d-none");
+            };
+            actionCell.appendChild(evaluateButton);
+        }
+      }
+    row.appendChild(actionCell);
+
+    tableBody.appendChild(row);
+});
+
+  }
+
+  fetch('https://app.liliumpharma.com/clients/users-with-target-month/?month='+monthUrl)
+      .then(response => response.json())
+      .then(data => {
+        console.log(data)
+          updateUserTable(data);
+      })
+      .catch(error => console.error('Erreur lors de la récupération des utilisateurs:', error));
+</script>
+
+
+<!-- FETCHING OWN EVALS -->
+<script>
+  
+  function updateMyEvalsTable(evals) {
+
+  var tableBody = document.querySelector('#myEvalsTable tbody');
+  tableBody.innerHTML = '';
+  
+  evals.forEach(function(eval) {
+    console.log(eval)
+    var row = document.createElement('tr');
+
+    var IdCell = document.createElement('td');
+    IdCell.textContent = eval.id;
+    row.appendChild(IdCell);
+
+    var userCell = document.createElement('td');
+    userCell.textContent = eval.user;
+    row.appendChild(userCell);
+
+    // Colonne 3 : supToDirectionCell
+    var supToDirectionCell = document.createElement('td');
+    var supToDirectionCellIcon = document.createElement('i');
+    supToDirectionCellIcon.className ='fas fa-check text-success';
+    supToDirectionCell.appendChild(supToDirectionCellIcon);
+    row.appendChild(supToDirectionCell);
+
+    // Colonne 4 : DirectionToSupCell
+    var DirectionToSupCell = document.createElement('td');
+    var DirectionToSupCellIcon = document.createElement('i');
+    DirectionToSupCellIcon.className = eval.direction_evaluate_sup ? 'fas fa-check text-success' : 'fas fa-times text-danger';
+    DirectionToSupCell.appendChild(DirectionToSupCellIcon);
+    row.appendChild(DirectionToSupCell);
+
+    // var dateEvalCell = document.createElement('td');
+    // // dateEvalCell.textContent = eval.Date;
+    // dateEvalCell.textContent = "0%";
+    // row.appendChild(dateEvalCell);
+
+    var actionCell = document.createElement('td');
+
+    var viewLink = document.createElement('a');
+    viewLink.textContent = 'View';
+    viewLink.href = 'https://app.liliumpharma.com/monthly_evaluation/monthly_evaluations_sup_to_direction/' + eval.id + '/';
+    viewLink.target = '_blank'; // Open link in new tab
+    actionCell.appendChild(viewLink);
+
+    row.appendChild(actionCell);
+
+    tableBody.appendChild(row);
+  });
+}
+
+console.log(monthUrl)
+  fetch('https://app.liliumpharma.com/monthly_evaluation/MonthlyEvaluationSupToDirectionView/?month='+monthUrl)
+  .then(response => response.json())
+  .then(data => {
+    console.log(data[0].exists)
+    console.log(typeof data[0].exists);
+
+    if (data[0].exists === true){
+      console.log("yes exists")
+      updateMyEvalsTable(data);
+    }
+    else{
+      console.log("false")
+      // window.location.href = "https://app.liliumpharma.com/monthly_evaluation/MonthlyEvaluationFrontSupToDirection/";
+
+    }
+
+
+
+
+
+  })
+  .catch(error => console.error('Error while fetching users:', error));
+
+
+</script>
+
+
+
+<!-- PREPARING DATA -->
+<script>
+
+  function getMonthFromUrl() {
+    var url = window.location.href; // Obtenez l'URL actuelle
+    var monthIndex = url.indexOf("month="); // Trouvez l'index du paramètre "month"
+
+    if (monthIndex !== -1) {
+        // Si le paramètre "month" est trouvé dans l'URL
+        var month = url.substring(monthIndex + 6, monthIndex + 8); // Récupérez le mois à partir de l'URL
+        return parseInt(month); // Convertir la chaîne en nombre entier
+    } else {
+        // Si le paramètre "month" n'est pas trouvé dans l'URL
+        return null;
+    }
+}
+function getUserFromUrl() {
+    var url = window.location.href; // Obtenez l'URL actuelle
+    var userIndex = url.indexOf("user="); // Trouvez l'index du paramètre "user"
+
+    if (userIndex !== -1) {
+        // Si le paramètre "user" est trouvé dans l'URL
+        var user = url.substring(userIndex + 5); // Récupérez l'utilisateur à partir de l'URL
+        return user; // Retourne l'utilisateur
+    } else {
+        // Si le paramètre "user" n'est pas trouvé dans l'URL
+        return null;
+    }
+}
+
+</script>
+
+<script>
+  // Assurez-vous d'appeler cette fonction après le chargement du DOM
+document.addEventListener("DOMContentLoaded", function() {
+    // Obtenez une référence aux éléments select
+    const monthSelect = document.getElementById('monthSelect');
+    const userSelect = document.getElementById('userSelect');
+
+    // Ajoutez un gestionnaire d'événements pour le changement de sélection
+    monthSelect.addEventListener('change', updateURL);
+    userSelect.addEventListener('change', updateURL);
+});
+
+</script>
+
+<script>
+    var selectElement = document.getElementById('userSelect');
+    var ALL_OKAY = true; // Initialisez votre variable à true
+
+    // Add event listener for change event
+    selectElement.addEventListener('change', function() {
+        if (this.value == -1) {
+            ALL_OKAY = false;
+        } else {
+            console.log("Selected option value is not -1");
+            ALL_OKAY = true; // Réinitialisez à true si une option valide est sélectionnée
+        }
+    });
+
+</script>
+<!-- #PREPARING DATA -->
+<script>
+  document.getElementById("submit").addEventListener("click", getAnswers);
+
+  var csrfToken = '{{ csrf_token }}';
+  var selectElement = document.getElementById('userSelect');
+
+  var ALL_OKAY = true; // Initialize to true
+  console.log(selectElement.options[selectElement.selectedIndex].value)
+  var selectedOption = selectElement.options[selectElement.selectedIndex];
+  if (selectedOption.value == -1) {
+          ALL_OKAY = false;
+  }
+
+
+
+  function getAnswers() {
+    totale =document.getElementById("note_totale")
+    var allQuestionsAnswered = true; // Variable to track if all questions have been answered
+    console.log(selectedButtonValue)
+
+
+    answers = {};
+
+// Parcourir chaque paire de champs textarea
+for (var i = 1; i < questionCounter; i++) {
+    var question = $('#question' + i).val(); // Obtenir la valeur de la question
+    var solution = $('#solution' + i).val(); // Obtenir la valeur de la solution
+
+    // Ajouter la paire question-solution à l'objet des réponses
+    answers['question' + i] = question;
+    answers['solution' + i] = solution;
+}
+
+// Convertir l'objet des réponses en chaîne JSON
+
+// Afficher les réponses dans la console
+
+
+// Loop through each question
+for (var i = 21; i <= 23; i++) { // Update the loop range to cover all 22 questions
+    var questionAnswered = false; // Variable to track if at least one radio button is checked for the current question
+
+    // Loop through radio buttons for the current question
+    for (var j = 1; j <= 2; j++) {
+        var radioButtonId = "option" + j + "_" + i; // ID of each radio button for the current question
+        var radioButton = document.getElementById(radioButtonId);
+
+        if (radioButton.checked) {
+            questionAnswered = true; // If a radio button is checked, mark the question as answered
+            break; // Exit the loop since we found an answer for the current question
+        }
+    }
+
+    // If no radio button is checked for the current question, mark allQuestionsAnswered as false
+    if (!questionAnswered) {
+        allQuestionsAnswered = false;
+        break; // Exit the loop since we found a question without an answer
+    }
+}
+
+
+        if (allQuestionsAnswered) {
+          var scoreText = document.getElementById("score").textContent;
+          var score = scoreText.split('/')[0].trim();
+          // pourcentage = document.getElementById("pourcentage")
+
+          var perc = score; // Fixed typo: `perc` should be assigned `score`, not `score.value`
+          // var own_perc = pourcentage.innerHTML; // Fixed typo: `perc` should be assigned `score`, not `score.value`
+
+          var postData = {
+              csrfmiddlewaretoken: csrfToken,
+              perc: score,
+              own_perc: totale.textContent,
+              responses_okay: selectedButtonValue,
+              probs: JSON.stringify(answers) 
+          };
+
+          var month = getMonthFromUrl();
+          if (month !== null) {
+              postData.month = month;
+          }
+          var user = getUserFromUrl();
+          postData.user = user;
+
+          for (var i = 1; i <= 30; i++) {
+              var questionNumber = i;
+              var questionId = "option1_" + questionNumber;
+              var radioButtonTrue = document.getElementById(questionId);
+
+              if (radioButtonTrue.checked) {
+                  postData["q" + questionNumber] = true;
+              } else {
+                  postData["q" + questionNumber] = false;
+              }
+          }
+          var monthUrll = getMonthFromUrl();
+          var userUrll = getUserFromUrl();
+          console.log("finished postData: " + JSON.stringify(postData));
+          $.ajax({
+              url: '/monthly_evaluation/AddMonthlyEvaluationSup/?month=' + monthUrll + '&user=' + userUrll,
+              type: 'POST',
+              data: postData,
+              success: function(response) {
+                  vanillaToast.success('SUCCESS');
+                  // Refresh the window
+                  setTimeout(function() {
+                    window.location.href = "https://app.liliumpharma.com/monthly_evaluations_front";
+                  }, 1000);
+              },
+              error: function(xhr, status, error) {
+                  vanillaToast.error("ATTENTION: Vous avez déjà évalué l'utilisateur pour le mois choisi  لديك تقييم شهري شهري للشهر المختار والمستخدم المختار");
+                  setTimeout(function() {
+                    window.location.href = "https://app.liliumpharma.com/monthly_evaluations_front";
+                  }, 2000);
+              }
+          });
+      } else {
+          vanillaToast.error("ATTENTION: Veuillez remplir les champs Vides تنبيه: الرجاء اختيار مستخدم");
+      }
+  }
+</script>
+
+
+
+
+
+<script>
+  if (!monthUrl) {
+    const baseUrl = window.location.href.split('?')[0]; 
+    const newUrl = `${baseUrl}?month=${currentMonth-1}`;
+    history.replaceState({}, document.title, newUrl);
+  }
+
+  for (let i = 0; i < currentMonth - 1; i++) {
+    const option = document.createElement("option");
+    option.value = i + 1; 
+    option.textContent = getMonthName(i); // Fonction pour obtenir le nom du mois
+    monthSelect.appendChild(option);
+  }
+
+  function getMonthName(monthIndex) {
+    const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+    return monthNames[monthIndex];
+  }
+
+  // Déterminer le mois précédent
+  const defaultMonth = currentMonth > 1 ? currentMonth - 1 : 12;
+
+  if (monthUrl && 1 <= monthUrl <= 12) {
+    monthSelect.value = monthUrl;
+    monthSelect.selectedIndex = monthUrl - 1;
+  } else {
+    monthSelect.value = defaultMonth; // Sélectionner le mois précédent par défaut
+    monthSelect.selectedIndex = defaultMonth - 1; // Sélectionner l'option correspondant au mois précédent
+  }
+
+  // Gestionnaire d'événement pour écouter le changement de sélection dans le <select>
+  monthSelect.addEventListener("change", function() {
+    console.log("changed")
+    updateURLL(); // Mettre à jour l'URL avec le mois sélectionné
+    window.location.reload(); // Rafraîchir la page pour effectuer le fetch avec le mois sélectionné
+  });
+
+  // Mettre à jour l'URL avec le mois sélectionné sans rafraîchir la page
+  function updateURLL() {
+    const selectedMonth = monthSelect.value;
+    const baseUrl = window.location.href.split('?')[0]; // Récupérer l'URL de base sans les paramètres
+    const newUrl = `${baseUrl}?month=${selectedMonth}`; // Construire la nouvelle URL avec le mois sélectionné
+    history.replaceState({}, document.title, newUrl); // Mettre à jour l'URL sans recharger la page
+  }
+</script>
+
+
+
+
+</html>

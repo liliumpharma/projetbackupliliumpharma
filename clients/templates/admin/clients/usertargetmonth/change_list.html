@@ -1,0 +1,30 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block object-tools-items %}
+
+
+<div style="display: flex; gap: 10px; justify-content: end;">
+
+    <div class="d-flex justify-content-end">
+        <button class="btn btn-primary" id="download_excel" disabled>
+            Exporter sous Excel
+        </button>
+    </div>
+
+    <script>
+        let element = document.getElementById('download_excel')
+        if (window.location.href.includes('date__year'))
+            element.disabled = false
+
+
+        let url = new URL(window.location.href);
+        let date__year = url.searchParams.get("date__year");
+        element.addEventListener('click', () => open(`{% url 'user_target_months_excel' %}?date__year=${date__year}`, '_blank'))
+
+    </script>
+
+    {{ block.super }}
+</div>
+
+{% endblock %}

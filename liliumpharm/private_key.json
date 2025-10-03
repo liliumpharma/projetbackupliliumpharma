@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "liliumpharma-affca",
+  "private_key_id": "e9fc953b200fe38d52c476919ac98f05bdb935d1",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDZEiwdgTQ8lLXc\nrrzSs5Cb0shJFNfC8KrEH2rLSrIlzd1HhmG3VWq0Qm3XspXlDiZQYhmh5B/5izhg\nYY3Ko+0cQRz39dxlKE5IFtNwnM0HuuC0UnJRXX4iI5kdKXAs7fQXt6oxo2FJD0Ws\nYXOaS3DWJB0kEBkZVmyLJu24ygVyHGPvgMbzQFQa29zIazV6EszHnNxaspEXaBnP\nuW79MX9WcGJoMIb3IcXtRKYGy1LKhhEFLDcXfdT9BCDnoO33IF9Qqi1DIqJyIjJR\nR6vuU3PEZ4mLJ3/jV4ggejEViEtPeNCVghStfJK1rPvNCHGmFvFlQBtofq5rgxlb\nSgtYiyU3AgMBAAECggEAGVdwxQUHdycZUCkqLCMAd+CUt0tyoPR9yyWrzw3qXFV7\nRtVeZQvYyDCVKEBWFYagXHQHcAn03aouK7pX1ldq4AiN/Di8wSaCdRINHzF/Ei7z\n+rlBVVRn3E5xmqDy0pv5CifL+72KJwBcbvJ1j4bNJoLS0Bn9BCM9ysUBrbgQCLEm\nrcILTvf/AuIfeNc+rMAPUSmTA3+nFegbGLgVQFN/174Wpat0g1J7M9UbHqqcQTvL\nTlHv2+QUbpxY0f9Nuf5kPQTr8D/WtI3Q1guUKkyWzjc2eQzVEWbfbT44CCk72YAr\nxx6uXJOz8UKgjTpCs0vo3oy1/N9qjGtva9xFE1oKUQKBgQD5CjUJbQAHnmFPcRzV\n5r9S0b8uFiQDnozhNactufmTNPt6VyNbKzR+lzwoTpY/ZgyuiHsr2t05Z1PEcuYh\nIppLhCBy6IBizliLmW3BDAn5brEpsO62XOEB66rcPL6jxt/PiRiHoP4RpcC0mrpb\nKWNrP8mZPpSrZnoFDyBPI6WzSQKBgQDfIz0u4qgXY8futb0kHii/A4VogH6KEu6G\n+GNcuCKJNz3Afe0CnXwq2fRRBmlgOJtcmCdigWOZlmYiFz08NR4tYcNHrpdxUHSm\njjapI8adEo7nBU7EKfLu3UH9EcK6WMh5XBkQeEP/zwaM3UpPLsDV3Ynlpz2UeXE2\nDGYy7ymUfwKBgQCMZPa1U5+aq+zL7kaFR8pAFEKk5pJy/+UH6UlP+/H4zPugYpNq\nCBdV7khZqMQHBa7MjeByPrZMcDXHH8cgkvNM8zWf0fbevNkqCdrX48OTvJVfnYFV\niVLH1GXENvJ6PdlalD0h6N6ScFEM/9VjIxgLFDDAlYkWf3T2eSqLstrtEQKBgQCd\nDt+0zaLE+92xPsiH0JabhG31lWP76cFszQ6bJ5xferuDbt9RVOod+1WFZn7rVEy+\nivZF1o71fzAaVMMsSrMX/FUIcnJ0Ns40oasFuIHG81YUc97yIhi1WpVk/IhUw8Mv\n8MxPlGdAekbBBc2VGHJw1kOGmwW0KRqvkWCp/z8EHwKBgHNNkQ02hTZxTNmAyjz8\njy1Fy7Hkzw6vEUiLI6Tq+IgH5HPcst4MJeVQqQD6G0mfKM83v5SUi0DvnU8wQ8Er\nb4f06Ns3n4ld8sAEECIKcCItnaZdDcSHrPPijK6CrbeXulKOVDS7pEWDIPhNIQh6\nYP/tN87yC0qtY3nwg6HQwF/N\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-y8yny@liliumpharma-affca.iam.gserviceaccount.com",
+  "client_id": "113953439364238878882",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-y8yny%40liliumpharma-affca.iam.gserviceaccount.com"
+}

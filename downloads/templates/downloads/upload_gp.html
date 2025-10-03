@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Folder</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <style>
+        .upload-container {
+            max-width: 800px;
+            margin: auto;
+            padding: 2rem;
+            border-radius: 8px;
+            background: #f9f9f9;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .btn-primary {
+            background-color:#427b3b; /* Vert clair */
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #10B981; /* Vert plus foncé */
+        }
+        .alert {
+            color: red;
+        }
+        .rtl {
+            direction: rtl;
+            text-align: right;
+        }
+        .lang-section {
+            flex: 1;
+            padding: 0 1rem;
+        }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #427b3b; /* Vert clair */
+            color: #fff;
+            padding: 1rem;
+            text-align: left;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .navbar a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+        .navbar svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+        .spacer {
+            margin-top: 4rem; /* Spacing for content below the fixed navbar */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 items-center justify-center min-h-screen">
+<!-- import_pdf.html -->
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <label for="folder">Téléchargez un dossier de fichiers PDF (zip) :</label>
+    <input type="file" name="folder" id="folder" accept=".zip" required>
+    <button type="submit">Importer</button>
+</form>
+
+</body>
+</html>

@@ -1,0 +1,60 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block object-tools-items %}
+
+
+
+<div style="display: flex; gap: 10px; justify-content: end;">
+
+
+    <div class="d-flex justify-content-end">
+        <button class="btn btn-primary" id="download_excel" disabled>
+            Rapport Excel
+        </button>
+    </div>
+
+    <script>
+        let element = document.getElementById('download_excel')
+        if (window.location.href.includes('source__date__year'))
+            element.disabled = false
+
+
+        let url = new URL(window.location.href);
+        let date__year = url.searchParams.get("source__date__year");
+        element.addEventListener('click', () => open(`https://app.liliumpharma.com/clients/orders/export-excel/?year=${date__year}`, '_blank'))
+
+    </script>
+    
+    <a id="import" class="btn btn-outline-info" target="_blank" href="{% url 'target_report' %}?{{ params }}"><i
+            class="fas fa-print"></i>Print Target Report</a>
+    {{ block.super }}
+</div>
+
+{% endblock %}
+
+
+{% block result_list %}
+
+<!-- <div style="display: flex; gap: 5px; margin-bottom: 15px; color: black; flex-wrap: wrap">
+    <div
+        style="display: flex; flex-wrap: wrap; flex: 1; gap: 10px; align-items: center; justify-content: space-between; background-color: white; border-radius: 5px; border: 1px solid black; padding: 10px;">
+        {% for total_product in total_products %}
+        <div style="flex: 1;  text-align: center">
+            <div>{{ total_product.product }}</div>
+            <div style="color: red; font-weight: bold">(<b>{{ total_product.total }}</b>)</div>
+        </div>
+        {% endfor %}
+
+    </div>
+
+    <div
+        style="flex: 0.2; text-align: center; background-color: white; border-radius: 5px; border: 1px solid black; padding: 10px;">
+        <div>Total</div>
+        <div style="color: red; font-weight: bold"> {{ global_total }}</div>
+    </div>
+</div> -->
+
+
+{{ block.super }}
+{% endblock result_list %}

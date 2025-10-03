@@ -1,0 +1,268 @@
+ {%load static%}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rapport des congés et absences</title>
+    <style>
+      @media print {
+        @page {
+          size: A4 landscape;
+          margin: 0;
+        }
+        /* .absence-table {
+                page-break-before: always;
+            } */
+      }
+    </style>
+    <style>
+      table {
+        width: 100%; /* Tableau occupe 100% de la largeur de la page */
+        border-collapse: collapse; /* Fusionner les bordures de cellules */
+        border: 1px solid #000; /* Bordure du tableau */
+        margin-bottom: 20px; /* Marge en bas du tableau */
+      }
+
+      th,
+      td {
+        border: 1px solid #000; /* Bordure de chaque cellule */
+        padding: 8px; /* Espacement à l'intérieur des cellules */
+        text-align: left; /* Alignement du texte à gauche */
+      }
+
+      /* Définition des styles pour les titres de tableau */
+      h1 {
+        text-align: center; /* Alignement du titre au centre */
+      }
+
+      /* Définition des styles pour les div contenant les tableaux */
+      .leave-table,
+      .absence-table {
+        margin-bottom: 50px; /* Marge en bas de chaque div */
+      }
+      /* Style pour l'en-tête */
+      .header {
+        text-align: center; /* Alignement du contenu au centre */
+        margin-bottom: 20px; /* Marge en bas de l'en-tête */
+      }
+
+      /* Style pour le logo */
+      .logo {
+        display: block; /* Affichage en tant que bloc */
+        margin: 0 auto; /* Centrer horizontalement */
+        max-width: 200px; /* Largeur maximale du logo */
+        height: auto; /* Hauteur automatique pour conserver les proportions */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <img
+        src="{% static 'img/logo.png' %}"
+        alt="Logo EURL LILIUM PHARMA"
+        class="logo"
+        width="80px"
+        height="80px"
+      />
+      <h2>Rapport global des congés et absences</h2>
+      <h3>
+        Du: {{ starting_date|date:"d-m-Y" }} au: {{ ending_date|date:"d-m-Y" }}
+      </h3>
+    </div>
+    <!-- Premier tableau : Rapport des congés -->
+    <div>
+      <!-- Premier tableau : Rapport des congés -->
+      <div>
+        <p id="">
+          <strong style="font-size: 25px">Résumé Liste des Congés:</strong>
+          <strong id="total" style="font-size: 20px; color: green"></strong
+          ><strong style="font-size: 20px; color: green"> Jours</strong> (<span
+            id="recap_par_type"
+          ></span
+          >)
+        </p>
+      </div>
+
+      <script>
+        // Récupérer le dictionnaire de compteur passé dans le contexte
+        var leaveCounts = JSON.parse("{{ leave_counts|escapejs }}");
+        var leaveDaysTaken = JSON.parse("{{ leave_days_taken_json|escapejs }}");
+
+        // Élément où nous afficherons le récapitulatif par type de congé
+        var recapParTypeElement = document.getElementById("recap_par_type");
+
+        // Créer une chaîne HTML pour afficher le récapitulatif
+        var recapHTML = "";
+
+        // Parcourir le dictionnaire de compteur et construire la chaîne HTML
+        for (var leaveType in leaveCounts) {
+          // Ajouter le nombre de jours pris pour ce type
+          var daysTaken =
+            leaveDaysTaken[leaveType] == 0 ? 1 : leaveDaysTaken[leaveType];
+          recapHTML +=
+            "<strong>" +
+            leaveType +
+            "</strong>: " +
+            " " +
+            daysTaken +
+            " jours  , ";
+        }
+
+        // Afficher le récapitulatif dans l'élément approprié
+        recapParTypeElement.innerHTML = recapHTML;
+      </script>
+
+      <table id="leave_table" class="leave-table">
+        <!-- Headers du tableau -->
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>User <br />المستخدم</th>
+            <th>Family <br />العائلة</th>
+            <th>Type <br />النوع</th>
+            <th>Attachement <br />الورقة الثبوتية</th>
+            <th>Status <br />الحالة</th>
+            <th>Premier Jour Du Congé <br />تاريخ بداية الإجازة</th>
+            <th>Jour De Reprise <br />تاريخ العودة للعمل</th>
+            <th>actif <br />حالة المستخدم</th>
+            <th>Nombre de jours <br />عدد الأيام</th>
+          </tr>
+        </thead>
+        <!-- Corps du tableau -->
+        <tbody>
+          {% for leave in leaves %}
+          <tr>
+            <td>
+              <a
+                href="https://app.liliumpharma.com/admin/leaves/leave/{{ leave.id }}/change/"
+                >{{ leave.id }}</a
+              >
+            </td>
+            <td>{{ leave.user }}</td>
+            <td>{{ leave.family }}</td>
+            <td>{{ leave.type }}</td>
+            <td>
+              {% if leave.attachement %}
+              <a
+                href="https://app.liliumpharma.com/media/{{ leave.attachement }}"
+                >Justificatif</a
+              >
+              {% else %}
+              <span style="color: red">Pas de Justificatif</span>
+              {% endif %}
+            </td>
+
+            <td>{{ leave.status }}</td>
+            <td>{{ leave.starting_date }}</td>
+            <td>{{ leave.ending_date }}</td>
+            <td>{{ leave.actif }}</td>
+            <td>{{ leave.nombre_jours_pris }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- *************ABSENCE************ -->
+
+    <!-- Deuxième tableau : Rapport des absences -->
+    <div class="absence-table">
+      {% if absence.absence_count > 0 %}
+
+      <p>
+        <strong style="font-size: 25px">Résumé Liste des Absences:</strong>
+        <strong id="total" style="font-size: 20px; color: green"
+          >{{ absences|length }}</strong
+        ><strong style="font-size: 20px; color: green"> Jours</strong>
+      </p>
+      <p>
+        {% for absence in absence_count_per_user %}
+        <span style="font-weight: bold">{{ absence.user }}:</span> {{
+        absence.absence_count }} absence(s){% if not forloop.last %} {% endif %}
+        {% endfor %}
+      </p>
+
+      <table>
+        <!-- Headers du tableau -->
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>User | المستخدم</th>
+            <th>Family | العائلة</th>
+            <th>Type | النوع</th>
+            <th>Status | الحالة</th>
+            <th>Premier Jour D'absence | تاريخ بداية الإجازة</th>
+            <th>Jour De Reprise | تاريخ العودة للعمل</th>
+            <th>Raison | السبب</th>
+          </tr>
+        </thead>
+        <!-- Corps du tableau -->
+        <tbody>
+          {% for absence in absences %}
+          <tr>
+            <td>
+              <a
+                href="https://app.liliumpharma.com/admin/leaves/absence/{{ absence.id }}/change/"
+                >{{ absence.id }}</a
+              >
+            </td>
+
+            <td>{{ absence.user }}</td>
+            <td>{{ absence.family }}</td>
+            <td>Absence</td>
+            <td>{{ absence.status }}</td>
+            <td>{{ absence.starting_date }}</td>
+            <td id="ending_date_{{ absence.id }}"></td>
+            <td>{{ absence.reason }}</td>
+          </tr>
+          <script>
+            // JavaScript code to add one day and format the ending_date
+            var ending_date = new Date("{{ absence.ending_date }}");
+            ending_date.setDate(ending_date.getDate() + 1);
+            var formatted_ending_date = ending_date.toLocaleDateString(
+              "en-US",
+              { year: "numeric", month: "long", day: "numeric" }
+            );
+            document.getElementById(
+              "ending_date_{{ absence.id }}"
+            ).textContent = formatted_ending_date;
+          </script>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% endif %}
+    </div>
+  </body>
+
+  <script>
+    window.addEventListener("DOMContentLoaded", function () {
+      // Récupérer le tableau
+      var table = document.getElementById("leave_table");
+      if (table) {
+        var rows = table
+          .getElementsByTagName("tbody")[0]
+          .getElementsByTagName("tr");
+
+        // Initialiser la somme
+        var total = 0;
+
+        // Parcourir les lignes sauf la première qui est les headers
+        for (var i = 0; i < rows.length; i++) {
+          // Récupérer la dernière cellule de chaque ligne
+          var cell =
+            rows[i].getElementsByTagName("td")[
+              rows[i].getElementsByTagName("td").length - 1
+            ];
+
+          // Ajouter la valeur de la cellule à la somme
+          total += parseInt(cell.textContent || cell.innerText);
+        }
+
+        // Afficher la somme
+        document.getElementById("total").textContent += total;
+      }
+    });
+  </script>
+</html>

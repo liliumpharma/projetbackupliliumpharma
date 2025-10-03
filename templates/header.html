@@ -1,0 +1,1625 @@
+{% if user.is_authenticated %}
+{% load static %}
+<style>
+  @keyframes slideInFromTop {
+    0% {
+        opacity: 0;
+        transform: translateY(-100%);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.user-profile-header {
+    animation: slideInFromTop 1s ease; /* Adjust the duration and easing as needed */
+}
+
+@keyframes fadeInLeft {
+    0% {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Define the animation for items coming from the right */
+@keyframes fadeInRight {
+    0% {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Apply animations to the first two and last two navbar items */
+.navbar-nav li:nth-child(-n + 2) {
+    animation: fadeInLeft 0.5s ease-in-out;
+    animation-fill-mode: both;
+    opacity: 0;
+}
+
+.navbar-nav li:nth-child(n + 3):not(:last-child) {
+    animation: fadeInRight 0.5s ease-in-out;
+    animation-fill-mode: both;
+    opacity: 0;
+}
+
+/* Ensure the animation is triggered when the element comes into view */
+.navbar-nav {
+    /* visibility: hidden; */
+    animation: fadeInLeft 0.5s ease-in-out both, fadeInRight 0.5s ease-in-out both;
+    animation-delay: 0.2s; /* Adjust the delay as needed */
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.quick-access-menu {
+    opacity: 0;
+    visibility: hidden;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.quick-access:hover .quick-access-menu {
+    opacity: 1;
+    visibility: visible;
+}
+
+#btn {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+
+</style>
+
+
+<style>
+  .styled-img {
+      width: 35px;
+      height: 35px;
+  }
+  .navbar li {
+    margin-right: 3px;
+  }
+
+  .navbar li:last-child {
+    margin-right: 0px;
+  }
+</style>
+<style>
+
+  .sidebar a {
+      padding: 10px;
+      text-decoration: none;
+      color: #495057;
+      display: block;
+      transition: background-color 0.3s;
+  }
+
+  .sidebar a:hover {
+      background: radial-gradient(circle,#228B22  ,#67CB57,#fff);
+
+      color: white;
+  }
+
+  .sidebar .nav-item.active a {
+      background-color: #dee2e6;
+      color: #495057;
+  }
+  h4 {
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        margin-left: 1rem;
+        margin-right: 1rem;
+        font-weight: bold;
+        color: green;
+    }
+</style>
+
+<style>
+.navbar a {
+    text-decoration: none;
+    color: #495057;
+    display: block;
+    transition: background-color 0.3s, transform 0.3s ease-out, opacity 0.3s ease-out;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.navbar a:hover {
+    background-color: #e9ecef;
+    border-color: green;
+    color: white;
+    transform: translateY(-5px);
+    opacity: 0.8;
+    background: linear-gradient(#67CB57,#fff);
+
+}
+.gradient{
+  background: linear-gradient(228B22,#67CB57,#fff);
+
+}
+.navbar .nav-item.active a {
+    background-color: #dee2e6;
+    color: green;
+}
+
+  h5 {
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+        margin-left: 1rem;
+        font-weight: bold;
+        color: green; 
+    }
+
+  .cardd {
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    background: radial-gradient(circle, #B0F2B6, #fff);
+}
+
+.cardd:hover {
+    border: 1px solid green; 
+    opacity: 0.8;
+    transform: translateY(-5px); 
+
+}
+
+.nav-item-hover {
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+.nav-item-hover:hover {
+    transform: translateY(-5px);
+    opacity: 0.8; 
+}
+#scrollToTopBtn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: none;
+    background-color: #007bff;
+    color: #fff;
+    font-size: 16px;
+    padding: 10px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 100;
+}
+
+</style>
+<style>
+  .quick-access {
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+      
+  }
+
+  .quick-access-menu {
+      display: none;
+      position: absolute;
+      top: 0;
+      left: 100%;
+      width: 200px;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      padding: 10px;
+      z-index: 1;
+      
+  }
+
+  /* Styles for the quick access buttons */
+  .quick-access-menu button {
+      display: block;
+      width: 100%;
+      
+      padding: 8px;
+      margin-bottom: 5px;
+      text-align: left;
+      border: none;
+      background-color: #e9ecef;
+      cursor: pointer;
+  }
+  .quick-access-menu button:hover {
+  background-color: #d1d8e0; /* Change background color on hover */
+}
+
+  .butt{
+    border: none;
+    background-color: green;
+    border-radius: 5px;
+    color: white;
+    margin-top: 10px;
+    margin-left: 15px;
+    padding: 15px;
+  }
+  .butto{
+    border: 1px solid green;
+    background-color: white;
+    border-radius: 1px;
+    color: green;
+  }
+  ul{
+    margin-left: auto;
+    margin-right: auto;
+  }
+</style>
+<style>
+  /* Style the header */
+  .user-profile-header {
+    background-color: #2E7D32; /* Deeper shade of green */
+    color: #fff;
+    padding: 10px 0;
+  }
+
+  .container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0 15px; /* Add padding to the container */
+  }
+
+  .d-flex {
+    display: flex;
+    flex-wrap: wrap; /* Allow items to wrap to the next line */
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .profile-title {
+    display: flex;
+    align-items: center;
+    color: white;
+    margin-right: 20px; /* Add margin for better spacing */
+  }
+
+  .styled-img {
+    width: 25px; /* Adjust the size as needed */
+    height: 25px; /* Adjust the size as needed */
+    margin-right: 10px;
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    margin-right: 20px; /* Add margin for better spacing */
+  }
+
+  .date {
+    margin-right: 20px;
+  }
+
+  .user-details {
+    display: flex;
+    align-items: center;
+  }
+
+  .username {
+    margin-right: 10px;
+  }
+
+  .text-10 {
+    font-size: 10px;
+  }
+
+  .logout-link {
+    color: #fff;
+    text-decoration: none;
+  }
+
+  /* Media queries for responsiveness */
+  @media (max-width: 768px) {
+    .profile-title {
+      margin-right: 0; /* Remove margin for smaller screens */
+    }
+
+    .user-info {
+      margin-right: 0; /* Remove margin for smaller screens */
+      margin-top: 10px; /* Add margin-top for spacing */
+    }
+  }
+
+  @media (max-width: 576px) {
+    .container {
+      padding: 0; /* Remove padding for smaller screens */
+    }
+  }
+
+</style>
+<!-- <button id="scrollToTopBtn" onclick="scrollToTop()">^</button> -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+<div class="flex-wrap" >
+  <header class="user-profile-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3 class="profile-title" style="font-weight: bold;">
+            <img class="styled-img" src="{% static 'img/icons/logo-2.png' %}" alt="Logo">
+            <span>Bienvenue {{ user|title }}</span>
+          </h3>        
+            <div class="user-info">
+                <span class="date">{% now "l jS F Y" %}</span>
+                <div class="user-details">
+                    <i class="fa fa-user"></i>
+                    <span class="username">{{ user }}</span>
+                    <a href="{% url 'logout'%}" class="logout-link">
+                        <i class="fas fa-sign-out-alt"></i> Déconnexionn
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>
+      /* Style the header */
+      .user-profile-header {
+        background-color: #2E7D32; /* Deeper shade of green */
+    color: #fff;
+    padding: 10px 0;
+}
+
+.container {
+    max-width: 100%;
+    margin: 0 0;
+}
+
+.d-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.profile-title {
+    display: flex;
+    align-items: center;
+    color: white;
+}
+
+.styled-img {
+    width: 25px; /* Adjust the size as needed */
+    height: 25px; /* Adjust the size as needed */
+    margin-right: 0px;
+}
+
+.user-info {
+    display: flex;
+    align-items: right;
+}
+
+.date {
+    margin-right: 20px;
+}
+
+.user-details {
+    display: flex;
+    align-items: center;
+}
+
+.username {
+    margin-right: 10px;
+}
+
+.text-10 {
+    font-size: 10px;
+}
+
+.logout-link {
+    color: #fff;
+    text-decoration: none;
+}
+    </style>
+
+
+  <div class="d-flex">
+    <!-- <a class="btn" style="color: black;" href="http://192.168.100.3/open_second" target="_blank">
+      <div style="background: white; padding: 5px; border-radius: 5px; display: inline-block;">
+        <img class="icon-door" src="{% static 'img/open_entrance.png' %}" />
+        <strong>Open Exterior Door</strong>
+      </div>
+    </a> -->
+
+
+<!-- Bouton flottant futuriste -->
+<div id="chatbot-icon" onclick="toggleChat()" title="Lilium Assistant">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 0C5.37258 0 0 4.922 0 11c0 2.72 1.03 5.21 2.73 7.11L1 24l5.26-2.46C8.01 22.72 9.95 23 12 23c6.6274 0 12-4.922 12-11S18.6274 0 12 0z"/>
+  </svg>
+</div>
+
+<!-- Fenêtre de chat fullscreen -->
+<div id="chatbot-overlay" style="display: none;">
+  <div id="chatbot-window">
+    <div id="chat-header">
+      <span>🚀 Lilium Assistant</span>
+      <button id="close-btn" onclick="toggleChat()">✖</button>
+    </div>
+
+    <div id="chat-messages"></div>
+
+    <div id="chat-lang-box">
+      <label for="chat-lang">Langue:</label>
+      <select id="chat-lang">
+        <option value="fr" selected>Français</option>
+        <option value="ar">Arabe</option>
+        <option value="en">Anglais</option>
+      </select>
+    </div>
+
+    <div id="chat-input-box">
+      <input id="chat-input" type="text" placeholder="Posez votre question..." onkeypress="sendOnEnter(event)">
+      <button id="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* ==== BOUTON FLOTTANT FUTURISTE ==== */
+#chatbot-icon {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3), 0 0 15px rgba(34,197,94,0.4) inset;
+  z-index: 9999;
+  transition: all 0.3s ease;
+}
+#chatbot-icon:hover {
+  transform: scale(1.2) rotate(10deg);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4), 0 0 20px rgba(34,197,94,0.6) inset;
+}
+
+/* ==== OVERLAY ==== */
+#chatbot-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.8);
+  backdrop-filter: blur(6px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+/* ==== FENÊTRE CHAT ==== */
+#chatbot-window {
+  background: #f9fafb; /* fond clair */
+  width: 450px;
+  max-width: 90%;
+  height: 600px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(34,197,94,0.2);
+  animation: fadeIn 0.4s ease-in-out;
+  color: #111827;
+  font-family: 'Segoe UI', sans-serif;
+}
+@keyframes fadeIn { from {opacity: 0; transform: scale(0.95);} to {opacity:1; transform: scale(1);} }
+
+/* ==== HEADER ==== */
+#chat-header {
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+  color: white;
+  padding: 16px 20px;
+  font-size: 18px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  border-bottom: 1px solid #d1fae5;
+}
+#close-btn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  color: white;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+#close-btn:hover { transform: rotate(90deg); }
+
+/* ==== MESSAGES ==== */
+#chat-messages {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  background: #f9fafb;
+  scroll-behavior: smooth;
+}
+.message {
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  max-width: 75%;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: messageIn 0.4s forwards;
+  line-height: 1.5;
+  font-size: 15px;
+}
+@keyframes messageIn { to { opacity:1; transform: translateY(0);} }
+.user { background: #16a34a; color: white; margin-left: auto; }
+.bot { background: #d1fae5; color: #065f46; margin-right: auto; }
+
+/* ==== TYPING LOADER ==== */
+.typing { display: inline-flex; gap: 4px; }
+.typing span {
+  width: 8px; height: 8px;
+  background: #16a34a;
+  border-radius: 50%;
+  animation: blink 1s infinite;
+}
+.typing span:nth-child(2) { animation-delay: 0.2s; }
+.typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%, 80%, 100% {opacity:0;} 40% {opacity:1;} }
+
+/* ==== LANGUE ==== */
+#chat-lang-box { padding: 10px; text-align:right; }
+#chat-lang { padding: 6px 10px; border-radius: 8px; border: 1px solid #d1fae5; outline: none; background: #f9fafb; color: #065f46; }
+
+/* ==== INPUT ==== */
+#chat-input-box { display:flex; border-top: 1px solid #d1fae5; }
+#chat-input { flex:1; padding:14px; font-size:16px; border:none; outline:none; border-radius:0; background:#f0fdf4; color:#065f46; transition: box-shadow 0.3s ease; }
+#chat-input:focus { box-shadow: 0 0 10px #16a34a; }
+#chat-input::placeholder { color:#999; font-style:italic; }
+#send-btn { background: linear-gradient(135deg, #16a34a, #22c55e); border:none; color:white; padding:0 20px; font-size:18px; cursor:pointer; transition: all 0.3s ease; }
+#send-btn:hover { transform: scale(1.1); box-shadow: 0 0 15px #22c55e; }
+
+</style>
+
+<script>
+function toggleChat(){
+  const overlay=document.getElementById("chatbot-overlay");
+  overlay.style.display=(overlay.style.display==="flex")?"none":"flex";
+  document.getElementById("chat-input").focus();
+}
+
+function sendOnEnter(e){ if(e.key==="Enter") sendMessage(); }
+
+function addMessage(sender,text,type,withTyping=false){
+  const chatBox=document.getElementById("chat-messages");
+  const div=document.createElement("div");
+  div.className="message "+type;
+  if(withTyping){
+    div.innerHTML=sender+' <span class="typing"><span></span><span></span><span></span></span>';
+  } else {
+    div.innerHTML=sender+' '+text;
+  }
+  chatBox.appendChild(div);
+  chatBox.scrollTop=chatBox.scrollHeight;
+  return div;
+}
+
+async function sendMessage(){
+  const input=document.getElementById("chat-input");
+  const message=input.value.trim();
+  if(!message){
+    // Effet pulse si vide
+    input.style.animation="pulse 0.5s";
+    setTimeout(()=>input.style.animation="",500);
+    return;
+  }
+  addMessage("👤",message,"user");
+  input.value="";
+
+  const botDiv=addMessage("🤖","","bot",true);
+  try{
+const lang = document.getElementById("chat-lang").value;
+console.log("langue "+lang)
+const res = await fetch("https://app.liliumpharma.com/downloads/chatbot/", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ question: message, lang: lang })
+});
+
+    const reader=res.body.getReader();
+    const decoder=new TextDecoder();
+    let text="";
+    while(true){
+      const {done,value}=await reader.read();
+      if(done) break;
+      text+=decoder.decode(value,{stream:true});
+      botDiv.innerHTML="🤖 "+text;
+      document.getElementById("chat-messages").scrollTop=document.getElementById("chat-messages").scrollHeight;
+    }
+  }catch(err){
+    console.error("Erreur:",err);
+    botDiv.innerHTML="🤖 Erreur de connexion...";
+  }
+}
+
+// Pulse animation
+const styleSheet=document.createElement("style");
+styleSheet.innerHTML="@keyframes pulse{0%{box-shadow:0 0 0 #16a34a;}50%{box-shadow:0 0 10px #16a34a;}100%{box-shadow:0 0 0 #16a34a;}}";
+document.head.appendChild(styleSheet);
+</script>
+
+
+
+
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light" style="padding: 0 !important; margin-right: 180px; background-color: transparent !important;">
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown"
+        aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNavDropdown">
+        <ul class="navbar-nav col-12">
+          <!-- <li class="nav-item text-center col-3"> -->
+            <!-- href="{% url 'HomeMedecin'%}" -->
+            <!-- <a class="nav-link text-10"  style="color: white;">
+              <img class="styled-img" src="{% static 'img/icons/liste_medecins.png' %}" />
+              <br/> Liste des médecins</br> (قائمة الأطباء)
+            </a> -->
+          <!-- </li> -->
+          <!-- <li class="nav-item text-center col-3"> -->
+            <!-- href="{% url 'HomeRapport'%}"  -->
+            <!-- <a class="nav-link text-10"  style="color: white;">
+              <img class="styled-img" src="{% static 'img/icons/rapports.png' %}" alt="">
+              <br /> Liste des rapports</br> (قائمة التقارير)
+            </a> -->
+          <!-- </li> 
+          <li class="nav-item text-center col-10">
+            <a class="nav-link text-10" href="https://haumea-shared.dzsecurity.net:2096/cpsess1327018687/webmail/jupiter/index.html?login=1&post_login=65047219455876"   target="_blank"  style="color: white;">
+              <img class="styled-img" src="{% static 'img/icons/mail.png' %}" alt="">
+              <br />E-mail</br>
+            </a>
+          </li>
+          <li class="nav-item text-center col-10">
+            <a class="nav-link text-10" href="https://docs.google.com/spreadsheets/u/0/?ec=asw-sheets-hero-goto"   target="_blank"  style="color: white;">
+              <img class="styled-img" src="{% static 'img/icons/excell.png' %}" alt="">
+              <br />Excel</br>
+            </a>
+          </li>
+          <li class="nav-item text-center col-10">
+            <a class="nav-link text-10" href="https://docs.google.com/document/u/0/"   target="_blank"  style="color: white;">
+              <img class="styled-img" src="{% static 'img/icons/word.png' %}" alt="">
+              <br />Word</br>
+            </a>
+          </li>
+          <li class="nav-item text-center col-10">
+            <a class="nav-link text-10" href="{% url 'meet_front'%}"  style="color: white;">
+              <img class="styled-img" src="{% static 'img/icons/meet.png' %}" alt="">
+              <br />Réunion</br>
+            </a>
+          </li>-->
+          <li class="nav-item text-center col-3">
+            <!-- href="{% url 'AddVisite'%}"  -->
+            <!-- <a class="nav-link text-10"   style="color: white;">
+              <img class="styled-img" src="{% static 'img/icons/visite.png' %}" alt="">
+              <br /> Nouvelle Visite</br> (أضف زيارة)
+            </a> -->
+          </li>
+          <!-- Add more navigation items here -->
+
+        <li class="nav-item text-center col-3">
+          <!-- href="{% url 'AddMedecin'%}" -->
+          <!-- <a class="nav-link text-10"   style="color: white;">
+            <img class="styled-img" src="{% static 'img/icons/add_medecin.png' %}" alt="">
+            <br /> Nouveau médecin</br>(أضف طبيب)
+          </a> -->
+        </li>
+  
+      </ul>
+    
+      </div>
+    </nav>
+
+    <!-- <a class="btn" style="color: black;" href="http://192.168.100.3/open" target="_blank">
+      <div  style="background: white; padding: 5px; border-radius: 5px; display: inline-block;">
+        <img class="icon-door" src="{% static 'img/door.png' %}" />
+        <strong>Open Interior Door</strong>
+      </div>
+    </a> -->
+  </div>
+
+  </header>
+
+
+
+
+  <script>
+
+    function httpGet(url) {
+      fetch(url)
+    }
+  </script>
+
+
+
+</div>
+
+
+<!-- CODE FOR NOTIFICATION -->
+<div class="row mt-4">
+  <div class="col-12 text-right">
+    <div class="notification-bell" style="margin-right: 20px;">
+      <span id="notification-count" class="notification-count">-</span> <!-- Initialisation à zéro -->
+      <img src="../static/img/notification-2.png" alt="" width="40px" height="40px">
+      {% comment %} <div class="notifications-dropdown">
+        <ul class="notifications-list"></ul>
+      </div> {% endcomment %}
+    </div>
+  </div>
+
+</div>
+
+<!-- JavaScript -->
+{% comment %} <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialisation du compteur de notifications non lues
+    let unreadCount = 0;
+    $('.notifications-dropdown').hide();
+
+    // Fonction pour récupérer et afficher les notifications non lues
+    function fetchNotifications() {
+        $.ajax({
+            url: '/notifications/get-unread-notifications/',  // Modifier l'URL en fonction de votre configuration
+            method: 'GET',
+            success: function(data) {
+                const notifications = data.notifications;
+
+                // Mettre à jour le nombre de notifications non lues
+                unreadCount = data.unread_count;
+
+                // Mettre à jour le compteur visible
+                if (unreadCount > 0) {
+                    $('#notification-count').text(unreadCount).show();
+                } else {
+                    $('#notification-count').hide();
+                }
+
+                // Peupler la liste des notifications
+                const notificationsList = $('.notifications-list');
+                notificationsList.empty();
+                notifications.forEach(notification => {
+                    const isUnread = !notification.read;
+                    const url = notification.data.url || '#';
+
+                    // Création de l'élément li avec le contenu de la notification
+                    const listItem = $('<li></li>').css('text-align', 'left');
+
+                    // Construction du lien <a>
+                    const anchor = $('<a></a>').attr('href', url).css({
+                        'text-decoration': 'none',
+                        'color': 'inherit'
+                    });
+
+                    // Construction du conteneur <div> pour le contenu de la notification
+                    const container = $('<div></div>').css('cursor', 'pointer');
+
+                    // Construction des éléments <div> pour le titre, la date et la description
+                    const titleDiv = $('<div></div>').css({
+                        'font-weight': 'bold',
+                        'font-size': '12px'
+                    }).html(`${isUnread ? '<span style="color: green; margin-right: 10px; font-size: 16px;">&#9679;</span>' : ''}${notification.title}`);
+
+                    const dateDiv = $('<div></div>').css({
+                        'font-weight': 'bold',
+                        'font-size': '10px'
+                    }).text(notification.added);
+
+                    const descriptionDiv = $('<div></div>').css('font-size', '10px').text(notification.description);
+
+                    // Ajout des éléments au conteneur
+                    container.append(titleDiv, dateDiv, descriptionDiv);
+
+                    // Ajout du conteneur au lien <a>
+                    anchor.append(container);
+
+                    // Ajout du lien <a> à l'élément <li>
+                    listItem.append(anchor);
+
+                    // Ajout de l'élément <li> à la liste des notifications
+                    notificationsList.append(listItem);
+
+                    // Ajout de l'événement de clic sur le conteneur pour marquer la notification comme lue
+                    container.on('click', function(event) {
+                        event.preventDefault(); // Empêche la navigation par défaut
+
+                        // Envoyer la requête POST pour marquer la notification comme lue
+                        $.ajax({
+                            url: '/notifications/mark-notifications-read/',
+                            method: 'POST',
+                            data: {
+                                id: notification.id
+                            },
+                            beforeSend: function(xhr) {
+                                xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                            },
+                            success: function(response) {
+                                console.log('Notification marquée comme lue avec succès');
+                                // Décrémenter le compteur de notifications non lues et mettre à jour
+                                if (isUnread) {
+
+                                  unreadCount--;
+                                  if (unreadCount > 0) {
+                                      $('#notification-count').text(unreadCount);
+  
+                                  } else {
+                                      $('#notification-count').hide();
+                                  }
+                                }
+                                else{
+                                  if (unreadCount <= 0) {
+                                    $('#notification-count').hide();
+                                  }
+                                }
+                                window.location.href=url
+
+                                fetchNotifications(); // Rafraîchir la liste des notifications
+                            },
+                            error: function(error) {
+                                console.error('Erreur lors du marquage de la notification comme lue :', error);
+                            }
+
+                        });
+                    });
+                });
+            },
+            error: function(error) {
+                console.error('Erreur lors de la récupération des notifications :', error);
+            }
+        });
+    }
+
+    // Premier appel à la fonction de récupération des notifications
+    fetchNotifications();
+
+    // Rafraîchir automatiquement les notifications toutes les 30 secondes
+    setInterval(fetchNotifications, 30000);
+
+    // Gestion de l'affichage/masquage du menu déroulant des notifications
+    $('.notification-bell').click(function() {
+        $('.notifications-dropdown').slideToggle();
+    });
+});
+
+</script> {% endcomment %}
+
+<!-- CSS -->
+<style>
+.notification-bell {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+
+.notification-count {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: red;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 12px;
+    /* display: none; */
+}
+
+.notifications-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.notifications-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.notifications-list li {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+</style>
+<!-- END CODE FOR NOTIFICATION -->
+
+
+<div id="congratsCard" class="card" style="display: none; padding: 20px; border-radius: 10px; text-align: center;">
+  <img src="{% static 'img/logo.png' %}" alt="Logo" class="logo" style="width: 100px; margin-bottom: 10px;">
+</br>
+  <h2 style="color: green;">Lilium Pharma vous souhaite une <span style="color: #ff4081;">joyeuse année Amazigh!</span></h2>
+  <h2 style="color: green;">تتمنى لكم Lilium Pharma !</br><span style="color: #ff4081;"> ! سنة أمازيغية سعيدة</span></h2>
+  <h2 style="color: green;"><span style="color: #ff4081;">Asegas amegas</span></h2>
+  <h1 style="color: green;"><span style="color: #ff4081;">2975</span></h1>
+  <p></p>
+  <p style="direction: rtl;"></p>
+  <span class="close-icon" onclick="closeCard()" style="position: absolute; top: 10px; right: 10px; cursor: pointer; color: red;">✖</span>
+  <div class="balloon-container">
+      <div class="balloon"></div>
+      <div class="balloon"></div>
+      <div class="balloon"></div>
+      <div class="balloon"></div>
+      <div class="balloon"></div>
+      <div class="balloon"></div>
+      <div class="balloon"></div>
+      <div class="balloon"></div>
+      <div class="balloon"></div>
+      <div class="balloon"></div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+      const currentDate = new Date();
+      const targetDate = new Date('2025-01-13'); // Set your target date here
+      const hasSeenCongrats = localStorage.getItem("hasSeenCongrats");
+
+      if (currentDate.toDateString() === targetDate.toDateString() && !hasSeenCongrats) {
+          // Show the congratulations card
+          document.getElementById("congratsCard").style.display = "block";
+
+          // Mark as seen so it doesn't show again
+          localStorage.setItem("hasSeenCongrats", "true");
+      }
+  });
+
+  // Function to close the card
+  function closeCard() {
+      document.getElementById("congratsCard").style.display = "none";
+  }
+</script>
+
+<style>
+  #congratsCard {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      background-color: white;
+      border: 1.5px solid green;
+      z-index: 1000;
+      width: 400px;
+      height: 500px;
+  }
+
+  #congratsCard h2 {
+      font-size: 24px;
+      color: #4CAF50;
+  }
+
+  #congratsCard .logo {
+      width: 100px;
+      margin-top: 20px;
+  }
+
+  .balloon-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+  }
+
+  .balloon {
+      position: absolute;
+      bottom: -100px;
+      width: 40px;
+      height: 60px;
+      background-color: red;
+      border-radius: 50%;
+      animation: float 3s infinite ease-in-out; /* Faster animation */
+  }
+
+  .balloon:nth-child(2) {
+      background-color: blue;
+      left: 10%;
+      animation-duration: 3s;
+  }
+
+  .balloon:nth-child(3) {
+      background-color: green;
+      left: 20%;
+      animation-duration: 3.5s;
+  }
+
+  .balloon:nth-child(4) {
+      background-color: yellow;
+      left: 30%;
+      animation-duration: 4s;
+  }
+
+  .balloon:nth-child(5) {
+      background-color: purple;
+      left: 40%;
+      animation-duration: 4.5s;
+  }
+
+  .balloon:nth-child(6) {
+      background-color: orange;
+      left: 50%;
+      animation-duration: 4s;
+  }
+
+  .balloon:nth-child(7) {
+      background-color: pink;
+      left: 60%;
+      animation-duration: 3.5s;
+  }
+
+  .balloon:nth-child(8) {
+      background-color: cyan;
+      left: 70%;
+      animation-duration: 3s;
+  }
+
+  .balloon:nth-child(9) {
+      background-color: lightgreen;
+      left: 80%;
+      animation-duration: 3.5s;
+  }
+
+  .balloon:nth-child(10) {
+      background-color: lightblue;
+      left: 90%;
+      animation-duration: 4s;
+  }
+
+  @keyframes float {
+      0% {
+          transform: translateY(100vh);
+      }
+      100% {
+          transform: translateY(-100vh);
+      }
+  }
+</style>
+
+
+
+{% if request.user.is_superuser or request.user.userprofile.rolee == "CountryManager" or request.user.userprofile.rolee == "Admin" %}
+  
+
+  
+<div id="btn" class="d-flex" style="justify-content: space-between;">
+  <div class="quick-access"  onmouseover="showQuickAccessMenu()" onmouseout="hideQuickAccessMenu()">
+    <button class="butt">
+      Quick access >
+    </button>
+    <div class="quick-access-menu" id="quickAccessMenu">
+      <a href="{% url 'Home'%}">
+        <button class="button-with-image mt-3" >
+          <img src="{% static 'img/icons/supervisorr.png' %}" width="30px" height="auto" alt="Administration Icon">
+          Supervisor
+        </button>
+      </a>
+      {% comment %} <a href="https://app.liliumpharma.com/production/front-main/">
+        <button class="button-with-image mt-3">
+          <img src="{% static 'img/icons/settings.png' %}" width="30px" height="auto" alt="Administration Icon">
+          prod
+        </button>
+      </a> {% endcomment %}
+      <a href="/admin/">
+        <button class="button-with-image mt-3">
+          <img src="{% static 'img/icons/settings.png' %}" width="30px" height="auto" alt="Administration Icon">
+          Admin
+        </button>
+      </a>
+      <a href="{% url 'front_main1' %}">
+        <button class="button-with-image mt-3">
+          <img src="{% static '' %}" width="30px" height="auto" alt="">
+          Production
+        </button>
+      </a>
+      <!-- WhatsApp button with icon -->
+      <a href="whatsapp://">
+        <button style="background-color: #25D366; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px;">
+            <i class="fab fa-whatsapp" style="margin-right: 8px;"></i> WhatsApp
+        </button>
+      </a>
+      <!--GP Pharmacie-->
+      <a href="{% url 'griffePassagePharmacieFront'%}">
+        <button class="button-with-image mt-3">
+          <img src="{% static 'img/icons/liste_report.png' %}" width="30px" height="auto" alt="">
+          GP Pharmacie
+        </button>
+      </a>
+      <!--Visit Par produit-->
+      <a href="{% url 'griffePassageFront'%}">
+        <button class="button-with-image mt-3">
+          <img src="{% static 'img/icons/liste_report.png' %}" width="30px" height="auto" alt="">
+          Visite Par Produits
+        </button>
+      </a>
+      
+      
+    </div>
+  </div>
+  
+  
+</div>
+{% endif %}
+{% if request.user.is_superuser or request.user.userprofile.rolee == "Finance_et_comptabilité" or request.user.userprofile.rolee == "Office" %}
+<div id="btn" class="d-flex" style="justify-content: space-between;">
+  <div class="quick-access"  onmouseover="showQuickAccessMenu1()" onmouseout="hideQuickAccessMenu1()">
+    <button class="butt">
+      Quick Excel >
+    </button>
+    <div class="quick-access-menu" id="quickAccessMenu1">
+      <a  href="https://app.liliumpharma.com/accounts/export_excel">
+        <button class="button-with-image mt-3">
+          <img src="{% static 'img/icons/excel.png' %}" width="20px" height="auto" alt="Excel Icon">
+          Liste Personnel
+        </button>
+      </a>
+
+      <a  href="http://app.liliumpharma.com/orders/exit_orders_export_excel">
+        <button class="button-with-image mt-3">
+          <img src="{% static 'img/icons/excel.png' %}" width="20px" height="auto" alt="Excel Icon">
+          Bon de sortie
+        </button>
+      </a><!--
+      <a  href="{{ MEDIA_URL }}/downloadable/mon_fichier.xlsx">
+        <button class="button-with-image mt-3">
+          <img src="{% static 'img/icons/excel.png' %}" width="20px" height="auto" alt="Excel Icon">
+          Check Liste Nouveau délégué
+        </button>
+      </a>-->
+      <a  href="http://app.liliumpharma.com/clients/sales/export-excel/">
+        <button class="button-with-image mt-3">
+          <img src="{% static 'img/icons/excel.png' %}" width="20px" height="auto" alt="Excel Icon">
+          Vente Par Wilaya Mois précédent
+        </button>
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endif %}
+{% if request.user.userprofile.rolee == "Commercial" %}
+<div id="btn" class="d-flex" style="justify-content: space-between;">
+  <div class="quick-access"  onmouseover="showQuickAccessMenu1()" onmouseout="hideQuickAccessMenu1()">
+    <button class="butt">
+      Quick Excel >
+    </button>
+    <div class="quick-access-menu" id="quickAccessMenu1">
+      <a  href="https://app.liliumpharma.com/medecins/export/listeMedecin">
+        <button class="button-with-image mt-3">
+          <img src="{% static 'img/icons/excel.png' %}" width="20px" height="auto" alt="Excel Icon">
+          Porte feuille client
+        </button>
+      </a>
+    </div>
+    
+  </div>
+  
+  
+</div>
+
+{% endif %}
+
+
+
+
+<div class="sidebar mt-3">
+  <ul class="navbar-nav col-8"></ul>
+  <ul class="navbar-nav col-8 mt-3">
+    <div class="cardd b-green" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="/plans/mServices/monthly_planning/">
+            <img class="styled-img" src="{% static 'img/icons/planning.png' %}" alt="">
+            <br /> Planning</br>
+          </a>
+        </li>
+      </div>
+    </div>
+
+
+    <!-- <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="{% url 'Home'%}">
+            <img class="styled-img" src="{% static 'img/icons/supervisor.png' %}" alt="">
+            <br /> Superviseur</br>
+          </a>
+        </li>
+      </div>
+    </div> -->
+    {% if request.user.userprofile.rolee != "Commercial" %}
+
+
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="https://app.liliumpharma.com/medecins">
+            <img class="styled-img" src="{% static 'img/icons/list_doctor.png' %}" alt="">
+            <br /> Liste Medecins</br>
+          </a>
+        </li>
+      </div>
+    </div>
+
+  <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+    <div class="d-flex justify-content-between p-3">
+      <div class="text-center">
+        <a class="nav-link" href="https://app.liliumpharma.com/rapports/" style="display: inline;">
+          <img class="styled-img" src="{% static 'img/icons/liste_report.png' %}" alt="">
+          Liste Rapport  قائمة التقارير
+        </a>
+      </div>
+      <div class="text-center">
+        <a class="nav-link" href="{% url 'addrapport'%}" style="background-color: #24b424; padding:4px; color:white; border-radius: 10px;">
+          <!--<img class="styled-img" src="{% static 'img/icons/plus.jpg' %}" alt="">-->
+          <i class="fas fa-plus" style="color: red; font-size: 30px;"></i>Ajouter اضافة
+        </a>
+    </div>
+  </div>
+</div>
+    {% endif %}
+
+    {% if request.user.userprofile.speciality_rolee == "Medico_commercial" %}
+
+
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <!-- <a class="nav-link" href="https://app.liliumpharma.com/accounts/profile.html"> -->
+            <a class="nav-link" href="{% url 'HomeMedecin'%}">
+            <img class="styled-img" src="{% static 'img/icons/list_doctor.png' %}" alt="">
+            <br /> Liste Medecins</br>
+          </a>
+        </li>
+      </div>
+    </div>
+<!--
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+           <a class="nav-link" href="https://app.liliumpharma.com/accounts/profile.html"> 
+            <a class="nav-link" href="https://app.liliumpharma.com/rapports/test">
+            <img class="styled-img" src="{% static 'img/icons/liste_report.png' %}" alt="">
+            <br /> Liste Rapport</br>قائمة التقارير
+          </a>
+        </li>
+      </div>
+    </div>-->
+    
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="d-flex justify-content-between p-3">
+        <div class="text-center">
+          <a class="nav-link" href="https://app.liliumpharma.com/rapports/test" style="display: inline;">
+            <img class="styled-img" src="{% static 'img/icons/liste_report.png' %}" alt="">
+            Liste Rapport  قائمة التقارير
+          </a>
+        </div>
+        <div class="text-center">
+          <a class="nav-link" href="{% url 'addrapport'%}" style="background-color: #24b424; padding:4px; color:white; border-radius: 10px;">
+            <!--<img class="styled-img" src="{% static 'img/icons/plus.jpg' %}" alt="">-->
+            <i class="fas fa-plus" style="color: red; font-size: 30px;"></i>Ajouter اضافة
+          </a>
+      </div>
+    </div>
+    </div>
+    {% endif %}
+    <!--
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <!-- <a class="nav-link" href="https://app.liliumpharma.com/accounts/profile.html"> 
+            <a class="nav-link" href="{% url 'addrapport'%}">
+            <!--<img class="styled-img" src="{% static 'img/icons/liste_report.png' %}" alt="">
+            <br /> Ajouter Un Rapport</br>
+          </a>
+        </li>
+      </div>
+    </div>
+    
+
+     <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="{% url 'visitesProduitFront'%}">
+            <img class="styled-img" src="{% static 'img/icons/liste_report.png' %}" alt="">
+            <br /> Visite Par Produits</br>قائمة التقارير
+          </a>
+        </li>
+      </div>
+    </div> -->
+    <!--
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="{% url 'griffePassageFront'%}">
+            <img class="styled-img" src="{% static 'img/icons/liste_report.png' %}" alt="">
+            <br /> Visite Par Produits</br>قائمة التقارير
+          </a>
+        </li>
+      </div>
+    </div>
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="{% url 'griffePassagePharmacieFront'%}">
+            <img class="styled-img" src="{% static 'img/icons/liste_report.png' %}" alt="">
+            <br /> GP pharmacie</br>قائمة التقارير
+          </a>
+        </li>
+      </div>
+    </div>
+-->
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="https://app.liliumpharma.com/concurents/mServices/competors/?is_mobile=0">
+            <img class="styled-img" src="{% static 'img/box-produit.png' %}" alt="">
+            <br /> Produits</br>قائمة المنتوجات
+          </a>
+        </li>
+      </div>
+    </div>
+
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="d-flex justify-content-between p-3">
+        <div class="text-center">
+          <a class="nav-link" href="{% url 'MsOrders'%}" style="display: inline;">
+            <img class="styled-img" src="{% static 'img/icons/bon_de_commande.png' %}" alt="">
+            Bon de commande الطلبات
+          </a>
+        </div>
+        <div class="text-center">
+          <a class="nav-link" href="{% url 'addorder'%}" style="background-color: #24b424; padding:4px; color:white; border-radius: 10px;">
+            <!--<img class="styled-img" src="{% static 'img/icons/plus.jpg' %}" alt="">-->
+            <i class="fas fa-plus" style="color: red; font-size: 30px;"></i>Ajouter اضافة
+          </a>
+      </div>
+    </div>
+    </div>
+
+    
+
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="{% url 'MsExitOrders'%}">
+            <img class="styled-img" src="{% static 'img/icons/bons_de_sortie.png' %}" alt="">
+            <br /> Bon de sortie</br>العينات
+          </a>
+        </li>
+      </div>
+    </div>
+
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="{% url 'LeavesFrontend' %}">
+            <img class="styled-img" src="{% static 'img/icons/holiday_96.png' %}" />
+            <br /> Congé & Absences</br>الإجازة والغياب
+          </a>
+        </li>
+      </div>
+    </div>
+
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="{% url 'target_front' %}">
+            <img class="styled-img" src="{% static 'img/icons/sales-2.png' %}" />
+            <br /> Ventes</br>مبيعات
+          </a>
+        </li>
+      </div>
+    </div>
+
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="{% url 'depenses_front'%}">
+            <img class="styled-img" src="{% static 'img/icons/spends.png' %}" />
+            <br /> Dépenses <br>مصاريف
+          </a>
+        </li>
+      </div>
+    </div>
+
+
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="/deplacement/front/">
+            <img class="styled-img" src="{% static 'img/icons/deplacement.png' %}" alt="">
+            <br />Déplacement</br>
+          </a>
+        </li>
+      </div>
+    </div>
+
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="{% url 'versement_front'%}">
+            <img class="styled-img" src="{% static 'img/icons/versement.png' %}" />
+            <br /> Recouvrement <br>تحصيلات
+          </a>
+        </li>
+      </div>
+    </div>
+
+    <!-- <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="{% url 'VisiteDuoFrontEnd'%}">
+            <img class="styled-img" src="{% static 'img/icons/duo.png' %}" />
+            <br /> Visite Duo</br>
+          </a>
+        </li>
+      </div>
+    </div> -->
+
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="{% url 'MonthlyEvaluationsFrontEnd' %}">
+            <img class="styled-img" src="{% static 'img/icons/evaluation.png' %}" />
+            <br /> Evaluation mensuelle</br>التقييم الشهري
+          </a>
+        </li>
+      </div>
+    </div>
+
+
+
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="{% url 'HomeDownloads'%}">
+            <img class="styled-img" src="{% static 'img/icons/download.png' %}" alt="">
+            <br /> Téléchargement</br>التحميلات
+          </a>
+        </li>
+      </div>
+    </div>
+
+    <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">
+      <div class="col-12">
+        <li class="nav-item text-center">
+          <a class="nav-link" href="/admin/">
+            <img class="styled-img" src="{% static 'img/icons/admin.png' %}" alt="">
+            <br /> Admin</br>إدارة
+          </a>
+        </li>
+      </div>
+    </div>
+
+  </ul>
+</div>
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
+
+
+
+
+<!-- <nav class="navbar navbar-expand-lg navbar-light bg-light shadow">
+  <a class="navbar-brand" href="{% url 'HomeRapport' %}"><img src="{% static 'img/logo.png'%}" style="max-height:50px"></a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+      <h1 class='font-weight-light text-green d-none d-md-block'> {{page_title}} </h1>
+    <div class="navbar-nav ml-auto ">
+      {% if request.user.is_superuser or request.user.userprofile.rolee != "Commercial" %}
+      <a class="nav-item dropdown my-1 mx-md-2 btn nav-link">
+        <a class="dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <i class="fa fa-user-cog"></i> Supervisor
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+          <a class="dropdown-item" href="{% url 'Home'%}">Supervisor</a>
+          <a class="dropdown-item" href="/admin">Admin</a>
+        </div>
+      </a> -->
+<!-- <a class="nav-item nav-link my-1 mx-md-2 btn" href="{% url 'Home'%}"><i class="fa fa-user-cog"></i> Superviseur </a> -->
+<!-- {%endif%} -->
+<!-- <a class="nav-item nav-link my-1 mx-md-2 btn" href="{% url 'HomeDownloads'%}"><i class="fas fa-download"></i> Telechargement </a>
+      <a class="nav-item nav-link my-1 mx-md-2 btn" href="{% url 'HomeMedecin'%}"><i class="far fa-calendar-check"></i> Liste des  medecins (قائمة الأطباء) </a>
+      <a class="nav-item nav-link my-1 mx-md-2 btn" href="{% url 'HomeRapport'%}"><i class="far fa-calendar-check"></i> Liste des  rapports (قائمة التقارير)</a>
+      <a class="nav-item nav-link my-1 mx-md-2 btn" href="{% url 'AddVisite'%}"><i class="fa fa-plus-circle"></i> Nouvelle Visite (أضف زيارة)</a> -->
+<!-- {% if request.user.userprofile.can_add_medecin or  request.user.userprofile.can_add_client %}  -->
+<!-- <a class="nav-item nav-link my-1 mx-md-2 btn" href="{% url 'AddMedecin'%}"><i class="fa fa-plus-circle"></i> Nouveau medecin (أضف طبيب)</a> -->
+<!-- {% endif%}    
+    </div>
+  </div>
+</nav> -->
+<h5 class="text-green text-center pt-3 ">{{page_title}}</h5>
+{% endif %}
+    <script>
+        function showQuickAccessMenu() {
+            document.getElementById('quickAccessMenu').style.display = 'block';
+        }
+
+        function hideQuickAccessMenu() {
+            document.getElementById('quickAccessMenu').style.display = 'none';
+        }
+
+        function performAction(shortcutName) {
+            alert('Performing action for ' + shortcutName);
+            // Add logic for the actual action you want to perform
+        }
+    </script>
+
+<script>
+  function showQuickAccessMenu1() {
+      document.getElementById('quickAccessMenu1').style.display = 'block';
+  }
+
+  function hideQuickAccessMenu1() {
+      document.getElementById('quickAccessMenu1').style.display = 'none';
+  }
+
+  function performAction(shortcutName) {
+      alert('Performing action for ' + shortcutName);
+      // Add logic for the actual action you want to perform
+  }
+</script>
+
+<!-- <script>
+document.addEventListener("DOMContentLoaded", function () {
+    var scrollToTopBtn = document.getElementById("scrollToTopBtn");
+
+    window.onscroll = function () {
+        if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+            scrollToTopBtn.style.display = "block";
+        } else {
+            scrollToTopBtn.style.display = "none";
+        }
+    };
+
+    scrollToTopBtn.addEventListener("click", function () {
+        scrollToTopWithAnimation();
+    });
+
+    function scrollToTopWithAnimation() {
+        var currentPosition = document.documentElement.scrollTop || document.body.scrollTop;
+
+        function scrollStep() {
+            if (currentPosition > 0) {
+                window.requestAnimationFrame(function () {
+                    window.scrollTo(0, currentPosition);
+                    currentPosition -= 200; // Adjust scrolling speed here
+                    scrollStep();
+                });
+            }
+        }
+
+        scrollStep();
+    }
+});
+
+
+</script> -->

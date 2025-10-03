@@ -1,0 +1,26 @@
+{% load i18n admin_urls %}
+{% block filters %}
+<div id="changelist-filter">
+    <h3>{% trans 'Filters' %}</h3>
+    <ul>
+        <li>
+            <strong>{% trans 'Année' %}:</strong>
+            {% for year in year_choices %}
+                <a href="{% url request.resolver_match.view_name %}?year={{ year.0 }}" class="filter-button{% if year.0 == current_year %} active{% endif %}">
+                    {{ year.1 }}
+                </a>
+            {% endfor %}
+        </li>
+        {% if current_year %}
+        <li>
+            <strong>{% trans 'Mois' %}:</strong>
+            {% for month in month_choices %}
+                <a href="{% url request.resolver_match.view_name %}?year={{ current_year }}&month={{ month.0 }}" class="filter-button{% if month.0 == current_month %} active{% endif %}">
+                    {{ month.1 }}
+                </a>
+            {% endfor %}
+        </li>
+        {% endif %}
+    </ul>
+</div>
+{% endblock %}

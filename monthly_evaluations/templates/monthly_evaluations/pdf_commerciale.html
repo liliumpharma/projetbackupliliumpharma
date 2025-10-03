@@ -1,0 +1,2114 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+  <title>PDF</title>
+  <!-- <link href="{% static 'css/print.css' %}" rel="stylesheet"/> -->
+</head>
+<body>
+  <style>
+    @media print {
+
+            body {
+            margin: 0;
+        }
+      }
+
+  </style>
+  <div class="container pt-4">
+    <div class="d-flex flex-column align-items-center text-center">
+      <img src="{% static 'img/logo.png' %}" style="height: 80px;">
+      <h2 class="mb-3">LILIUM PHARMA ALGERIEEEEEEE</h2>
+    </div>
+    <h3 class="text-center">   Evaluation mensuelle |N°{{evaluation.id}}| التقييم الشهري  </h3>
+    <h3 class="text-center">Mois : {{ evaluation.added | date:'m/Y' }}  :الشهر </h3>
+    <h3 id="saving_month" class="text-center d-none">{{evaluation.added | date:'m'}}</h3>
+    <h3 id="saving_user" class="text-center d-none">{{evaluation.user.id}}</h3>
+    <h3 id="month" class="text-center d-none">{{evaluation.added | date:'m'}}</h3>
+    <h3 id="user" class="text-center d-none">{{ evaluation.user.id }}</h3>
+    <h3 id="speciality_role" class="text-center d-none">{{ evaluation.user.userprofile.speciality_rolee}}</h3>
+  </div>
+    <div class="container">
+      <script>
+        console.log("hereereerere")
+      </script>
+
+      <div class="container mt-3">
+
+        <div class="row mb-3" style="font-size: 22px;">
+          <div class="col-12 col-sm-6">
+            <b>DELEGUE: </b> {{ evaluation.user.first_name|add:" " }}{{ evaluation.user.last_name }} <br>
+          </div>
+          <div class="col-12 col-sm-3">
+          </div>
+          <div class="col-12 col-sm-3 mb-2 mb-sm-0">
+            <b>DATE:</b> {{evaluation.added | date:'Y-m-d'}} <br>
+          </div>
+
+        </div>
+        <div class="py-1 " style="background: #6b6b6b;"></div>
+
+        <div class="row justify-content-center">
+          <div class="col-md-6 text-center">
+            <h5 style="font-weight: bold;">Résumé | ملخص</h5>
+          </div>
+      </div>
+      
+        <div class="row mb-3 d-block" style="font-size: 22px;">
+          <!-- <div class="col-12 col-sm-2 mb-2 mb-sm-0">
+            <b>Note:</b> <span id="notee"></span><br>
+          </div>
+          <div class="col-12 col-sm-2 mb-2 mb-sm-0">
+            <b>Bonus:</b><span id="bonus"></span> <br>
+          </div>
+          <div class="col-12 col-sm-4">
+            <b>Note Totale: </b><span id="note_totale"></span> <br>
+          </div>
+          <div class="col-12 col-sm-4">
+            <b>Pourcentage: </b> <span id="pourcentage"></span>/15% <br>
+          </div> -->
+          <div class="card-body d-flex flex-column flex-sm-row justify-content-between">
+            <p class="font-weight-bold  text-center text-sm-left mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 16px;">• Résultat de l'évaluation du délégué /100 </p>
+            <p class="font-weight-bold text-center text-sm-center col-2" style="flex: 1; font-size: 16px;"><span id="notee" style="font-size: 18px; color: red;"></span>/100</p>
+            <p class="font-weight-bold  text-center text-sm-right mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 16px;">نتيجة تقيم المندوب لنفسه  العلامه من 100 •</p>
+          </div>
+          <div class="card-body d-flex flex-column flex-sm-row justify-content-between">
+            <p class="font-weight-bold  text-center text-sm-left mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 16px;">• Résultat des réponses sur les questions bonus /30 </p>
+            <p class="font-weight-bold text-center text-sm-center col-2" style="flex: 1; font-size: 16px;"><span id="bonus" style="font-size: 18px; color: red;"></span>/30</p>
+            <p class="font-weight-bold  text-center text-sm-right mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 16px;">   نتيجة الاجابه على الاسئله الاظافيه  العلامه 30 •</p>
+          </div>
+          <div class="card-body d-flex flex-column flex-sm-row justify-content-between">
+            <p class="font-weight-bold  text-center text-sm-left mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 16px;">• Résultat final de l'évaluation du délégué ?</p>
+            <p class="font-weight-bold text-center text-sm-center col-2" style="flex: 1; font-size: 16px;"><span id="note_totale" style="font-size: 18px; color: red;"></span></p>
+            <p class="font-weight-bold  text-center text-sm-right mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 16px;"> النتيجه النهائيه لتقيم المندوب لنفسه •</p>
+          </div>
+          <div class="card-body d-flex flex-column flex-sm-row justify-content-between">
+            <p class="font-weight-bold  text-center text-sm-left mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 16px;">• Résultat de l'évaluation du supérviseur au délégué ?</p>
+            {% if sup_evaluation %}
+              <p id="sup_perc" class="text-center text-sm-center col-2 font-weight-bold " style="flex: 1; font-size: 18px; color: red;">{{sup_evaluation.perc}}</p>
+              {% else %}
+              <p>En attente</p>
+            {% endif %}
+            <p class="font-weight-bold  text-center text-sm-right mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 16px;">النتيجه لتقيم السوبر فايزر للمندوب •</p>
+          </div>
+
+
+          <div class="card-body d-flex flex-column flex-sm-row justify-content-between">
+            <p class="font-weight-bold  text-center text-sm-left mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 16px;">• Résultat final de l'évaluation pour ce mois ?</p>
+            <p class="font-weight-bold text-center text-sm-center col-2" style="flex: 1; font-size: 30px; color: black;"><span style="font-weight: bold; color:red; font-size: 30px;" id="tot"></span>/15</p>
+            <p class="font-weight-bold  text-center text-sm-right mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 16px;">النتيجه النهائيه لهذا الشهر •</p>
+          </div>
+          <p class="col-12" style="flex: 1; font-size: 13px; color: black; margin-left: 15px;">Formule de calcul du resultat final [(Points evaluation délégué + Points evaluation supérviseur)x15]/115</p>
+
+
+          <script>
+            setTimeout(function() {
+                // Get elements by their IDs
+                let sup_perc_element = document.getElementById("sup_perc");
+                let notee_element = document.getElementById("note_totale");
+                let tot_element = document.getElementById("tot");
+                console.log("--->"+notee_element.textContent)
+        
+                // Parse the numerical values from text content
+                let sup_perc_text = sup_perc_element.textContent.trim().replace('%', '');
+                let notee_text = notee_element.textContent.trim();
+                
+                // Check if the parsed values are valid numbers
+                let sup_perc = isNaN(parseFloat(sup_perc_text)) ? 0 : parseFloat(sup_perc_text);
+                let notee = isNaN(parseFloat(notee_text)) ? 0 : parseFloat(notee_text);
+        
+                console.log(sup_perc);
+                console.log(notee);
+        
+                // Calculate the final result for the month
+                let tot = (sup_perc + notee) * 15 / 115;
+        
+                // Set the text content of the element with ID "tot" to display the calculated value
+                tot_element.textContent = tot.toFixed(2); // Display with two decimal places
+            }, 10000); // Delay in milliseconds (2 seconds)
+        </script>
+        
+          <!-- <script>
+            // Définition de la fonction fetch
+            function fetch() {
+                // Récupérer l'élément contenant la note totale
+                const note_totale_element = document.getElementById("note_totale");
+                // Récupérer l'élément contenant le pourcentage de l'évaluation du superviseur
+                const sup_perc_element = document.getElementById("sup_perc");
+        
+                // Vérifier si les deux éléments existent et ont des valeurs numériques
+                if (note_totale_element && sup_perc_element) {
+                    console.log("Ici")
+                    // Convertir les valeurs en nombres
+                    const note_totale = parseFloat(note_totale_element.textContent.trim());
+                    const sup_perc = parseFloat(sup_perc_element.textContent.trim());
+                    console.log(note_totale)
+                    
+                    // Vérifier si les valeurs sont des nombres valides
+                    if (!isNaN(note_totale) && !isNaN(sup_perc)) {
+                        // Calculer la somme des deux valeurs
+                        const tot = note_totale + sup_perc;
+                        console.log(tot); // Afficher la somme dans la console
+                    } else {
+                        console.error("Les valeurs ne sont pas numériques.");
+                    }
+                } else {
+                    console.error("Les éléments n'existent pas dans le document.");
+                }
+            }
+        
+            // Exécution de la fonction fetch après un délai de 3 secondes
+            setTimeout(fetch, 5000);
+        </script> -->
+        
+        
+
+        </div>
+
+        <div class="py-1 " style="background: #6b6b6b;"></div>
+
+        <div class="container mt-3">
+          <div class="row mb-3 d-bleck" style="font-size: 22px;">
+            <div class="d-flex justify-content-end col-12">
+              <p class="align-self-center" style="font-size: 13px; margin-top: 2px; color: red;"></p>
+              <h5 class="mb-sm-0" style="margin-left: auto;color: black; "><span style="font-size: 13px;color: red;">Note totale 20 points, chaque rapport manquant moins un point |  العلامة الإجمالية 20 علامة, كل تقرير غير موجود, ناقص علامة</span><strong> Note:</strong><span id="note_q0" style="color: red; font-weight: bold;"></span>/20</h5>
+            </div>
+
+            <!-- <div class="col-12 d-flex">
+              <p id="nbr_rapports">Nombre de jour de travail: </b> 
+              <p style="margin-left: 8px;" id="nombre_rapport"></p>
+
+            </div> -->
+
+            <div class="d-flex flex-column flex-sm-row justify-content-between col-12 mt-4">
+              <p class="font-weight-bold  text-center text-sm-left mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 20px;">• Nombre de jour de travail:</p>
+              <p class="font-weight-bold text-center text-sm-center col-2" style="flex: 1; font-size: 20px;"><span id="nombre_rapport"></span></p>
+              <p class="font-weight-bold  text-center text-sm-right mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 20px;">عدد أيام العمل •</p>
+            </div>
+
+
+
+
+              <div class="d-flex flex-column flex-sm-row justify-content-between col-12">
+                <p class="font-weight-bold  text-center text-sm-left mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 20px;">• Nombre de rapport(s) manquant(s):</p>
+                <p class="font-weight-bold text-center text-sm-center col-2" style="flex: 1; font-size: 20px;"><span id="nombre_absence"></span></p>
+                <p class="font-weight-bold  text-center text-sm-right mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 20px;">عدد الرابورات الناقصة •</p>
+              </div>
+
+              <div class="d-flex flex-column flex-sm-row justify-content-between col-12">
+                <p class="font-weight-bold  text-center text-sm-left mb-2 mb-sm-0 col-4" style="flex: 1; font-size: 20px;">• Dates des rapports manquant(s)</p>
+                <p class=" text-center text-sm-center col-4" style="flex: 1; font-size: 15px;"><span id="dates_absence">0</span></p>
+                <p class="font-weight-bold  text-center text-sm-right mb-2 mb-sm-0 col-4" style="flex: 1; font-size: 20px;">تواريخ التقارير الناقصة •</p>
+              </div>
+
+
+
+            <div class="col-12 d-flex" style="margin-left: 65px;">
+              <b  style="font-size: 15px;">Absences (<span id="absences_count"></span>) :</b>
+              <div style="width: 80%;">
+                <p id="absences" style="font-size: 15px;">0</p>
+              </div>
+            </div>
+
+            <div class="col-12 d-flex mt-3" style="margin-left:65px;">
+              <b  style="font-size: 15px;">Congés (<span id="leaves_count"></span>) :</b>
+
+              <div style="width: 80%;">
+                <p id="leaves" style="font-size: 15px;">0</p>
+              </div>
+            </div>
+
+            <div class="d-flex flex-column flex-sm-row justify-content-between col-12 mt-4">
+              <p class="font-weight-bold  text-center text-sm-left mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 20px;">• Nombre de clients visités:</p>
+              <p style="margin-left: 8px;" id="nombre_medecins" class="d-none"></p>
+              
+              <p class="font-weight-bold text-center text-sm-center col-2" style="flex: 1; font-size: 20px;"><span id="nombre_absence"></span></p>
+              <p class="font-weight-bold  text-center text-sm-right mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 20px;">  عدد الزبائن المزارين •</p>
+
+            </div>
+            <!-- <div class="d-flex col-12" style="margin-top: -10px;">
+              <b style="font-size: 18px;">Spécialités visitées:</b>
+              <p style="margin-left: 8px; font-size: 18px;" id="specialties_data"></p>
+            </div> -->
+
+            <div class="d-block col-12 mt-3" style="margin-left: 50px;">
+              <div class="d-block col-12" style="margin-top: -10px;">
+                <b class="d-none" style="font-size: 15px;">Medicall: (<span id="specialties_medical_count"> </span>)</b>
+                <b  style="font-size: 15px;">Medical: (<span>{{ evaluation.q1 }}</span>)</b>
+                <p style="margin-left: 8px; font-size: 13px;" id="specialties_medical"></p>
+              </div>
+          
+              <div class="d-block col-12" style="margin-top: -10px;">
+                <b class="d-none" style="font-size: 15px;">Commercial: (<span id="specialties_commercial_count"> </span>)</b>
+                <b style="font-size: 15px;">Commercial: (<span id="com_recap"> </span>)</b>
+                <p style="margin-left: 8px; font-size: 13px;" id="specialties_commercial"></p>
+              </div>
+            </div>
+
+            <!-- <div class="col-12 d-flex">
+              <b>Nombre des call :</b><br>
+              <p style="margin-left: 8px; margin-right: 15px;" id="nombre_visites"></p> 
+              <b  style="font-size: 18px; margin-top: 3px;">Medical:</b> <span style="font-size: 18px; margin-right: 15px;margin-top: 3px;" id="nombre_visites_med"></span>
+              <b style="font-size: 18px;margin-top: 3px;">Commercial:</b> <span style="font-size: 18px;margin-top: 3px;" id="nombre_visites_com"></span>
+
+
+            </div> -->
+
+
+            <div class="d-flex flex-column flex-sm-row justify-content-between col-12">
+              <p class="font-weight-bold  text-center text-sm-left mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 20px;">• Nombre des visite(s): <span id="nombre_visites"></span><span></span></p>
+              <b  style="font-size: 15px; margin-top: 3px; margin-left: 70px;">Medical:</b> <span style="font-size: 18px; margin-right: 15px;margin-top: 3px;" id="nombre_visites_med"></span>
+              <b style="font-size: 15px;margin-top: 3px;  margin-left: 70px;">Commercial:</b> <span style="font-size: 18px;margin-top: 3px;" id="nombre_visites_com"></span>
+              <p class="font-weight-bold  text-center text-sm-right mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 20px;">  عدد الزيارات الشهرية •</p>
+            </div>
+
+            <div class="d-flex flex-column flex-sm-row justify-content-between col-12 mt-4">
+              <p class="font-weight-bold  text-center text-sm-left mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 20px;">• Moyenne des visites medicales: <span id="nombre_visites"></span><span></span></p>
+              <b id="moy"  style="font-size: 19px; margin-top: 3px;margin-left:60px;"></b>
+              <p class="font-weight-bold  text-center text-sm-right mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 20px;"> معدل زيارات الأطباء يوميا•</p>
+              <span id="nbr_de_jour" class="d-none"></span>
+            </div>
+
+            <script>
+              // Wrap your code inside setTimeout function
+              setTimeout(function() {
+                  nbr_visite = parseFloat(document.getElementById("nombre_visites_med").innerHTML);
+                  nbr_de_jour = parseFloat(document.getElementById("nbr_de_jour").innerHTML);
+                  console.log(nbr_de_jour)
+                  moy = document.getElementById("moy");
+                  moyenne = nbr_visite / (nbr_de_jour-4);
+                  moy.textContent = moyenne.toFixed(2)+" Dr/j";
+              }, 5000); // Delay in milliseconds (2 seconds = 2000 milliseconds)
+          </script>
+          
+
+
+            <div class="d-block justify-content-between col-12">
+            </div>
+
+     
+          </div>
+          <div class="py-1 " style="background: #6b6b6b;"></div>
+
+
+        <div class="pt-1" style="background: #6b6b6b"></div>
+
+        <div class="row pt-3" style="font-size: 23px;">
+          <div class="card-body d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left mb-2 mb-sm-0">Comment est-ce que vous évaluez le travail de votre superviseur ?</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right" style="flex: 1;">كيف تقيّم أداء سوبرفيزرك؟</h5>
+          </div>
+        </div>
+        <div class="row justify-content-center" style="font-size: 18px;">
+          <div class="d-flex align-items-center bg-success rounded" style="width: 280px; height: 80px;">
+            <strong class="text-white m-auto">{{ evaluation.q10 }}</strong>
+          </div>
+        </div>
+
+        <div class="pt-1 mt-2" style="background: #6b6b6b"></div>
+
+      <div id="medical">
+
+        <div class="row pt-3 d-block" style="font-size: 23px;">
+          <div class="d-flex justify-content-end col-12">
+            <p class="align-self-center" style="font-size: 13px; margin-top: 2px; color: red;"></p>
+            <h5 class="mb-sm-0" style="margin-left: auto;color: black; "><span style="font-size: 13px;color: red;">Note totale 25 points, moins un point pour chaque medecin en dessous de 100 |  العلامة الإجمالية 25 علامة.معدل عدد الأطباء 100, كل طبيب ناقص عن مئة,ناقص علامة</span><strong> Note:</strong><span id="note_q1" style="color: red; font-weight: bold;"></span>/25</h5>
+          </div>
+            <div class="card-body d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left mb-2 mb-sm-0" style="flex: 1;">Q1- Combien de communes non visitée ce mois ?</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right mb-2 mb-sm-0" style="flex: 1;"> السؤال 1 : كم عدد الأطباء المزاريين خلال الشهر ؟</h5>
+          </div>
+        </div>
+        <div class="row justify-content-center" style="font-size: 23px;">
+          <div class="d-flex align-items-center bg-success rounded-circle" style="width: 50px; height: 50px;">
+            <strong class="text-white m-auto">{{ evaluation.q1 }}</strong>
+          </div>
+        </div>
+        <script>
+          var q1Value = {{ evaluation.q1 }};
+          var note_q1;
+
+          if (q1Value > 100) {
+            note_q1 = 25;
+          } else {
+            note_q1 = Math.max(25 - (100 - q1Value), 0);
+          }
+        
+          document.getElementById("note_q1").innerText = note_q1 ;
+        </script>
+        
+        
+        
+        <div class="pt-1 mt-3" style="background: #6b6b6b"></div>
+
+        <div class="row pt-3 d-block" style="font-size: 23px;">
+          <h5 class="mb-sm-0" style="color: black; margin-left: 90%;" ><strong>Note:</strong><span style="color: red;">0</span>/0</h5>
+
+          <div class="card-body d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left mb-2 mb-sm-0" style="flex: 1;">Q2- Quelle sont les régions qui ont été visitées plus d'une fois ce mois-ci, et la raison</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right" style="flex: 1;">  السؤال 2 :  ما سبب زيارة هؤلاء الأطباء أكثر من مرة هذا الشهر ؟</h5>
+          </div>
+          <div class="row justify-content-center" style="font-size: 23px;">
+            <div class="d-flex align-items-center bg-success rounded-circle" style="width: 50px; height: 50px;">
+              <strong id="q2_total" class="text-white m-auto">{{ evaluation.q1 }}</strong>
+            </div>
+          </div>
+        </div>
+
+
+          <div id="q2" style="width: 100%"></div>
+          <script>
+            let response_2=""
+            let doctorsList = [];
+
+            const object = {{ evaluation.q2|safe }}
+            document.getElementById('q2_total').innerHTML = `${object.total}`
+            for(answer of object.answers){
+              const doctorParts = answer.doctor.split(' '); // Diviser le nom complet en parties (ID et nom)
+              const doctorID = doctorParts[0]; // Récupérer l'ID (la première partie)
+              doctorsList.push(doctorID); // Ajouter l'ID à la liste
+              response_2 += `<div class="mt-4 mb-4">
+                              <div style="height: 1px; width: 100%; background-color: black; margin-top:10px;margin-bottom:3px"></div>
+                              <p style="font-weight: bold; margin: 0px; font-size: 18px; font-family: 'Roboto', sans-serif;">Doctor: ${answer.doctor}</p>
+                              <p id="spec_${doctorID}" style="font-size:18px; margin:0px">Spécialité:-</p>
+                              <p id="classif_${doctorID}" style="font-size:18px; margin:0px">Classification: -</p>
+                              <p id="visits_${doctorID}" style="font-size:18px; margin:0px">Dates de visite: -</p>
+
+                              <p><strong>Raison:</strong> ${answer.reason}</p>
+                            </div>`
+
+            }
+            document.getElementById('q2').innerHTML = response_2
+
+
+// Envoyer la liste des IDs des médecins au serveur
+const doctorIdsParam = doctorsList.join('&doctor_ids=');
+month = document.getElementById("saving_month").textContent
+user = document.getElementById("saving_user").textContent
+const url = `https://app.liliumpharma.com/medecins/MedecinInfo/?user=${user}&month=${month}&doctor_ids=${doctorIdsParam}`;
+fetch(url)
+.then(response => response.json())
+.then(data => {
+  console.log(data)
+    for (const doctor of Object.keys(data)) {
+        // Récupérer l'ID du médecin
+        const doctorID = doctor.split(' ')[0];
+        // Récupérer la spécialité du médecin
+        const specialite = data[doctor].specialite;
+        // Récupérer la classification du médecin
+        const classification = data[doctor].classification;
+        // Récupérer les dates de visite du médecin
+        const visiteDates = data[doctor].visite_dates.join('  |  ');
+
+        // Mettre à jour la partie HTML correspondante avec les données récupérées
+        document.getElementById(`spec_${doctorID}`).innerHTML = `<strong>Spécialité:</strong> ${specialite}`;
+        document.getElementById(`classif_${doctorID}`).innerHTML = `<strong>Classification:</strong>  ${classification}`;
+        document.getElementById(`visits_${doctorID}`).innerHTML = `<strong>Dates des visites:</strong>  ${visiteDates}`;
+    }
+})
+.catch(error => {
+    console.error('Erreur lors de l\'envoi des données au serveur :', error);
+});
+
+
+
+
+
+          </script>
+
+        <div class="pt-1 mt-3" style="background: #6b6b6b"></div>
+
+        <div class="row pt-3 d-block" style="font-size: 23px;">
+          <!-- <h5 class="mb-sm-0" style="color: green; margin-left: 90%;" ><strong>Note:</strong><span id="note_q3"></span>/25</h5> -->
+          <div class="d-flex justify-content-end col-12">
+            <p class="align-self-center" style="font-size: 13px; margin-top: 2px; color: red;"></p>
+            <h5 class="mb-sm-0" style="margin-left: auto;color: black; "><span style="font-size: 13px;color: red;">Note totale 25 points, moins un demi point pour chaque medecin non visité |  العلامة الإجمالية 25 علامة. لكل طبيب غير مزار ,ناقص نصف علامة</span><strong> Note:</strong><span id="note_q3" style="color: red; font-weight: bold;"></span>/25</h5>
+          </div>
+          <div class="card-body d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left mb-2 mb-sm-0" style="flex: 1;">Q3- Qui sont les clients qui ont été visités plus d'une fois ce mois-ci, et la raison ? </h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right" style="flex: 1;"> السؤال 3 : ما سبب عدم زيارة هؤلاء الأطباء هذا الشهر ؟ </h5>
+          </div>
+          <div class="row justify-content-center" style="font-size: 23px;">
+            <div class="d-flex align-items-center bg-success rounded-circle" style="width: 50px; height: 50px;">
+              <strong id="q3_total" class="text-white m-auto"></strong>
+            </div>
+          </div>
+        </div>
+
+        <div id="q3"></div>
+        <script>
+          let response_3 = "";
+          let doctorsListt = [];
+      
+          const object_3 = {{ evaluation.q3|safe }};
+          document.getElementById('q3_total').innerHTML = `${object_3.total}`;
+      
+          let note_q3;
+
+          if (object_3.total > 0) {
+              const reduction = object_3.total * 0.5; // Calcul de la réduction
+              note_q3 = Math.max(25 - reduction, 0); // Calcul de la note en soustrayant la réduction de 25
+          } else {
+              note_q3 = 25; // Si aucun médecin n'est non visité, la note est de 25
+          }
+      
+          document.getElementById("note_q3").innerText = note_q3;
+      
+          // Function to extract date from the string and convert it to a Date object
+          function extractAndConvertToDate(dateString) {
+              // Extract the date part from the string
+              const datePart = dateString.split(': ')[1];
+              // Convert the date part to a Date object
+              return new Date(datePart);
+          }
+
+          // Function for custom comparison
+          function compareLastVisit(a, b) {
+              // If one of the responses is "Jamais visité !", place it first
+              if (a.derniere_visite === "Jamais Visité !") return -1;
+              if (b.derniere_visite === "Jamais Visité !") return 1;
+          
+              // Convert the strings representing dates to Date objects
+              const dateA = extractAndConvertToDate(a.derniere_visite);
+              const dateB = extractAndConvertToDate(b.derniere_visite);
+          
+              // Compare the last visit dates
+              return dateA - dateB;
+          }
+
+          // Sorting the answers using the custom comparison function
+          object_3.answers.sort(compareLastVisit);
+
+
+
+      
+          // Tri des réponses en utilisant la fonction de comparaison personnalisée
+          object_3.answers.sort(compareLastVisit);
+      
+          for (answer of object_3.answers) {
+            const doctorParts = answer.doctor.split(' ');
+            const doctorID = doctorParts[0];
+            doctorsListt.push(doctorID);
+            response_3 += `<div class="mt-4">
+                            <div style="height: 1px; width: 100%; background-color: black; margin-top:10px;margin-bottom:10px"></div>
+                            <p style="font-weight: bold; margin: 0px; font-size: 18px; font-family: 'Roboto', sans-serif;">Doctor: ${answer.doctor}</p>
+                            <p id="wilaya_commune_${doctorID}" style="font-size:18px; margin:0px">Wilaya:- | Commune:-</p>
+                            <p id="specc_${doctorID}" style="font-size:18px; margin:0px">Spécialité:-</p>
+                            <p id="classiff_${doctorID}" style="font-size:18px; margin:0px">Classification: -</p>
+                            <p id="added_${doctorID}" style="font-size:18px; margin:0px">Classification: -</p>
+                            <p style="color: ${answer.derniere_visite === 'Jamais Visité !' ? 'red' : 'green'};">${answer.derniere_visite}</p>
+                            <p><strong>Raison:</strong> ${answer.reason}</p>
+                        </div>`;
+            }
+document.getElementById('q3').innerHTML = response_3;
+
+const doctorIdsParammm = doctorsListt.join('&doctor_ids=');
+month = document.getElementById("saving_month").textContent;
+user = document.getElementById("saving_user").textContent;
+const urll = `https://app.liliumpharma.com/medecins/MedecinInfo/?user=${user}&month=${month}&doctor_ids=${doctorIdsParammm}&q3=true`;
+fetch(urll)
+    .then(response => response.json())
+    .then(data => {
+        for (const doctor of Object.keys(data)) {
+            const doctorID = doctor.split(' ')[0];
+            const specialite = data[doctor].specialite ? data[doctor].specialite : '-';
+            const classification = data[doctor].classification ? data[doctor].classification : '-';
+            const wilaya = data[doctor].wilaya ? data[doctor].wilaya : '-';
+            const commune = data[doctor].commune ? data[doctor].commune : '-';
+            const added = data[doctor].added ? data[doctor].added : '-';
+            document.getElementById(`wilaya_commune_${doctorID}`).innerHTML = `<strong>Wilaya:</strong> ${wilaya} | <strong>Commune:</strong> ${commune}`;
+            document.getElementById(`added_${doctorID}`).innerHTML = `<strong>Added:</strong> ${added}`;
+            document.getElementById(`specc_${doctorID}`).innerHTML = `<strong>Spécialité:</strong> ${specialite}`;
+            document.getElementById(`classiff_${doctorID}`).innerHTML = `<strong>Classification:</strong>  ${classification}`;
+        }
+    })
+    .catch(error => {
+        console.error('Erreur lors de l\'envoi des données au serveur :', error);
+    });
+
+      </script>
+
+
+<div class="pt-1 mt-3" style="background: #6b6b6b"></div>
+
+<div class="row pt-3 d-block" style="font-size:23px">
+  <div class="d-flex justify-content-end col-12">
+    <p class="align-self-center" style="font-size: 13px; margin-top: 2px; color: red;"></p>
+    <h5 class="mb-sm-0" style="margin-left: auto;color: green; "><span style="font-size: 13px;color: red;">Note totale 6 points, plus un demi point pour chaque médecin ajouté |  العلامة الإجمالية 6 علامات. زائد نصف نقطة لكل طبيب مضاف</span><strong> Bonus:</strong><span id="note_q4" style="color: green; font-weight: bold;"></span>/6</h5>
+  </div>
+  <div class="d-flex flex-column flex-sm-row justify-content-between">
+    <h5 class="card-title font-weight-bold text-center text-sm-left mb-2 mb-sm-0" style="flex: 1;">Q4- Qui sont les grossistes qui n'ont pas été visité ce mois-ci ?</h5>
+    <h5 class="card-title font-weight-bold text-center text-sm-right" style="flex: 1;"> السؤال 5 : من هم الاطباء الذي تمت زيارتهم هذا الشهر مع السوبر فايزر وما هو الهدف من الزيارة </h5>
+  </div>
+  <div class="row justify-content-center" style="font-size: 23px;">
+    <div class="d-flex align-items-center bg-success rounded-circle" style="width: 50px; height: 50px;">
+      <strong id="q4_total" class="text-white m-auto"></strong>
+    </div>
+  </div>
+
+    <div id="q4"></div>
+    <script>
+      let response_4=""
+      let count_q4 = 0
+      const object_4 =  {{ evaluation.q4|safe }}
+      document.getElementById('q4_total').innerHTML = `${object_4.total}`
+      for(answer of object_4.answers){
+        count_q4++
+        
+        response_4 += `<div class="mt-4">
+                      <div style="height: 1px; width: 100%; background-color: black"></div>
+                      <p style="font-weight: bold">Client: ${answer.doctor}</p>
+                      <p>Raison: ${answer.reason}</p>
+                    </div>`
+      }
+      note_q4 = count_q4/2
+      if(note_q4>6){
+        note_q4=6
+      }
+      document.getElementById("note_q4").innerText = note_q4 ;
+      document.getElementById('q4').innerHTML = response_4
+    
+    </script>
+
+</div>
+
+
+
+
+        <div class="pt-1 mt-3" style="background: #6b6b6b"></div>
+        <div class="d-flex justify-content-end col-12">
+          <p class="align-self-center" style="font-size: 13px; margin-top: 2px; color: red;"></p>
+          <h5 class="mb-sm-0" style="margin-left: auto;color: black; "><span style="font-size: 13px;color: red;">Note totale 15 points, plus un demi point pour chaque medecin ajouté |  العلامة الإجمالية 15 علامة. زائد نصف علامة لكل طبيب مضاف </span><strong> Note:</strong><span id="note_q5" style="color: red; font-weight: bold;"></span>/15</h5>
+        </div>
+        <div class="row pt-3" style="font-size:23px">
+          <div class="card-body d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left mb-2 mb-sm-0" style="flex: 1;">Q5- Écrivez cinq pharmacie importantes en écriture pour chaque produit ?</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right" style="flex: 1;"> السؤال 4 : اكتب خمسة أطباء مهمين في الكتابة لكل منتج</h5>
+          </div>
+
+          
+          
+          
+        </div>
+        <div id="q5"></div>
+        <script>
+          let response_5 = "";
+          doctorsListe=[]
+          const object_5 = {{ evaluation.q5|safe }};
+          let allDoctorsAbsent_q5 = true; // Supposons que tous les docteurs sont absents
+          count = 0
+          let uniqueDoctors = {};
+          id=0
+          
+          if (object_5.answers) {
+            object_5.answers.forEach(answer => {
+                const produit = answer.produit;
+                const medecins = answer.medecins || "none";
+            
+                const medecinsArray = medecins.split(',').map(item => item.trim()); // Splitting medecins string into an array
+                const doctorsHTML = [];
+            
+                medecinsArray.forEach(medecinString => {
+                    const medecinsInsideArray = medecinString.split(' - '); // Split each medecinString by hyphen
+
+                    medecinsInsideArray.forEach(medecin => {
+                        if (medecin !== "none") {
+                            const doctorParts = medecin.split(' '); // Diviser le nom complet en parties (ID et nom)
+                            const doctorID = doctorParts[0];
+                            count++ // Récupérer l'ID (la première partie)
+                        
+                            // Créer le HTML pour ce médecin
+                            const doctorHTML = `
+                                <a  href="https://app.liliumpharma.com/medecins/visites/PDF/${doctorID}/?priority=&mindate=2023-01-01&maxdate=&produit=&stock=" target="_blank" style="color: black;">
+                                    <img src="{% static 'monthly_evaluation/history.png' %}" style="display:inline-block; vertical-align: middle; margin-left: 5px;" alt="Votre image" width="25px" height="25px">
+                                    ${medecin}
+                                </a>
+                                <span style="font-size:13px; color:green" id="speciality_${count}_q5"></span>
+                                <span style="font-size:16px" id="classification_${count}_q5"></span>  | 
+                            `;
+                            doctorsHTML.push(doctorHTML);
+                            fetchDoctorInfo(doctorID,count)
+                        }
+                    });
+                });
+              
+                // Concaténer tous les médecins dans un seul bloc HTML pour le même produit
+                response_5 += `
+                    <div class="mt-4">
+                        <div style="height: 1px; width: 100%; background-color: black; margin-top:10px;margin-bottom:10px"></div>
+                        <p style="font-weight: bold; margin:0;   font-size:15px">Produit: ${produit}</p>
+                        <span style="font-size:16px" >
+                            <strong>Doctors:
+                            ${doctorsHTML.join('')}<strong>
+                        </span> 
+                    </div>
+                `;
+            });
+        }
+
+          note_q5 = count/2
+          if(note_q5>15){
+            note_q5=15
+          }
+          document.getElementById("note_q5").textContent = note_q5 ;
+        
+          if (response_5) {
+              document.getElementById('q5').innerHTML = response_5;
+          }
+
+
+
+          function fetchDoctorInfo(doctorID,index) {
+                fetch(`https://app.liliumpharma.com/medecins/MedecinInfo/?user=${user}&month=${month}&doctor_ids=${doctorID}&q3=true`)
+                    .then(response => response.json())
+                    .then(data => {
+                      for (const key in data) {
+                            if (data.hasOwnProperty(key)) {
+                                // Récupérer l'objet correspondant à la clé
+                                const doctorData = data[key];
+                                // Extraire les informations nécessaires de l'objet
+                                const speciality = doctorData.specialite || '-';
+                                console.log(speciality)
+                                const classification = doctorData.classification || '-';
+                                const wilaya = doctorData.wilaya || '-';
+                                const commune = doctorData.commune || '-';
+                                console.log(speciality)
+                            
+                                // Mise à jour des éléments HTML avec les informations supplémentaires
+                                document.getElementById(`speciality_${index}_q6`).innerHTML = `<strong>speciality</strong> ${speciality}`;
+                                document.getElementById(`classification_${index}_q6`).innerHTML = `<strong>Classification:</strong> ${classification}`;
+                            
+                                // Sortir de la boucle car nous avons traité l'objet
+                                break;
+                            }
+                          }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching doctor information:', error);
+                    });
+                }
+                function fetchDoctorInfo(doctorID,index) {
+                  fetch(`https://app.liliumpharma.com/medecins/MedecinInfo/?user=${user}&month=${month}&doctor_ids=${doctorID}&q3=true`)
+                      .then(response => response.json())
+                      .then(data => {
+                        for (const key in data) {
+                              if (data.hasOwnProperty(key)) {
+                                  // Récupérer l'objet correspondant à la clé
+                                  const doctorData = data[key];
+                                  // Extraire les informations nécessaires de l'objet
+                                  const speciality = doctorData.specialite || '-';
+                                  const classification = doctorData.classification || '-';
+                                  const wilaya = doctorData.wilaya || '-';
+                                  const commune = doctorData.commune || '-';
+                                  console.log(speciality)
+                              
+                                  // Mise à jour des éléments HTML avec les informations supplémentaires
+                                  document.getElementById(`speciality_${index}_q5`).innerHTML = `-${speciality} - `;
+                                  document.getElementById(`classification_${index}_q5`).innerHTML = `${classification}`;
+                              
+                                  // Sortir de la boucle car nous avons traité l'objet
+                                  break;
+                              }
+                            }
+                      })
+                      .catch(error => {
+                          console.error('Error fetching doctor information:', error);
+                      });
+                  }
+
+      </script>
+      
+
+        <div class="pt-1 mt-3" style="background: #6b6b6b"></div>
+
+
+      </div>
+      <div id="Commercial">
+
+          <div style="height: 1px; width: 100%; background-color: black; margin-top:10px;margin-bottom:10px"></div>
+          <div style="height: 1px; width: 100%; background-color: black; margin-top:10px;margin-bottom:10px"></div>
+          <div  style="width: 100%; text-align: center;">
+            <h5 style="color: green;">Commercial</h5>
+          </div>
+          <div style="height: 1px; width: 100%; background-color: black; margin-top:10px;margin-bottom:10px"></div>
+          <div style="height: 1px; width: 100%; background-color: black; margin-top:10px;margin-bottom:10px"></div>
+        
+          <div class="row pt-3 d-block" style="font-size:23px">
+            <h5 class="mb-sm-0" style="color: black; margin-left: 90%;" ><strong>Note:</strong><span style="color: red;">0</span>/0</h5>
+
+            <div class="d-flex flex-column flex-sm-row justify-content-between">
+              <h5 class="card-title font-weight-bold text-center text-sm-left mb-2 mb-sm-0" style="flex: 1;">Q11- Combien de pharmacies et de grossistes avez-vous visités au cours du mois</h5>
+              <h5 class="card-title font-weight-bold text-center text-sm-right" style="flex: 1;"> السؤال 11 : كم عدد الصيدليات وتجار الجملة الذين قمت بزيارتهم خلال الشهر</h5>
+            </div>
+        </div>
+        <div class="row justify-content-center" style="font-size: 23px;">
+          <div class="d-flex align-items-center bg-success rounded-circle" style="width: 50px; height: 50px;">
+            <strong id="response_11" class="text-white m-auto"></strong>
+          </div>
+        </div>
+
+              <div class="d-block mb-4">
+                  <div class="d-flex" style="font-size: 18px;">
+                    <strong>Nombre de pharmacies : </strong>
+                    <strong id="total_pharma" style="color: green;"></strong>
+                  </div>
+
+                <div class="d-flex" style="font-size: 18px;">
+                  <strong>Nombre de grossistes : </strong>
+                  <strong id="total_gro"style="color: green;"></strong>
+                </div>
+              </div>
+        
+        
+          
+          <div class="pt-1 mt-3" style="background: #6b6b6b"></div>
+          <div class="row pt-3 d-block mt-3" style="font-size:23px">
+
+            <h5 class="mb-sm-0" style="color: black; margin-left: 90%;" ><strong>Note:</strong><span style="color: red;">0</span>/0</h5>
+            <div class="d-flex flex-column flex-sm-row justify-content-between">
+
+              <h5 class="card-title font-weight-bold text-center text-sm-left mb-2 mb-sm-0" style="flex: 1;">Q12- Combien de super grossistes avez-vous visité ce mois-ci, en mentionnant le nom du super grossiste et la raison de la visite</h5>
+              <h5 class="card-title font-weight-bold text-center text-sm-right" style="flex: 1;"> السؤال 12 : كم عدد سوبر جروسيست الذين زرتهم هذا الشهر ، مع ذكر اسم سوبر جروسيست وسبب الزيارة</h5>
+            </div>
+            <div class="row justify-content-center" style="font-size: 23px;">
+              <div class="d-flex align-items-center bg-success rounded-circle" style="width: 50px; height: 50px;">
+                <strong id="q12_total" class="text-white m-auto"></strong>
+              </div>
+            </div>
+
+              <div id="q12"></div>
+              <script>
+                let response_12=""
+                const object_12 =  {{ evaluation.q7|safe }}
+                document.getElementById('q12_total').innerHTML = `${object_12.total}`
+                for(answer of object_12.answers){
+                  response_12 += `<div class="mt-4">
+                    <div style="height: 1px; width: 100%; background-color: black; margin-top:10px;margin-bottom:10px"></div>
+                    <p style="font-weight: bold; margin:0px">Super grossiste: ${answer.doctor}</p>
+                    <p style="font-weight: bold; margin:0px">${answer.nombre_visites}</p>
+                    <p style="font-weight: bold; margin:0px">${answer.date_derniere_visite}</p>
+                    <p style="font-weight: bold; margin:0px">${answer.etat_stock}</p>
+                    <p style="font-weight: bold; margin:0px">${answer.stock}</p>
+                    <p><strong style="color:green ">Raison:</strong> ${answer.reason}</p>
+                    </div>`
+                }
+                document.getElementById('q12').innerHTML = response_12
+              
+              </script>
+
+          </div>
+        
+          <div class="pt-1 mt-3" style="background: #6b6b6b"></div>
+
+          <!-- <h5 class="mb-sm-0" style="margin-left: 90%;color: green; "><strong>Note:</strong><span id="note_q13"></span>/15</h5> -->
+        
+          <div class="d-block justify-content-end col-12">
+            <h5 style=" margin-left: 90%;"> Note:<span id="note_q13" class="align-self-center" style="font-size: 20px; margin-top: 2px; color: red; font-weight: bold;"></span>/15</h5>
+            <p class="mb-sm-0 col-12" style="margin-left: auto;color: red; font-size: 13px;margin-left:35%;">العلامة الإجمالية 15 علامة, نصف علامة إضافية لكل طلبية من الصيدلية إلى جروسيست أو من جروسيست إلى السوبر جروسيست</p>
+            <p class="col-12" style="color: red; font-size: 13px;">Note totale 15 points, plus un demi point pour chaque bon de commande de : pharmacie à grossiste où de grossiste à supergrossite</p>
+          </div>
+          <div class="row pt-3 d-block" style="font-size:23px">
+            <div class="d-flex flex-column flex-sm-row justify-content-between">
+              <h5 class="card-title font-weight-bold text-center text-sm-left mb-2 mb-sm-0" style="flex: 1;">Q13- Combien de bon de commandes durant ce mois, en mentionnant le nom du client, le produit et la quantité</h5>
+              <h5 class="card-title font-weight-bold text-center text-sm-right" style="flex: 1;"> السؤال 13 : كم عدد بوند كوموند خلال هذا الشهر ، مع ذكر اسم الزبون والمنتج والكمية</h5>
+            </div>    
+
+            <div class="row justify-content-center" style="font-size: 23px;">
+              <div class="d-flex align-items-center bg-success rounded-circle" style="width: 50px; height: 50px;">
+                <strong id="response_13_nombre" class="text-white m-auto"></strong>
+              </div>
+            </div>
+                
+          <h6 class="mb-3" id="raison_13_resume"></h6>
+          <div id="raison_13_summary" style="width: 100%;"></div>
+          <div id="response_13" class="table-responsive">
+            <h5>Received orders</h5>
+            <table id="transfered_order_table" class="table table-bordered table-hover" style="font-size: 10px;">
+              <thead class="table-dark">
+                <tr>
+                  <th>Date</th>
+                  <th>ID bon de commande</th>
+                  <th>Utilisateur</th>
+                  <th>Status</th>
+                  <th>Pharmacie</th>
+                  <th>Grossiste</th>
+                  <th>Super grossiste</th>
+                  <th>Produits</th>
+                </tr>
+              </thead>
+              <tbody id="field_13_tr"></tbody>
+            </table>
+            <h5>Transfered orders</h5>
+            <table id="transfered_order_table_2" class="table table-bordered table-hover" style="font-size: 10px;">
+              <thead class="table-dark">
+                <tr>
+                  <th>Date</th>
+                  <th>ID bon de commande</th>
+                  <th>Utilisateur</th>
+                  <th>Status</th>
+                  <th>Transfered To</th>
+                  <th>Pharmacie</th>
+                  <th>Grossiste</th>
+                  <th>Super Grossiste</th>
+                  <th>Produits</th>
+                </tr>
+              </thead>
+              <tbody id="field_13_tr_2"></tbody>
+            </table>
+            <h5>ALL</h5>
+            <table id="order_table" class="table table-bordered table-hover" style="font-size: 10px;">
+              <thead class="table-dark">
+                <tr>
+                  <th>Date</th>
+                  <th>ID bon de commande</th>
+                  <th>Status</th>
+                  <th>Pharmacie</th>
+                  <th>Grossiste</th>
+                  <th>Super grossiste</th>
+                  <th>Produits</th>
+                </tr>
+              </thead>
+              <tbody id="field_13"></tbody>
+            </table>
+          </div>
+
+          </div>
+          <script>
+            function calculerSomme() {
+                var note = document.getElementById("notee");
+                var note_totale = document.getElementById("note_totale");
+                var bonus = document.getElementById("bonus");
+                var pourcentageElement = document.getElementById("pourcentage");
+          
+                var note_q0 = parseFloat(document.getElementById("note_q0").innerText);
+                var note_q1 = parseFloat(document.getElementById("note_q1").innerText);
+                var note_q3 = parseFloat(document.getElementById("note_q3").innerText);
+                var note_q13 = parseFloat(document.getElementById("note_q13").innerText);
+                var note_q5 = parseFloat(document.getElementById("note_q5").innerText);
+          
+                var note_q4 = parseFloat(document.getElementById("note_q4").innerText);
+                var note_q6= parseFloat(document.getElementById("note_q6").innerText);
+                var note_q7 = parseFloat(document.getElementById("note_q7").innerText);
+                var note_q8 = parseFloat(document.getElementById("note_q8").innerText);
+                var note_q9 = parseFloat(document.getElementById("note_q9").innerText);
+                var note_q10 = parseFloat(document.getElementById("note_q10").innerText);
+                
+                var somme_note = note_q0 + note_q1 + note_q3 + note_q13+note_q5;
+                var somme_bonus =  note_q6 + note_q7 + note_q8+note_q9+note_q10+note_q4;
+                var somme_totale = somme_note + somme_bonus;
+
+                console.log(somme_note)
+                console.log(somme_bonus)
+                console.log(somme_totale)
+          
+                var pourcentage = (somme_totale * 15) / 100;
+          
+                note_totale.innerText = somme_totale+"%";
+                note.innerText = somme_note;
+                bonus.innerText = somme_bonus;
+                pourcentageElement.innerText = pourcentage.toFixed(2);
+                console.log("somme totale"+note_totale.innerHTML)
+            }
+          
+                setTimeout(calculerSomme,10000);
+          </script>
+        
+        
+          <div class="pt-1 mt-3" style="background: #6b6b6b"></div>
+
+          <div class="row pt-3" style="font-size: 23px;">
+            <h5 class="mb-sm-0" style="color: black; margin-left: 90%;" ><strong>Note:</strong><span style="color: red;">0</span>/0</h5>
+
+            <div class="col-12">
+              <div class="d-flex flex-column flex-sm-row justify-content-between">
+                <h5 class="card-title font-weight-bold text-center text-sm-left">Q14- Quelles sont vos suggestions pour améliorer les ventes</h5>
+                <h5 class="card-title font-weight-bold text-center text-sm-right"> السؤال 14 : ما هي اقتراحاتك لتحسين المبيعات</h5>
+              </div>
+              <div style="width: 100%;"></div>
+              <div class="d-flex justify-content-between">  
+                {% if evaluation.q14|length == 2 %}
+                  <p style="width: 100%;">Pas de suggestions | لا توجد اقتراحات</p>
+                {% else %}
+                  <p style="width: 100%;">{{ evaluation.q14 }}</p>
+                {% endif %}
+            
+                         
+              </div>
+            </div>
+          </div>
+    </div>
+
+    <div>
+      {% if sup_evaluation %}
+
+      <div style="height: 1px; width: 100%; background-color: black; margin-top:10px;margin-bottom:10px"></div>
+      <div style="height: 1px; width: 100%; background-color: black; margin-top:10px;margin-bottom:10px"></div>
+      <div  style="width: 100%; text-align: center;">
+        <h5 style="color: green;">Evaluation de votre superviseur</h5>
+      </div>
+      <div style="height: 1px; width: 100%; background-color: black; margin-top:10px;margin-bottom:10px"></div>
+      <div style="height: 1px; width: 100%; background-color: black; margin-top:10px;margin-bottom:10px"></div>
+
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Pourcentage</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">نسبة مئوية</h5>
+          </div>
+          <div style="width: 100%;"></div>
+            <div class="row justify-content-center" style="font-size: 18px;">
+              <div class="d-flex align-items-center bg-success rounded" style="width: 280px; height: 80px;">
+                <strong class="text-white m-auto">{{sup_evaluation.perc}}%</strong>
+              </div>
+            </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Avez-vous discuté l'évaluation avec le délégué et vous êtes-vous assuré que les réponses sont correctes et en accord ses réponses ?</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">هل ناقشت المندوب في التقييم و متاكد من صحة الاجابات و موافق عليها ؟</h5>
+          </div>
+          <div style="width: 100%;"></div>
+            <div class="row justify-content-center" style="font-size: 18px;">
+              <div class="d-flex align-items-center bg-success rounded" style="width: 280px; height: 80px;">
+                <strong class="text-white m-auto">{{sup_evaluation.responses_okay}}</strong>
+              </div>
+            </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Résumer les problèmes les plus importants lors de l'évaluation du délégué ainsi que la votre proposition pour la résolution du problème ?</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">لخص اهم المشاكل في تقييم المندوب مع طريقة الحل للمشكلة</h5>
+          </div>
+          <div style="width: 100%;"></div>
+            <div id="problemsContainer" class="d-block justify-content-center" style="font-size: 18px;">
+
+            </div>
+            <script>
+              // Parse the JSON string into a JavaScript object
+              const probsData = JSON.parse('{{sup_evaluation.probs|escapejs}}');
+              count=0
+          
+              // Get the container element where you want to display the questions and solutions
+              const container = document.getElementById("problemsContainer");
+          
+              // Iterate over the properties of the probsData object
+              for (const key in probsData) {
+                if (probsData.hasOwnProperty(key) && key.startsWith("question")) {
+                    count++
+                      // Get the question and its corresponding solution
+                      const question = probsData[key];
+                      const solutionKey = key.replace("question", "solution");
+                      const solution = probsData[solutionKey];
+          
+                      // Construct HTML for the question and solution
+                      const questionHtml = document.createElement("div");
+                      questionHtml.innerHTML = `<strong>Probleme ${count} :</strong><p>${question}</p>`;
+          
+                      const solutionHtml = document.createElement("div");
+                      solutionHtml.innerHTML = `<strong>Solution ${count} :</strong><p>${solution}</p>`;
+          
+                      // Append the question and solution to the container with a horizontal line between them
+                      container.appendChild(document.createElement("hr"));
+                      container.appendChild(questionHtml);
+                      container.appendChild(solutionHtml);
+                      container.appendChild(document.createElement("hr"));
+                  }
+              }
+          </script>
+          
+          
+          
+          
+          
+        </div>
+      </div>
+      <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 1rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+        <h4>Connaissances produit | معرفة المنتج</h4>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q1- Connaissance pathologie et motif de prescription</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">معرفة الأمراض المتعلقة بالمنتج ودواعي كتابته</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            {% if sup_evaluation.q1 %}
+              <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+            {% else %}
+              <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q2- Connaissance des Caractéristiques produit</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">معرفة خصائص المنتج</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q2 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q3- Connaissance des mécanismes d'action</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">معرفة آليات عمل المنتج و مكوناته</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q3 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q4- Connaissance études, données et références scientifiques</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">معرفة الدراسات والبيانات والمراجع العلمية</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q4 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q5- Positionnement produit vis-à-vis les concurrents</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">تحديد الخصائص التي يتميز بها المنتج مقارنة بخصائص المنتجات المنافسة</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q5 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 1rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+        <h4>Porte feuille medecins | قائمة الأطباء</h4>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q6- Ratio spécialités ciblée / le nombre globale des medecins</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right"> نسبة التخصصات المستهدفة / إجمالي عدد الأطباء</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q6 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q7- Ratio nombre des potentiels a/ le nombre globale des medecins</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right"> نسبة عدد الأطباء المهمين / إجمالي عدد الأطباء</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q7 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q8- Informations medecins (contact, spécialité, potentialité, adresse et adresse mail)</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">معلومات الأطباء (رقم الهاتف، التخصص، الأهمية، العنوان، وعنوان البريد الإلكتروني)</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q8 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q9-Cycles des visites (nombre de visites par medecins, durée entre 2 visites)</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">جولات المندوب (عدد الزيارات لكل طبيب، المدة بين زيارتين)</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q9 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 1rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+        <h4>Visite medicale | الزيارة الطبية</h4>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q10-Couverture secteur</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">تغطية المنطقة</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q10 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q11-Communication et adaptation des types de présentations au profil du médecin</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">طريقة التواصل مع الطبيب و تغيير الرسالة حسب بروفايل الطبيب</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q11 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q12-Préparation avant la visite (fiche médecin)</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">التحضير قبل الزيارة (ورقة الطبيب)</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q12 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q13-Traitement des objections medecins</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">معالجة اعتراضات الأطباء</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q13 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q14-Traitement des d'objections pharmaciens</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">معالجة اعتراضات الصيادلة</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q14 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q15-Timing d'introduction</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">إدارة الوقت</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q15 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 1rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+        <h4>Planning | البرنامج</h4>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q16-Ciblage medecins spécialités</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right"> استهداف التخصصات المهمة</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q16 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q17-Ciblage medecins potentialités</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">استهداف الأطباء المهمين</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q17 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q18-Ciblage secteur</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">استهداف المناطق المهمة</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q18 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q19-Planning hebdomadaire </h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">ادخال البرنامج الأسبوعي</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q19 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q20-Timing d'introduction</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">احترام توقيت ادخال البرنامج</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q20 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 1rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+        <h4>Rapport | التقرير</h4>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q21-Nombre des présentations/ produit</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right"> عدد العروض التقديمية لكل منتج</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q21 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q22-Informations récoltées Medecins</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">المعلومات المجمعة عن الأطباء</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q22 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q23-Informations récoltées pharmacies (état de stock + medecins prescripteurs)</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">المعلومات المجمعة عن الصيدليات (حالة المخزون + الأطباء الدين يكتبون المنتج)</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q23 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q24-Conformité des griffes de passages (date + clarté)</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">انسجام ورقة ختومات الزيارات (تاريخ + وضوح)</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q24 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q25-Timing d'introduction</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">احترام توقيت ادخال التقرير</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q25 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 1rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+        <h4>Ethique professionnelle | الأخلاقيات المهنية</h4>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q26-Engagement et Intégrité</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">الالتزام و النزاهة</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q26 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q27-Confidentialité</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">الحفاظ على اسرار الشركة</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q27 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q28-Transparence</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">الشفافية</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q28 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q29-Conflits d'intérêts</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">تضارب المصالح</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q29 %}
+                <p style="width: 100%; color: green;">Réponse: Aucun conflit</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Conflit avéré</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Q30-Relations avec les professionnels de la santé</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">علاقة المندوب مع الأطباء</h5>
+          </div>
+          <div style="width: 100%;"></div>
+          <div class="d-flex justify-content-between">
+            <div class="d-flex justify-content-between">
+              {% if sup_evaluation.q30 %}
+                <p style="width: 100%; color: green;">Réponse: Vérifié</p>
+              {% else %}
+                <p style="width: 100%; color: red;">Réponse: Non Vérifié</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {% endif %}
+    </div>
+
+    <div>
+      {% if direction_eval %}
+
+      <div style="height: 1px; width: 100%; background-color: black; margin-top:10px;margin-bottom:10px"></div>
+      <div style="height: 1px; width: 100%; background-color: black; margin-top:10px;margin-bottom:10px"></div>
+      <div  style="width: 100%; text-align: center;">
+        <h5 style="color: green;">Evaluation de la direction</h5>
+      </div>
+      <div style="height: 1px; width: 100%; background-color: black; margin-top:10px;margin-bottom:10px"></div>
+      <div style="height: 1px; width: 100%; background-color: black; margin-top:10px;margin-bottom:10px"></div>
+
+      <div class="row pt-3" style="font-size: 23px;">
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Comment jugez vous l'évaluation du superviseur au délégué ?</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">كيف ترى تقييم السوبر فايزر للمندوب؟</h5>
+          </div>
+          <div style="width: 100%;"></div>
+            <div class="row justify-content-center" style="font-size: 18px;">
+              <div class="d-flex align-items-center bg-success rounded" style="width: 280px; height: 80px;">
+                <strong class="text-white m-auto" id="q1Output"></strong>
+
+                <script>
+                    var directionEval = "{{direction_eval.q1}}"; // Assurez-vous de remplacer "{{direction_eval.q1}}" par la valeur réelle de votre variable
+                
+                    switch (directionEval) {
+                        case "oui":
+                            document.getElementById("q1Output").textContent = "Oui  |  نعم"; // Si la valeur est "oui"
+                            break;
+                        case "non":
+                            document.getElementById("q1Output").textContent = "Non  |  لا"; // Si la valeur est "non"
+                            break;
+                        case "Pas Totalement":
+                            document.getElementById("q1Output").textContent = "Pas Totalement | ليس تمامًا"; // Si la valeur est "pas totalement"
+                            break;
+                        default:
+                            document.getElementById("q1Output").textContent = directionEval; // Afficher la valeur telle quelle si elle ne correspond à aucun cas
+                            break;
+                    }
+                </script>
+                              </div>
+            </div>
+        </div>
+        <div class="col-12">
+          <div class="d-flex flex-column flex-sm-row justify-content-between">
+            <h5 class="card-title font-weight-bold text-center text-sm-left">Explication:</h5>
+            <h5 class="card-title font-weight-bold text-center text-sm-right">:توضيح</h5>
+          </div>
+          <div class="d-flex justify-content-between">
+            <p style="width: 100%;">{{direction_eval.explication}}</p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+
+
+  </div>
+
+  <div class="page-break"></div>
+</body>
+
+
+<script>
+  month = document.getElementById("month").textContent
+  user = document.getElementById("user").textContent
+  nbr_rapports = document.getElementById("nbr_rapports")
+  nombre_rapport = document.getElementById("nombre_rapport")
+  nombre_visites = document.getElementById("nombre_visites")
+  nombre_medecins = document.getElementById("nombre_medecins")
+  nombre_absence = document.getElementById("nombre_absence") 
+  dates_absence = document.getElementById("dates_absence") 
+  nombre_visites_com = document.getElementById("nombre_visites_com") 
+  nombre_visites_med = document.getElementById("nombre_visites_med") 
+  nbr_de_jour = document.getElementById("nbr_de_jour") 
+  // specialties_data = document.getElementById('specialties_data');
+
+  
+
+
+  function fetchData(){
+    fetch('https://app.liliumpharma.com/rapports/RapportSummaryAPIView?month='+month+'&user='+user)
+      .then((response) => response.json())
+      .then((data) => {
+        nombre_rapport.textContent = data.num_reports+'/'+data.days_in_month
+        nombre_visites.textContent = data.num_visits
+        nombre_visites_com.textContent = data.num_visits_commercial
+        nombre_visites_med.textContent = data.num_visits_medical
+        nombre_medecins.textContent = data.num_medecins 
+        nombre_absence.textContent = data.num_absence  
+        nbr_de_jour.textContent = data.days_in_month  
+
+
+        // Append leaves data
+        const leavesCountElement = document.getElementById("leaves_count");
+        leavesCountElement.textContent = data.leaves_response_count;
+        const leavesElement = document.getElementById("leaves");
+        leavesElement.textContent = "";
+        const leavesDates = data.leaves_response.map(leave => {
+            const formattedStartDate = new Date(leave.starting_date).toISOString().slice(0, 10);
+            const formattedEndDate = new Date(leave.ending_date).toISOString().slice(0, 10);
+            const leaveType = leave.type
+
+            return `<span style="color: red;">${leaveType}</span>: ${formattedStartDate} | ${formattedEndDate}\n`;
+        }).join(" - ");
+        leavesElement.innerHTML = leavesDates;
+
+        // Append absences data
+        const absencesCountElement = document.getElementById("absences_count");
+        absencesCountElement.textContent = data.absences_response_count;
+        const absencesElement = document.getElementById("absences");
+        absencesElement.textContent = "";
+        const absencesDates = data.absences_response.map(absence => {
+            const formattedDate = new Date(absence.date).toISOString().slice(0, 10);
+            return formattedDate;
+        }).join(" - ");
+        absencesElement.textContent = absencesDates;
+
+
+        
+        count=20
+        count=count-data.num_absence
+        if(count<0){
+          count=0
+        }
+        document.getElementById("note_q0").innerText = count ;
+
+
+        const absenceDatesText = data.absence_dates.join(" | ");
+        if (data.absence_dates.length > 0) {
+          dates_absence.textContent = absenceDatesText;
+        }
+
+        // const specialtiesFormatted = Object.entries(data.specialties_data).map(([specialty, count]) => `${specialty} (${count})`).join(' ');
+        // specialties_data.textContent = Object.keys(data.specialties_data).length;
+        // Convertir les données en tableau d'objets
+        const specialtiesMedical = Object.entries(data.specialties_medical).map(([specialty, count]) => ({ specialty, count }));
+              
+        // Trier le tableau par le comptage de chaque spécialité (de la plus grande à la plus petite)
+        specialtiesMedical.sort((a, b) => b.count - a.count);
+              
+        // Formater les données triées
+        const specialtiesMedicalFormatted = specialtiesMedical.map(({ specialty, count }) => `${specialty} (${count})`).join(' ');
+              
+        // Afficher les données triées dans les éléments HTML
+        document.getElementById("specialties_medical_count").textContent = specialtiesMedical.length;
+        document.getElementById("specialties_medical").textContent = specialtiesMedicalFormatted;
+
+
+        // Commercial
+        const specialtiesCommercial = Object.entries(data.specialties_commercial).map(([specialty, count]) => ({ specialty, count }));
+        specialtiesCommercial.sort((a, b) => b.count - a.count);
+
+        const specialtiesCommercialFormatted = specialtiesCommercial.map(({ specialty, count }) => `${specialty} (${count})`).join(' ');
+
+        document.getElementById("specialties_commercial_count").textContent = specialtiesCommercial.length;
+        document.getElementById("specialties_commercial").textContent = specialtiesCommercialFormatted;
+
+
+
+      })
+  }
+  fetchData()
+</script>
+
+<!-- FETCHING ORDERS  -->
+<script>
+  function fetchOrders() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const monthUrl = document.getElementById("saving_month")
+    const UserUrl = document.getElementById("saving_user")
+    
+    
+    fetch('https://app.liliumpharma.com/orders/ordersPerUserPerMonth?month=' + monthUrl.textContent+'&user='+UserUrl.textContent)
+    .then((response) => response.json())
+    .then((data) => {
+      const note_q13 = document.getElementById("note_q13")
+
+
+
+      
+
+      var note=0
+      const tableBody = document.getElementById("field_13");
+      const tableTransferedBody = document.getElementById("field_13_tr"); 
+      const tableTransferedBody2 = document.getElementById("field_13_tr_2"); 
+      
+        nombre_de_bons = document.getElementById("response_13_nombre");
+        nombre_de_bons.innerHTML = data.total_orders;
+        const resume=document.getElementById("raison_13_resume")
+        summary = document.getElementById("raison_13_summary");
+        summary.innerHTML = "";
+
+        let currentRow = document.createElement("div"); 
+        currentRow.className = "row";
+
+        let productListText = ""; // Variable pour stocker le texte des produits
+
+        for (const productName in data.product_summary) {
+          const productQuantity = data.product_summary[productName];
+          productListText += `<strong>${productName}:</strong> ${productQuantity} - `; // Ajouter le nom du produit et sa quantité au texte
+        }
+        // const productListTextNode = document.createTextNode(productListText.slice(0, -3));
+        const productListParagraph = document.createElement("p");
+        productListParagraph.style.fontSize = "14px"; // Définir la taille de police à 12px
+              
+        productListParagraph.innerHTML = productListText.slice(0, -3);
+              
+                
+        // Ajouter le paragraphe à l'élément parent (par exemple, le body du document)
+        summary.appendChild(productListParagraph);                
+        let pharmacyGrossisteCount = 0;
+        let grossisteSuperGrossisteCount = 0;
+        let pharmacySuperGrossisteCount = 0;
+        let supergrotooffice = 0;
+        
+        data.orders.forEach((order, index) => {
+          const newRow = document.createElement("tr");
+  
+          // Populate table cells with order data
+          const dateCell = document.createElement("td");
+          dateCell.innerHTML = order.date;
+          
+          const idCell = document.createElement("td");
+          idCell.innerHTML = order.order_id;
+  
+          const statusCell = document.createElement("td");
+          statusCell.innerHTML = order.status;
+  
+          // Apply different colors based on the status of the order
+          let statusColor;
+          switch (order.status) {
+            case "initial":
+              statusColor = "blue";
+              break;
+            case "confirme":
+              statusColor = "green";
+              break;
+            case "en cours":
+              statusColor = "orange";
+              break;
+            default:
+              statusColor = "black"; // Default color if none of the cases match
+              break;
+          }
+          statusCell.style.color = statusColor; // Style the "Status" cell with the selected color
+  
+          const pharmacyCell = document.createElement("td");
+          pharmacyCell.innerHTML = order.pharmacy || "-"; // Use a hyphen if pharmacy is empty
+  
+          const grosCell = document.createElement("td");
+          grosCell.innerHTML = order.gros || "-"; // Use a hyphen if gros is empty
+  
+          const superGrosCell = document.createElement("td");
+          superGrosCell.innerHTML = order.super_gros || "-"; // Use a hyphen if super_gros is empty
+  
+          const productsCell = document.createElement("td");
+          const productList = document.createElement("ul");
+          order.products.forEach((product) => {
+            const productItem = document.createElement("li");
+            productItem.innerHTML = product.product_name + " - Quantity: " + product.quantity;
+            productList.appendChild(productItem);
+          });
+          productsCell.appendChild(productList);
+  
+          // Add cells to the row
+          newRow.appendChild(dateCell);
+          newRow.appendChild(idCell);
+          newRow.appendChild(statusCell);
+          newRow.appendChild(pharmacyCell);
+          newRow.appendChild(grosCell);
+          newRow.appendChild(superGrosCell);
+          newRow.appendChild(productsCell);
+  
+          // Add the row to the table body
+          tableBody.appendChild(newRow);
+
+          const pharmacyValue = order.pharmacy;
+          const grossisteValue = order.gros;
+          const superGrossisteValue = order.super_gros;
+
+          if (pharmacyValue === "-" && grossisteValue !== "-" && superGrossisteValue !== "-") {
+            grossisteSuperGrossisteCount++;
+          } else if (pharmacyValue !== "-" && grossisteValue !== "-" && superGrossisteValue === "-") {
+            pharmacyGrossisteCount++;
+          } else if (pharmacyValue !== "-" && grossisteValue === "-" && superGrossisteValue !== "-") {
+            pharmacySuperGrossisteCount++;
+          }
+          if(pharmacyValue == "-" && grossisteValue == "-" &&superGrossisteValue !== "-"){
+            supergrotooffice++
+          }
+        });
+
+        const summaryText = `
+        <strong>From pharmacies to grossistes: </strong>${pharmacyGrossisteCount}<br>
+        <strong>From grossistes to super grossistes: </strong> ${grossisteSuperGrossisteCount}<br>
+        <strong>From pharmacies to super grossistes: </strong> ${pharmacySuperGrossisteCount}<br>
+        <strong>Super grossistes to lilium office: </strong> ${supergrotooffice}<br>
+        `;
+        resume.innerHTML = summaryText;
+
+        note = (pharmacyGrossisteCount + grossisteSuperGrossisteCount)/2
+        if (note>=15){
+          note=15
+        }
+        document.getElementById("note_q13").innerText = note ;
+
+        
+
+        if (data.transfered_orders.length === 0) {
+          const noOrdersRow = document.createElement("tr");
+          const noOrdersCell = document.createElement("td");
+          noOrdersCell.colSpan = 8; // Span sur toutes les colonnes
+          noOrdersCell.textContent = "Il n'y a pas de bon de commande transférés | لا يوجد طلبيات محولة إلى كمرسيال المنطقة";
+          noOrdersRow.appendChild(noOrdersCell);
+          tableTransferedBody.appendChild(noOrdersRow);
+        } else {    
+        data.transfered_orders.forEach((order, index) => {
+          const newRow = document.createElement("tr");
+  
+          // Populate table cells with order data
+          const dateCell = document.createElement("td");
+          dateCell.innerHTML = order.date;
+          
+          const idCell = document.createElement("td");
+          idCell.innerHTML = order.order_id;
+
+          const userCell = document.createElement("td");
+          userCell.innerHTML = order.user;
+  
+          const statusCell = document.createElement("td");
+          statusCell.innerHTML = order.status;
+  
+          // Apply different colors based on the status of the order
+          let statusColor;
+          switch (order.status) {
+            case "initial":
+              statusColor = "blue";
+              break;
+            case "confirme":
+              statusColor = "green";
+              break;
+            case "en cours":
+              statusColor = "orange";
+              break;
+            default:
+              statusColor = "black"; // Default color if none of the cases match
+              break;
+          }
+          statusCell.style.color = statusColor; // Style the "Status" cell with the selected color
+  
+          const pharmacyCell = document.createElement("td");
+          pharmacyCell.innerHTML = order.pharmacy || "-"; // Use a hyphen if pharmacy is empty
+  
+          const grosCell = document.createElement("td");
+          grosCell.innerHTML = order.gros || "-"; // Use a hyphen if gros is empty
+  
+          const superGrosCell = document.createElement("td");
+          superGrosCell.innerHTML = order.super_gros || "-"; // Use a hyphen if super_gros is empty
+  
+          const productsCell = document.createElement("td");
+          const productList = document.createElement("ul");
+          order.products.forEach((product) => {
+            const productItem = document.createElement("li");
+            productItem.innerHTML = product.product_name + " - Quantity: " + product.quantity;
+            productList.appendChild(productItem);
+          });
+          productsCell.appendChild(productList);
+  
+          // Add cells to the row
+          newRow.appendChild(dateCell);
+          newRow.appendChild(idCell);
+          newRow.appendChild(userCell);
+          newRow.appendChild(statusCell);
+          newRow.appendChild(pharmacyCell);
+          newRow.appendChild(grosCell);
+          newRow.appendChild(superGrosCell);
+          newRow.appendChild(productsCell);
+  
+          // Add the row to the table body
+          tableTransferedBody.appendChild(newRow);
+
+        })
+      }
+
+      })
+  }
+  
+  fetchOrders();
+  </script>
+
+<script>
+  function fetchOrders2() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const monthUrl = document.getElementById("saving_month")
+    const UserUrl = document.getElementById("saving_user")
+    
+    
+    fetch('https://app.liliumpharma.com/orders/ordersPerUserPerMonth?month=' + monthUrl.textContent+'&user='+UserUrl.textContent)
+    .then((response) => response.json())
+    .then((data) => {
+      
+
+// Obtenez une référence à la deuxième table en utilisant getElementById
+const tableTransferedBody2 = document.getElementById("field_13_tr_2");
+
+// Vérifiez si les données de transfered_orders_2 sont vides
+if (data.transfered_orders_2.length === 0) {
+    // Créez une ligne de tableau pour afficher un message indiquant qu'il n'y a pas de commandes transférées
+    const noOrdersRow = document.createElement("tr");
+    const noOrdersCell = document.createElement("td");
+    noOrdersCell.colSpan = 8; // Span sur toutes les colonnes
+    noOrdersCell.textContent = "Il n'y a pas de bons de commande transférés  | لا يوجد طلبيات محولة ";
+    noOrdersRow.appendChild(noOrdersCell);
+    tableTransferedBody2.appendChild(noOrdersRow);
+} else {
+    // Parcourez les données de transfered_orders_2 et créez des lignes de tableau pour chaque commande transférée
+    data.transfered_orders_2.forEach((order, index) => {
+        // Créez une nouvelle ligne de tableau
+        const newRow = document.createElement("tr");
+
+        // Créez des cellules de tableau pour chaque propriété de commande et ajoutez-les à la nouvelle ligne
+        const dateCell = document.createElement("td");
+        dateCell.innerHTML = order.date;
+        
+        const idCell = document.createElement("td");
+        idCell.innerHTML = order.order_id;
+        
+        const userCell = document.createElement("td");
+        userCell.innerHTML = order.user;
+        
+        const statusCell = document.createElement("td");
+        statusCell.innerHTML = order.status;
+        
+        const toUserCell = document.createElement("td");
+        toUserCell.innerHTML = order.to_user;
+        
+        const pharmacyCell = document.createElement("td");
+        pharmacyCell.innerHTML = order.pharmacy || "-"; 
+
+        const grosCell = document.createElement("td");
+        grosCell.innerHTML = order.gros || "-"; // Use a hyphen if gros is empty
+  
+        const superGrosCell = document.createElement("td");
+        superGrosCell.innerHTML = order.super_gros || "-"; // Use a hyphen if super_gros is empty
+        
+
+        newRow.appendChild(dateCell);
+        newRow.appendChild(idCell);
+        newRow.appendChild(userCell);
+        newRow.appendChild(statusCell);
+        newRow.appendChild(toUserCell);
+        newRow.appendChild(pharmacyCell);
+        newRow.appendChild(grosCell);
+        newRow.appendChild(superGrosCell);
+        
+        const productsCell = document.createElement("td");
+        const productList = document.createElement("ul");
+        order.products.forEach((product) => {
+          const productItem = document.createElement("li");
+          productItem.innerHTML = product.product_name + " - Quantity: " + product.quantity;
+          productList.appendChild(productItem);
+        });
+        productsCell.appendChild(productList);
+        
+        newRow.appendChild(productsCell);
+
+  
+          // Add the row to the table body
+          tableTransferedBody2.appendChild(newRow);
+
+        // Ajoutez la nouvelle ligne au corps du tableau
+        tableTransferedBody2.appendChild(newRow);
+    });
+}
+
+
+
+
+
+
+    })
+  }
+  
+  fetchOrders2();
+  </script>
+
+
+
+<!-- FETCHING PHARMACIES -->
+<script>
+  const UserUrl = document.getElementById("saving_user")
+  function fetchPharmacies(){
+    const urlParams = new URLSearchParams(window.location.search);
+    const monthUrl = document.getElementById("saving_month").textContent
+    fetch('https://app.liliumpharma.com/medecins/api/PharmaciesGrossitesVisitsPerUser?month='+monthUrl+'&user='+UserUrl.textContent)
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("response_11").innerHTML = data.nombre_visites
+        document.getElementById("com_recap").innerHTML = data.nombre_visites
+        
+        document.getElementById("total_pharma").innerHTML = data.total_pharmacies_visitees
+        document.getElementById("total_gro").innerHTML = data.total_grossistes_visites
+         
+         
+      })
+  }
+fetchPharmacies()
+</script>
+
+
+
+
+
+
+
+</html>

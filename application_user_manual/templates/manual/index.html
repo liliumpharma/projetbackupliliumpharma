@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.21.0/font/bootstrap-icons.css" rel="stylesheet">
+
+
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/styles.css'%}">
+  {%block styles%}
+  {%endblock styles%}
+  <title>{% block title %}{%endblock title%}</title>
+</head>
+<body>
+  <style>
+    .separator {
+      width: 1px;
+      background-color: #ccc;
+      margin: 0 20px;
+    }
+    img {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h4{
+      color:green;
+      font-weight: bold;
+    }
+
+    /* Style pour le bouton flottant */
+    .scroll-to-top-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      font-size: 24px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .scroll-to-top-button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+
+{% block body %}{%endblock body%}
+<script src="{% static 'js/jquery.min.js'%}"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+{% block scripts %}{%endblock scripts%}
+<div class="d-flex justify-content-between" style="margin: 20px;">
+    <div class="d-flex flex-column" style="width: 50%;">
+      <h4 style="font-weight: bold;">Manuel d'utilisation de notre application</h4>
+      <p class="text-muted">Cette section a pour objectif de vous familiariser avec l'utilisation des différentes fonctionnalités offertes par notre application mobile.</p>
+    </div>
+    <div class="d-flex flex-column text-right" style="width: 50%;">
+      <h4 style="font-weight: bold;">دليل المستخدم لتطبيقنا</h4>
+      <p class="text-muted">يهدف هذا القسم إلى تعريفك باستخدام الميزات المختلفة التي يقدمها تطبيق الهاتف المحمول الخاص بنا.</p>
+    </div>
+  </div>
+  <div class="col-md-12" style="text-align: center; margin-top: 40px;">
+    <h3 style="color: green;">Manuel pour Application mobile</h3>
+    <h3 style="color: green;">دليل لتطبيق الهاتف</h3>
+    <button id="toggleMenu" class="btn btn-primary" type="button" data-toggle="collapse" data-target="#menuMobile" aria-expanded="false" aria-controls="menuMobile">
+      Afficher le menu
+    </button>
+  </div>
+
+  <style>
+    a {
+      text-decoration: none; /* Supprime le soulignement des liens */
+      transition: transform 0.3s ease; /* Ajoute une transition fluide pour l'effet de zoom */
+    }
+
+    a:hover,
+    a:focus {
+      transform: scale(1.03); /* Zoom de 10 % sur hover ou focus */
+      color: green; /* Couleur du texte au focus */
+    }
+  </style>
+
+<div class="collapse" id="menuMobile">
+
+  <div class="row" style="margin: 20px;">
+    <div class="col-md-12">
+      <div class="d-flex flex-column mt-5">
+        <a href="#connexion" class="scroll-link">
+          <h5 style="font-weight: bold; color: green;">Connexion      تسجيل الدخول</h5>
+        </a>
+        <a href="#connexion">
+          <p style="margin-left: 15px;">&#8226; Comment me connecter a mon compte ?     كيف يمكنني تسجيل الدخول إلى حسابي؟</p>
+        </a>
+      </div>
+    </div>
+
+    <div class="col-md-12">
+      <div class="d-flex flex-column mt-5">
+        <a href="#rapports" class="scroll-link">
+          <h5 style="font-weight: bold; color: green;">Rapports     التقارير</h5>
+        </a>
+        <a href="#liste_rapports">
+          <p style="margin-left: 15px;">&#8226; Comment voir la liste des rapports ?      كيف ترى قائمة التقارير ؟</p>
+        </a>
+        <a href="#ajouter_rapports">
+          <p style="margin-left: 15px;">&#8226; Comment ajouter un rapport ?      كيفية إضافة تقرير؟</p>
+        </a>
+        <a href="#add_visite">
+          <p style="margin-left: 15px;">&#8226; Comment ajouter une visite ?      كيفية إضافة زيارة؟</p>
+        </a>
+      </div>
+      <div class="separator" style="margin: 0px;"></div> <!-- Ajout de la ligne verticale -->
+    </div>
+
+
+    <div class="col-md-12">
+
+      <div class="d-flex flex-column mt-5">
+        <a href="#planning">
+          <h5 style="font-weight: bold; color: green;">Planning     برنامج</h3>
+        </a>
+        <a href="#liste_planning">
+          <p style="margin-left: 15px;">&#8226; Comment voir la liste des plannings ?     كيف ترى قائمة الجداول؟</p>
+        </a>
+        <a href="#ajouter_planning">
+          <p style="margin-left: 15px;">&#8226; Comment ajouter un planning ?     كيفية إضافة الجدول؟</p>
+        </a>
+      </div>
+    </div>
+
+
+    <div class="col-md-12">
+      <div class="d-flex flex-column mt-5">
+        <h5 style="font-weight: bold; color: green;">Medecins     الأطباء</h3>
+        <a href="#liste_medecins">
+          <p style="margin-left: 15px;">&#8226;  Comment voir la liste des medecins ?     كيف ترى قائمة الأطباء؟</p>
+        </a>
+        <a href="#ajouter_medecins">
+          <p style="margin-left: 15px;">&#8226; Comment ajouter un medecin ?      كيفية إضافة طبيب؟</p>
+        </a>
+      </div>
+    </div>
+
+    <div class="col-md-12">
+      <div class="d-flex flex-column mt-5">
+        <h5 style="font-weight: bold; color: green;">Produits     منتجات</h3>
+          <a href="#produits">
+            <p style="margin-left: 15px;">&#8226;  Comment voir la liste des produits Lilium ?      كيف يمكن الاطلاع على قائمة منتجات ليليوم؟</p>
+            <p style="margin-left: 15px;">&#8226; Comment ajouter un produit concurrent ?     كيفية إضافة منتج منافس؟</p>
+          </a>
+
+      </div>
+    </div>
+
+    <div class="col-md-12">
+      <div class="d-flex flex-column mt-5">
+        <a href="#bons_de_commandes">
+          <h5 style="font-weight: bold; color: green;">Bons de commandes      طلبات الشراء</h3>
+          <p style="margin-left: 15px;">&#8226;  Comment voir la liste des bons de commandes ?      كيف يمكن الاطلاع على قائمة أوامر الشراء؟</p>
+        </a>
+        <a href="#ajouter_bon_de_commande">
+          <p style="margin-left: 15px;">&#8226;  Comment créer un nouveau bon de commande ?       كيفية إنشاء أمر شراء جديد ؟</p>
+        </a>
+      </div>
+    </div>
+
+
+    <div class="col-md-12">
+      <div class="d-flex flex-column mt-5">
+        <a href="#bons_de_sortie">
+          <h5 style="font-weight: bold; color: green;">Bons de sorties      قسائم الخروج</h3>
+          <p style="margin-left: 15px;">&#8226; Comment voir la liste des bons de sortie ?      كيف يمكن الاطلاع على قائمة قسائم الخروج؟ </p>
+        </a>
+        <a href="#ajouter_bon_de_sortie">
+          <p style="margin-left: 15px;">&#8226; Comment créer un nouveau bon de sortie ?      كيفية إنشاء قسيمة خروج جديدة؟</p>
+        </a>
+      </div>
+    </div>
+
+    <div class="col-md-12">
+      <div class="d-flex flex-column mt-5">
+        <a href="#ventes">
+          <h5 style="font-weight: bold; color: green;">Ventes     مبيعات</h3>
+          <p style="margin-left: 15px;">&#8226; Comment accéder aux ventes ?      كيفية الوصول إلى المبيعات؟</p>
+        </a>
+      </div>
+    </div>
+
+    <div class="col-md-12">
+      <div class="d-flex flex-column mt-5">
+        <a href="#conge">
+          <h5 style="font-weight: bold; color: green;">Ressources humaines      الموارد البشرية</h3>
+            <p style="margin-left: 15px;">&#8226; Congés & absence      الإجازة والغياب</p>
+        </a>
+        <a href="liste_rh">
+          <p style="margin-left: 15px;">&#8226; Comment voir la liste des congés et/ou absences ?     كيف ترى قائمة الإجازات و/أو الغياب؟</p>
+        </a>
+        <a href="ajouter_rh">
+          <p style="margin-left: 15px;">&#8226; Comment ajouter un congé ou une absence ?     كيفية إضافة إجازة أو غياب؟</p>
+        </a>
+        <a href="#ajouter_ev">
+          <p style="margin-left: 15px;">&#8226; Comment ajouter une evaluation mensuelle ?      كيفية إضافة التقييم الشهري؟</p>
+        </a>
+      </div>
+    </div>
+
+
+
+
+
+  </div>
+</div>
+
+{%if request.user.is_superuser%}
+<div class="col-md-12" style="text-align: center; margin-top: 40px;">
+  <h3 style="color: green;">Manuel pour Administration</h3> 
+  <h3 style="color: green;">دليل للإدارة </h3>
+  <button id="toggleMenuAdministration" class="btn btn-primary" type="button" data-toggle="collapse" data-target="#menuAdministration" aria-expanded="false" aria-controls="menuAdministration">
+    Afficher le menu
+  </button>
+</div>
+
+<div class="collapse" id="menuAdministration">
+  <div class="col-md-12" style="margin: 20px;">
+    <div class="d-flex flex-column mt-5">
+      <a href="#administration">
+        <h5 style="font-weight: bold; color: green;">Dashboard      لوحة التحكم الرئيسية</h3>
+      </a>
+      <a href="#administration">
+        <p style="margin-left: 15px;">&#8226; Comment se présente le menu principal de l'administration ?     كيف تبدو قائمة الإدارة الرئيسية؟</p>
+      </a>
+    </div>
+  </div>
+
+
+  <div class="col-md-12" style="margin: 20px;">
+    <div class="d-flex flex-column mt-5">
+      <a href="#new_user">
+        <h5 style="font-weight: bold; color: green;">Utilisateurs     المستخدمون</h3>
+      </a>
+      <a href="#new_user">
+        <p style="margin-left: 15px;">&#8226; Comment créer un nouveau compte pour un utilisateur ?     كيفية إنشاء حساب جديد للمستخدم؟</p>
+      </a>
+    </div>
+  </div>
+
+  <div class="col-md-12" style="margin: 20px;">
+    <div class="d-flex flex-column mt-5">
+      <a href="#cproducts">
+        <h5 style="font-weight: bold; color: green;">Produits concurrents     منتجات المنافسين</h3>
+      </a>
+      <a href="#add_cproduct">
+        <p style="margin-left: 15px;">&#8226; Comment ajouter un produit concurrent ?     كيفية إضافة منتج منافس؟</p>
+      </a>
+    </div>
+  </div>
+
+  <div class="col-md-12" style="margin: 20px;">
+    <div class="d-flex flex-column mt-5">
+      <a href="#deals" class="scroll-link">
+        <h5 style="font-weight: bold; color: green;">Deals      صفقات</h5>
+      </a>
+      <a href="#deals">
+        <p style="margin-left: 15px;">&#8226; Comment voir la liste des deals ?     كيف ترى قائمة الصفقات؟</p>
+      </a>
+      <a href="#add_deal">
+        <p style="margin-left: 15px;">&#8226; Comment ajouter un nouveau deal ?     كيفية إضافة صفقة جديدة؟</p>
+      </a>
+    </div>
+  </div>
+
+  <div class="col-md-12" style="margin: 20px;">
+    <div class="d-flex flex-column mt-5">
+      <a href="#medecins" class="scroll-link">
+        <h5 style="font-weight: bold; color: green;">Medecins     الأطباء</h5>
+      </a>
+      <a href="#medecins_ad">
+        <p style="margin-left: 15px;">&#8226; Comment voir la liste des medecins ?      كيف ترى قائمة الأطباء؟</p>
+      </a>
+      <a href="#add_medecin_ad">
+        <p style="margin-left: 15px;">&#8226; Comment ajouter un nouveau medecin ?      كيفية إضافة طبيب جديد؟</p>
+      </a>
+    </div>
+  </div>
+
+  <div class="col-md-12" style="margin: 20px;">
+    <div class="d-flex flex-column mt-5">
+      <a href="#me" class="scroll-link">
+        <h5 style="font-weight: bold; color: green;">Evaluation mensuelle     التقييم الشهري</h5>
+      </a>
+      <a href="#me_ad">
+        <p style="margin-left: 15px;">&#8226; Comment voir la liste des evaluation mensuelle ?      كيف يمكن الاطلاع على قائمة التقييمات الشهرية؟</p>
+      </a>
+    </div>
+  </div>
+
+  <div class="col-md-12" style="margin: 20px;">
+    <div class="d-flex flex-column mt-5">
+      <a href="#bon_de_commande_ad" class="scroll-link">
+        <h5 style="font-weight: bold; color: green;">Bons de commandes      طلبات الشراء</h5>
+      </a>
+      <a href="#liste_bon_de_commande_ad">
+        <p style="margin-left: 15px;">&#8226; Comment voir la liste des bons de commandes ?     كيف يمكن الاطلاع على قائمة أوامر الشراء؟</p>
+      </a>
+      <a href="#add_bon_de_commande_ad">
+        <p style="margin-left: 15px;">&#8226; Comment ajouter un bon de commande ?      كيفية إضافة أمر شراء؟</p>
+      </a>
+    </div>
+  </div>
+
+  <div class="col-md-12" style="margin: 20px;">
+    <div class="d-flex flex-column mt-5">
+      <a href="#bon_de_sortie_ad" class="scroll-link">
+        <h5 style="font-weight: bold; color: green;">Bons de sortie     قسائم الخروج</h5>
+      </a>
+      <a href="#liste_bon_de_sortie_ad">
+        <p style="margin-left: 15px;">&#8226; Comment voir la liste des bons de sortie ?     كيف يمكن الاطلاع على قائمة أوامر الشراء؟</p>
+      </a>
+      <a href="#add_bon_de_sortie_ad">
+        <p style="margin-left: 15px;">&#8226; Comment ajouter un bon de sortie ?      كيفية إضافة أمر شراء؟</p>
+      </a>
+    </div>
+  </div>
+
+  <div class="col-md-12" style="margin: 20px;">
+    <div class="d-flex flex-column mt-5">
+      <a href="#liste_planning_ad" class="scroll-link">
+        <h5 style="font-weight: bold; color: green;">Plannings    المخططات اليومية</h5>
+      </a>
+      <a href="#liste_planning_ad">
+        <p style="margin-left: 15px;">&#8226; Comment voir la liste des plannings ?     كيف يمكن الاطلاع على قائمة المخططات اليومية؟</p>
+      </a>
+      <a href="#validate_planning_ad">
+        <p style="margin-left: 15px;">&#8226; Comment valider un planning ?      كيف يوافق المخطط يومي؟</p>
+      </a>
+      <a href="#add_planning_ad">
+        <p style="margin-left: 15px;">&#8226; Comment ajouter un planning ?      كيفية إضافة المخطط يومي؟</p>
+      </a>
+    </div>
+  </div>
+
+  <div class="col-md-12" style="margin: 20px;">
+    <div class="d-flex flex-column mt-5">
+      <a href="#liste_produit_ad" class="scroll-link">
+        <h5 style="font-weight: bold; color: green;">Nos Produits    منتجاتنا</h5>
+      </a>
+      <a href="#liste_produit_ad">
+        <p style="margin-left: 15px;">&#8226; Comment voir la liste des produits ?     كيف ترى قائمة المنتجات؟</p>
+      </a>
+      <a href="#add_produit_ad">
+        <p style="margin-left: 15px;">&#8226; Comment ajouter un produit ?      كيفية إضافة منتج؟</p>
+      </a>
+    </div>
+  </div>
+
+  <div class="col-md-12" style="margin: 20px;">
+    <div class="d-flex flex-column mt-5">
+      <a href="#liste_rapport_ad" class="scroll-link">
+        <h5 style="font-weight: bold; color: green;">Rapports    التقارير</h5>
+      </a>
+      <a href="#liste_rapport_ad">
+        <p style="margin-left: 15px;">&#8226; Comment voir la liste des rapports ?     كيف ترى قائمة التقارير؟</p>
+      </a>
+      <a href="#add_updatable_ad">
+        <p style="margin-left: 15px;">&#8226; Comment rendre un rapport modifiable ?      كيف تجعل التقرير قابلاً للتحرير؟</p>
+      </a>
+      <a href="#add_rapport_ad">
+        <p style="margin-left: 15px;">&#8226; Comment ajouter un rapport ?      كيفية إضافة تقرير؟</p>
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+<div class="card" style="margin-top: 50px; margin-bottom: 15%">
+  <div class="card-body">
+
+    <h6 style="margin: 10px;">Vous trouverez ci-dessous le manuel d'utilisation de l'application mobile suivi par le manuel de l'administration, si vous recherchez un probleme bien précis, cliquez sur afficher le menu, puis cliquez sur ce que vous savoir, vous serez directement envoyé vers la section souhaitée</h6>
+  </div>
+</div>
+<div class="mt-5" style="margin: 20px;">
+  <div id="connexion">
+    <h4>1-Connexion au compte</h4>
+    <img class="img" src="../static/manual/home.png" alt="" style="max-width: 100%;" width="700px">
+    <p class="text-muted">Vous devez entrez votre nom d'utilisateur et votre mot de passe VALIDE, et puis cliquez sur connexion</p>
+    <p class="text-muted text-right">يجب عليك إدخال اسم المستخدم وكلمة المرور الصالحة، ثم النقر فوق تسجيل الدخول</p>
+  </div>
+</div>
+
+<div style="margin: 20px;">
+  <div>
+    <h4>2-Ecran d'acceuil</h4>
+    <img class="img mb-3" src="../static/manual/acceuil.jpg" alt="" style="max-width: 100%;" width="300px">
+    <p class="text-muted">Vous serez directement redirigé vers l'ecran d'accueil ci-dessus sur lequel vous aurez accés a toutes les rebriques disponibles sur l'application</p>
+    <p class="text-muted text-right">ستتم إعادة توجيهك مباشرة إلى الشاشة الرئيسية أعلاه حيث ستتمكن من الوصول إلى جميع الأقسام المتوفرة في التطبيق
+    </p>
+  </div>
+</div>
+
+<div id="rapports" style="margin: 20px;">
+  <div>
+    <h4>3-Rapports</h4>
+    <img class="img mb-3" src="../static/manual/rapports_acceuil.png" alt="" style="max-width: 100%;" width="700px">
+    <p class="text-muted">Pour acceder aux rapports, cliquez sur la rubrique Rapports</p>
+    <p class="text-muted text-right">للوصول إلى التقارير، انقر على قسم التقارير</p>
+  </div>
+
+  <div id="liste_rapports" class="mt-4">
+    <h5>3-1-Liste des rapports</h5>
+    <img class="img mb-3" src="../static/manual/liste_rapports.jpg" alt="" style="max-width: 100%;" width="300px">
+    <p class="text-muted">Après avoir cliqué sur la rubrique 'Rapports', vous aurez accès directement à la liste des rapports déposés par vos collègues.</p>
+    <p class="text-muted text-right">بعد النقر على قسم "التقارير"، سيكون لديك إمكانية الوصول المباشر إلى قائمة التقارير المقدمة من زملائك</p>
+  </div>
+
+  <div id="ajouter_rapports" class="mt-4">
+    <h5>3-2-Ajouter un rapport</h5>
+    <div class="mt-2 mb-5">
+      <div class="card border-info">
+        <div class="card-body">
+          <div class="d-flex justify-content-between">
+            <h5 class="card-title">Important !</h5>
+            <h5 class="card-title">!مهم</h5>
+          </div>
+          <div class="d-flex justify-content-between">
+            <p class="card-text">Vous ne pouvez pas ajouter de rapport journalier tant que vous n'avez pas encore ajouté de planning pour la journée</p>
+            <p class="card-text text-end" style=" direction: rtl;text-align: right;">لا يمكنك إضافة تقرير يومي حتى تقوم بإضافة بلانينڤ لهذا اليوم</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <img class="img mb-3" src="../static/manual/add_rapport.png" alt="" style="max-width: 100%;" width="700px">
+    <p class="text-muted">Vous avez deux méthodes pour ajouter votre rapport, la premiere consiste a cliquer sur le + dans la rubrique rapport de l;ecran d;acceuil, ou depuis l'interface de la liste des rapports en cliquant sur le + situé en bas à droite de l;ecran</p>
+    <p class="text-muted text-right">أمامك طريقتان لإضافة تقريرك، الأولى هي الضغط على علامة + الموجودة في قسم التقارير بالشاشة الرئيسية، أو من واجهة قائمة التقارير بالضغط على علامة + الموجودة في أسفل يمين الشاشة</p>
+    <img class="img mt-5" src="../static/manual/add_rapport_interface.png" alt="" style="max-width: 100%;" width="700px">
+    <p class="text-muted mt-4">Vous devez ensuit prendre une photo ou selectionné depuis votre gallerie d'image les photos des 2 faces du rapports, les photos doivent être clair, et puis cliquez sur envoyer</p>
+    <p class="text-muted text-right">يجب عليك بعد ذلك التقاط صورة أو اختيار صور وجهي التقرير من معرض الصور الخاص بك، ويجب أن تكون الصور واضحة، ثم الضغط على إرسال</p>
+
+  </div>
+
+  <div id="add_visite" class="mt-4">
+    <h5>3-3-Ajouter des visite</h5>
+    <img class="img mb-3" src="../static/manual/add_visite.png" alt="" style="max-width: 100%;" width="1500px">
+    <p class="text-muted">Après avoir crée votre rapport, vous devez ajouter les visites, pour ce faire commancez par cliquer sur l'image de votre rapport, en bas de la page vous troueverez ajouter une visite, cliquez sur le + . vous serez redirigé sur l'interface d'ajout de visite, selectionnez un medecins et les produits, a la fin une observation puis cliquez sur envoyer</p>
+    <p class="text-muted text-right">بعد إنشاء تقريرك، يجب عليك إضافة الزيارات، للقيام بذلك ابدأ بالضغط على صورة تقريرك، في أسفل الصفحة ستجد إضافة زيارة، اضغط على + . سيتم تحويلك إلى واجهة إضافة زيارة، اختر الطبيب والمنتجات، في النهاية ملاحظة ثم اضغط على إرسال</p>
+  </div>
+
+</div>
+
+<div id="planning" style="margin: 20px;">
+  <div>
+    <h4>4-Planning</h4>
+    <img class="img mb-3" src="../static/manual/planning.png" alt="" style="max-width: 100%;" width="400px">
+    <p class="text-muted">Pour acceder aux planning, cliquez sur la rubrique planning</p>
+    <p class="text-muted text-right">للوصول إلى التخطيط، انقر على قسم التخطيط</p>
+  </div>
+  <div id="liste_planning" class="mt-4">
+    <h5>4-1-liste des planning</h5>
+    <img class="img mb-3" src="../static/manual/liste_planning.png" alt="" style="max-width: 100%;" width="1000px">
+    <p class="text-muted">Ici vous aurez la liste des planning, vous devez chaque jour entrer le planning avant 11h du matin afin qu'il soit validé, pour vous donner l'accés d'ajouter votre rapport a la fin de la journée</p>
+    <p class="text-muted text-right">هنا ستكون لديك قائمة الجداول، يجب عليك إدخال الجدول قبل الساعة 11 صباحًا كل يوم حتى يتم التحقق من صحته، لتمنحك إمكانية الوصول لإضافة تقريرك في نهاية اليوم</p>
+  </div>
+  <div id="ajouter_planning" class="mt-4">
+    <h5>4-2-Ajouter un planning</h5>
+    <img class="img mb-4" src="../static/manual/planning_1.png" alt="" style="max-width: 100%;" width="1000px">
+    <p class="text-muted">En premier temps vous devez specifier les regions que vous avez programmé de visiter, en cliquant sur le bouton Ajouter Region a visiter, vous serez redirigé vers une interface ou vous devez rechercher et cliquer sur la region souhaitée, et cliquer sur Demander validation</p>
+    <p class="text-muted text-right">أولاً يجب عليك تحديد المناطق التي خططت لزيارتها، بالضغط على زر إضافة منطقة للزيارة، سيتم إعادة توجيهك إلى واجهة حيث يجب عليك البحث والنقر على المنطقة المطلوبة، ثم الضغط على طلب التحقق من الصحة</p>
+    <img class="img mb-4 " src="../static/manual/planning_2.png" alt="" style="max-width: 100%;" width="1000px" >
+    <p class="text-muted">Vous devez ensuite ajouter la liste des medecins que vous avez programmé de visiter en cliquant sur ajouter medecins/pharmacies a visiter, vous serez redirigé vers une page où vous devez rechercher le nom du medecin ou la pharmacie et cliquer sur demander validation</p>
+    <p class="text-muted text-right">يجب عليك بعد ذلك إضافة قائمة الأطباء الذين حددت موعد زيارتهم بالضغط على إضافة أطباء/صيدليات للزيارة، سيتم إعادة توجيهك إلى صفحة يجب عليك فيها البحث عن اسم الطبيب أو الصيدلية والضغط على التحقق من صحة الطلب</p>
+    <img class="img mb-4" src="../static/manual/planning_3.png" alt="" style="max-width: 100%;" width="1000px">
+    <p class="text-muted">Vous devez ensuite ajouter les taches a faire en cliquant sur taches a faire, vous serez redirigé vers une interface où vous devez ecrire les teches et pour chaque tache appuyer sur ajouter, a la fin cliquez sur demander validation</p>
+    <p class="text-muted text-right">يجب عليك بعد ذلك إضافة المهام المطلوب تنفيذها بالضغط على المهام المراد تنفيذها، سيتم إعادة توجيهك إلى واجهة حيث يجب عليك كتابة المهام ولكل مهمة اضغط على إضافة، في النهاية اضغط على التحقق من صحة الطلب</p>
+  </div>
+
+
+
+  <div id="medecins" style="margin: 20px;">
+    <div>
+      <h4>4-Medecins</h4>
+      <img class="img mb-3" src="../static/manual/medecins.png" alt="" style="max-width: 100%;" width="700px">
+      <p class="text-muted">Pour acceder aux medecins, cliquez sur la rubrique Medecins</p>
+      <p class="text-muted text-right">للوصول إلى الأطباء، انقر فوق قسم الأطباء</p>
+    </div>
+  
+    <div id="liste_medecins" class="mt-4">
+      <h5>4-1-Liste des medecins</h5>
+      <img class="img mb-3" src="../static/manual/liste_medecins.png" alt="" style="max-width: 100%;" width="800px">
+      <p class="text-muted">Après avoir cliqué sur la rubrique 'Medecins', vous aurez accès directement à la liste des medecins disponibles.</p>
+      <p class="text-muted text-right">بعد النقر على قسم "التقارير"، سيكون لديك إمكانية الوصول المباشر إلى قائمة التقارير المقدمة من زملائك</p>
+    </div>
+  
+    <div id="ajouter_medecins" class="mt-4">
+      <h5>4-2-Ajouter un nouveau medecins</h5>
+      <img class="img mb-3" src="../static/manual/add_medecin.png" alt="" style="max-width: 100%;" width="800px">
+      <p class="text-muted">Pour ajouter un medecin, cliquez sur le + sdans la rubrique medecins ou sur le + dans l;interface de la liste des medecins, apres ça vous serez redirigé vers l'interface d'ajout ou vous avez des champs que vous devez remplir, a la fin cliquez sur Ajout</p>
+      <p class="text-muted text-right">لإضافة طبيب اضغط على + في قسم الأطباء أو على + في واجهة قائمة الأطباء، بعد ذلك سيتم إعادة توجيهك إلى واجهة الإضافة حيث لديك حقول يجب عليك تعبئتها، وفي النهاية اضغط على إضافة</p>  
+    </div>
+  
+  </div>
+
+
+  <div id="produits" style="margin: 20px;">
+    <div>
+      <h4>5-Produits</h4>
+      <img class="img mb-3" src="../static/manual/product_details.png" alt="" style="max-width: 100%;" width="700px">
+      <p class="text-muted">Pour acceder aux produits, cliquez sur la rubrique produits, vous aurez les produits affichés ou vous pouvez selectionné le produit désiré, vous pouvez voir et partager les presentations, les etudes et certifications du produit, en bas de la page vous avez la liste des produits concurrents, leurs informations et leurs images, vous pouvez aussi ajouter un produit concurrent en cliquant sur le +, vous aurez un formulaire avec des champs des informations du produit concurrent, a la fin cliquez sur sauvegarder</p>
+      <p class="text-muted text-right">للوصول إلى المنتجات، انقر على قسم المنتجات، سيتم عرض المنتجات حيث يمكنك تحديد المنتج المطلوب، يمكنك رؤية ومشاركة العروض التقديمية والدراسات والشهادات الخاصة بالمنتج، في أسفل الصفحة لديك القائمة للمنتجات المنافسة ومعلوماتهم وصورهم، كما يمكنك إضافة منتج منافس بالضغط على +، سيكون لديك نموذج به حقول معلومات عن المنتج المنافس، في النهاية اضغط على حفظ</p>
+    </div>
+  </div>
+
+
+  <div id="bons_de_commandes" style="margin: 20px;">
+    <div>
+      <h4>6-Bons de commandes</h4>
+      <img class="img mb-3" src="../static/manual/liste_bon_de_commandes.png" alt="" style="max-width: 100%;" width="700px">
+      <p class="text-muted">Pour acceder au bons de commandes, cliquez sur la rubrique bons de commandes, vous serez redirigé vers l'interface ou vous pouvez choisir l'utilisateur et la date, la liste des bons s'affichera vous pouvez vous pouvez transferer, imprimer ou partager le bon en cliquant sur les icones adequate </p>
+      <p class="text-muted text-right">للوصول إلى طلبات الشراء اضغط على قسم طلبات الشراء، سيتم إعادة توجيهك إلى الواجهة حيث يمكنك اختيار المستخدم والتاريخ، سيتم عرض قائمة الطلبات يمكنك نقلها أو طباعتها أو مشاركتها موافق بالضغط على الرموز المناسبة</p>
+    </div>
+
+    <div id="ajouter_bon_de_commande" class="mt-4">
+      <h5>6-1-Ajouter un bon de commande</h5>
+      <img class="img mb-3" src="../static/manual/add_bon_de_commande.png" alt="" style="max-width: 100%;" width="800px">
+      <p class="text-muted">Pour ajouter un bon de commande, cliquez sur + dans la rubrique bon de commande, vous serez redirigé vers l'interface d'ajout ou vous devez ajouter la photo et les produits, a la fin vous pouvez ajouter une observation et puis cliquez sur envoyer</p>
+      <p class="text-muted text-right">لإضافة نموذج طلب، اضغط على + في قسم نموذج الطلب، سيتم إعادة توجيهك إلى واجهة الإضافة حيث يجب عليك إضافة الصورة والمنتجات، في النهاية يمكنك إضافة تعليق ثم اضغط على إرسال</p>  
+    </div>
+
+  </div>
+
+  <div id="bons_de_sortie" style="margin: 20px;">
+    <div>
+      <h4>7-Bons de sortie</h4>
+      <img class="img mb-3" src="../static/manual/liste_bon_de_sortie.png" alt="" style="max-width: 100%;" width="700px">
+      <p class="text-muted">Pour acceder au bons de sortie, cliquez sur la rubrique bons de sortie, vous serez redirigé vers l'interface ou vous pouvez choisir l'utilisateur et la date, la liste des bons s'affichera vous pouvez vous pouvez imprimer ou partager le bon en cliquant sur les icones adequate </p>
+      <p class="text-muted text-right">للوصول إلى طلبات الشراء اضغط على قسم طلبات الشراء، سيتم إعادة توجيهك إلى الواجهة حيث يمكنك اختيار المستخدم والتاريخ، سيتم عرض قائمة الطلبات يمكنك طباعتها أو مشاركتها موافق بالضغط على الرموز المناسبة</p>
+    </div>
+
+    <div id="ajouter_bon_de_sortie" class="mt-4">
+      <h5>7-1-Ajouter un bon de sortie</h5>
+      <img class="img mb-3" src="../static/manual/add_bon_de_sortie.png" alt="" style="max-width: 100%;" width="800px">
+      <p class="text-muted">Pour ajouter un bon de sortie, cliquez sur + dans la rubrique bon de commande, vous serez redirigé vers l'interface d'ajout ou vous devez ajouter la photo et les produits, a la fin vous pouvez ajouter une observation et puis cliquez sur envoyer</p>
+      <p class="text-muted text-right">لإضافة نموذج طلب، اضغط على + في قسم نموذج الطلب، سيتم إعادة توجيهك إلى واجهة الإضافة حيث يجب عليك إضافة الصورة والمنتجات، في النهاية يمكنك إضافة تعليق ثم اضغط على إرسال</p>  
+    </div>
+
+  </div>
+
+  <div id="ventes" style="margin: 20px;">
+    <div>
+      <h4>8-Ventes</h4>
+      <img class="img mb-3" src="../static/manual/ventes.png" alt="" style="max-width: 100%;" width="700px">
+      <p class="text-muted">Pour acceder aux ventes, cliquez sur la rubrique des ventes, vous serez redirigé vers l'interface ou vous pouvez vos ventes durant la periode souhaitée </p>
+      <p class="text-muted text-right">للوصول إلى المبيعات، اضغط على قسم المبيعات، سيتم إعادة توجيهك إلى الواجهة حيث يمكنك مبيعاتك خلال الفترة المطلوبة</p>
+    </div>
+  </div>
+
+  <div id="conge" style="margin: 20px;">
+    <div>
+      <h4>10-Congés et absences</h4>
+      <img class="img mb-3" src="../static/manual/rh.png" alt="" style="max-width: 100%;" width="350px">
+      <p class="text-muted">Pour acceder aux ressources, cliquez sur la rubrique des ressource, vous serez redirigé vers l'interface des ressources humaines </p>
+      <p class="text-muted text-right">للوصول إلى الموارد، انقر فوق قسم موارد المبيعات، وسيتم إعادة توجيهك إلى واجهة الموارد البشرية</p>
+    </div>
+
+    <div id="liste_rh" class="mt-4">
+      <h5>10-1-liste des congés et absences</h5>
+      <img class="img mb-3" src="../static/manual/liste_rh.png" alt="" style="max-width: 100%;" width="350px">
+      <p class="text-muted">Pour acceder aux congés et absences, cliquez sur la rubrique des congés et absences, vous serez redirigé vers l'interface des congés et absences</p>
+      <p class="text-muted text-right">لإضافة نموذج طلب، اضغط على + في قسم نموذج الطلب، سيتم إعادة توجيهك إلى واجهة الإضافة حيث يجب عليك إضافة الصورة والمنتجات، في النهاية يمكنك إضافة تعليق ثم اضغط على إرسال</p>  
+    </div>
+
+    <div id="ajouter_rh" class="mt-4">
+      <h5>10-2-ajouter des congés et absences</h5>
+      <img class="img mb-3" src="../static/manual/add_conge.png" alt="" style="max-width: 100%;" width="700px">
+      <p class="text-muted">Pour ajouter une demande de congé, cliquez sur + dans la rubrique congé et absences, vous serez redirigé vers l'interface d'ajout ou vous devez remplir le formulaire, a la fin de la reponse cliqez sur valider</p>
+      <p class="text-muted text-right">لإضافة طلب إجازة، اضغط على + في قسم الإجازات والغيابات، سيتم إعادة توجيهك إلى واجهة الإضافة حيث يجب عليك إكمال النموذج، في نهاية الإجابة اضغط على التحقق من الصحة</p>  
+    </div>
+
+    <div id="ajouter_ev" class="mt-4">
+      <h5>10-3-ajouter evaluation</h5>
+      <img class="img mb-3" src="../static/manual/evaluation.png" alt="" style="max-width: 100%;" width="700px">
+      <p class="text-muted">Pour ajouter evaluation, vous devez cliquer sur la rubrique evaluation, remplir les champs vides et valider, un message "SUCCES" s;affichera une fois l'evaluation enregistrée</p>
+      <p class="text-muted text-right">لإضافة تقييم يجب عليك الضغط على قسم التقييم وملء الحقول الفارغة والتحقق من صحته، ستظهر رسالة "نجاح" بمجرد حفظ التقييم</p>  
+    </div>
+
+  </div>
+
+  <div id="telechargements" style="margin: 20px;">
+    <div>
+      <h4>11-Telechargements</h4>
+      <img class="img mb-3" src="../static/manual/telechargements.png" alt="" style="max-width: 100%;" width="700px">
+      <p class="text-muted">Pour acceder aux telechargements, vous pouvez cliquez sur la rubrique telechargement,vous aurez la possibilité de telecharger les fichier présents sur la liste </p>
+      <p class="text-muted text-right">للوصول إلى التنزيلات، يمكنك النقر فوق قسم التنزيل، وسيكون لديك إمكانية تنزيل الملفات الموجودة في القائمة</p>
+    </div>
+  </div>
+
+  {%if request.user.is_superuser%}
+  <div id="administration" style="margin: 20px;">
+    <div>
+      <h2>ADMINISTRATION</h2>
+      <br>
+      <h4>1-Menu principal</h4>
+      <img class="img mb-3" src="../static/manual/admin_dashboard.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Vous avez dans le menu principal de l'administration les differents titres de la base de données</p>
+      <p class="text-muted text-right">لديك في القائمة الرئيسية للإدارة العناوين المختلفة لقاعدة البيانات</p>
+    </div>
+  </div>
+
+  <div id="new_user" style="margin: 20px;">
+    <div>
+      <h4>2-Créer un nouveau compte pour un utilisateur</h4>
+      <img class="img mb-3" src="../static/manual/new_user.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour ajouter un utilisateur vous devez acceder a la liste des utilisateurs en cliquant sur user à gauche de t'écran, vous aurez accés a toute la liste des utilisateurs disponible, puis cliquez sur add user, vous serez redirigé vers un formulaire avec plusieurs page, chaque page contient un formulaire que vous devez remplir avec précaution, puis cliquez sur save pour confirmer l'ajout</p>
+      <p class="text-muted text-right">لإضافة مستخدم يجب عليك الوصول إلى قائمة المستخدمين من خلال النقر على المستخدم الموجود على يسار الشاشة، سيكون لديك حق الوصول إلى القائمة الكاملة للمستخدمين المتاحين، ثم انقر فوق إضافة مستخدم، وسيتم إعادة توجيهك إلى نموذج يحتوي على عدة صفحات ، تحتوي كل صفحة على نموذج يجب عليك تعبئته بعناية، ثم الضغط على "حفظ" لتأكيد الإضافة</p>
+    </div>
+  </div>
+
+  <div id="cproducts" style="margin: 20px;">
+    <div>
+      <h4>2-Produits concurrent</h4>
+      <img class="img mb-3" src="../static/manual/cproducts.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour acceder aux produits concurrents, cliquez sur CProducts a gauche de l'ecran</p>
+      <p class="text-muted text-right">CProducts للوصول إلى المنتجات المنافسة، انقر فوق  على يسار الشاشة</p>
+    </div>
+
+    <div id="add_cproduct">
+      <h4>2-1-Ajouter un produit concurrent</h4>
+      <img class="img mb-3" src="../static/manual/add_cproduct.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour ajouter un produit concurrent, cliquez sur add CProduct, vous aurez acces a un formulaire que vous devez remplir correctement, puis cliquez sur save</p>
+      <p class="text-muted text-right"> لإضافة منتج منافس، اضغط على "إضافة منتج"، سيكون لديك حق الوصول إلى النموذج الذي يجب عليك إكماله بشكل صحيح، ثم اضغط على حفظ"</p>
+    </div>
+
+  </div>
+
+  <div id="deals" style="margin: 20px;">
+    <div>
+      <h4 id="deals">3-Deals</h4>
+      <img class="img mb-3" src="../static/manual/liste_deals.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour acceder à la liste des deals, cliquez sur deals a gauche de l'écran</p>
+      <p class="text-muted text-right">للوصول إلى قائمة الصفقات، انقر على الصفقات الموجودة على يسار الشاشة</p>
+    </div>
+
+    <div id="add_deal">
+      <h4>3-1-Ajouter un deal</h4>
+      <img class="img mb-3" src="../static/manual/add_deal.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour ajouter un deal, cliquez sur add deal, vous aurez acces a un formulaire que vous devez remplir correctement, puis cliquez sur save</p>
+      <p class="text-muted text-right">لإضافة صفقة، اضغط على "إضافة صفقة، سيكون لديك حق الوصول إلى النموذج الذي يجب عليك تعبئته بشكل صحيح، ثم اضغط على حفظ"</p>
+    </div>
+  </div>
+
+  <div id="medecins" style="margin: 20px;">
+    <div>
+      <h4 id="medecins_ad">4-Medecins</h4>
+      <img class="img mb-3" src="../static/manual/liste_medecin.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour à la liste des medecins, cliquez sur le boutton medecin a gauche de l'ecran</p>
+      <p class="text-muted text-right">للحصول على قائمة الأطباء، انقر على زر الطبيب الموجود على يسار الشاشة</p>
+    </div>
+
+    <div id="add_medecin_ad">
+      <h4>4-1-Ajouter un medecin</h4>
+      <img class="img mb-3" src="../static/manual/add_medecin_ad.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour ajouter un nouveau medecin, cliquez sur add medecins, vous aurez acces a un formulaire que vous devez remplir correctement, puis cliquez sur save</p>
+      <p class="text-muted text-right">لإضافة طبيب جديد، اضغط على إضافة أطباء، سيتاح لك الوصول إلى النموذج الذي يجب عليك تعبئته بشكل صحيح، ثم اضغط على حفظ</p>
+    </div>
+  </div>
+
+  <div id="me" style="margin: 20px;">
+    <div>
+      <h4 id="me-ad">5-Evaluation mensuelle</h4>
+    </div>
+
+    <div id="me_ad">
+      <img class="img mb-3" src="../static/manual/liste_me.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour acceder aux evaluations mensuelle, cliquez sur le boutton monthly_evaluation a gauche de l'ecran</p>
+      <p class="text-muted text-right">للوصول إلى التقييمات الشهرية، اضغط على زر التقييم الشهري الموجود على يسار الشاشة</p>
+    </div>
+  </div>
+
+  <div id="bon_de_commande_ad" style="margin: 20px;">
+    <div>
+      <h4 id="liste_bon_de_commande_ad">6-Bons de commandes</h4>
+      <img class="img mb-3" src="../static/manual/liste_bon_de_commande_ad.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour acceder à la liste des bons de commande, cliquez sur le boutton bon de commande a gauche de l'écran</p>
+      <p class="text-muted text-right">للوصول إلى قائمة أوامر الشراء، اضغط على زر أمر الشراء الموجود على يسار الشاشة</p>
+    </div>
+
+    <div id="add_bon_de_commande_ad">
+      <h4>6-1-Ajouter un bon de commande</h4>
+      <img class="img mb-3" src="../static/manual/add_bon_de_commande_ad.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour ajouter un bon de commande, cliquez sur ajouter bon de commande comme expliqué sur l'image, vous aurez accés à un formulaire que vous devez remplir correctement, et à la fin cliquez sur save</p>
+      <p class="text-muted text-right">لإضافة طلب شراء، اضغط على إضافة طلب شراء كما هو موضح في الصورة، سيتاح لك الوصول إلى النموذج الذي يجب عليك تعبئته بشكل صحيح، وفي النهاية اضغط على حفظ</p>
+    </div>
+  </div>
+
+  <div id="bon_de_sortie_ad" style="margin: 20px;">
+    <div>
+      <h4 id="liste_bon_de_sortie_ad">7-Bons de sortie</h4>
+      <img class="img mb-3" src="../static/manual/liste_bon_de_sortie_ad.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour acceder à la liste des bons de sortie, cliquez sur le boutton bon de sortie a gauche de l'écran</p>
+      <p class="text-muted text-right">للحصول على قائمة قسائم الخروج، اضغط على زر قسيمة الخروج الموجود على يسار الشاشة</p>
+    </div>
+
+    <div id="add_bon_de_sortie_ad">
+      <h4>7-1-Ajouter un bon de sortie</h4>
+      <img class="img mb-3" src="../static/manual/add_bon_de_sortie_ad.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour ajouter un bon de sortie, cliquez sur ajouter bon de sortie comme expliqué sur l'image, vous aurez accés à un formulaire que vous devez remplir correctement, et à la fin cliquez sur save</p>
+      <p class="text-muted text-right">لإضافة قسيمة خروج، اضغط على إضافة قسيمة خروج كما هو موضح في الصورة، سيكون لديك حق الوصول إلى النموذج الذي يجب عليك إكماله بشكل صحيح، وفي النهاية اضغط على حفظ</p>
+    </div>
+  </div>
+
+  <div id="liste_planning_ad">
+    <div>
+      <h4 id="liste_planning_ad">8-Plannings     المخططات اليومية</h4>
+      <img class="img mb-3" src="../static/manual/liste_planning_ad.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour acceder à la liste des plannings, cliquez sur le boutton plans a gauche de l'écran</p>
+      <p class="text-muted text-right">للحصول على قائمة المخططات اليومية، اضغط على زر قسيمة المخططات اليومية الموجود على يسار الشاشة</p>
+    </div>
+
+    <div id="validate_planning_ad">
+      <h4>8-1-Valider un planning      يصلح المخططات اليومية</h4>
+      <img class="img mb-3" src="../static/manual/validate_planning_ad.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour valider un ou plusieurs plannings, selectionnez le ou les plannings concernés, puis cliquez sur le menu déroulant situé sours les filtres, choisissez l'action et cliquez sur Go</p>
+      <p class="text-muted text-right"> Go للتحقق من صحة جدول واحد أو أكثر، حدد الجدول (الجداول) المعنية، ثم انقر فوق القائمة المنسدلة الموجودة أسفل عوامل التصفية، واختر الإجراء وانقر فوق </p>
+    </div>
+
+    <div id="add_planning_ad">
+      <h4>8-2-Créer un planning      إنشاء المخططات اليومية</h4>
+      <img class="img mb-3" src="../static/manual/add_planning_ad.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour créer un nouveau planing pour un utilisateur, appuyez sur add plan en haut a droite de l'interface de liste des plannings, vous aurez accés à un formulaire que vous devez remplir correctement, puis à la fin cliquez sur save </p>
+      <p class="text-muted text-right">لإنشاء جدول جديد للمستخدم، اضغط على إضافة خطة في أعلى يمين واجهة قائمة الجدول، سيتاح لك الوصول إلى النموذج الذي يجب عليك تعبئته بشكل صحيح، ثم في النهاية انقر على حفظ</p>
+    </div>
+  </div>
+
+  <div id="liste_produit_ad">
+    <div>
+      <h4 id="liste_produit_ad">9-Produits       منتجات</h4>
+      <img class="img mb-3" src="../static/manual/liste_produit_ad.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour acceder à la liste des produits, cliquez sur le boutton produits a gauche de l'écran</p>
+      <p class="text-muted text-right">للوصول إلى قائمة المنتجات، انقر على زر المنتجات الموجود على يسار الشاشة</p>
+    </div>
+
+    <div id="add_produit_ad">
+      <h4>9-1-Ajouter un produit      أضف منتجًا</h4>
+      <img class="img mb-3" src="../static/manual/add_product_ad.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour créer un nouveau produit, appuyez sur add produit en haut a droite de l'interface de liste des produits, vous aurez accés à un formulaire que vous devez remplir correctement, puis à la fin cliquez sur save </p>
+      <p class="text-muted text-right">لإنشاء منتج جديد، اضغط على إضافة منتج في أعلى يمين واجهة قائمة المنتجات، سيتاح لك الوصول إلى النموذج الذي يجب عليك تعبئته بشكل صحيح، ثم في النهاية اضغط على حفظ</p>
+    </div>
+
+  </div>
+
+  <div id="liste_rapport_ad">
+    <div>
+      <h4 id="liste_rapport_ad">10-Rapports       التقارير</h4>
+      <img class="img mb-3" src="../static/manual/liste_rapport_ad.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour acceder à la liste des rapports, cliquez sur le boutton rapports a gauche de l'écran</p>
+      <p class="text-muted text-right">للوصول إلى قائمة التقارير، اضغط على زر التقارير الموجود على يسار الشاشة</p>
+    </div>
+
+    <div id="add_updatable_ad">
+      <h4>10-1-Rendre un rapport modifiable      جعل التقرير قابلاً للتعديل</h4>
+      <img class="img mb-3" src="../static/manual/add_updatable_ad.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour rendre un ou des rapports modifiables, vous devez en premier sélèctionner les rapport concérnés, puis choisir dans la liste du menu d'action add updatable (ajouter modifiable), c'est les mêmes procédures pour le rendre non modifiable (remove updatable), puis cliquez sur go</p>
+      <p class="text-muted text-right">go لجعل تقرير أو أكثر قابلاً للتحرير، عليك أولاً تحديد التقارير المعنية، ثم اختر من قائمة قائمة الإجراء إضافة قابل للتحديث (إضافة قابل للتحرير)، وهي نفس الإجراءات لجعله غير قابل للتعديل (إزالة قابل للتحديث)، ثم انقر فوق </p>
+    </div>
+
+    <div id="add_rapport_ad">
+      <h4>10-2-Créer un nouveau rapport     إنشاء تقرير جديد</h4>
+      <img class="img mb-3" src="../static/manual/add_rapport_ad.png" alt="" style="max-width: 100%;" width="1000px">
+      <p class="text-muted">Pour créer un nouveau rapport, appuyez sur add rapport en haut a droite de l'interface de liste des rapports, vous aurez accés à un formulaire que vous devez remplir correctement, puis à la fin cliquez sur save </p>
+      <p class="text-muted text-right">لإنشاء تقرير جديد اضغط على إضافة تقرير في أعلى يمين واجهة قائمة التقارير، سيتاح لك الوصول إلى النموذج الذي يجب عليك تعبئته بشكل صحيح، ثم في النهاية اضغط على حفظ</p>
+    </div>
+
+  </div>
+  {% endif %}
+
+
+</div>
+
+
+
+
+
+
+<style>
+  @keyframes jumpAnimation {
+    0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-20px);
+    }
+    60% {
+      transform: translateY(-10px);
+    }
+  }
+
+  #scrollToTopButton {
+    animation: jumpAnimation 5s ease-in-out infinite;
+  }
+</style>
+
+<button id="scrollToTopButton" class="scroll-to-top-button" style="color: green; background-color: transparent; border: 1px solid green; display: flex; align-items: center; justify-content: center;">
+    <p style="font-size: 40px; margin: 0;">↑</p>
+</button>
+
+
+
+
+</body> 
+
+<div>{{ errors }}</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+  $(document).ready(function () {
+    $('#toggleMenu').click(function () {
+      $('#menuMobile').toggle();
+
+      if ($('#menuMobile').is(':visible')) {
+        $('#toggleMenu').text('Cacher le menu');
+      } else {
+        $('#toggleMenu').text('Afficher le menu');
+      }
+    });
+  });
+</script>
+
+<!-- show adminnistration menu -->
+<script>
+  $(document).ready(function () {
+    $('#toggleMenuAdministration').click(function () {
+      $('#menuAdministration').toggle();
+
+      if ($('#menuAdministration').is(':visible')) {
+        $('#toggleMenuAdministration').text('Cacher le menu');
+      } else {
+        $('#toggleMenuAdministration').text('Afficher le menu');
+      }
+    });
+  });
+</script>
+
+<script>
+  // JavaScript pour faire défiler vers le haut lorsque le bouton est cliqué
+  document.addEventListener('DOMContentLoaded', function () {
+    const scrollToTopButton = document.getElementById('scrollToTopButton');
+
+    scrollToTopButton.addEventListener('click', function () {
+      document.body.scrollTop = 0; // Pour les navigateurs non-Chrome
+      document.documentElement.scrollTop = 0; // Pour Chrome
+    });
+  });
+</script>
+</html>

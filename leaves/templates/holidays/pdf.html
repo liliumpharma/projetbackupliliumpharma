@@ -1,0 +1,46 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Titre de congé</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+</head>
+<body>
+  <style>
+  @media print {
+    body{
+        width: 21cm;
+
+        /* change the margins as you want them to be. */
+   }
+   /*.page-break*/
+   /*{*/
+   /*  page-break-after: always;*/
+   /*}*/
+}</style>
+{% load static %}
+
+      <div class="container page-break">
+        <div class="d-flex" style="align-items: center;">
+            <img src="/static/img/logo.png" >
+            <div>
+                <h1 class=" display-4">  Titre de congé</h1>
+                <h1> Liliumpharma</h1>
+            </div>
+        </div>
+        <div class="px-4 py-4">
+            <h1 class=''><small><b> Nom et prenom:</b> {{holiday.user.first_name}} {{holiday.user.last_name}}</small></h1>
+            <h1 class=''><small><b> Affectation:</b> {{holiday.user.userprofile.job_name}}</small></h1>
+            <h1><small><b> Date entre le:</b> {{holiday.start_date}}</small></h1>
+            <h1 class=''><small><b> et le :</b> {{holiday.end_date}}</small></h1>
+        </div>
+
+      <div class="container text-right py-3">
+        <b>Signature et cachet:</b>
+      </div>
+
+</body>
+</html>

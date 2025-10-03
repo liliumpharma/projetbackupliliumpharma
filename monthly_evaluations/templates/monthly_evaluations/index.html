@@ -1,0 +1,3817 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/styles.css'%}">
+  <link rel="stylesheet" href="{% static 'css/toast/vanilla-toast.css'%}">
+
+  {%block styles%}
+  {%endblock styles%}
+  <title>{% block title %}{%endblock title%}</title>
+</head>
+<body>
+  {% include 'header.html' %}
+{% block body %}{%endblock body%}
+<script src="{% static 'js/jquery.min.js'%}"></script>
+<script src="{% static 'js/toast/vanilla-toast.js'%}"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+{% block scripts %}{%endblock scripts%}
+<div class="text-center">
+    <h4 class="mr-3 font-weight-bold">Evaluation mensuelle</h4>
+</div>
+<div class="d-flex mt-3 mb-4" style="justify-content: space-between;">
+  <!-- <div class="d-flex" style="margin-left: 20px;">
+    <img class="mr-2" src="../../../static/img/schedule.png" alt="calendrier" width="30px" height="30px">
+    <h5>Fixez un mois</h5>
+    <input id="min" type="date" class="form-control">
+  </div> -->
+
+</div>
+<div class="col-12">
+  <div class="alert alert-success" role="alert" style="display: flex; flex-wrap: wrap;">
+    <div style="flex-basis: 50%; box-sizing: border-box; padding: 5px;">
+      <h4 class="alert-heading">Important!</h4>
+      <p class="card-text">Avant de commencer Vous devez vérifier le mois séléctionné</p>
+      <p class="card-text">Vous devez remplir tous les champs pour pouvoir valider votre évaluation</p>
+      <p class="card-text">L'action de validation est irréversible, vérifiez vos réponses avant de valider, vous serez responsables de vos reponses</p>
+    </div>
+    <div style="flex-basis: 50%; box-sizing: border-box; padding: 5px; word-break: break-all;">
+      <h4 class="alert-heading text-right">!هام</h4>
+      <p class="card-text text-right">قبل أن تبدأ يجب عليك التحقق من الشهر المحدد</p>
+      <p class="card-text text-right">يجب عليك ملء جميع الحقول لتتمكن من تسجيل تقييمك</p>
+      <p class="card-text text-right">إجراء التحقق لا رجوع فيه ، تحقق من إجاباتك قبل التحقق من الصحة ، وستكون مسؤولاً عن إجاباتك</p>
+    </div>
+  </div>
+  
+  
+</div>
+<form method="post">
+  <div class="col-4 d-flex mt-5">
+    <label for="monthSelect" style="font-weight: bold;" >Sélectionnez un mois :</label>
+    <select class="form-control" id="monthSelect" onchange="updateURL()">
+    </select>
+  </div>
+  <div class="d-flex m-4" style="display: flex; justify-content: space-between; align-items: center; margin-right: 20px;">
+    <button id="submit" class="btn btn-primary" type="submit">
+      Valider l'evaluation
+    </button>
+    <a id="imprimer-bouton">
+      <img src="{% static 'img/printer.png' %}" alt="print" width="35px" height="35px">
+    </a>
+  </div>
+  
+<!-- MEDICAL -->
+<div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+  <h4>Medical</h4>
+</div>
+<!-- Q1 -->
+<div class="card bg-white m-4">
+  <h6 class="text-center">Q1</h6>
+  <div class="card-body d-flex" style="justify-content: space-between;">
+    <h5 class="card-title font-weight-bold text-left">Combien de médecins visités au cours du mois</h5>
+    <h5 id="response_1" class="card-title font-weight-bold text-left"></h5>
+    <h5 class="card-title font-weight-bold text-right" >كم عدد الاطباء المزاريين خلال الشهر </h5>
+  </div>
+  <textarea id="doctors_1" class="form-control" rows="6" style=" height: auto;max-height: 500px; overflow-y: scroll; background-color: white;" readonly>doctors list</textarea>
+
+</div>
+<br>
+<!-- Q2 -->
+<div class="card bg-white m-4">
+  <h6 class="text-center">Q2</h6>
+  <div class="card-body">
+    <div class="d-flex" style="justify-content: space-between;">
+      <h5 class="card-title font-weight-bold text-left" style="width: 50%;">Qui sont les médecins qui ont été visités plus d'une fois ce mois-ci, et la raison</h5>
+      <h5 id="response_2_medecins" class="card-title font-weight-bold text-left"></h5>
+      <h5 class="card-title font-weight-bold text-right" style="width: 50%;">من هم الأطباء الذين تمت زيارتهم أكثر من مرة هذا الشهر مع ذكر السبب</h5>
+    </div>
+    <div id="raison_2" style="padding: 10px;">
+    </div>
+  </div>
+</div>
+<br>
+<!-- Q3 -->
+<div class="card bg-white m-4">
+  <h6 class="text-center">Q3</h6>
+  <div class="card-body">
+    <div class="d-flex" style="justify-content: space-between;">
+      <h5 class="card-title font-weight-bold text-left" style="width: 50%;">Combien de médecins n'ont pas été visités ce mois-ci, en mentionnant le nom du médecin et la raison de la non-visite</h5>
+      <h5 id="response_3_medecins" class="card-title font-weight-bold text-left"></h5>
+      <h5 class="card-title font-weight-bold text-right"style="width: 50%;">كم عدد الاطباء الغير مزارين هذا الشهر مع ذكر اسم الطبيب وسبب عدم الزياره</h5>
+    </div>
+    <div id="raison_3" style="padding: 10px;">
+    </div>
+  </div>
+</div>
+<br>
+<!-- Q4 -->
+<div class="card bg-white m-4">
+  <h6 class="text-center">Q4</h6>
+  <div class="card-body">
+    <div class="d-flex" style="justify-content: space-between;">
+      <h5 class="card-title font-weight-bold text-left" style="width: 50%;">Qui sont les médecins visités ce mois-ci avec un Superviseur et quel est le but de la visite</h5>
+      <h5 id="response_4_medecins" class="card-title font-weight-bold text-left" style="margin-left: 8px; margin-right: 8px;"></h5>
+      <h5 class="card-title font-weight-bold text-right"style="width: 50%;">من هم الاطباء التي تمت زيارتهم هذا الشهر مع السوبر فايزر وما هو الهدف من الزياره</h5>
+    </div>
+    <div id="raison_4" style="padding: 10px;">
+    </div>
+  </div>
+</div>
+<br>
+<!-- Q5 -->
+<div class="card bg-white m-4">
+  <h6 class="text-center">Q5</h6>
+  <div class="card-body">
+    <div class="d-flex" style="justify-content: space-between;">
+      <h5 class="card-title font-weight-bold text-left" style="width: 50%;">Écrivez cinq médecins importants en écriture pour chaque produit</h5>
+      <h5 class="card-title font-weight-bold text-right" style="width: 50%;">اكنب خمس اطباء مهمين في الكتابه لكل منتج</h5>
+    </div>
+
+    <!-- -------1-------- -->
+    <div class="d-flex">
+      <p class="form-control col-2" id="produit_dropdown_5_1" style="margin-top: 4px; margin-right: 5px; color: green;">HAIRVOL</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_5_1" placeholder="Rechercher un medecin" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_5_1" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_5_1" class="form-control mt-1 " style=" color: green;" rows="1" placeholder="Liste des medecins"></textarea>
+    </div>
+
+    <!-- -------2-------- -->
+    <div class="d-flex">
+      <p class="form-control col-2" id="produit_dropdown_5_2" style="margin-top: 4px; margin-right: 5px; color: green;">DHEA 75mg</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_5_2" placeholder="Rechercher un medecin" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_5_2" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_5_2" class="form-control mt-1" style=" color: green;" rows="1" placeholder="Liste des medecins..."></textarea>
+    </div>
+
+    <!-- -------3-------- -->
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_5_3" style="margin-top: 4px; margin-right: 5px; color: green;">ADVAGEN</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_5_3" placeholder="Rechercher un medecin" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_5_3" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_5_3" class="form-control mt-1" style="color: green;" rows="1" placeholder="Liste des medecins..."></textarea>
+    </div>
+
+    <!-- -------4-------- -->
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_5_4" style="margin-top: 4px; margin-right: 5px; color: green;">YES VIT</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_5_4" placeholder="Rechercher un medecin" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_5_4" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_5_4" class="form-control mt-1" style=" color: green;" rows="1" placeholder="Liste des medecins..."></textarea>
+    </div>
+
+    <!-- -------5-------- -->
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_5_5" style="margin-top: 4px; margin-right: 5px; color: green;">YES CAL</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_5_5" placeholder="Rechercher un medecin" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_5_5" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_5_5" class="form-control mt-1" style=" color: green;" rows="1" placeholder="Liste des medecins..."></textarea>
+    </div>
+    <!-- -------6-------- -->
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_5_6" style="margin-top: 4px; margin-right: 5px; color: green;">FM</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_5_6" placeholder="Rechercher un medecin" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_5_6" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_5_6" class="form-control mt-1" style=" color: green;" rows="1" placeholder="Liste des medecins..."></textarea>
+    </div>
+    <!-- -------7-------- -->
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_5_7" style="margin-top: 4px; margin-right: 5px; color: green;">FF</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_5_7" placeholder="Rechercher un medecin" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_5_7" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_5_7" class="form-control mt-1" style=" color: green;" rows="1" placeholder="Liste des medecins..."></textarea>
+    </div>   
+    <!-- -------8-------- -->
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_5_8" style="margin-top: 4px; margin-right: 5px; color: green;">SUB12</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_5_8" placeholder="Rechercher un medecin" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_5_8" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_5_8" class="form-control mt-1" style=" color: green;" rows="1" placeholder="Liste des medecins..."></textarea>
+    </div>
+    <!-- -------9-------- -->
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_5_9" style="margin-top: 4px; margin-right: 5px; color: green;">IRON</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_5_9" placeholder="Rechercher un medecin" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_5_9" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_5_9" class="form-control mt-1" style=" color: green;" rows="1" placeholder="Liste des medecins..."></textarea>
+    </div>
+    <!-- -------10-------- -->
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_5_10" style="margin-top: 4px; margin-right: 5px; color: green;">MENOLIB</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_5_10" placeholder="Rechercher un medecin" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_5_10" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_5_10" class="form-control mt-1" style=" color: green;" rows="1" placeholder="Liste des medecins..."></textarea>
+    </div>
+    <!-- -------11-------- -->
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_5_11" style="margin-top: 4px; margin-right: 5px; color: green;">THYROLYB</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_5_11" placeholder="Rechercher un medecin" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_5_11" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_5_11" class="form-control mt-1" style=" color: green;" rows="1" placeholder="Liste des medecins..."></textarea>
+    </div>
+  </div>
+</div>
+<br>
+<!-- Q6 -->
+<div class="card bg-white m-4">
+  <h6 class="text-center">Q6</h6>
+  <div class="card-body">
+    <div class="d-flex" style="justify-content: space-between;">
+      <h5 class="card-title font-weight-bold text-left" style="width: 50%;">Mentionnez 10 médecins qui ont visité plus de trois visites et n'ont pas encore écrit, en expliquant la raison à votre avis</h5>
+      <h5 class="card-title font-weight-bold text-right" style="width: 50%;">اذكر 10 اطباء مزارين اكثر من ثلاث زيارات ولم يكتبوا بعد مع توضيح السبب برايك</h5>
+    </div>
+
+    <!-- -------1-------- -->
+    <div class="d-flex">
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_6_1" placeholder="Entrez le nom ou l'ID du médecin n°1" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_6_1" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_6_1" class="form-control mt-1" rows="1" placeholder="La cause a votre avis"></textarea>
+    </div>
+
+    <!-- -------2-------- -->
+    <div class="d-flex">
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_6_2" placeholder="Entrez le nom ou l'ID du médecin n°2" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_6_2" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_6_2" class="form-control mt-1" rows="1" placeholder="La cause a votre avis..."></textarea>
+    </div>
+
+    <!-- -------3-------- -->
+    <div class="d-flex">
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_6_3" placeholder="Entrez le nom ou l'ID du médecin n°3" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_6_3" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_6_3" class="form-control mt-1" rows="1" placeholder="La cause a votre avis..."></textarea>
+    </div>
+
+    <!-- -------4-------- -->
+    <div class="d-flex">
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_6_4" placeholder="Entrez le nom ou l'ID du médecin n°4" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_6_4" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_6_4" class="form-control mt-1" rows="1" placeholder="La cause a votre avis..."></textarea>
+    </div>
+
+    <!-- -------5-------- -->
+    <div class="d-flex">
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_6_5" placeholder="Entrez le nom ou l'ID du médecin n°5" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_6_5" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_6_5" class="form-control mt-1" rows="1" placeholder="La cause a votre avis..."></textarea>
+    </div>
+
+    <!-- -------6-------- -->
+    <div class="d-flex">
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_6_6" placeholder="Entrez le nom ou l'ID du médecin n°6" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_6_6" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_6_6" class="form-control mt-1" rows="1" placeholder="La cause a votre avis..."></textarea>
+    </div>
+
+    <!-- -------7-------- -->
+    <div class="d-flex">
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_6_7" placeholder="Entrez le nom ou l'ID du médecin n°7" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_6_7" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_6_7" class="form-control mt-1" rows="1" placeholder="La cause a votre avis..."></textarea>
+    </div>
+
+    <!-- -------8-------- -->
+    <div class="d-flex">
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_6_8" placeholder="Entrez le nom ou l'ID du médecin n°8" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_6_8" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_6_8" class="form-control mt-1" rows="1" placeholder="La cause a votre avis..."></textarea>
+    </div>
+
+    <!-- -------9-------- -->
+    <div class="d-flex">
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_6_9" placeholder="Entrez le nom ou l'ID du médecin n°9" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_6_9" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_6_9" class="form-control mt-1" rows="1" placeholder="La cause a votre avis..."></textarea>
+    </div>
+
+    <!-- -------10-------- -->
+    <div class="d-flex" >
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_6_10" placeholder="Entrez le nom ou l'ID du médecin n°10" style="width: 20.8rem; margin-top: 4px; margin-right: 5px; color: green;" />
+        <div id="doctor_dropdown_6_10" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_6_10" class="form-control mt-1" rows="1" placeholder="La cause a votre avis..."></textarea>
+    </div>
+
+  </div>
+</div>
+<br>
+<!-- Q7 -->
+<div class="card bg-white m-4">
+  <h6 class="text-center">Q7</h6>
+  <div class="card-body">
+    <div class="d-flex" style="justify-content: space-between;">
+      <h5 class="card-title font-weight-bold text-left" style="width: 50%;">Quels plus avez-vous apporté avec les médecins ce mois-ci, en mentionnant le nom du médecin et le type du plus</h5>
+      <h5 class="card-title font-weight-bold text-right" style="width: 50%;">ما هي الاضافه التي حققتها مع الاطباء هذا الشهر مع ذكر اسم الطبيب ونوع الاضافه</h5>
+    </div>
+    <div id="raison_7" style="padding: 10px;">
+
+    </div>
+    <div style="position: relative">
+      <input class="form-control text-left" id="doctor_input_7" placeholder="Entrez le nom ou l'ID du médecin" style="margin-bottom: 4px;" />
+      <div id="doctor_dropdown_7" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+      </div>
+    </div>
+  </div>
+</div>
+<br>
+<!-- Q8 -->
+<div class="card bg-white m-4">
+  <h6 class="text-center">Q8</h6>
+  <div class="card-body">
+    <div class="d-flex" style="justify-content: space-between;">
+      <h5 class="card-title font-weight-bold text-left" style="width: 50%;">Quels sont les médecins que vous suggérez de retirer de la liste, en mentionnant la raison</h5>
+      <h5 class="card-title font-weight-bold text-right" style="width: 50%;">من هم الاطباء الذي تقترح شطبهم من القائمه مع ذكر السبب</h5>
+    </div>
+    <div id="raison_8" style="padding: 10px;"></div>
+    <div style="position: relative">
+      <input class="form-control text-left" id="doctor_input_8" placeholder="Entrez le nom ou l'ID du médecin" style="margin-bottom: 4px;" />
+      <div id="doctor_dropdown_8" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+      </div>
+    </div>
+  </div>
+</div>
+<br>
+<!-- Q9 -->
+<div class="card bg-white m-4">
+  <h6 class="text-center">Q9</h6>
+  <div class="card-body">
+    <div class="d-flex" style="justify-content: space-between;">
+      <h5 class="card-title font-weight-bold text-left" style="width: 50%;">Quelles sont vos suggestions pour les médecins qui sont visités régulièrement et qui n'écrivent pas encore bien. Mentionnez le nom du médecin et la suggestion</h5>
+      <h5 class="card-title font-weight-bold text-right" style="width: 50%;">ما هي مقترحاتك للاطباء الذين تمت زيارتهم بشكل منتظم ولا يكتبون لغايه الان بشكل جيد. مع ذكر اسم الطبيب والمقترح</h5>
+    </div>
+    <div id="raison_9" style="padding: 10px;">
+
+    </div>    <div style="position: relative">
+      <input class="form-control text-left" id="doctor_input_9" placeholder="Entrez le nom ou l'ID du médecin" style="margin-bottom: 4px;" />
+      <div id="doctor_dropdown_9" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+      </div>
+    </div>
+  </div>
+</div>
+<br>
+<!-- Q10 -->
+<div class="card bg-white m-4">
+  <h6 class="text-center">Q10
+  </h6>
+  <div class="card-body">
+    <div class="d-flex" style="justify-content: space-between;">
+      <h5 class="card-title font-weight-bold text-left" style="width: 50%;">Choisissez un médecin pour chaque produit pour qui vous proposez un deal avec l'entreprise pour augmenter les ventes. Le nom du médecin et la suggestion</h5>
+      <!-- <h5 class="card-title font-weight-bold text-right" style="width: 50%;">اكتب خمس اطباء تتمنى ان تكسبهم ليكتبوا لك منتوجاتك لان لديهم مرضى كثير اسم الطبيب والمنتج </h5> -->
+      <h5 class="card-title font-weight-bold text-right" style="width: 50%;">اختر طبيب واحد لكل منتج  تقترح له ديل من الشركة لزيادة المبيعات اسم الطبيب والمقترح</h5>
+    </div>
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_10_1" style="margin-top: 4px; margin-right: 5px; color: green;">HAIRVOL</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_10_1" placeholder="Entrez le nom ou l'ID du médecin n°1" style="width: 20rem; margin-top: 4px; margin-right: 5px; color: green; font-weight: bold;" />
+        <div id="doctor_dropdown_10_1" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_10_1" class="form-control mt-1" rows="1" placeholder="Proposition..."></textarea>
+    </div>
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_10_2" style="margin-top: 4px; margin-right: 5px; color: green;">DHEA 75mg</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_10_2" placeholder="Entrez le nom ou l'ID du médecin n°2" style="width: 20rem; margin-top: 4px; margin-right: 5px; color: green; font-weight: bold;" />
+        <div id="doctor_dropdown_10_2" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_10_2" class="form-control mt-1" rows="1" placeholder="Proposition..."></textarea>
+    </div>
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_10_3" style="margin-top: 4px; margin-right: 5px; color: green;">ADVAGEN</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_10_3" placeholder="Entrez le nom ou l'ID du médecin n°3" style="width: 20rem; margin-top: 4px; margin-right: 5px; color: green; font-weight: bold;" />
+        <div id="doctor_dropdown_10_3" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_10_3" class="form-control mt-1" rows="1" placeholder="Proposition..."></textarea>
+    </div>
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_10_4" style="margin-top: 4px; margin-right: 5px; color: green;">YES VIT</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_10_4" placeholder="Entrez le nom ou l'ID du médecin n°4" style="width: 20rem; margin-top: 4px; margin-right: 5px; color: green; font-weight: bold;" />
+        <div id="doctor_dropdown_10_4" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_10_4" class="form-control mt-1" rows="1" placeholder="Proposition..."></textarea>
+    </div>
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_10_5" style="margin-top: 4px; margin-right: 5px; color: green;">YES CAL</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_10_5" placeholder="Entrez le nom ou l'ID du médecin n°5" style="width: 20rem; margin-top: 4px; margin-right: 5px; color: green; font-weight: bold;" />
+        <div id="doctor_dropdown_10_5" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_10_5" class="form-control mt-1" rows="1" placeholder="Proposition..."></textarea>
+    </div>
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_10_6" style="margin-top: 4px; margin-right: 5px; color: green;">FM</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_10_6" placeholder="Entrez le nom ou l'ID du médecin n°5" style="width: 20rem; margin-top: 4px; margin-right: 5px; color: green; font-weight: bold;" />
+        <div id="doctor_dropdown_10_6" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_10_6" class="form-control mt-1" rows="1" placeholder="Proposition..."></textarea>
+    </div>
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_10_7" style="margin-top: 4px; margin-right: 5px; color: green;">FF</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_10_7" placeholder="Entrez le nom ou l'ID du médecin n°5" style="width: 20rem; margin-top: 4px; margin-right: 5px; color: green; font-weight: bold;" />
+        <div id="doctor_dropdown_10_7" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_10_7" class="form-control mt-1" rows="1" placeholder="Proposition..."></textarea>
+    </div>
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_10_8" style="margin-top: 4px; margin-right: 5px; color: green;">SUB12</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_10_8" placeholder="Entrez le nom ou l'ID du médecin n°5" style="width: 20rem; margin-top: 4px; margin-right: 5px; color: green; font-weight: bold;" />
+        <div id="doctor_dropdown_10_8" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_10_8" class="form-control mt-1" rows="1" placeholder="Proposition..."></textarea>
+    </div>
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_10_9" style="margin-top: 4px; margin-right: 5px; color: green;">IRON</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_10_9" placeholder="Entrez le nom ou l'ID du médecin n°5" style="width: 20rem; margin-top: 4px; margin-right: 5px; color: green; font-weight: bold;" />
+        <div id="doctor_dropdown_10_9" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_10_9" class="form-control mt-1" rows="1" placeholder="Proposition..."></textarea>
+    </div>
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_10_10" style="margin-top: 4px; margin-right: 5px; color: green;">MENOLIB</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_10_10" placeholder="Entrez le nom ou l'ID du médecin n°5" style="width: 20rem; margin-top: 4px; margin-right: 5px; color: green; font-weight: bold;" />
+        <div id="doctor_dropdown_10_10" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_10_10" class="form-control mt-1" rows="1" placeholder="Proposition..."></textarea>
+    </div>
+    <div class="d-flex">
+      <p class="form-control col-2" name="" id="produit_dropdown_10_11" style="margin-top: 4px; margin-right: 5px; color: green;">THYROLYB</p>
+      <div style="position: relative">
+        <input class="form-control text-left" id="doctor_input_10_11" placeholder="Entrez le nom ou l'ID du médecin n°5" style="width: 20rem; margin-top: 4px; margin-right: 5px; color: green; font-weight: bold;" />
+        <div id="doctor_dropdown_10_11" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+        </div>
+      </div>
+      <textarea id="raison_10_11" class="form-control mt-1" rows="1" placeholder="Proposition..."></textarea>
+    </div>
+  </div>
+</div>
+
+
+<!-- COMMERCIAL -->
+<div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+  <h4>Commercial</h4>
+</div>
+<!-- Q11 -->
+<div class="card bg-white m-4">
+  <h6 class="text-center">Q11</h6>
+  <div class="card-body d-flex" style="justify-content: space-between;">
+    <h5 class="card-title font-weight-bold text-left" style="width: 50%;">Combien de pharmacies et de grossistes avez vous visités au cours du mois</h5>
+    <h5 id="response_11" class="card-title font-weight-bold text-left" style="margin-left: 10px;"></h5>
+    <h5 class="card-title font-weight-bold text-right" style="width: 50%;">كم عدد الصيدليات وتجار الجملة الذين قمت بزيارتها خلال الشهر</h5>
+  </div>
+  <textarea id="doctors_11" class="form-control" rows="6" style=" height: auto;max-height: 500px; overflow-y: scroll; background-color: white;" readonly>doctors list</textarea>
+</div>
+<br>
+<!-- Q12 -->
+<div class="card bg-white m-4">
+  <h6 class="text-center">Q12</h6>
+  <div class="card-body">
+    <div class="d-flex" style="justify-content: space-between;">
+      <h5 class="card-title font-weight-bold text-left" style="width: 50%;">Combien de super grossistes avez vous visité ce mois-ci, en mentionnant le nom du super grossistes et la raison de la visite</h5>
+      <h5 id="response_12_medecins" class="card-title font-weight-bold text-left"></h5>
+      <h5 class="card-title font-weight-bold text-right"style="width: 50%;">كم عدد سوبر جروسيست الذين زرتها هذا الشهر ، مع ذكر اسم تاجر الجملة وسبب الزيارة </h5>
+    </div>
+    <div id="raison_12" style="padding: 10px;">
+    </div>
+  </div>
+</div>
+<br>
+<!-- Q13 -->
+<div class="card bg-white m-4">
+  <h6 class="text-center">Q13</h6>
+  <div class="card-body">
+    <div class="d-flex" style="justify-content: space-between;">
+      <h5 class="card-title font-weight-bold text-left" style="width: 50%;">Combien de bon de commandes durant ce mois, en mentionnant le nom du client, le produit et la quantité</h5>
+      <h5 id="response_13_nombre" class="card-title font-weight-bold text-left" style="margin-left: 8px; margin-right: 8px;"></h5>
+      <h5 class="card-title font-weight-bold text-right"style="width: 50%;">كم عدد نموذج طلبية خلال هذا الشهر ، مع ذكر اسم الزبون ,المنتج والكمية </h5>
+    </div>
+    <div id="raison_13" style="padding: 10px;">
+      <table id="order_table" class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>ID</th>
+            <th>Status</th>
+            <th>Pharmacie</th>
+            <th>Grossiste</th>
+            <th>Super grossiste</th>
+            <th>Produits</th>
+          </tr>
+        </thead>
+        <tbody id="field_13">
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<br>
+<!-- Q14 -->
+<div class="card bg-white m-4">
+  <h6 class="text-center">Q14</h6>
+  <div class="card-body d-flex" style="justify-content: space-between;">
+    <h5 class="card-title font-weight-bold text-left" style="width: 50%;">Quelles sont vos suggestions pour améliorer les ventes</h5>
+    <h5 class="card-title font-weight-bold text-right" style="width: 50%;">ما هي اقتراحاتك لتحسين المبيعات</h5>
+  </div>
+  <textarea id="doctors_11" class="form-control" placeholder="Suggestions..." rows="8" style=" height: auto;max-height: 500px; overflow-y: scroll; background-color: white;"></textarea>
+</div>
+
+</body> 
+<div>{{ errors }}</div>
+<script>
+  let minLength_4 =0
+  let nombre_medecins_non_visites=0
+     $('document').ready(() => {
+  function table_row(item) {
+    const produits = item.produits.map((produit) => {
+      return `${produit.nom} (qtt: ${produit.qtt}, prescription: ${produit.prescription})`;
+    }).join('<br>');
+    // const observations = item.observations.join('<br><br>');
+    
+    return (`
+      <tr>
+        <td>${item.date_visite}</td>
+        <td>${item.id}</td>
+        <td>${item.nom}</td>
+        <td>${item.utilisateurs.join(', ')}</td>
+        <td>${produits}</td>
+        <td>We can add it as option</td>
+      </tr>`);
+  }
+// TO ADD OBSERVATION  class="table-cell-scroll" style="max-width: 200px; max-height: 100px; overflow: auto;"
+  function showSpinner() {
+    $('#table tbody').html(`
+      <tr id="spinner">
+        <td colspan="5" class="text-center">
+          <div class="spinner-border" role="status" style="color:green">
+          </div>
+        </td>
+      </tr>
+    `);
+  }
+  function fetchData() {
+    showSpinner();
+    const urlParams = new URLSearchParams(window.location.search);
+    const monthUrl = urlParams.get('month');
+
+    fetch('https://app.liliumpharma.com/medecins/api/VisitsPerUser?month='+monthUrl)
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("response_1").innerHTML = data.nombre_visites
+        document.getElementById("doctors_1").innerHTML = data.noms_medecins_visites
+      })
+
+    fetch('https://app.liliumpharma.com/medecins/api/VisitsMoreThanOneTimeForMedecinPerUser?month='+monthUrl)
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("response_2_medecins").innerHTML = data.nombre_medecins_visites
+        
+        field_2 = document.getElementById("raison_2")
+        const max_display_2 = 5
+        counter_2=0
+
+        for (elt in data.noms_medecins_visites){
+          const newDiv = document.createElement("div");
+          newDiv.id="NomsMedecinsMultiplesVisitesDiv_"+elt
+          newDiv.className = "d-flex";
+          newDiv.style = "margin-bottom:15px;";
+
+          const blockDiv = document.createElement("div");
+          blockDiv.className = "d-block";
+          blockDiv.style = "margin-bottom:5px;";
+
+          const doctorNameElement = document.createElement("p");
+          doctorNameElement.id = "NomsMedecinsMultiplesVisites_"+elt;
+          doctorNameElement.style = "color:green;font-weight: bold;width:30rem; margin:0"
+          doctorNameElement.textContent = data.noms_medecins_visites[elt].nom;
+
+          const nombreVisites = document.createElement("label");
+          nombreVisites.id = "NomsMedecinsMultiplesVisites_"+elt;
+          nombreVisites.style = "color:black; margin:0"
+          nombreVisites.textContent ="Total visites " + data.noms_medecins_visites[elt].total_visites;
+
+          blockDiv.appendChild(doctorNameElement); 
+          blockDiv.appendChild(nombreVisites);
+
+          newDiv.appendChild(blockDiv);
+
+          const textAreaElement = document.createElement("textarea");
+          textAreaElement.id="RaisonsMedecinsMultiplesVisites_"+elt;
+          textAreaElement.className = "form-control text-left";
+          textAreaElement.placeholder = "Raison...";
+          newDiv.appendChild(textAreaElement); // Ajoute le textarea au div
+
+          
+          if(counter_2 >= max_display_2){
+            newDiv.className = "d-none";
+          }
+
+          field_2.appendChild(newDiv);
+          counter_2++
+        }
+        const voir_plus_button = document.createElement("p")
+        voir_plus_button.textContent="+ Voir plus"
+        voir_plus_button.cursor="pointer"
+        voir_plus_button.className="btn btn-primary"
+        if(counter_2>5)
+          field_2.appendChild(voir_plus_button)
+        voir_plus_button.addEventListener("click", ()=>{
+          for(i=max_display_2; i<counter_2;i++){
+            div = document.getElementById("NomsMedecinsMultiplesVisitesDiv_"+i)
+            div.classList.add("d-flex")
+            div.classList.remove("d-none")
+          }
+          voir_plus_button.remove();
+        })        
+
+      })
+
+    fetch('https://app.liliumpharma.com/medecins/api/MedecinsNonVisites?month='+monthUrl)
+    .then((response) => response.json())
+    .then((data) => {
+      nombre_medecins_non_visites = data.nombre_medecins_non_visites
+      document.getElementById("response_3_medecins").innerHTML = data.nombre_medecins_non_visites
+
+      const field_3 = document.getElementById("raison_3");
+      const max_display = 5
+      counter=0
+
+      for (let elt in data.medecins_non_visites) {
+        const newDiv = document.createElement("div");
+        newDiv.id="MedecinsNonVisitesDiv_"+elt
+        newDiv.className = "d-flex";
+        newDiv.style = "margin-bottom: 15px;";
+
+        const div_doctor = document.createElement("div");
+        div_doctor.id="div_doctor_"+elt
+        div_doctor.className = "d-bock";
+
+        const doctorNameElement = document.createElement("p");
+        doctorNameElement.id = "NomsMedecinsNonVisites_" + elt;
+        doctorNameElement.style = "color:green;font-weight: bold;width:400px; margin:0px";
+        doctorNameElement.innerHTML = data.medecins_non_visites[elt].id +" "+data.medecins_non_visites[elt].nom
+
+        div_doctor.appendChild(doctorNameElement);
+
+        const derniere_visite = document.createElement("label");
+        derniere_visite.id = "derniere_visite_"+elt;
+        derniere_visite.style = "color:black ;font-size:14px";
+        derniere_visite.textContent ="Jamais Visité !";
+        if (data.medecins_non_visites[elt].date_derniere_visite != null) {
+          derniere_visite.textContent ="Derniere visite: "+data.medecins_non_visites[elt].date_derniere_visite; 
+        }
+        div_doctor.appendChild(derniere_visite);
+
+
+        newDiv.appendChild(div_doctor);
+
+        const textAreaElement = document.createElement("textarea");
+        textAreaElement.id = "RaisonsMedecinsNonVisites_" + elt;
+        textAreaElement.className = "form-control text-left";
+        textAreaElement.placeholder = "Raison de la non visite...";
+        newDiv.appendChild(textAreaElement); // Ajoute le textarea au div
+
+        const brElement = document.createElement("br");
+
+
+        if(counter >= max_display){
+          newDiv.className = "d-none";
+        }
+
+        field_3.appendChild(newDiv);
+        counter++
+      }
+
+      const voir_plus_button = document.createElement("p")
+      voir_plus_button.textContent="+ Voir plus"
+      voir_plus_button.cursor="pointer"
+      voir_plus_button.className="btn btn-primary"
+      if(counter > max_display)
+        field_3.appendChild(voir_plus_button)
+      voir_plus_button.addEventListener("click", ()=>{
+        for(i=max_display; i<counter;i++){
+          div = document.getElementById("MedecinsNonVisitesDiv_"+i)
+          div.classList.add("d-flex")
+          div.classList.remove("d-none")
+        }
+        voir_plus_button.remove();
+      })
+    });
+
+    fetch('https://app.liliumpharma.com/medecins/api/v2/current_month_medecin_visite_duo_per_user_with_qtt_products?month='+monthUrl)
+    .then((response) => response.json())
+    .then((data) => {
+      document.getElementById("response_4_medecins").innerHTML = data.nombre_medecins_visites_en_duo
+
+      const field_4 = document.getElementById("raison_4");
+      const max_display_4 = 5
+      counter_4=0
+      minLength_4 = data.datas.length;
+
+      for (let elt in data.datas) {
+        const newDiv = document.createElement("div");
+        newDiv.id="MedecinsVisitesDuoDiv_"+elt
+        newDiv.className = "d-flex";
+        newDiv.style = "margin-bottom: 15px;";
+
+        const doctorNameElement = document.createElement("p");
+        doctorNameElement.id = "NomsMedecinsVisitesDuo_" + elt;
+        doctorNameElement.style = "color:green;font-weight: bold;width:30rem";
+        doctorNameElement.innerHTML = data.datas[elt].id+"  "+data.datas[elt].nom+"<br> ";
+        newDiv.appendChild(doctorNameElement);
+
+        const usersVisite = document.createElement("p");
+        usersVisite.id = "usersVisite_" + elt;
+        usersVisite.style = "color:black;font-weight: bold;width:30rem; font-size:15px";
+        usersVisite.innerHTML =data.datas[elt].utilisateurs[0]+"  |   "+data.datas[elt].utilisateurs[1]+"<br> "
+        newDiv.appendChild(usersVisite);
+
+        const dateVisite = document.createElement("p");
+        dateVisite.id = "date_visite_" + elt;
+        dateVisite.style = "color:green;font-weight: bold;width:30rem";
+        dateVisite.innerHTML = data.datas[elt].date_visite
+        newDiv.appendChild(dateVisite);
+
+        const textAreaElement = document.createElement("textarea");
+        textAreaElement.id = "RaisonMedecinsVisitesDuo_" + elt;
+        textAreaElement.className = "form-control text-left";
+        textAreaElement.placeholder = "Quel est le but de la visite...";
+        newDiv.appendChild(textAreaElement); // Ajoute le textarea au div
+
+        if(counter_4 >= max_display_4){
+          newDiv.className = "d-none";
+        }
+
+        field_4.appendChild(newDiv);
+        counter_4++
+      }
+
+      const voir_plus_button = document.createElement("p")
+      voir_plus_button.textContent="+ Voir plus"
+      voir_plus_button.cursor="pointer"
+      voir_plus_button.className="btn btn-primary"
+
+      if(counter_4 > max_display_4)
+        field_4.appendChild(voir_plus_button)
+      voir_plus_button.addEventListener("click", ()=>{
+        for(i=max_display_4; i<counter_4;i++){
+          div = document.getElementById("MedecinsVisitesDuoDiv_"+i)
+          div.classList.add("d-flex")
+          div.classList.remove("d-none")
+        }
+        voir_plus_button.remove();
+      })
+    });
+
+    
+
+
+  }
+
+fetchData(); 
+});
+</script>
+
+
+<!-- FIN Q10 DOCTORS -->
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  field_5 = document.getElementById("raison_5")
+  doctor_dropdown_5_1 = document.getElementById("doctor_dropdown_5_1")
+  doctor_input_5_1 = document.getElementById("doctor_input_5_1")
+
+  function isDoctorAlreadyAdded(name) {
+    const textarea = document.getElementById('raison_5_1');
+    const doctors = textarea.value.split(' - ');
+    return doctors.includes(name);
+  }
+
+  function addDoctorNameToTextArea_5_1(selecteddoctor) {
+    if (!isDoctorAlreadyAdded(selecteddoctor)) {
+      const textarea = document.getElementById('raison_5_1');
+      if (textarea.value.trim() !== '') {
+        textarea.value = textarea.value + " - " + selecteddoctor;
+      } else {
+        textarea.value = selecteddoctor;
+      }
+    }
+  }
+
+  // Add Doctor Name V2
+  const addMedecin_5 = (name) => {
+    doctor_input_5_1.value = ''; // Clear the input field
+    addDoctorNameToTextArea_5_1(name);
+    doctor_dropdown_5_1.classList.add("d-none"); // Hide the dropdown after selecting a doctor
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_5_1.addEventListener("input", (e) => {
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent;
+    if (value.length >= 3) {
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if (data.length > 0) {
+            let innerHTML = "";
+            for (d of data) {
+              innerHTML += `<p onclick="addMedecin_5('${d.nom}')">${d.nom}</p>`;
+            }
+            doctor_dropdown_5_1.innerHTML = innerHTML;
+            doctor_dropdown_5_1.classList.remove("d-none");
+            doctor_dropdown_5_1.style.zIndex = "9999";
+          }
+        })
+    } else {
+      doctor_dropdown_5_1.classList.add("d-none");
+    }
+  });
+
+  // Hide dropdown when clicking outside
+  document.body.addEventListener("click", (e) => {
+    if (!doctor_input_5_1.contains(e.target) && !doctor_dropdown_5_1.contains(e.target)) {
+      doctor_dropdown_5_1.classList.add("d-none");
+    }
+  });
+</script>
+
+
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_5_2 = document.getElementById("doctor_dropdown_5_2");
+  doctor_input_5_2 = document.getElementById("doctor_input_5_2");
+
+  function isDoctorAlreadyAdded_2(name) {
+    const textarea = document.getElementById('raison_5_2');
+    const doctors = textarea.value.split(' - ');
+    return doctors.includes(name);
+  }
+
+  function addDoctorNameToTextArea_5_2(selecteddoctor) {
+    if (!isDoctorAlreadyAdded_2(selecteddoctor)) {
+      const textarea = document.getElementById('raison_5_2');
+      if (textarea.value.trim() !== '') {
+        textarea.value = textarea.value + " - " + selecteddoctor;
+      } else {
+        textarea.value = selecteddoctor;
+      }
+    }
+  }
+
+  // Add Doctor Name V2
+  const addMedecin_5_2 = (name) => {
+    doctor_input_5_2.value = ''; // Clear the input field
+    addDoctorNameToTextArea_5_2(name);
+    doctor_dropdown_5_2.classList.add("d-none"); // Hide the dropdown after selecting a doctor
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_5_2.addEventListener("input", (e) => {
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent;
+    if (value.length >= 3) {
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if (data.length > 0) {
+            let innerHTML = "";
+            for (d of data) {
+              innerHTML += `<p onclick="addMedecin_5_2('${d.nom}')">${d.nom}</p>`;
+            }
+            doctor_dropdown_5_2.innerHTML = innerHTML;
+            doctor_dropdown_5_2.classList.remove("d-none");
+            doctor_dropdown_5_2.style.zIndex = "9999";
+          }
+        })
+    } else {
+      doctor_dropdown_5_2.classList.add("d-none");
+    }
+  });
+
+  // Hide dropdown when clicking outside
+  document.body.addEventListener("click", (e) => {
+    if (!doctor_input_5_2.contains(e.target) && !doctor_dropdown_5_2.contains(e.target)) {
+      doctor_dropdown_5_2.classList.add("d-none");
+    }
+  });
+</script>
+
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_5_3 = document.getElementById("doctor_dropdown_5_3");
+  doctor_input_5_3 = document.getElementById("doctor_input_5_3");
+
+  function isDoctorAlreadyAdded_3(name) {
+    const textarea = document.getElementById('raison_5_3');
+    const doctors = textarea.value.split(' - ');
+    return doctors.includes(name);
+  }
+
+  function addDoctorNameToTextArea_5_3(selecteddoctor) {
+    if (!isDoctorAlreadyAdded_3(selecteddoctor)) {
+      const textarea = document.getElementById('raison_5_3');
+      if (textarea.value.trim() !== '') {
+        textarea.value = textarea.value + " - " + selecteddoctor;
+      } else {
+        textarea.value = selecteddoctor;
+      }
+    }
+  }
+
+  // Add Doctor Name V2
+  const addMedecin_5_3 = (name) => {
+    doctor_input_5_3.value = ''; // Clear the input field
+    addDoctorNameToTextArea_5_3(name);
+    doctor_dropdown_5_3.classList.add("d-none"); // Hide the dropdown after selecting a doctor
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_5_3.addEventListener("input", (e) => {
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent;
+    if (value.length >= 3) {
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if (data.length > 0) {
+            let innerHTML = "";
+            for (d of data) {
+              innerHTML += `<p onclick="addMedecin_5_3('${d.nom}')">${d.nom}</p>`;
+            }
+            doctor_dropdown_5_3.innerHTML = innerHTML;
+            doctor_dropdown_5_3.classList.remove("d-none");
+            doctor_dropdown_5_3.style.zIndex = "9999";
+          }
+        })
+    } else {
+      doctor_dropdown_5_3.classList.add("d-none");
+    }
+  });
+
+  // Hide dropdown when clicking outside
+  document.body.addEventListener("click", (e) => {
+    if (!doctor_input_5_3.contains(e.target) && !doctor_dropdown_5_3.contains(e.target)) {
+      doctor_dropdown_5_3.classList.add("d-none");
+    }
+  });
+</script>
+
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_5_4 = document.getElementById("doctor_dropdown_5_4");
+  doctor_input_5_4 = document.getElementById("doctor_input_5_4");
+
+  function isDoctorAlreadyAdded_4(name) {
+    const textarea = document.getElementById('raison_5_4');
+    const doctors = textarea.value.split(' - ');
+    return doctors.includes(name);
+  }
+
+  function addDoctorNameToTextArea_5_4(selecteddoctor) {
+    if (!isDoctorAlreadyAdded_4(selecteddoctor)) {
+      const textarea = document.getElementById('raison_5_4');
+      if (textarea.value.trim() !== '') {
+        textarea.value = textarea.value + " - " + selecteddoctor;
+      } else {
+        textarea.value = selecteddoctor;
+      }
+    }
+  }
+
+  // Add Doctor Name V2
+  const addMedecin_5_4 = (name) => {
+    doctor_input_5_4.value = ''; // Clear the input field
+    addDoctorNameToTextArea_5_4(name);
+    doctor_dropdown_5_4.classList.add("d-none"); // Hide the dropdown after selecting a doctor
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_5_4.addEventListener("input", (e) => {
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent;
+    if (value.length >= 3) {
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if (data.length > 0) {
+            let innerHTML = "";
+            for (d of data) {
+              innerHTML += `<p onclick="addMedecin_5_4('${d.nom}')">${d.nom}</p>`;
+            }
+            doctor_dropdown_5_4.innerHTML = innerHTML;
+            doctor_dropdown_5_4.classList.remove("d-none");
+            doctor_dropdown_5_4.style.zIndex = "9999";
+          }
+        })
+    } else {
+      doctor_dropdown_5_4.classList.add("d-none");
+    }
+  });
+
+  // Hide dropdown when clicking outside
+  document.body.addEventListener("click", (e) => {
+    if (!doctor_input_5_4.contains(e.target) && !doctor_dropdown_5_4.contains(e.target)) {
+      doctor_dropdown_5_4.classList.add("d-none");
+    }
+  });
+</script>
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_5_5 = document.getElementById("doctor_dropdown_5_5");
+  doctor_input_5_5 = document.getElementById("doctor_input_5_5");
+
+  function isDoctorAlreadyAdded_5(name) {
+    const textarea = document.getElementById('raison_5_5');
+    const doctors = textarea.value.split(' - ');
+    return doctors.includes(name);
+  }
+
+  function addDoctorNameToTextArea_5_5(selecteddoctor) {
+    if (!isDoctorAlreadyAdded_5(selecteddoctor)) {
+      const textarea = document.getElementById('raison_5_5');
+      if (textarea.value.trim() !== '') {
+        textarea.value = textarea.value + " - " + selecteddoctor;
+      } else {
+        textarea.value = selecteddoctor;
+      }
+    }
+  }
+
+  // Add Doctor Name V2
+  const addMedecin_5_5 = (name) => {
+    doctor_input_5_5.value = ''; // Clear the input field
+    addDoctorNameToTextArea_5_5(name);
+    doctor_dropdown_5_5.classList.add("d-none"); // Hide the dropdown after selecting a doctor
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_5_5.addEventListener("input", (e) => {
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent;
+    if (value.length >= 3) {
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if (data.length > 0) {
+            let innerHTML = "";
+            for (d of data) {
+              innerHTML += `<p onclick="addMedecin_5_5('${d.nom}')">${d.nom}</p>`;
+            }
+            doctor_dropdown_5_5.innerHTML = innerHTML;
+            doctor_dropdown_5_5.classList.remove("d-none");
+            doctor_dropdown_5_5.style.zIndex = "9999";
+          }
+        })
+    } else {
+      doctor_dropdown_5_5.classList.add("d-none");
+    }
+  });
+
+  // Hide dropdown when clicking outside
+  document.body.addEventListener("click", (e) => {
+    if (!doctor_input_5_5.contains(e.target) && !doctor_dropdown_5_5.contains(e.target)) {
+      doctor_dropdown_5_5.classList.add("d-none");
+    }
+  });
+</script>
+
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_5_6 = document.getElementById("doctor_dropdown_5_6");
+  doctor_input_5_6 = document.getElementById("doctor_input_5_6");
+
+  function isDoctorAlreadyAdded_6(name) {
+    const textarea = document.getElementById('raison_5_6');
+    const doctors = textarea.value.split(' - ');
+    return doctors.includes(name);
+  }
+
+  function addDoctorNameToTextArea_5_6(selecteddoctor) {
+    if (!isDoctorAlreadyAdded_6(selecteddoctor)) {
+      const textarea = document.getElementById('raison_5_6');
+      if (textarea.value.trim() !== '') {
+        textarea.value = textarea.value + " - " + selecteddoctor;
+      } else {
+        textarea.value = selecteddoctor;
+      }
+    }
+  }
+
+  // Add Doctor Name V2
+  const addMedecin_5_6 = (name) => {
+    doctor_input_5_6.value = ''; // Clear the input field
+    addDoctorNameToTextArea_5_6(name);
+    doctor_dropdown_5_6.classList.add("d-none"); // Hide the dropdown after selecting a doctor
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_5_6.addEventListener("input", (e) => {
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent;
+    if (value.length >= 3) {
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if (data.length > 0) {
+            let innerHTML = "";
+            for (d of data) {
+              innerHTML += `<p onclick="addMedecin_5_6('${d.nom}')">${d.nom}</p>`;
+            }
+            doctor_dropdown_5_6.innerHTML = innerHTML;
+            doctor_dropdown_5_6.classList.remove("d-none");
+            doctor_dropdown_5_6.style.zIndex = "9999";
+          }
+        })
+    } else {
+      doctor_dropdown_5_6.classList.add("d-none");
+    }
+  });
+
+  // Hide dropdown when clicking outside
+  document.body.addEventListener("click", (e) => {
+    if (!doctor_input_5_6.contains(e.target) && !doctor_dropdown_5_6.contains(e.target)) {
+      doctor_dropdown_5_6.classList.add("d-none");
+    }
+  });
+</script>
+
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_5_7 = document.getElementById("doctor_dropdown_5_7");
+  doctor_input_5_7 = document.getElementById("doctor_input_5_7");
+
+  function isDoctorAlreadyAdded_7(name) {
+    const textarea = document.getElementById('raison_5_7');
+    const doctors = textarea.value.split(' - ');
+    return doctors.includes(name);
+  }
+
+  function addDoctorNameToTextArea_5_7(selecteddoctor) {
+    if (!isDoctorAlreadyAdded_7(selecteddoctor)) {
+      const textarea = document.getElementById('raison_5_7');
+      if (textarea.value.trim() !== '') {
+        textarea.value = textarea.value + " - " + selecteddoctor;
+      } else {
+        textarea.value = selecteddoctor;
+      }
+    }
+  }
+
+  // Add Doctor Name V2
+  const addMedecin_5_7 = (name) => {
+    doctor_input_5_7.value = ''; // Clear the input field
+    addDoctorNameToTextArea_5_7(name);
+    doctor_dropdown_5_7.classList.add("d-none"); // Hide the dropdown after selecting a doctor
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_5_7.addEventListener("input", (e) => {
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent;
+    if (value.length >= 3) {
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if (data.length > 0) {
+            let innerHTML = "";
+            for (d of data) {
+              innerHTML += `<p onclick="addMedecin_5_7('${d.nom}')">${d.nom}</p>`;
+            }
+            doctor_dropdown_5_7.innerHTML = innerHTML;
+            doctor_dropdown_5_7.classList.remove("d-none");
+            doctor_dropdown_5_7.style.zIndex = "9999";
+          }
+        })
+    } else {
+      doctor_dropdown_5_7.classList.add("d-none");
+    }
+  });
+
+  // Hide dropdown when clicking outside
+  document.body.addEventListener("click", (e) => {
+    if (!doctor_input_5_7.contains(e.target) && !doctor_dropdown_5_7.contains(e.target)) {
+      doctor_dropdown_5_7.classList.add("d-none");
+    }
+  });
+</script>
+
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_5_8 = document.getElementById("doctor_dropdown_5_8");
+  doctor_input_5_8 = document.getElementById("doctor_input_5_8");
+
+  function isDoctorAlreadyAdded_8(name) {
+    const textarea = document.getElementById('raison_5_8');
+    const doctors = textarea.value.split(' - ');
+    return doctors.includes(name);
+  }
+
+  function addDoctorNameToTextArea_5_8(selecteddoctor) {
+    if (!isDoctorAlreadyAdded_8(selecteddoctor)) {
+      const textarea = document.getElementById('raison_5_8');
+      if (textarea.value.trim() !== '') {
+        textarea.value = textarea.value + " - " + selecteddoctor;
+      } else {
+        textarea.value = selecteddoctor;
+      }
+    }
+  }
+
+  // Add Doctor Name V2
+  const addMedecin_5_8 = (name) => {
+    doctor_input_5_8.value = ''; // Clear the input field
+    addDoctorNameToTextArea_5_8(name);
+    doctor_dropdown_5_8.classList.add("d-none"); // Hide the dropdown after selecting a doctor
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_5_8.addEventListener("input", (e) => {
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent;
+    if (value.length >= 3) {
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if (data.length > 0) {
+            let innerHTML = "";
+            for (d of data) {
+              innerHTML += `<p onclick="addMedecin_5_8('${d.nom}')">${d.nom}</p>`;
+            }
+            doctor_dropdown_5_8.innerHTML = innerHTML;
+            doctor_dropdown_5_8.classList.remove("d-none");
+            doctor_dropdown_5_8.style.zIndex = "9999";
+          }
+        })
+    } else {
+      doctor_dropdown_5_8.classList.add("d-none");
+    }
+  });
+
+  // Hide dropdown when clicking outside
+  document.body.addEventListener("click", (e) => {
+    if (!doctor_input_5_8.contains(e.target) && !doctor_dropdown_5_8.contains(e.target)) {
+      doctor_dropdown_5_8.classList.add("d-none");
+    }
+  });
+</script>
+
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_5_9 = document.getElementById("doctor_dropdown_5_9");
+  doctor_input_5_9 = document.getElementById("doctor_input_5_9");
+
+  function isDoctorAlreadyAdded_9(name) {
+    const textarea = document.getElementById('raison_5_9');
+    const doctors = textarea.value.split(' - ');
+    return doctors.includes(name);
+  }
+
+  function addDoctorNameToTextArea_5_9(selecteddoctor) {
+    if (!isDoctorAlreadyAdded_9(selecteddoctor)) {
+      const textarea = document.getElementById('raison_5_9');
+      if (textarea.value.trim() !== '') {
+        textarea.value = textarea.value + " - " + selecteddoctor;
+      } else {
+        textarea.value = selecteddoctor;
+      }
+    }
+  }
+
+  // Add Doctor Name V2
+  const addMedecin_5_9 = (name) => {
+    doctor_input_5_9.value = ''; // Clear the input field
+    addDoctorNameToTextArea_5_9(name);
+    doctor_dropdown_5_9.classList.add("d-none"); // Hide the dropdown after selecting a doctor
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_5_9.addEventListener("input", (e) => {
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent;
+    if (value.length >= 3) {
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if (data.length > 0) {
+            let innerHTML = "";
+            for (d of data) {
+              innerHTML += `<p onclick="addMedecin_5_9('${d.nom}')">${d.nom}</p>`;
+            }
+            doctor_dropdown_5_9.innerHTML = innerHTML;
+            doctor_dropdown_5_9.classList.remove("d-none");
+            doctor_dropdown_5_9.style.zIndex = "9999";
+          }
+        })
+    } else {
+      doctor_dropdown_5_9.classList.add("d-none");
+    }
+  });
+
+  // Hide dropdown when clicking outside
+  document.body.addEventListener("click", (e) => {
+    if (!doctor_input_5_9.contains(e.target) && !doctor_dropdown_5_9.contains(e.target)) {
+      doctor_dropdown_5_9.classList.add("d-none");
+    }
+  });
+</script>
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_5_10 = document.getElementById("doctor_dropdown_5_10");
+  doctor_input_5_10 = document.getElementById("doctor_input_5_10");
+
+  function isDoctorAlreadyAdded_10(name) {
+    const textarea = document.getElementById('raison_5_10');
+    const doctors = textarea.value.split(' - ');
+    return doctors.includes(name);
+  }
+
+  function addDoctorNameToTextArea_5_10(selecteddoctor) {
+    if (!isDoctorAlreadyAdded_10(selecteddoctor)) {
+      const textarea = document.getElementById('raison_5_10');
+      if (textarea.value.trim() !== '') {
+        textarea.value = textarea.value + " - " + selecteddoctor;
+      } else {
+        textarea.value = selecteddoctor;
+      }
+    }
+  }
+
+  // Add Doctor Name V2
+  const addMedecin_5_10 = (name) => {
+    doctor_input_5_10.value = ''; // Clear the input field
+    addDoctorNameToTextArea_5_10(name);
+    doctor_dropdown_5_10.classList.add("d-none"); // Hide the dropdown after selecting a doctor
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_5_10.addEventListener("input", (e) => {
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent;
+    if (value.length >= 3) {
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if (data.length > 0) {
+            let innerHTML = "";
+            for (d of data) {
+              innerHTML += `<p onclick="addMedecin_5_10('${d.nom}')">${d.nom}</p>`;
+            }
+            doctor_dropdown_5_10.innerHTML = innerHTML;
+            doctor_dropdown_5_10.classList.remove("d-none");
+            doctor_dropdown_5_10.style.zIndex = "9999";
+          }
+        })
+    } else {
+      doctor_dropdown_5_10.classList.add("d-none");
+    }
+  });
+
+  // Hide dropdown when clicking outside
+  document.body.addEventListener("click", (e) => {
+    if (!doctor_input_5_10.contains(e.target) && !doctor_dropdown_5_10.contains(e.target)) {
+      doctor_dropdown_5_10.classList.add("d-none");
+    }
+  });
+</script>
+
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_5_11 = document.getElementById("doctor_dropdown_5_11");
+  doctor_input_5_11 = document.getElementById("doctor_input_5_11");
+
+  function isDoctorAlreadyAdded_11(name) {
+    const textarea = document.getElementById('raison_5_11');
+    const doctors = textarea.value.split(' - ');
+    return doctors.includes(name);
+  }
+
+  function addDoctorNameToTextArea_5_11(selecteddoctor) {
+    if (!isDoctorAlreadyAdded_11(selecteddoctor)) {
+      const textarea = document.getElementById('raison_5_11');
+      if (textarea.value.trim() !== '') {
+        textarea.value = textarea.value + " - " + selecteddoctor;
+      } else {
+        textarea.value = selecteddoctor;
+      }
+    }
+  }
+
+  // Add Doctor Name V2
+  const addMedecin_5_11 = (name) => {
+    doctor_input_5_5.value = ''; // Clear the input field
+    addDoctorNameToTextArea_5_11(name);
+    doctor_dropdown_5_11.classList.add("d-none"); // Hide the dropdown after selecting a doctor
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_5_11.addEventListener("input", (e) => {
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent;
+    if (value.length >= 3) {
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if (data.length > 0) {
+            let innerHTML = "";
+            for (d of data) {
+              innerHTML += `<p onclick="addMedecin_5_11('${d.nom}')">${d.nom}</p>`;
+            }
+            doctor_dropdown_5_11.innerHTML = innerHTML;
+            doctor_dropdown_5_11.classList.remove("d-none");
+            doctor_dropdown_5_11.style.zIndex = "9999";
+          }
+        })
+    } else {
+      doctor_dropdown_5_11.classList.add("d-none");
+    }
+  });
+
+  // Hide dropdown when clicking outside
+  document.body.addEventListener("click", (e) => {
+    if (!doctor_input_5_11.contains(e.target) && !doctor_dropdown_5_11.contains(e.target)) {
+      doctor_dropdown_5_11.classList.add("d-none");
+    }
+  });
+</script>
+
+<!-- FIN Q5 DOCTORS -->
+
+<!-- -----Q6------ -->
+
+<!-- ---1--- -->
+<script>
+  // GETTING DOCTORS LIST
+  doctor_dropdown_6_1 = document.getElementById("doctor_dropdown_6_1")
+  doctor_input_6_1 = document.getElementById("doctor_input_6_1")
+
+  // Add Doctor Name V2
+  const addMedecin_6 = (name) => {
+    doctor_input_6_1.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_6_1.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_6('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_6_1.innerHTML = innerHTML
+            doctor_dropdown_6_1.classList.remove("d-none")
+            doctor_dropdown_6_1.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_6_1.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_6_1.contains(e.target) && !doctor_dropdown_6_1.contains(e.target)) {
+        doctor_dropdown_6_1.classList.add("d-none");
+      }
+    });
+  })
+</script>
+
+<!-- ---2--- -->
+<script>
+  // GETTING DOCTORS LIST
+  doctor_dropdown_6_2 = document.getElementById("doctor_dropdown_6_2")
+  doctor_input_6_2 = document.getElementById("doctor_input_6_2")
+
+  // Add Doctor Name V2
+  const addMedecin_6_2 = (name) => {
+    doctor_input_6_2.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_6_2.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_6_2('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_6_2.innerHTML = innerHTML
+            doctor_dropdown_6_2.classList.remove("d-none")
+            doctor_dropdown_6_2.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_6_2.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_6_2.contains(e.target) && !doctor_dropdown_6_2.contains(e.target)) {
+        doctor_dropdown_6_2.classList.add("d-none");
+      }
+    });
+  })
+</script>
+
+<!-- ---3--- -->
+<script>
+  // GETTING DOCTORS LIST
+  doctor_dropdown_6_3 = document.getElementById("doctor_dropdown_6_3")
+  doctor_input_6_3 = document.getElementById("doctor_input_6_3")
+
+  // Add Doctor Name V2
+  const addMedecin_6_3 = (name) => {
+    doctor_input_6_3.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_6_3.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_6_3('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_6_3.innerHTML = innerHTML
+            doctor_dropdown_6_3.classList.remove("d-none")
+            doctor_dropdown_6_3.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_6_3.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_6_3.contains(e.target) && !doctor_dropdown_6_3.contains(e.target)) {
+        doctor_dropdown_6_3.classList.add("d-none");
+      }
+    });
+  })
+</script>
+
+<!-- ---4--- -->
+<script>
+  // GETTING DOCTORS LIST
+  doctor_dropdown_6_4 = document.getElementById("doctor_dropdown_6_4")
+  doctor_input_6_4 = document.getElementById("doctor_input_6_4")
+
+  // Add Doctor Name V2
+  const addMedecin_6_4 = (name) => {
+    doctor_input_6_4.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_6_4.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_6_4('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_6_4.innerHTML = innerHTML
+            doctor_dropdown_6_4.classList.remove("d-none")
+            doctor_dropdown_6_4.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_6_4.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_6_4.contains(e.target) && !doctor_dropdown_6_4.contains(e.target)) {
+        doctor_dropdown_6_4.classList.add("d-none");
+      }
+    });
+  })
+</script>
+
+<!-- ---5--- -->
+<script>
+  // GETTING DOCTORS LIST
+  doctor_dropdown_6_5 = document.getElementById("doctor_dropdown_6_5")
+  doctor_input_6_5 = document.getElementById("doctor_input_6_5")
+
+  // Add Doctor Name V2
+  const addMedecin_6_5 = (name) => {
+    doctor_input_6_5.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_6_5.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_6_5('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_6_5.innerHTML = innerHTML
+            doctor_dropdown_6_5.classList.remove("d-none")
+            doctor_dropdown_6_5.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_6_5.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_6_5.contains(e.target) && !doctor_dropdown_6_5.contains(e.target)) {
+        doctor_dropdown_6_5.classList.add("d-none");
+      }
+    });
+  })
+</script>
+
+<!-- ---6--- -->
+<script>
+  // GETTING DOCTORS LIST
+  doctor_dropdown_6_6 = document.getElementById("doctor_dropdown_6_6")
+  doctor_input_6_6 = document.getElementById("doctor_input_6_6")
+
+  // Add Doctor Name V2
+  const addMedecin_6_6 = (name) => {
+    doctor_input_6_6.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_6_6.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_6_6('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_6_6.innerHTML = innerHTML
+            doctor_dropdown_6_6.classList.remove("d-none")
+            doctor_dropdown_6_6.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_6_6.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_6_6.contains(e.target) && !doctor_dropdown_6_6.contains(e.target)) {
+        doctor_dropdown_6_6.classList.add("d-none");
+      }
+    });
+  })
+</script>
+
+<!-- ---7--- -->
+<script>
+  // GETTING DOCTORS LIST
+  doctor_dropdown_6_7 = document.getElementById("doctor_dropdown_6_7")
+  doctor_input_6_7 = document.getElementById("doctor_input_6_7")
+
+  // Add Doctor Name V2
+  const addMedecin_6_7 = (name) => {
+    doctor_input_6_7.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_6_7.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_6_7('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_6_7.innerHTML = innerHTML
+            doctor_dropdown_6_7.classList.remove("d-none")
+            doctor_dropdown_6_7.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_6_7.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_6_7.contains(e.target) && !doctor_dropdown_6_7.contains(e.target)) {
+        doctor_dropdown_6_7.classList.add("d-none");
+      }
+    });
+  })
+</script>
+
+<!-- ---8--- -->
+<script>
+  // GETTING DOCTORS LIST
+  doctor_dropdown_6_8 = document.getElementById("doctor_dropdown_6_8")
+  doctor_input_6_8 = document.getElementById("doctor_input_6_8")
+
+  // Add Doctor Name V2
+  const addMedecin_6_8 = (name) => {
+    doctor_input_6_8.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_6_8.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_6_8('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_6_8.innerHTML = innerHTML
+            doctor_dropdown_6_8.classList.remove("d-none")
+            doctor_dropdown_6_8.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_6_8.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_6_8.contains(e.target) && !doctor_dropdown_6_8.contains(e.target)) {
+        doctor_dropdown_6_8.classList.add("d-none");
+      }
+    });
+  })
+</script>
+
+<!-- ---9--- -->
+<script>
+  // GETTING DOCTORS LIST
+  doctor_dropdown_6_9 = document.getElementById("doctor_dropdown_6_9")
+  doctor_input_6_9 = document.getElementById("doctor_input_6_9")
+
+  // Add Doctor Name V2
+  const addMedecin_6_9 = (name) => {
+    doctor_input_6_9.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_6_9.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_6_9('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_6_9.innerHTML = innerHTML
+            doctor_dropdown_6_9.classList.remove("d-none")
+            doctor_dropdown_6_9.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_6_9.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_6_9.contains(e.target) && !doctor_dropdown_6_9.contains(e.target)) {
+        doctor_dropdown_6_9.classList.add("d-none");
+      }
+    });
+  })
+</script>
+
+<!-- ---10--- -->
+<script>
+  // GETTING DOCTORS LIST
+  doctor_dropdown_6_10 = document.getElementById("doctor_dropdown_6_10")
+  doctor_input_6_10 = document.getElementById("doctor_input_6_10")
+
+  // Add Doctor Name V2
+  const addMedecin_6_10 = (name) => {
+    doctor_input_6_10.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_6_10.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_6_10('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_6_10.innerHTML = innerHTML
+            doctor_dropdown_6_10.classList.remove("d-none")
+            doctor_dropdown_6_10.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_6_10.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_6_10.contains(e.target) && !doctor_dropdown_6_10.contains(e.target)) {
+        doctor_dropdown_6_10.classList.add("d-none");
+      }
+    });
+  })
+</script>
+<!-- FIN Q6 DOCTORS -->
+
+<script>
+  // <!-- Q7 DOCTORS -->
+  // GETTING DOCTORS LIST
+  field_7 = document.getElementById("raison_7")
+  select_doctors_7 = document.getElementById("select_doctors_7")
+  doctor_dropdown_7 = document.getElementById("doctor_dropdown_7")
+  let id=1
+
+  // Function to handle "Supprimer" click
+  const handleDelete = (doctorId) => {
+    const newDiv = document.getElementById(`NewDiv_7_${doctorId}`);
+    if (newDiv) {
+        newDiv.remove();
+
+        // Extract the doctor's name from the newDiv and remove it from the addedDoctors_7 array
+        const doctorNameElement = newDiv.querySelector(`#doctor_7_${doctorId}`);
+        if (doctorNameElement) {
+            const doctorName = doctorNameElement.textContent.trim().toLowerCase();
+            const index = addedDoctors_7.indexOf(doctorName);
+            if (index !== -1) {
+                addedDoctors_7.splice(index, 1);
+            }
+        }
+    }
+};
+  // Add Doctor Name V2
+  const addedDoctors_7 = [];
+
+  const addMedecin_7 = (name) => {
+      // Check if the doctor is already added
+      if (addedDoctors_7.includes(name.toLowerCase())) {
+          return;
+      }
+
+      // Add the doctor to the list of added doctors
+      addedDoctors_7.push(name.toLowerCase());
+
+      const doctorId = id;
+      const newDiv = document.createElement("div");
+      newDiv.id = "NewDiv_7_" + doctorId;
+      newDiv.className = "d-flex";
+      newDiv.style = "margin-bottom:15px;";
+
+      const doctorNameElement = document.createElement("p");
+      doctorNameElement.id = `doctor_7_${doctorId}`;
+      doctorNameElement.style = "color:green;font-weight: bold;";
+      doctorNameElement.textContent = name;
+      newDiv.appendChild(doctorNameElement);
+
+      const textAreaElement = document.createElement("textarea");
+      textAreaElement.id = `plus_7_${doctorId}`;
+      textAreaElement.className = "form-control text-left";
+      textAreaElement.placeholder = "Votre plus...";
+      newDiv.appendChild(textAreaElement);
+      id++;
+
+      const deleteElement = document.createElement("p");
+      const deleteImage = document.createElement("img");
+      deleteImage.className = "icon-door";
+      deleteImage.src = "{% static 'img/supprimer.png' %}";
+      deleteImage.style.width = "1.5rem";
+      deleteImage.style.height = "1.5rem";
+      deleteElement.appendChild(deleteImage);
+      deleteElement.style.cursor = "pointer";
+      deleteElement.style.color = "red";
+      deleteElement.style.marginTop = "auto";
+      deleteElement.style.marginBottom = "auto";
+      deleteElement.style.marginLeft = "15px";
+      deleteElement.addEventListener("click", () => handleDelete(doctorId));
+      newDiv.appendChild(deleteElement);
+
+      field_7.appendChild(newDiv);
+  };
+
+  // FETCH DOCTORS USING INPUT
+  document.getElementById("doctor_input_7").addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_7('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_7.innerHTML = innerHTML
+            doctor_dropdown_7.classList.remove("d-none")
+            doctor_dropdown_7.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_7.classList.add("d-none")
+
+      }
+          // Remove added doctors from the list if they are not in the fetched data
+    addedDoctors_7.forEach((doctor, index) => {
+        if (!data.some((d) => d.nom.toLowerCase() === doctor)) {
+            addedDoctors_7.splice(index, 1);
+        }
+    });
+    // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_7.contains(e.target) && !doctor_dropdown_7.contains(e.target)) {
+        doctor_dropdown_7.classList.add("d-none");
+      }
+    });
+    
+  })
+</script>
+<!-- FIN Q7 DOCTORS -->
+
+<script>
+  // <!-- Q8 DOCTORS -->
+// GETTING DOCTORS LIST
+field_8 = document.getElementById("raison_8")
+select_doctors_8 = document.getElementById("select_doctors_8")
+doctor_dropdown_8 = document.getElementById("doctor_dropdown_8")
+let id_8 = 1;
+
+// Function to handle "Supprimer" click
+const handleDelete_8 = (doctorId) => {
+    const newDiv = document.getElementById(`NewDiv_8_${doctorId}`);
+    if (newDiv) {
+        newDiv.remove();
+
+        // Extract the doctor's name from the newDiv and remove it from the addedDoctors_8 array
+        const doctorNameElement = newDiv.querySelector(`#doctor_8_${doctorId}`);
+        if (doctorNameElement) {
+            const doctorName = doctorNameElement.textContent.trim().toLowerCase();
+            const index = addedDoctors_8.indexOf(doctorName);
+            if (index !== -1) {
+                addedDoctors_8.splice(index, 1);
+            }
+        }
+    }
+};
+
+// Add Doctor Name V2 for doctor_input_8
+const addedDoctors_8 = [];
+
+const addMedecin_8 = (name) => {
+    // Check if the doctor is already added
+    if (addedDoctors_8.includes(name.toLowerCase())) {
+        return;
+    }
+
+    // Add the doctor to the list of added doctors
+    addedDoctors_8.push(name.toLowerCase());
+
+    const doctorId_8 = id_8;
+    const newDiv = document.createElement("div");
+    newDiv.id = "NewDiv_8_" + doctorId_8;
+    newDiv.className = "d-flex";
+    newDiv.style = "margin-bottom:15px;";
+
+    const doctorNameElement = document.createElement("p");
+    doctorNameElement.id = `doctor_8_${doctorId_8}`;
+    doctorNameElement.style = "color:green;font-weight: bold;";
+    doctorNameElement.textContent = name;
+    newDiv.appendChild(doctorNameElement);
+
+    const textAreaElement = document.createElement("textarea");
+    textAreaElement.id = `raison_8_${doctorId_8}`;
+    textAreaElement.className = "form-control text-left";
+    textAreaElement.placeholder = "Votre plus...";
+    newDiv.appendChild(textAreaElement);
+    id_8++;
+
+    const deleteElement = document.createElement("p");
+    const deleteImage = document.createElement("img");
+    deleteImage.className = "icon-door";
+    deleteImage.src = "{% static 'img/supprimer.png' %}";
+    deleteImage.style.width = "1.5rem";
+    deleteImage.style.height = "1.5rem";
+    deleteElement.appendChild(deleteImage);
+    deleteElement.style.cursor = "pointer";
+    deleteElement.style.color = "red";
+    deleteElement.style.marginTop = "auto";
+    deleteElement.style.marginBottom = "auto";
+    deleteElement.style.marginLeft = "15px";
+    deleteElement.addEventListener("click", () => handleDelete_8(doctorId_8));
+    newDiv.appendChild(deleteElement);
+
+    field_8.appendChild(newDiv);
+};
+
+// FETCH DOCTORS USING INPUT for doctor_input_8
+document.getElementById("doctor_input_8").addEventListener("input", (e) => {
+    const value = e.target.value.toLowerCase();
+    if (value.length >= 3) {
+        fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value)
+            .then((response) => {
+                return response.json();
+            })
+            .then((data) => {
+                if (data.length > 0) {
+                    let innerHTML = "";
+                    for (const d of data) {
+                        innerHTML += `<p onclick="addMedecin_8('${d.nom}')">${d.nom}</p>`;
+                    }
+                    doctor_dropdown_8.innerHTML = innerHTML;
+                    doctor_dropdown_8.classList.remove("d-none");
+                    doctor_dropdown_8.style.zIndex = "9999";
+                }
+            });
+    } else {
+        doctor_dropdown_8.classList.add("d-none");
+    }
+
+    // Remove added doctors from the list if they are not in the fetched data
+    addedDoctors_8.forEach((doctor, index) => {
+        if (!data.some((d) => d.nom.toLowerCase() === doctor)) {
+            addedDoctors_8.splice(index, 1);
+        }
+    });
+});
+
+// Hide dropdown when clicking outside
+document.body.addEventListener("click", (e) => {
+    if (!doctor_input_8.contains(e.target) && !doctor_dropdown_8.contains(e.target)) {
+        doctor_dropdown_8.classList.add("d-none");
+    }
+});
+
+</script>
+<!-- FIN Q8 DOCTORS -->
+
+<script>
+  // <!-- Q9 DOCTORS -->
+// GETTING DOCTORS LIST
+field_9 = document.getElementById("raison_9");
+select_doctors_9 = document.getElementById("select_doctors_9");
+doctor_dropdown_9 = document.getElementById("doctor_dropdown_9");
+let id_9 = 1;
+
+// Function to handle "Supprimer" click
+const handleDelete_9 = (doctorId) => {
+    const newDiv = document.getElementById(`NewDiv_9_${doctorId}`);
+    if (newDiv) {
+        newDiv.remove();
+
+        // Extract the doctor's name from the newDiv and remove it from the addedDoctors_9 array
+        const doctorNameElement = newDiv.querySelector(`#doctor_9_${doctorId}`);
+        if (doctorNameElement) {
+            const doctorName = doctorNameElement.textContent.trim().toLowerCase();
+            const index = addedDoctors_9.indexOf(doctorName);
+            if (index !== -1) {
+                addedDoctors_9.splice(index, 1);
+            }
+        }
+    }
+};
+
+// Add Doctor Name V2 for doctor_input_9
+const addedDoctors_9 = [];
+
+const addMedecin_9 = (name) => {
+    // Check if the doctor is already added
+    if (addedDoctors_9.includes(name.toLowerCase())) {
+        return;
+    }
+
+    // Add the doctor to the list of added doctors
+    addedDoctors_9.push(name.toLowerCase());
+
+    const doctorId_9 = id_9;
+    const newDiv = document.createElement("div");
+    newDiv.id = `NewDiv_9_${doctorId_9}`;
+    newDiv.className = "d-flex";
+    newDiv.style = "margin-bottom:15px;";
+
+    const doctorNameElement = document.createElement("p");
+    doctorNameElement.id = `doctor_9_${doctorId_9}`;
+    doctorNameElement.style = "color:green;font-weight: bold;";
+    doctorNameElement.textContent = name;
+    newDiv.appendChild(doctorNameElement);
+
+    const textAreaElement = document.createElement("textarea");
+    textAreaElement.id = `raison_9_${doctorId_9}`;
+    textAreaElement.className = "form-control text-left";
+    textAreaElement.placeholder = "Votre plus...";
+    newDiv.appendChild(textAreaElement);
+    id_9++;
+
+    const deleteElement = document.createElement("p");
+    const deleteImage = document.createElement("img");
+    deleteImage.className = "icon-door";
+    deleteImage.src = "{% static 'img/supprimer.png' %}";
+    deleteImage.style.width = "1.5rem";
+    deleteImage.style.height = "1.5rem";
+    deleteElement.appendChild(deleteImage);
+    deleteElement.style.cursor = "pointer";
+    deleteElement.style.color = "red";
+    deleteElement.style.marginTop = "auto";
+    deleteElement.style.marginBottom = "auto";
+    deleteElement.style.marginLeft = "15px";
+    deleteElement.addEventListener("click", () => handleDelete_9(doctorId_9));
+    newDiv.appendChild(deleteElement);
+
+    field_9.appendChild(newDiv);
+};
+
+// FETCH DOCTORS USING INPUT for doctor_input_9
+document.getElementById("doctor_input_9").addEventListener("input", (e) => {
+    const value = e.target.value.toLowerCase();
+    if (value.length >= 3) {
+        fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value)
+            .then((response) => {
+                return response.json();
+            })
+            .then((data) => {
+                if (data.length > 0) {
+                    let innerHTML = "";
+                    for (const d of data) {
+                        innerHTML += `<p onclick="addMedecin_9('${d.nom}')">${d.nom}</p>`;
+                    }
+                    doctor_dropdown_9.innerHTML = innerHTML;
+                    doctor_dropdown_9.classList.remove("d-none");
+                    doctor_dropdown_9.style.zIndex = "9999";
+                }
+            });
+    } else {
+        doctor_dropdown_9.classList.add("d-none");
+    }
+
+    // Remove added doctors from the list if they are not in the fetched data
+    addedDoctors_9.forEach((doctor, index) => {
+        if (!data.some((d) => d.nom.toLowerCase() === doctor)) {
+            addedDoctors_9.splice(index, 1);
+        }
+    });
+});
+
+// Hide dropdown when clicking outside
+document.body.addEventListener("click", (e) => {
+    if (!doctor_input_9.contains(e.target) && !doctor_dropdown_9.contains(e.target)) {
+        doctor_dropdown_9.classList.add("d-none");
+    }
+});
+
+</script>
+<!-- FIN Q9 DOCTORS -->
+
+<!-- Q10 -->
+<script>
+  // GETTING DOCTORS LIST
+  doctor_dropdown_10_1 = document.getElementById("doctor_dropdown_10_1")
+  doctor_input_10_1 = document.getElementById("doctor_input_10_1")
+  produit_dropdown_10_1 = document.getElementById("produit_dropdown_10_1")
+
+  const addMedecin_10_1 = (name) => {
+    doctor_input_10_1.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_10_1.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_10_1('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_10_1.innerHTML = innerHTML
+            doctor_dropdown_10_1.classList.remove("d-none")
+            doctor_dropdown_10_1.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_10_1.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_10_1.contains(e.target) && !doctor_dropdown_10_1.contains(e.target)) {
+        doctor_dropdown_10_1.classList.add("d-none");
+      }
+    });
+  })
+   const selectProduit = document.getElementById('produit_dropdown_10_1');
+    produit_dropdown_10_1.addEventListener('change', function () {
+    const selectedMedicamentName = selectProduit.options[selectProduit.selectedIndex].text;
+    addMedicamentNameToTextArea_1(selectedMedicamentName);
+  });
+
+</script>
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_10_2 = document.getElementById("doctor_dropdown_10_2")
+  doctor_input_10_2 = document.getElementById("doctor_input_10_2")
+  produit_dropdown_10_2 = document.getElementById("produit_dropdown_10_2")
+
+  // Add Doctor Name V2
+  const addMedecin_10_2 = (name) => {
+    doctor_input_10_2.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_10_2.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_10_2('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_10_2.innerHTML = innerHTML
+            doctor_dropdown_10_2.classList.remove("d-none")
+            doctor_dropdown_10_2.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_10_2.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_10_2.contains(e.target) && !doctor_dropdown_10_2.contains(e.target)) {
+        doctor_dropdown_10_2.classList.add("d-none");
+      }
+    });
+  })
+   const selectProduit_2 = document.getElementById('produit_dropdown_10_2');
+    produit_dropdown_10_2.addEventListener('change', function () {
+    const selectedMedicamentName = selectProduit.options[selectProduit_2.selectedIndex].text;
+    addMedicamentNameToTextArea_2(selectedMedicamentName);
+  });
+</script>
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_10_3 = document.getElementById("doctor_dropdown_10_3")
+  doctor_input_10_3 = document.getElementById("doctor_input_10_3")
+  produit_dropdown_10_3 = document.getElementById("produit_dropdown_10_3")
+
+
+  // Add Doctor Name V2
+  const addMedecin_10_3 = (name) => {
+    doctor_input_10_3.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_10_3.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_10_3('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_10_3.innerHTML = innerHTML
+            doctor_dropdown_10_3.classList.remove("d-none")
+            doctor_dropdown_10_3.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_10_3.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_10_3.contains(e.target) && !doctor_dropdown_10_3.contains(e.target)) {
+        doctor_dropdown_10_3.classList.add("d-none");
+      }
+    });
+  })
+ 
+
+
+   const selectProduit_3 = document.getElementById('produit_dropdown_10_3');
+    produit_dropdown_10_3.addEventListener('change', function () {
+    const selectedMedicamentName = selectProduit.options[selectProduit_3.selectedIndex].text;
+    addMedicamentNameToTextArea_3(selectedMedicamentName);
+  });
+</script>
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_10_4 = document.getElementById("doctor_dropdown_10_4")
+  doctor_input_10_4 = document.getElementById("doctor_input_10_4")
+  produit_dropdown_10_4 = document.getElementById("produit_dropdown_10_4")
+
+  // Add Doctor Name V2
+  const addMedecin_10_4 = (name) => {
+    doctor_input_10_4.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_10_4.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_10_4('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_10_4.innerHTML = innerHTML
+            doctor_dropdown_10_4.classList.remove("d-none")
+            doctor_dropdown_10_4.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_10_4.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_10_4.contains(e.target) && !doctor_dropdown_10_4.contains(e.target)) {
+        doctor_dropdown_10_4.classList.add("d-none");
+      }
+    });
+  })
+
+
+
+   const selectProduit_4 = document.getElementById('produit_dropdown_10_4');
+    produit_dropdown_10_4.addEventListener('change', function () {
+    const selectedMedicamentName = selectProduit.options[selectProduit_4.selectedIndex].text;
+    addMedicamentNameToTextArea_4(selectedMedicamentName);
+  });
+</script>
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_10_5 = document.getElementById("doctor_dropdown_10_5")
+  doctor_input_10_5 = document.getElementById("doctor_input_10_5")
+  produit_dropdown_10_5 = document.getElementById("produit_dropdown_10_5")
+
+  // Add Doctor Name V2
+  const addMedecin_10_5 = (name) => {
+    doctor_input_10_5.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_10_5.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_10_5('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_10_5.innerHTML = innerHTML
+            doctor_dropdown_10_5.classList.remove("d-none")
+            doctor_dropdown_10_5.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_10_5.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_10_5.contains(e.target) && !doctor_dropdown_10_5.contains(e.target)) {
+        doctor_dropdown_10_5.classList.add("d-none");
+      }
+    });
+  })
+   const selectProduit_5 = document.getElementById('produit_dropdown_10_5');
+    produit_dropdown_10_5.addEventListener('change', function () {
+    const selectedMedicamentName = selectProduit.options[selectProduit_5.selectedIndex].text;
+    addMedicamentNameToTextArea_5(selectedMedicamentName);
+  });
+</script>
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_10_6 = document.getElementById("doctor_dropdown_10_6")
+  doctor_input_10_6 = document.getElementById("doctor_input_10_6")
+  produit_dropdown_10_6 = document.getElementById("produit_dropdown_10_6")
+
+  // Add Doctor Name V2
+  const addMedecin_10_6 = (name) => {
+    doctor_input_10_6.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_10_6.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_10_6('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_10_6.innerHTML = innerHTML
+            doctor_dropdown_10_6.classList.remove("d-none")
+            doctor_dropdown_10_6.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_10_6.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_10_6.contains(e.target) && !doctor_dropdown_10_6.contains(e.target)) {
+        doctor_dropdown_10_6.classList.add("d-none");
+      }
+    });
+  })
+   const selectProduit_6 = document.getElementById('produit_dropdown_10_6');
+    produit_dropdown_10_6.addEventListener('change', function () {
+    const selectedMedicamentName = selectProduit.options[selectProduit_6.selectedIndex].text;
+    addMedicamentNameToTextArea_6(selectedMedicamentName);
+  });
+</script>
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_10_7 = document.getElementById("doctor_dropdown_10_7")
+  doctor_input_10_7 = document.getElementById("doctor_input_10_7")
+  produit_dropdown_10_7 = document.getElementById("produit_dropdown_10_7")
+
+  // Add Doctor Name V2
+  const addMedecin_10_7 = (name) => {
+    doctor_input_10_7.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_10_7.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_10_7('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_10_7.innerHTML = innerHTML
+            doctor_dropdown_10_7.classList.remove("d-none")
+            doctor_dropdown_10_7.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_10_7.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_10_7.contains(e.target) && !doctor_dropdown_10_7.contains(e.target)) {
+        doctor_dropdown_10_7.classList.add("d-none");
+      }
+    });
+  })
+   const selectProduit_7 = document.getElementById('produit_dropdown_10_7');
+    produit_dropdown_10_7.addEventListener('change', function () {
+    const selectedMedicamentName = selectProduit.options[selectProduit_7.selectedIndex].text;
+    addMedicamentNameToTextArea_7(selectedMedicamentName);
+  });
+</script>
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_10_8 = document.getElementById("doctor_dropdown_10_8")
+  doctor_input_10_8 = document.getElementById("doctor_input_10_8")
+  produit_dropdown_10_8 = document.getElementById("produit_dropdown_10_8")
+
+  // Add Doctor Name V2
+  const addMedecin_10_8 = (name) => {
+    doctor_input_10_8.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_10_8.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_10_8('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_10_8.innerHTML = innerHTML
+            doctor_dropdown_10_8.classList.remove("d-none")
+            doctor_dropdown_10_8.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_10_8.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_10_8.contains(e.target) && !doctor_dropdown_10_8.contains(e.target)) {
+        doctor_dropdown_10_8.classList.add("d-none");
+      }
+    });
+  })
+   const selectProduit_8 = document.getElementById('produit_dropdown_10_8');
+    produit_dropdown_10_8.addEventListener('change', function () {
+    const selectedMedicamentName = selectProduit.options[selectProduit_8.selectedIndex].text;
+    addMedicamentNameToTextArea_8(selectedMedicamentName);
+  });
+</script>
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_10_9 = document.getElementById("doctor_dropdown_10_9")
+  doctor_input_10_9 = document.getElementById("doctor_input_10_9")
+  produit_dropdown_10_9 = document.getElementById("produit_dropdown_10_9")
+
+  // Add Doctor Name V2
+  const addMedecin_10_9 = (name) => {
+    doctor_input_10_9.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_10_9.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_10_9('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_10_9.innerHTML = innerHTML
+            doctor_dropdown_10_9.classList.remove("d-none")
+            doctor_dropdown_10_9.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_10_9.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_10_9.contains(e.target) && !doctor_dropdown_10_9.contains(e.target)) {
+        doctor_dropdown_10_9.classList.add("d-none");
+      }
+    });
+  })
+   const selectProduit_9 = document.getElementById('produit_dropdown_10_9');
+    produit_dropdown_10_9.addEventListener('change', function () {
+    const selectedMedicamentName = selectProduit.options[selectProduit_9.selectedIndex].text;
+    addMedicamentNameToTextArea_9(selectedMedicamentName);
+  });
+</script>
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_10_10 = document.getElementById("doctor_dropdown_10_10")
+  doctor_input_10_10 = document.getElementById("doctor_input_10_10")
+  produit_dropdown_10_10 = document.getElementById("produit_dropdown_10_10")
+
+  // Add Doctor Name V2
+  const addMedecin_10_10 = (name) => {
+    doctor_input_10_10.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_10_10.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_10_10('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_10_10.innerHTML = innerHTML
+            doctor_dropdown_10_10.classList.remove("d-none")
+            doctor_dropdown_10_10.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_10_10.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_10_10.contains(e.target) && !doctor_dropdown_10_10.contains(e.target)) {
+        doctor_dropdown_10_10.classList.add("d-none");
+      }
+    });
+  })
+   const selectProduit_10 = document.getElementById('produit_dropdown_10_10');
+    produit_dropdown_10_10.addEventListener('change', function () {
+    const selectedMedicamentName = selectProduit.options[selectProduit_10.selectedIndex].text;
+    addMedicamentNameToTextArea_10(selectedMedicamentName);
+  });
+</script>
+
+<script>
+  <!-- Q5 DOCTORS -->
+  // GETTING DOCTORS LIST
+  doctor_dropdown_10_11 = document.getElementById("doctor_dropdown_10_11")
+  doctor_input_10_11 = document.getElementById("doctor_input_10_11")
+  produit_dropdown_10_11 = document.getElementById("produit_dropdown_10_11")
+
+  // Add Doctor Name V2
+  const addMedecin_10_11 = (name) => {
+    doctor_input_10_11.value = name
+  }
+
+  // FETCH DOCTORS USING INPUT
+  doctor_input_10_11.addEventListener("input", (e)=>{
+    const value = e.target.value.toLowerCase();
+    const value_text = e.target.textContent
+    if(value.length >= 3)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          if(data.length > 0){
+            let innerHTML = "";
+            for(d of data){
+              innerHTML += `<p onclick="addMedecin_10_11('${d.nom}')">${d.nom}</p>`
+            }
+            doctor_dropdown_10_11.innerHTML = innerHTML
+            doctor_dropdown_10_11.classList.remove("d-none")
+            doctor_dropdown_10_11.style.zIndex = "9999";
+          }
+        })
+    else{
+        doctor_dropdown_10_11.classList.add("d-none")
+
+      }
+          // Hide dropdown when clicking outside
+    document.body.addEventListener("click", (e) => {
+      if (!doctor_input_10_11.contains(e.target) && !doctor_dropdown_10_11.contains(e.target)) {
+        doctor_dropdown_10_11.classList.add("d-none");
+      }
+    });
+  })
+   const selectProduit_11 = document.getElementById('produit_dropdown_10_11');
+    produit_dropdown_10_11.addEventListener('change', function () {
+    const selectedMedicamentName = selectProduit.options[selectProduit_11.selectedIndex].text;
+    addMedicamentNameToTextArea_11(selectedMedicamentName);
+  });
+</script>
+
+<!-- FIN Q10 DOCTORS -->
+
+<!-- POST DATA SCRIPT -->
+<script>
+
+
+// CHECKING IF FIELDS ARE NOT EMPTY, AND ADD IS-INVALUD FOR EMPTY ONE
+let previousFocusedTextArea = null;
+
+document.addEventListener("focus", function(event) {
+  const target = event.target;
+  if (target.matches('[id^="RaisonsMedecinsNonVisites_"]')) {
+    previousFocusedTextArea = target;
+  }
+});
+
+document.addEventListener("blur", function(event) {
+  const target = event.target;
+  if (target.matches('[id^="RaisonsMedecinsNonVisites_"]') && previousFocusedTextArea !== null) {
+    validateAndAddClass(previousFocusedTextArea);
+    previousFocusedTextArea = null;
+  }
+});
+
+document.addEventListener("input", function(event) {
+  const target = event.target;
+  if (target.matches('[id^="RaisonsMedecinsNonVisites_"], [id^="RaisonMedecinsVisitesDuo_"], [id^="RaisonsMedecinsMultiplesVisites_"], [id^="plus_7_"], [id^="raison_8_"], [id^="raison_9_"]')) {
+    validateAndAddClass(target);
+  }
+});
+
+function validateAndAddClass(textArea) {
+  const textAreaValue = textArea.value.trim();
+
+  if (textAreaValue === "") {
+    textArea.classList.remove("is-valid");
+    textArea.classList.add("is-invalid");
+  } else {
+    textArea.classList.remove("is-invalid");
+    textArea.classList.add("is-valid");
+  }
+}
+
+const textAreasAndInputs = document.querySelectorAll(
+  '[id^="raison_8_"], ' +
+  '[id^="raison_9_"], ' +
+  '[id^="plus_7_"] ' 
+);
+
+function validateAndAddClass(element) {
+  const elementValue = element.value.trim();
+
+  if (elementValue === "") {
+    element.classList.remove("is-valid");
+    element.classList.add("is-invalid");
+  } else {
+    element.classList.remove("is-invalid");
+    element.classList.add("is-valid");
+  }
+}
+
+textAreasAndInputs.forEach(element => {
+  element.addEventListener("input", () => {
+    validateAndAddClass(element);
+  });
+
+  element.addEventListener("blur", () => {
+    validateAndAddClass(element);
+  });
+});
+
+
+function makePostRequest(e) {
+  e.preventDefault()
+  var csrfToken = '{{ csrf_token }}';
+
+  response_1 = document.getElementById("response_1").innerHTML
+
+
+  const response_2 = {answers: []}
+
+  field_2 = document.getElementById("raison_2")
+  const nombreEnfants_2 = field_2.childElementCount;
+  const children_2_1 = raison_2.querySelectorAll('p'); 
+  const children_2_2 = raison_2.querySelectorAll('textArea');  
+  response_2.total = parseInt(document.getElementById("response_2_medecins").innerHTML)
+
+  for (let i = 0; i <= children_2_1.length-1; i++) {
+    const name = children_2_1[i].textContent;
+    const raison = children_2_2[i] ? children_2_2[i].value : '';
+
+    // Pushing to Array
+    response_2.answers.push({doctor: name, reason: raison});
+  }
+        
+  
+  const response_3 = {answers: []}
+  field_3 = document.getElementById("raison_3")
+  response_3.total = parseInt(nombre_medecins_non_visites)
+
+
+  const children = field_3.querySelectorAll('p');
+  const children_2 = field_3.querySelectorAll('textArea');
+  const children_3 = field_3.querySelectorAll('label');
+  const minLength = Math.min(children.length, children_2.length);
+  let namesString = '';
+
+  for (let i = 0; i < minLength; i++) {
+    const name = children[i].textContent;
+    const raison = children_2[i].value;
+    const derniere_visite = children_3[i].textContent; 
+    namesString += '-Docteur:  ' + name +"\n"+ '    Raison de la non visite :  ' + raison + "\n-----------------------------------\n";
+    response_3.answers.push({doctor: name, derniere_visite: derniere_visite, reason: raison});
+
+  }
+
+  names = namesString.slice(0, -2);
+
+  
+  field_4 = document.getElementById("raison_4")
+  const response_4 = {answers: []}
+  nombre_medecins_4 =document.getElementById("response_4_medecins")
+  response_4.total = parseInt(nombre_medecins_4.textContent)
+
+  for (let i = 0; i < minLength_4; i++) {
+    names = document.getElementById("NomsMedecinsVisitesDuo_"+i)
+    raison = document.getElementById("RaisonMedecinsVisitesDuo_"+i)
+    usersVisite = document.getElementById("usersVisite_"+i)
+    date_visite = document.getElementById("date_visite_"+i)
+    response_4.answers.push({Visite: names.textContent, reason: raison.value, users: usersVisite.textContent, date:date_visite.textContent});
+  }
+
+  const response_5 = {answers: []}
+  response_5_raison_1= ''
+  const selectedOptionText = document.getElementById("produit_dropdown_5_1").textContent;
+  response_5_raison_1+= document.getElementById("raison_5_1").value
+  if (response_5_raison_1.length == 0){
+    response_5_raison_1 = "none"
+  }
+  response_5.answers.push({produit1: selectedOptionText, medecins1:response_5_raison_1})
+
+  response_5_doctor_2= ''
+  response_5_raison_2= ''
+  const selectedOptionText_2 = document.getElementById("produit_dropdown_5_2").textContent;
+  response_5_raison_2+= document.getElementById("raison_5_2").value
+  if (response_5_doctor_2.length == 0){
+    response_5_doctor_2 = "none"
+  }
+  if (response_5_raison_2.length == 0){
+    response_5_raison_2 = "none"
+  }
+  response_5.answers.push({produit2: selectedOptionText_2, medecins2:response_5_raison_2})
+
+
+  response_5_doctor_3= ''
+  response_5_raison_3= ''
+  const selectedOptionText_3 = document.getElementById("produit_dropdown_5_3").textContent;
+  response_5_raison_3+= document.getElementById("raison_5_3").value
+  if (response_5_doctor_3.length == 0){
+    response_5_doctor_3 = "none"
+  }
+  if (response_5_raison_3.length == 0){
+    response_5_raison_3 = "none"
+  }
+  response_5.answers.push({produit3: selectedOptionText_3, medecins3:response_5_raison_3})
+
+
+  response_5_doctor_4= ''
+  response_5_raison_4= ''
+  const selectedOptionText_4 = document.getElementById("produit_dropdown_5_4").textContent;
+  response_5_raison_4+= document.getElementById("raison_5_4").value
+  if (response_5_doctor_4.length == 0){
+    response_5_doctor_4 = "none"
+  }
+  if (response_5_raison_4.length == 0){
+    response_5_raison_4 = "none"
+  }
+  response_5.answers.push({produit4: selectedOptionText_4, medecins4:response_5_raison_4})
+
+
+  response_5_doctor_5= ''
+  response_5_raison_5= ''
+  const selectedOptionText_5 = document.getElementById("produit_dropdown_5_5").textContent;
+  response_5_raison_5+= document.getElementById("raison_5_5").value
+  if (response_5_doctor_5.length == 0){
+    response_5_doctor_5 = "none"
+  }
+  if (response_5_raison_5.length == 0){
+    response_5_raison_5 = "none"
+  }
+  response_5.answers.push({produit5: selectedOptionText_5, medecins5:response_5_raison_5})
+
+  response_5_doctor_6= ''
+  response_5_raison_6= ''
+  const selectedOptionText_6 = document.getElementById("produit_dropdown_5_6").textContent;
+  response_5_raison_6+= document.getElementById("raison_5_6").value
+  if (response_5_doctor_6.length == 0){
+    response_5_doctor_6 = "none"
+  }
+  if (response_5_raison_6.length == 0){
+    response_5_raison_6 = "none"
+  }
+  response_5.answers.push({produit6: selectedOptionText_6, medecins6:response_5_raison_6})
+
+  response_5_doctor_7= ''
+  response_5_raison_7= ''
+  const selectedOptionText_7 = document.getElementById("produit_dropdown_5_7").textContent;
+  response_5_raison_7+= document.getElementById("raison_5_7").value
+  if (response_5_doctor_7.length == 0){
+    response_5_doctor_7 = "none"
+  }
+  if (response_5_raison_7.length == 0){
+    response_5_raison_7 = "none"
+  }
+  response_5.answers.push({produit7: selectedOptionText_7, medecins7:response_5_raison_7})
+
+  response_5_doctor_8= ''
+  response_5_raison_8= ''
+  const selectedOptionText_8 = document.getElementById("produit_dropdown_5_8").textContent;
+  response_5_raison_8+= document.getElementById("raison_5_8").value
+  if (response_5_doctor_8.length == 0){
+    response_5_doctor_8 = "none"
+  }
+  if (response_5_raison_8.length == 0){
+    response_5_raison_8 = "none"
+  }
+  response_5.answers.push({produit8: selectedOptionText_8, medecins8:response_5_raison_8})
+
+  response_5_doctor_9= ''
+  response_5_raison_9= ''
+  const selectedOptionText_9 = document.getElementById("produit_dropdown_5_9").textContent;
+  response_5_raison_9+= document.getElementById("raison_5_9").value
+  if (response_5_doctor_9.length == 0){
+    response_5_doctor_9 = "none"
+  }
+  if (response_5_raison_9.length == 0){
+    response_5_raison_9 = "none"
+  }
+  response_5.answers.push({produit9: selectedOptionText_9, medecins9:response_5_raison_9})
+
+  response_5_doctor_10= ''
+  response_5_raison_10= ''
+  const selectedOptionText_10 = document.getElementById("produit_dropdown_5_10").textContent;
+  response_5_raison_10+= document.getElementById("raison_5_10").value
+  if (response_5_doctor_10.length == 0){
+    response_5_doctor_10 = "none"
+  }
+  if (response_5_raison_10.length == 0){
+    response_5_raison_10 = "none"
+  }
+  response_5.answers.push({produit10: selectedOptionText_10, medecins10:response_5_raison_10})
+
+  response_5_doctor_11= ''
+  response_5_raison_11= ''
+  const selectedOptionText_11 = document.getElementById("produit_dropdown_5_11").textContent;
+  response_5_raison_11+= document.getElementById("raison_5_11").value
+  if (response_5_doctor_11.length == 0){
+    response_5_doctor_11 = "none"
+  }
+  if (response_5_raison_11.length == 0){
+    response_5_raison_11 = "none"
+  }
+  response_5.answers.push({produit11: selectedOptionText_11, medecins11:response_5_raison_11})
+
+
+  const response_6 = {answers: []}
+  response_6_doctor_1= ''
+  response_6_raison_1= ''
+  response_6_doctor_1= document.getElementById("doctor_input_6_1").value
+  response_6_raison_1= document.getElementById("raison_6_1").value
+  if (response_6_doctor_1.length == 0){
+    response_6_doctor_1 = "none"
+  }
+  if (response_6_raison_1.length == 0){
+    response_6_raison_1 = "none"
+  }
+  response_6.answers.push({docteur1: response_6_doctor_1, reason_1:response_6_raison_1})
+
+
+  response_6_doctor_2= ''
+  response_6_raison_2= ''
+  response_6_doctor_2= document.getElementById("doctor_input_6_2").value
+  response_6_raison_2= document.getElementById("raison_6_2").value
+  if (response_6_doctor_2.length == 0){
+    response_6_doctor_2 = "none"
+  }
+  if (response_6_raison_2.length == 0){
+    response_6_raison_2 = "none"
+  }
+  response_6.answers.push({docteur2: response_6_doctor_2, reason_2:response_6_raison_2})
+
+
+  response_6_doctor_3= ''
+  response_6_raison_3= ''
+  response_6_doctor_3= document.getElementById("doctor_input_6_3").value
+  response_6_raison_3= document.getElementById("raison_6_3").value
+  if (response_6_doctor_3.length == 0){
+    response_6_doctor_3 = "none"
+  }
+  if (response_6_raison_3.length == 0){
+    response_6_raison_3 = "none"
+  }
+  response_6.answers.push({docteur3: response_6_doctor_3, reason_3:response_6_raison_3})
+
+
+  response_6_doctor_4= ''
+  response_6_raison_4= ''
+  response_6_doctor_4= document.getElementById("doctor_input_6_4").value
+  response_6_raison_4= document.getElementById("raison_6_4").value
+  if (response_6_doctor_4.length == 0){
+    response_6_doctor_4 = "none"
+  }
+  if (response_6_raison_4.length == 0){
+    response_6_raison_4 = "none"
+  }
+  response_6.answers.push({docteur4: response_6_doctor_4, reason_4:response_6_raison_4})
+
+
+  response_6_doctor_5= ''
+  response_6_raison_5= ''
+  response_6_doctor_5= document.getElementById("doctor_input_6_5").value
+  response_6_raison_5= document.getElementById("raison_6_5").value
+  if (response_6_doctor_5.length == 0){
+    response_6_doctor_5 = "none"
+  }
+  if (response_6_raison_5.length == 0){
+    response_6_raison_5 = "none"
+  }
+  response_6.answers.push({docteur5: response_6_doctor_5, reason_5:response_6_raison_5})
+
+
+  response_6_doctor_6= ''
+  response_6_raison_6= ''
+  response_6_doctor_6= document.getElementById("doctor_input_6_6").value
+  response_6_raison_6= document.getElementById("raison_6_6").value
+  if (response_6_doctor_6.length == 0){
+    response_6_doctor_6 = "none"
+  }
+  if (response_6_raison_6.length == 0){
+    response_6_raison_6 = "none"
+  }
+  response_6.answers.push({docteur6: response_6_doctor_6, reason_6:response_6_raison_6})
+
+
+  response_6_doctor_7= ''
+  response_6_raison_7= ''
+  response_6_doctor_7= document.getElementById("doctor_input_6_7").value
+  response_6_raison_7= document.getElementById("raison_6_7").value
+  if (response_6_doctor_7.length == 0){
+    response_6_doctor_7 = "none"
+  }
+  if (response_6_raison_7.length == 0){
+    response_6_raison_7 = "none"
+  }
+  response_6.answers.push({docteur7: response_6_doctor_7, reason_7:response_6_raison_7})
+
+
+  response_6_doctor_8= ''
+  response_6_raison_8= ''
+  response_6_doctor_8= document.getElementById("doctor_input_6_8").value
+  response_6_raison_8= document.getElementById("raison_6_8").value
+  if (response_6_doctor_8.length == 0){
+    response_6_doctor_8 = "none"
+  }
+  if (response_6_raison_8.length == 0){
+    response_6_raison_8 = "none"
+  }
+  response_6.answers.push({docteur8: response_6_doctor_8, reason_8:response_6_raison_8})
+
+
+  response_6_doctor_9= ''
+  response_6_raison_9= ''
+  response_6_doctor_9= document.getElementById("doctor_input_6_9").value
+  response_6_raison_9= document.getElementById("raison_6_9").value
+  if (response_6_doctor_9.length == 0){
+    response_6_doctor_9 = "none"
+  }
+  if (response_6_raison_9.length == 0){
+    response_6_raison_9 = "none"
+  }
+  response_6.answers.push({docteur9: response_6_doctor_9, reason_9:response_6_raison_9})
+
+
+  response_6_doctor_10= ''
+  response_6_raison_10= ''
+  response_6_doctor_10= document.getElementById("doctor_input_6_10").value
+  response_6_raison_10= document.getElementById("raison_6_10").value
+  if (response_6_doctor_10.length == 0){
+    response_6_doctor_10 = "none"
+  }
+  if (response_6_raison_10.length == 0){
+    response_6_raison_10 = "none"
+  }
+  response_6.answers.push({docteur10: response_6_doctor_10, reason_10:response_6_raison_10})
+
+
+  const response_7 = {answers: []}
+
+  let doctorNameFound = false;
+
+  for (let i = 1; i < id; i++) {
+    const doctor_name = document.getElementById("doctor_7_" + i);
+    const plus = document.getElementById("plus_7_" + i);
+
+    if (doctor_name && plus) {
+      response_7.answers.push({
+        doctor: doctor_name.textContent,
+        plus: plus.value
+      });
+      doctorNameFound = true;
+    } else {
+      continue;
+    }
+  }
+  if (!doctorNameFound) {
+    response_7.answers.push({
+      doctor: 'none',
+      plus: 'none'
+    });
+  }
+
+  let doctorNameFound_8 = false;
+  const response_8 = {answers: []}
+  for(i=1;i<id_8;i++){
+    doctor_name = document.getElementById("doctor_8_"+i);
+    raison = document.getElementById("raison_8_"+i);
+    if (doctor_name && raison) {
+      response_8.answers.push({doctor: doctor_name.textContent, reason: raison.value});
+      doctorNameFound_8 = true;
+    }else{
+      continue;
+    }
+  }
+  if (!doctorNameFound_8) {
+    response_8.answers.push({
+      doctor: 'none',
+      plus: 'none'
+    });
+  }
+
+  let doctorNameFound_9 = false;
+  const response_9 = {answers: []}
+  for(i=1;i<id_9;i++){
+    doctor_name = document.getElementById("doctor_9_"+i);
+    suggestion = document.getElementById("raison_9_"+i);
+    if (doctor_name && suggestion) {
+      response_9.answers.push({doctor: doctor_name.textContent, suggestion: suggestion.value});
+      doctorNameFound_9 = true
+    }else{
+      continue;
+    }
+  }
+  if (!doctorNameFound_9) {
+    response_9.answers.push({
+      doctor: 'none',
+      plus: 'none'
+    });
+  }
+
+  const response_10 = {answers: []}
+
+  response_10_doctor_1= ''
+  response_10_raison_1= ''
+  produit_dropdown_10_1= document.getElementById("produit_dropdown_10_1").textContent
+  response_10_doctor_1= document.getElementById("doctor_input_10_1").value
+  response_10_raison_1= document.getElementById("raison_10_1").value
+  if (response_10_doctor_1.length == 0){
+    response_10_doctor_1 = "none"
+  }
+  if (response_10_raison_1.length == 0){
+    response_10_raison_1 = "none"
+  }
+  response_10.answers.push({produit1:produit_dropdown_10_1, docteur1: response_10_doctor_1, reason_1:response_10_raison_1})
+
+
+  response_10_doctor_2= ''
+  response_10_raison_2= ''
+  produit_dropdown_10_2= document.getElementById("produit_dropdown_10_2").textContent
+  response_10_doctor_2= document.getElementById("doctor_input_10_2").value
+  response_10_raison_2= document.getElementById("raison_10_2").value
+  if (response_10_doctor_2.length == 0){
+    response_10_doctor_2 = "none"
+  }
+  if (response_10_raison_2.length == 0){
+    response_10_raison_2 = "none"
+  }
+  response_10.answers.push({produit2:produit_dropdown_10_2, docteur2: response_10_doctor_2, reason_2:response_10_raison_2})
+  
+  response_10_doctor_3= ''
+  response_10_raison_3= ''
+  produit_dropdown_10_3= document.getElementById("produit_dropdown_10_3").textContent
+  response_10_doctor_3= document.getElementById("doctor_input_10_3").value
+  response_10_raison_3= document.getElementById("raison_10_3").value
+  if (response_10_doctor_3.length == 0){
+    response_10_doctor_3 = "none"
+  }
+  if (response_10_raison_3.length == 0){
+    response_10_raison_3 = "none"
+  }
+  response_10.answers.push({produit3:produit_dropdown_10_3, docteur3: response_10_doctor_3, reason_3:response_10_raison_3})
+  
+  response_10_doctor_4= ''
+  response_10_raison_4= ''
+  produit_dropdown_10_4= document.getElementById("produit_dropdown_10_4").textContent
+  response_10_doctor_4= document.getElementById("doctor_input_10_4").value
+  response_10_raison_4= document.getElementById("raison_10_4").value
+  if (response_10_doctor_4.length == 0){
+    response_10_doctor_4 = "none"
+  }
+  if (response_10_raison_4.length == 0){
+    response_10_raison_4 = "none"
+  }
+  response_10.answers.push({produit4:produit_dropdown_10_4, docteur4: response_10_doctor_4, reason_4:response_10_raison_4})
+
+  response_10_doctor_5= ''
+  response_10_raison_5= ''
+  produit_dropdown_10_5= document.getElementById("produit_dropdown_10_5").textContent
+  response_10_doctor_5= document.getElementById("doctor_input_10_5").value
+  response_10_raison_5= document.getElementById("raison_10_5").value
+  if (response_10_doctor_5.length == 0){
+    response_10_doctor_5 = "none"
+  }
+  if (response_10_raison_5.length == 0){
+    response_10_raison_5 = "none"
+  }
+  response_10.answers.push({produit5:produit_dropdown_10_5, docteur5: response_10_doctor_5, reason_5:response_10_raison_5})
+
+  response_10_doctor_6= ''
+  response_10_raison_6= ''
+  produit_dropdown_10_6= document.getElementById("produit_dropdown_10_6").textContent
+  response_10_doctor_6= document.getElementById("doctor_input_10_6").value
+  response_10_raison_6= document.getElementById("raison_10_6").value
+  if (response_10_doctor_6.length == 0){
+    response_10_doctor_6 = "none"
+  }
+  if (response_10_raison_6.length == 0){
+    response_10_raison_6 = "none"
+  }
+  response_10.answers.push({produit6:produit_dropdown_10_6, docteur6: response_10_doctor_6, reason_6:response_10_raison_6})
+
+  response_10_doctor_7= ''
+  response_10_raison_7= ''
+  produit_dropdown_10_7= document.getElementById("produit_dropdown_10_7").textContent
+  response_10_doctor_7= document.getElementById("doctor_input_10_7").value
+  response_10_raison_7= document.getElementById("raison_10_7").value
+  if (response_10_doctor_7.length == 0){
+    response_10_doctor_7 = "none"
+  }
+  if (response_10_raison_7.length == 0){
+    response_10_raison_7 = "none"
+  }
+  response_10.answers.push({produit7:produit_dropdown_10_7, docteur7: response_10_doctor_7, reason_7:response_10_raison_7})
+
+  response_10_doctor_8= ''
+  response_10_raison_8= ''
+  produit_dropdown_10_8= document.getElementById("produit_dropdown_10_8").textContent
+  response_10_doctor_8= document.getElementById("doctor_input_10_8").value
+  response_10_raison_8= document.getElementById("raison_10_8").value
+  if (response_10_doctor_8.length == 0){
+    response_10_doctor_8 = "none"
+  }
+  if (response_10_raison_8.length == 0){
+    response_10_raison_8 = "none"
+  }
+  response_10.answers.push({produit8:produit_dropdown_10_8, docteur8: response_10_doctor_8, reason_8:response_10_raison_8})
+
+  response_10_doctor_9= ''
+  response_10_raison_9= ''
+  produit_dropdown_10_9= document.getElementById("produit_dropdown_10_9").textContent
+  response_10_doctor_9= document.getElementById("doctor_input_10_9").value
+  response_10_raison_9= document.getElementById("raison_10_9").value
+  if (response_10_doctor_9.length == 0){
+    response_10_doctor_9 = "none"
+  }
+  if (response_10_raison_9.length == 0){
+    response_10_raison_9 = "none"
+  }
+  response_10.answers.push({produit9:produit_dropdown_10_9, docteur9: response_10_doctor_9, reason_9:response_10_raison_9})
+
+  response_10_doctor_10= ''
+  response_10_raison_10= ''
+  produit_dropdown_10_10= document.getElementById("produit_dropdown_10_10").textContent
+  response_10_doctor_10= document.getElementById("doctor_input_10_10").value
+  response_10_raison_10= document.getElementById("raison_10_10").value
+  if (response_10_doctor_10.length == 0){
+    response_10_doctor_10 = "none"
+  }
+  if (response_10_raison_10.length == 0){
+    response_10_raison_10 = "none"
+  }
+  response_10.answers.push({produit10:produit_dropdown_10_10, docteur10: response_10_doctor_10, reason_10:response_10_raison_10})
+
+  response_10_doctor_11= ''
+  response_10_raison_11= ''
+  produit_dropdown_10_11= document.getElementById("produit_dropdown_10_11").textContent
+  response_10_doctor_11= document.getElementById("doctor_input_10_11").value
+  response_10_raison_11= document.getElementById("raison_10_11").value
+  if (response_10_doctor_11.length == 0){
+    response_10_doctor_11 = "none"
+  }
+  if (response_10_raison_11.length == 0){
+    response_10_raison_11 = "none"
+  }
+  response_10.answers.push({produit11:produit_dropdown_10_11, docteur11: response_10_doctor_11, reason_11:response_10_raison_11})
+
+
+  var postData = {    
+            csrfmiddlewaretoken: csrfToken,
+            q1: response_1,
+            q2: JSON.stringify(response_2),
+            q3: JSON.stringify(response_3),
+            q4: JSON.stringify(response_4),
+            q5: JSON.stringify(response_5),
+            q6: JSON.stringify(response_6),
+            q7: JSON.stringify(response_7),
+            q8: JSON.stringify(response_8),
+            q9: JSON.stringify(response_9),
+            q10: JSON.stringify(response_10)
+  };
+  const urlParams = new URLSearchParams(window.location.search);
+  const monthUrl = urlParams.get('month');
+
+
+  const textAreas = document.querySelectorAll(
+  '[id^="RaisonsMedecinsNonVisites_"], ' +
+  '[id^="RaisonMedecinsVisitesDuo_"], ' +
+  '[id^="RaisonsMedecinsMultiplesVisites_"], ' +
+  '[id^="raison_8_"], ' +
+  '[id^="raison_9_"], ' +
+  '[id^="plus_7_"] ' 
+
+);
+
+let hasEmptyField = false;
+
+for (let i = 0; i < textAreas.length; i++) {
+  const textAreaValue = textAreas[i].value.trim();
+
+  if (textAreaValue === "") {
+    hasEmptyField = true;
+    textAreas[i].classList.add("is-invalid");
+    textAreas[i].classList.remove("is-valid");
+  } else {
+    textAreas[i].classList.remove("is-invalid");
+    textAreas[i].classList.add("is-valid");
+  }
+}
+
+if (hasEmptyField) {
+  vanillaToast.error("ATTENTION: Remplissez tous les champs avant de soumettre le formulaire.");   
+}else{
+  $.ajax({
+      url: '/monthly_evaluation/AddMonthlyEvaluation/?month=' + monthUrl,
+      type: 'POST',
+      data: postData,
+      success: function (response) {
+        vanillaToast.success('SUCCESS');
+      },
+      error: function (xhr, status, error) {
+        vanillaToast.error("ATTENTION: Vous avez deja un rapport mensuel pour le mois courant");
+      }
+    });
+}
+
+}
+
+document.getElementById('submit').addEventListener('click', makePostRequest);
+</script>
+<script>
+  const monthSelect = document.getElementById("monthSelect");
+
+  // Obtenir la date actuelle
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1; // Valeur entre 1 et 12 (janvier = 1, décembre = 12)
+
+  // Vérifier si le paramètre 'month' est déjà présent dans l'URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const monthUrl = urlParams.get('month');
+
+  // Si le paramètre 'month' n'est pas déjà présent dans l'URL, ajouter le mois courant
+  if (!monthUrl) {
+    const baseUrl = window.location.href.split('?')[0]; // Récupérer l'URL de base sans les paramètres
+    const newUrl = `${baseUrl}?month=${currentMonth}`; // Construire la nouvelle URL avec le mois courant
+    history.replaceState({}, document.title, newUrl); // Mettre à jour l'URL sans recharger la page
+  }
+
+  for (let i = 0; i < currentMonth; i++) {
+    const option = document.createElement("option");
+    option.value = i + 1; // Valeur de l'option (de 1 à 12)
+    option.textContent = getMonthName(i); // Fonction pour obtenir le nom du mois
+    monthSelect.appendChild(option);
+  }
+
+  // Fonction pour obtenir le nom du mois
+  function getMonthName(monthIndex) {
+    const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+    return monthNames[monthIndex];
+  }
+
+  // Mettre à jour le mois sélectionné dans le <select> s'il est valide
+  if (monthUrl && 1 <= monthUrl <= 12) {
+    monthSelect.value = monthUrl;
+    monthSelect.selectedIndex = monthUrl - 1;
+  } else {
+    monthSelect.value = currentMonth; // Sélectionner le mois courant par défaut
+    monthSelect.selectedIndex = currentMonth - 1; // Sélectionner l'option correspondant au mois courant
+  }
+
+  // Gestionnaire d'événement pour écouter le changement de sélection dans le <select>
+  monthSelect.addEventListener("change", function() {
+    updateURL(); // Mettre à jour l'URL avec le mois sélectionné
+    window.location.reload(); // Rafraîchir la page pour effectuer le fetch avec le mois sélectionné
+  });
+
+  // Mettre à jour l'URL avec le mois sélectionné sans rafraîchir la page
+  function updateURL() {
+    const selectedMonth = monthSelect.value;
+    const baseUrl = window.location.href.split('?')[0]; // Récupérer l'URL de base sans les paramètres
+    const newUrl = `${baseUrl}?month=${selectedMonth}`; // Construire la nouvelle URL avec le mois sélectionné
+    history.replaceState({}, document.title, newUrl); // Mettre à jour l'URL sans recharger la page
+  }
+</script>
+<script>
+  const printButton = document.getElementById('imprimer-bouton');
+
+// Add a click event listener to the button
+printButton.addEventListener('click', function() {
+  // Call the window.print() method to trigger the print dialog
+  window.print();
+});
+</script>
+
+
+<!-- COMMERCIALS SCRIPTS  -->
+<!-- <script>
+  function fetchSuperGro() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const monthUrl = urlParams.get('month');
+
+  fetch('https://app.liliumpharma.com/medecins/api/SuperGrossitesVisitsPerUser?month=' + monthUrl)
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data);
+      nombre_super_grossites_visites = data.nombre_visites;
+      document.getElementById("response_12_medecins").innerHTML = data.nombre_visites;
+
+      const field_12 = document.getElementById("raison_12");
+      const max_display = 5;
+      let counter = 0;
+
+      data.noms_medecins_visites.forEach((medecin) => {
+        const newDiv = document.createElement("div");
+        newDiv.id = "GrossitesVisitesDiv_" + counter;
+        newDiv.className = "d-flex";
+        newDiv.style = "margin-bottom: 15px;";
+
+        const div_doctor = document.createElement("div");
+        div_doctor.id = "div_supergro_" + counter;
+        div_doctor.className = "d-block";
+
+        const doctorNameElement = document.createElement("p");
+        doctorNameElement.id = "NomsSuperGroVisites_" + counter;
+        doctorNameElement.style = "color:green;font-weight: bold;width:400px; margin:0px";
+        doctorNameElement.innerHTML = medecin;
+
+        div_doctor.appendChild(doctorNameElement);
+
+        newDiv.appendChild(div_doctor);
+
+        const textAreaElement = document.createElement("textarea");
+        textAreaElement.id = "RaisonsSuperGroVisites_" + counter;
+        textAreaElement.className = "form-control text-left";
+        textAreaElement.placeholder = "Raison de la visite...";
+        newDiv.appendChild(textAreaElement);
+
+        const brElement = document.createElement("br");
+
+        if (counter >= max_display) {
+          newDiv.className = "d-none";
+        }
+
+        field_12.appendChild(newDiv);
+        counter++;
+      });
+
+      const voir_plus_button = document.createElement("p");
+      voir_plus_button.textContent = "+ Voir plus";
+      voir_plus_button.cursor = "pointer";
+      voir_plus_button.className = "btn btn-primary";
+      if (counter > max_display)
+        field_12.appendChild(voir_plus_button);
+      voir_plus_button.addEventListener("click", () => {
+        for (i = max_display; i < counter; i++) {
+          div = document.getElementById("MedecinsNonVisitesDiv_" + i);
+          div.classList.add("d-flex");
+          div.classList.remove("d-none");
+        }
+        voir_plus_button.remove();
+      });
+    });
+}
+fetchSuperGro();
+</script>
+<script>
+  function fetchPharmacies(){
+    const urlParams = new URLSearchParams(window.location.search);
+    const monthUrl = urlParams.get('month');
+
+    fetch('https://app.liliumpharma.com/medecins/api/PharmaciesGrossitesVisitsPerUser?month='+monthUrl)
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("response_11").innerHTML = data.nombre_visites
+        document.getElementById("doctors_11").innerHTML = data.noms_medecins_visites
+         
+         
+      })
+  }
+fetchPharmacies()
+</script>
+<script>
+function fetchOrders() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const monthUrl = urlParams.get('month');
+  
+  fetch('https://app.liliumpharma.com/orders/ordersPerUserPerMonth?month=' + monthUrl)
+    .then((response) => response.json())
+    .then((data) => {
+      console.log(data);
+      
+      const tableBody = document.getElementById("field_13"); // Get the table body
+      
+      nombre_de_bons = document.getElementById("response_13_nombre");
+      nombre_de_bons.innerHTML = data.total_orders;
+      
+      data.orders.forEach((order, index) => {
+        const newRow = document.createElement("tr"); // Create a new table row for each order
+
+        // Populate table cells with order data
+        const dateCell = document.createElement("td");
+        dateCell.innerHTML = order.date;
+        
+        const idCell = document.createElement("td");
+        idCell.innerHTML = order.order_id;
+
+        const statusCell = document.createElement("td");
+        statusCell.innerHTML = order.status;
+
+        // Apply different colors based on the status of the order
+        let statusColor;
+        switch (order.status) {
+          case "initial":
+            statusColor = "blue";
+            break;
+          case "confirme":
+            statusColor = "green";
+            break;
+          case "en cours":
+            statusColor = "orange";
+            break;
+          default:
+            statusColor = "black"; // Default color if none of the cases match
+            break;
+        }
+        statusCell.style.color = statusColor; // Style the "Status" cell with the selected color
+
+        const pharmacyCell = document.createElement("td");
+        pharmacyCell.innerHTML = order.pharmacy || "-"; // Use a hyphen if pharmacy is empty
+
+        const grosCell = document.createElement("td");
+        grosCell.innerHTML = order.gros || "-"; // Use a hyphen if gros is empty
+
+        const superGrosCell = document.createElement("td");
+        superGrosCell.innerHTML = order.super_gros || "-"; // Use a hyphen if super_gros is empty
+
+        const productsCell = document.createElement("td");
+        const productList = document.createElement("ul");
+        order.products.forEach((product) => {
+          const productItem = document.createElement("li");
+          productItem.innerHTML = product.product_name + " - Quantity: " + product.quantity;
+          productList.appendChild(productItem);
+        });
+        productsCell.appendChild(productList);
+
+        // Add cells to the row
+        newRow.appendChild(dateCell);
+        newRow.appendChild(idCell);
+        newRow.appendChild(statusCell);
+        newRow.appendChild(pharmacyCell);
+        newRow.appendChild(grosCell);
+        newRow.appendChild(superGrosCell);
+        newRow.appendChild(productsCell);
+
+        // Add the row to the table body
+        tableBody.appendChild(newRow);
+      });
+    })
+    .catch((error) => {
+      console.error("Error fetching orders:", error);
+    });
+}
+
+fetchOrders();
+</script> -->
+</html>

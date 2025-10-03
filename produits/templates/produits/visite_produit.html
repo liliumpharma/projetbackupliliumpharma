@@ -1,0 +1,323 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+    <title>Technical Data Sheet PDF</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        position: relative;
+      }
+
+      .all_page {
+        width: 100%;
+        height: 100%;
+      }
+
+      .primary-title {
+        font-size: 15px;
+        font-weight: bold;
+      }
+
+      .secondary-title {
+        font-size: 13px;
+        font-weight: bold;
+      }
+
+      .simple-text {
+        font-size: 13px;
+      }
+
+      .small-text {
+        font-size: 10px;
+      }
+
+      .title {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-weight: bold;
+        font-size: 50px
+      }
+
+      .background-image {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: -1;
+      }
+
+      .content {
+        z-index: 1;
+        position: relative;
+      }
+
+      footer {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        padding: 10px;
+        text-align: center;
+      }
+
+      @media print {
+        body {
+          width: 210mm;
+          height: 367mm;
+          position: relative;
+          padding-bottom: 100px;
+          /* Changement de l'attachment pour l'impression */
+        }
+
+        .all_page {
+          width: 100%;
+          height: 100%;
+          margin-bottom: 50%;
+          position: relative;
+          /* Ajout de cette propriété pour positionnement relatif */
+        }
+
+        table {
+          font-size: 13px;
+        }
+
+        .content {
+          page-break-before: always;
+        }
+
+        footer {
+          position: absolute;
+          bottom: 0;
+          /* on le colle en bas */
+          width: 100%;
+          height: 100px;
+        }
+
+        hr {
+          margin-left: 80px;
+          margin-right: 80px;
+          margin-bottom: 0;
+          border: 2px solid green;
+        }
+
+        .ligne {
+          border: 0.5px solid grey;
+          color: green;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <style>
+      header {
+        background-color: #e0f0e9;
+        padding: 10px 20px;
+        display: flex;
+        align-items: center;
+      }
+
+      .back-arrow a {
+        color: #333;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 16px;
+      }
+
+      .back-arrow a:hover {
+        text-decoration: underline;
+      }
+
+      h1 {
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      .content {
+        padding: 20px;
+      }
+
+      .fa-arrow-left {
+        margin-right: 5px;
+        color: #fff;
+        background-color: #4CAF50;
+        border-radius: 50%;
+        padding: 8px;
+      }
+    </style>
+    <header>
+      <h1>Statistiques Visite Par Produit</h1>
+    </header>
+    <style>
+      .select-box {
+        width: 200px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+        color: #333;
+        background-color: #fff;
+      }
+    </style>
+    <div class="d-flex mt-4">
+      <h5 for="productSelect" style="margin-right: 10px;">Select a product:</h5>
+      <select class="select-box" id="productSelect" onchange="updateChart()">
+        <!-- Les options seront ajoutées dynamiquement ici -->
+      </select>
+    </div>
+
+    <div class="d-flex mt-4">
+      <h5 for="monthSelect" style="margin-right: 10px;">Select a month:</h5>
+      <select class="select-box" id="monthSelect" onchange="updateChart()">
+          <!-- Les options seront ajoutées dynamiquement ici -->
+      </select>
+  </div>
+
+
+    <div>
+      <p>
+        <span id="total"></span>
+      </p>
+    </div>
+    <div class="chart-container">
+      <canvas id="myChart"></canvas>
+    </div>
+  </body>
+
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const monthSelect = document.getElementById('monthSelect');
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth() + 1; // Les mois commencent à partir de zéro (janvier = 0)
+
+    // Ajouter les options pour les mois jusqu'au mois courant de l'année
+    for (let month = 1; month <= currentMonth; month++) {
+        const option = document.createElement('option');
+        option.value = `${currentYear}-${String(month).padStart(2, '0')}`;
+        option.textContent = `${getMonthName(month)} ${currentYear}`;
+        monthSelect.appendChild(option);
+    }
+});
+
+// Fonction pour obtenir le nom du mois à partir de son numéro
+function getMonthName(monthNumber) {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return months[monthNumber - 1];
+}
+
+function updateChart() {
+    // Mettre à jour le graphique en fonction de la sélection
+    // Ajoutez votre logique de mise à jour du graphique ici
+}
+
+</script>
+
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Récupérer les produits disponibles depuis le serveur
+      fetch('https://app.liliumpharma.com/produits/api/visites-produit/').then(response => response.json()).then(data => {
+        // Créer un ensemble (Set) pour stocker les noms de produits uniques
+        const uniqueProducts = new Set();
+        // Parcourir la liste d'objets et ajouter les noms de produits à l'ensemble
+        data.forEach(item => {
+          uniqueProducts.add(item.product);
+        });
+        // Convertir l'ensemble en un tableau pour pouvoir itérer dessus
+        const productsArray = Array.from(uniqueProducts);
+        // Sélectionner le select et ajouter les options pour chaque produit
+        const productSelect = document.getElementById('productSelect');
+        productsArray.forEach(product => {
+          const option = document.createElement('option');
+          option.value = product;
+          option.textContent = product;
+          productSelect.appendChild(option);
+        });
+        // Mettre à jour le graphique avec les données du premier produit lors du chargement initial
+        updateChart();
+      }).catch(error => {
+        console.error('Error fetching data:', error);
+      });
+    });
+
+    function calculateTotalCountByYear(data) {
+      let totalCountByYear = {
+        2023: 0,
+        2024: 0
+      };
+      data.forEach(item => {
+        totalCountByYear[item.year] += item.count;
+      });
+      return totalCountByYear;
+    }
+    // Mettre à jour le contenu de la balise 
+
+    function updateTotalCount(totalCountByYear) {
+      const totalSpan = document.getElementById('total');
+      totalSpan.textContent = `Number of Calls in 2024: ${totalCountByYear['2024']}`;
+    }
+    // Calculer la somme des counts par année
+    const totalCountByYear = calculateTotalCountByYear(data);
+    updateTotalCount(totalCountByYear);
+
+    function updateChart() {
+      const selectedProduct = document.getElementById('productSelect').value;
+      const selectedMonth = document.getElementById('monthSelect').value;
+
+      fetch(`https://app.liliumpharma.com/produits/api/visites-produit/?user=7&product=${selectedProduct}&month=${selectedMonth}`).then(response => response.json()).then(data => {
+        const labels = data.map(item => `${item.year}-${item.month}-${item.day}`);
+        const counts = data.map(item => item.count);
+        // Calculer la somme des counts par année
+        const totalCountByYear = calculateTotalCountByYear(data);
+        // Mettre à jour le contenu de la balise 
+        updateTotalCount(totalCountByYear);
+        const ctx = document.getElementById('myChart').getContext('2d');
+        // Vérifiez si window.myChart est défini et s'il contient une instance de Chart.js
+        if (window.myChart) {
+          // Si oui, détruisez le graphique existant avant d'en créer un nouveau
+          if (typeof window.myChart.destroy === 'function') {
+            window.myChart.destroy();
+          }
+        }
+        window.myChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: `Number of Visits for ${selectedProduct}`,
+              data: counts,
+              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+              borderColor: 'rgba(75, 192, 192, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            scales: {
+              yAxes: [{
+                ticks: {
+                  beginAtZero: true
+                }
+              }]
+            }
+          }
+        });
+      }).catch(error => {
+        console.error('Error fetching data:', error);
+      });
+    }
+  </script>
+</html>

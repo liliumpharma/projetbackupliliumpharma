@@ -1,0 +1,516 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+    <title>Technical Data Sheet PDF</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        position: relative;
+      }
+
+      .all_page {
+        width: 100%;
+        height: 100%;
+      }
+
+      .primary-title {
+        font-size: 15px;
+        font-weight: bold;
+      }
+
+      .secondary-title {
+        font-size: 13px;
+        font-weight: bold;
+      }
+
+      .simple-text {
+        font-size: 13px;
+      }
+
+      .small-text {
+        font-size: 10px;
+      }
+
+      .title {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-weight: bold;
+        font-size: 50px
+      }
+
+      .background-image {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: -1;
+      }
+
+      .content {
+        z-index: 1;
+        position: relative;
+      }
+
+      footer {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        padding: 10px;
+        text-align: center;
+      }
+
+      @media print {
+        body {
+          width: 210mm;
+          height: 367mm;
+          position: relative;
+          padding-bottom: 100px;
+          /* Changement de l'attachment pour l'impression */
+        }
+
+        .all_page {
+          width: 100%;
+          height: 100%;
+          margin-bottom: 50%;
+          position: relative;
+          /* Ajout de cette propriété pour positionnement relatif */
+        }
+
+        table {
+          font-size: 13px;
+        }
+
+        .content {
+          page-break-before: always;
+        }
+
+        footer {
+          position: absolute;
+          bottom: 0;
+          /* on le colle en bas */
+          width: 100%;
+          height: 100px;
+        }
+
+        hr {
+          margin-left: 80px;
+          margin-right: 80px;
+          margin-bottom: 0;
+          border: 2px solid green;
+        }
+
+        .ligne {
+          border: 0.5px solid grey;
+          color: green;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="all_page align-items-center">
+      <img src="{% static 'img/logo_less.png' %}" alt="Background Image" class="background-image" width="75%">
+      <div class="col-12 title">
+        <p class="text-center" style="font-weight:bold;">TECHNICAL DATA SHEET (TDS)</p>
+        <p id="name" class="text-center" style="font-weight:bold;"></p>
+      </div>
+    </div>
+    <div id="container">
+      <div class="container pt-4 content">
+        <img src="{% static 'img/logo22.png' %}" width="90px" style="position: absolute; margin-left: 60px;">
+        <!-- <img src="{% static 'img/logo_less.png' %}" alt="Background Image" class="background-image" width="75%"> -->
+        <div class="d-flex flex-column align-items-center text-center">
+          <!-- <img src="{% static 'img/logo.png' %}" style="height: 80px;"> -->
+          <h2 class="mb-0 mt-4"> TECHNICAL DATA SHEET</h2>
+        </div>
+        <div style="margin-top:100px; margin-left:60px">
+          <p class="primary-title">1.IDENTIFICATION OF THE SUBSTANCE/MIXTURE AND THE COMPANY/UNDERTAKING</p>
+          <div class="d-flex">
+            <div class="col-6">
+              <p class="secondary-title">PRODUCT IDENTIFIER:</p>
+            </div>
+            <div class="col-6">
+              <p id="product_identifier" class="simple-text"></p>
+            </div>
+          </div>
+          <div class="d-flex mt-3">
+            <div class="col-6">
+              <p class="secondary-title">Relevant Identified of the substance or Mixture and uses advise against intended use:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">As a dietary supplement</p>
+            </div>
+          </div>
+          <div class="d-flex mt-3">
+            <div class="col-6">
+              <p class="secondary-title">details of the supplier of the data sheet:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">LILIUM PHARMA ALGERIE Lotissement communal C N°123 2eme Etage, draria, Alger</p>
+            </div>
+          </div>
+          <!-- ------------------- -->
+          <p class="primary-title">2. HAZARDS IDENTIFICATION</p>
+          <div style="margin-left:16px">
+            <p class="secondary-title">Classification of the substance or Mixture </p>
+          </div>
+          <div class="d-flex mt-3" style="margin-left:6px">
+            <div class="col-6">
+              <p class="secondary-title">Classification:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Not classified as hazardous</p>
+            </div>
+          </div>
+          <div style="margin-left:16px">
+            <p class="secondary-title">US OSHA Specific – Classification </p>
+          </div>
+          <div class="d-flex mt-3" style="margin-left:6px">
+            <div class="col-6">
+              <p class="secondary-title">Physical Hazard:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Combustible Dust</p>
+            </div>
+          </div>
+          <div style="margin-left:16px">
+            <p class="secondary-title">EU Classification </p>
+          </div>
+          <div class="d-flex mt-3" style="margin-left:6px">
+            <div class="col-6">
+              <p class="secondary-title"> Indication of danger:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Not classified</p>
+            </div>
+          </div>
+          <p class="small-text">Note: this document has been prepared in accordance with standards for workplace safety, which requires the inclusion of all known hazards of the product its ingredients regardless the potential risk. The precautionary statements and warning included may not apply in all cases. </br>Your needs may vary depending upon the potential for exposure in your workplace. </p>
+          <!-- ------------------- -->
+          <p class="primary-title">3. COMPOSITION / INFORMATION ON INGREDIENTS</p>
+          <div style="margin-left:16px">
+            <p class="secondary-title">Active Ingredients Claim: Per 5.00 g</p>
+          </div>
+          <div class="col-12">
+            <table id="active_ingredient" style="border: 2px solid black; width: 100%;"></table>
+          </div>
+          <div class="d-flex mt-3" style="margin-left:6px">
+            <div class="col-6">
+              <p class="secondary-title"> Suggested use:</p>
+            </div>
+            <div class="col-6">
+              <p id="Suggested_use" class="simple-text"></p>
+            </div>
+          </div>
+          <!-- ------------------- -->
+          <p class="primary-title">4. FIRST AID MEASURES</p>
+          <div class="d-flex mt-3" style="margin-left:6px">
+            <div class="col-6">
+              <p class="secondary-title">Eye Contact:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Flush with water holding eyelids open for at least 15 minutes </br>Seek medical attention immediately </p>
+            </div>
+          </div>
+          <div class="d-flex mt-3" style="margin-left:6px">
+            <div class="col-6">
+              <p class="secondary-title"> Skin Contact:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Remove contaminated clothing. </br>Flush area with large amounts of water Use soap. </br>Seek medical attention </p>
+            </div>
+          </div>
+          <div class="d-flex mt-3" style="margin-left:6px">
+            <div class="col-6">
+              <p class="secondary-title">Ingestion:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Never give anything by mouth to an unconscious person </br>Wash out mouth with water </br>Do not induce vomiting unless directed by medical personnel </br>Seek medical attention immediately </p>
+            </div>
+          </div>
+          <div class="d-flex mt-3" style="margin-left:6px">
+            <div class="col-6">
+              <p class="secondary-title">Inhalation:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Remove to fresh air and keep patient at rest </br>Seek medical attention immediately </p>
+            </div>
+          </div>
+          <p class="primary-title mt-4">5. FIRE FIGHTING MEASURES </p>
+          <div class="d-flex">
+            <div class="col-6">
+              <p class="secondary-title">Auto Flammability:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Unknown.</p>
+            </div>
+          </div>
+          <div class="d-flex mt-3">
+            <div class="col-6">
+              <p class="secondary-title">Flash Point:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Unknown.</p>
+            </div>
+          </div>
+          <div class="d-flex mt-3">
+            <div class="col-6">
+              <p class="secondary-title">Extinguishing Media:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Water spray, carbon dioxide, dry chemical powder or appropriate foam.</p>
+            </div>
+          </div>
+          <div class="d-flex mt-3" style="margin-left:6px">
+            <div class="col-6">
+              <p class="secondary-title">Special Fire Fighting Procedures:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Wear self-contained breathing apparatus and protective clothing to </br>Prevent contact with skin and eyes. </p>
+            </div>
+          </div>
+          <div class="d-flex mt-3" style="margin-left:6px">
+            <div class="col-6">
+              <p class="secondary-title">Unusual Fire and Explosions Hazards:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Emits toxic fumes under fire conditions.</p>
+            </div>
+          </div>
+          <div class="d-flex mt-3" style="margin-left:6px">
+            <div class="col-6">
+              <p class="secondary-title">Hazardous Combustion Products:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">thermal decomposition could produce carbon monoxide. </br>Carbon dioxide and unidentified organic compounds. </p>
+            </div>
+          </div>
+          <div class="d-flex mt-3" style="margin-left:6px">
+            <div class="col-6">
+              <p class="secondary-title">Upper Explosion Limit %:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Not applicable.</p>
+            </div>
+          </div>
+          <div class="d-flex mt-3" style="margin-left:6px">
+            <div class="col-6">
+              <p class="secondary-title">Lower Explosion Limit %:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Not applicable.</p>
+            </div>
+          </div>
+          <p class="primary-title mt-4">6. ACCIDENTAL RELEASE MESURES</p>
+          <div class="d-flex">
+            <div class="col-6">
+              <p class="secondary-title">Personal Precautions, Protective Equipment and Emergency Procedures</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Personal involved in clean-up should wear appropriate personal </br>Protective equipment (see Section 8). Minimize exposure </p>
+            </div>
+          </div>
+          <div class="d-flex mt-3">
+            <div class="col-6">
+              <p class="secondary-title">Environment Precautions:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Place waste in an appropriately labelled, sealed contained for disposed. </br>Care should be taken to avoid environmental release </p>
+            </div>
+          </div>
+          <div style="margin-left:16px">
+            <p class="secondary-title">Methods and Material for Containment and Cleaning Up</p>
+          </div>
+          <div class="d-flex mt-3">
+            <div class="col-6">
+              <p class="secondary-title">Measures for Cleaning / Collecting</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Contain the source of spill if it is safe to do so </br>Collect spilled material by a method that controls dust generation </br>A damp cloth or a filtered vacuum should be used to clean spills of dry solids. Clean spill area thoroughly </p>
+            </div>undefined
+          </div>undefined<div class="d-flex mt-3" style="margin-left:6px">
+            <div class="col-6">
+              <p class="secondary-title">Addition Consideration for:</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Non-essential personnel should be evacuated from affected are </br>Report emergency situations immediately <br>Clean up operations should only be undertaken by trained personnel. </p>
+            </div>undefined
+          </div>undefined<p class="primary-title mt-4">7. HANDING AND STORAGE </p>undefined<div class="d-flex">
+            <div class="col-6">
+              <p class="secondary-title">Shelf life and Storage</p>
+            </div>
+            <div class="col-6">
+              <p class="simple-text">Store product at room temperature </br>Do not to expose to excessive heat or moisture </p>undefined
+            </div>undefined
+          </div>undefined<p class="small-text">Minimize dust generation. Avoid contact with eyes, skin and clothing. When handling, use appropriate personal protective equipment (see Section 8).Wash thoroughly after handling. Releases to the environment should be avoided.Review and implement appropriate technical and procedural waste water and waste disposal measures to prevent occupational exposure or environmental release.Potential points of process emissions of this material to the atmosphere should be controlled with dust collectors.HEPA filtration system or other equivalent controls.</p>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title">Conditions for Safe Storage, Including any Incompatibilities Storage Conditions:</p>undefined
+            </div>undefined<div class="col-6">
+              <p class="simple-text">Store as directed by product packaging.</p>undefined
+            </div>undefined</div>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title">Specific end use(s):</p>undefined
+            </div>undefined<div class="col-6">
+              <p class="simple-text">Consumer healthcare product used as dietary supplement</p>undefined
+            </div>undefined</div>undefined<p class="primary-title mt-4">8. EXPOSURE CONTROLS / PERSONAL PROTECTION </p>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title">Ventilation requirements:</p>undefined
+            </div>undefined<div class="col-6">
+              <p class="simple-text">Normal ventilation is sufficient</p>undefined
+            </div>undefined</div>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title">Eye protection requirements:</p>undefined
+            </div>undefined<div class="col-6">
+              <p class="simple-text">Chemical safety goggles, Eye bath</p>undefined
+            </div>undefined</div>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title"> Glove requirements:</p>undefined
+            </div>undefined<div class="col-6">
+              <p class="simple-text">Compatible chemical – Resistant gloves</p>undefined
+            </div>undefined</div>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title">Clothing requirements:</p>undefined
+            </div>undefined<div class="col-6">
+              <p class="simple-text">Uniforms, coveralls or lab coast should be worn</p>undefined
+            </div>undefined</div>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title">Respiratory requirements:</p>undefined
+            </div>undefined<div class="col-6">
+              <p class="simple-text">Avoid inhalation. Use self-contained breathing apparatus in emergency and non-routine situations</p>undefined
+            </div>undefined</div>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title"></p>undefined
+            </div>undefined<div class="col-6">
+              <p class="simple-text">Avoid contact with eyes, skin and clothing. Wash thoroughly after handlin Keep tightly closed </p>undefined
+            </div>undefined</div>undefined<p class="primary-title mt-4">9.PHSICAL AND CHEMICAL PROPERTIES</p>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title">Dosage Form:</p>undefined
+            </div>undefined<div class="col-6">
+              <p id="dosage_form" class="simple-text"></p>undefined
+            </div>undefined</div>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title">Description (Appearance and odour)</p>undefined
+            </div>undefined<div class="col-6">
+              <p id="description" class="simple-text"></p>undefined
+            </div>undefined</div>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title">Suggested Tablet size</p>undefined
+            </div>undefined<div class="col-6">
+              <p id="tablet_size" class="simple-text"></p>undefined
+            </div>undefined</div>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title">Suggested Tablet weight </p>undefined
+            </div>undefined<div class="col-6">
+              <p id="tablet_weight" class="simple-text"></p>undefined
+            </div>undefined</div>undefined<p class="primary-title mt-4">10. STABILITY AND REACTIVITY</p>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title">No data available </p>undefined
+            </div>undefined<div class="col-6">
+              <p class="simple-text"></p>undefined
+            </div>undefined</div>undefined<p class="primary-title mt-4">11. TOXICOLOGICAL INFORMATION </p>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title">No data available </p>undefined
+            </div>undefined<div class="col-6">
+              <p class="simple-text"></p>undefined
+            </div>undefined</div>undefined<p class="primary-title mt-4">12. ECOLOGICAL INFORMATION</p>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title">Environmental Overview:</p>undefined
+            </div>undefined<div class="col-6">
+              <p class="simple-text">Environmental properties have not been investigated</p>undefined
+            </div>undefined</div>undefined<p class="primary-title mt-4">13. DISPOSAL CONSIDERATION </p>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title">Waste Treatment Methods:</p>undefined
+            </div>undefined<div class="col-6">
+              <p class="simple-text">Dispose of waste in accordance with all applicable laws and regulation Member State specific and Community specific provisions must be considered Considering the relevant known environmental and human health hazards of the material review and implement appropriate technical and procedural waste water and waste disposal measures to prevent occupational exposure and environmental release</p>undefined
+            </div>undefined</div>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title"></p>undefined
+            </div>undefined<div class="col-6">
+              <p class="simple-text">It is recommended that waste minimization be practiced The best available technology should be utilized to prevent environmental release</p>undefined
+            </div>undefined</div>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title"></p>undefined
+            </div>undefined<div class="col-6">
+              <p class="simple-text">This may include destructive technique for waste and wastewater.</p>undefined
+            </div>undefined</div>undefined<p class="primary-title mt-4">14. TRANSPORT INFORMATION</p>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title"></p>undefined
+            </div>undefined<div class="col-6">
+              <p class="simple-text">The following refers to all modes of transportation unless specified below.</p>undefined
+            </div>undefined</div>undefined<p class="primary-title mt-4">15. REGULATORY INFORMATION</p>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title"></p>undefined
+            </div>undefined<div class="col-6">
+              <p id="producer" class="simple-text"></p>undefined
+            </div>undefined</div>undefined<div class="d-flex">undefined<div class="col-6">
+              <p class="secondary-title"></p>undefined
+            </div>undefined<div class="col-6">
+              <p class="simple-text">Manufactured under Good Manufacturing Practices.</p>undefined
+            </div>undefined</div>undefined
+        </div>undefined
+      </div>undefined
+    </div>undefined<style>
+      .center-container {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 0;
+        text-align: center;
+        width: 80%;
+        /* Vous pouvez ajuster la largeur selon vos besoins */
+        margin-left: auto;
+        margin-right: auto;
+        page-break-after: always;
+        /* Forcer un saut de page après le div avec la classe .center-container */
+        position: relative;
+      }
+    </style>undefined
+    <!-- <div class="center-container"><hr><p style="margin: 0; font-size: 12px;">EURL LILIUM PHARMA ALGERIE</p><p style="margin: 0; font-size: 10px;">Adresse: Lotissement communal C N°123 2eme Etage, draria, Alger</p><p style="margin: 0; font-size: 10px;">RC: 18B 0815401 -00/16 - NIF: 001816104518091 - NIS: 001816120005072 - AI: 16530040711</p><p style="margin: 0; font-size: 10px;"> Email:contact@liliumpharma.com | Tél:(+213) 559103708</p></div> -->undefined
+  </body>undefined
+  <!-- FETCHING -->undefined<script>
+    function fetchData() {
+      const urlParts = window.location.pathname.split('/');
+      const id = urlParts[urlParts.length - 2]; // Assuming the id is the second-to-last part of the path
+      fetch(`https://app.liliumpharma.com/produits/QualiquantityInformations/?id=` + id).then((response) => response.json()).then((data) => {
+        console.log(data[0])
+        const productInfo = data[0][0];
+        const activeIngredients = data[1];
+        // Update HTML elements with product information
+        document.getElementById("name").textContent = productInfo.product_name;
+        document.getElementById("product_identifier").textContent = productInfo.product_identifier;
+        document.getElementById("Suggested_use").textContent = productInfo.suggested_use;
+        document.getElementById("dosage_form").textContent = productInfo.dosage_form;
+        document.getElementById("description").textContent = productInfo.description;
+        document.getElementById("tablet_size").textContent = productInfo.tablet_size;
+        document.getElementById("tablet_weight").textContent = productInfo.tablet_weight;
+        document.getElementById("producer").textContent = productInfo.producer;
+        const activeIngredientTable = document.getElementById("active_ingredient");
+        // SORT BY UNIT AND QTT
+        // Define a mapping of units to numerical values
+        const unitValues = {
+          'mcg': 1,
+          'mg': 2,
+          'ml': 3
+        };
+        // // Sort the ingredients by unit and then by quantity in ascending order
+        activeIngredients.sort((b, a) => {
+          if (a.unit !== b.unit) {
+            // Sort by unit
+            return unitValues[a.unit] - unitValues[b.unit];
+          } else {
+            // If units are the same, sort by quantity
+            return a.qtt - b.qtt;
+          }
+        });
+        // Iterate through the sorted ingredients and add them to the table
+        activeIngredients.forEach(ingredient => {
+          const row = activeIngredientTable.insertRow();
+          row.style.border = "2px solid black";
+          row.style.width = "50%";
+          const cell1 = row.insertCell(0);
+          const cell2 = row.insertCell(1);
+          cell2.style.width = "50%";
+          cell1.textContent = ingredient.ingredient;
+          cell1.style.paddingLeft = '10px';
+          if (ingredient.qtt !== 0) {
+            cell2.textContent = ingredient.qtt + ingredient.unit;
+            cell2.style.textAlign = "right";
+            cell2.style.paddingRight = '10px';
+          } else {
+            cell2.textContent = "";
+          }
+        });
+      })
+    }
+    fetchData()
+  </script>undefined
+</html>

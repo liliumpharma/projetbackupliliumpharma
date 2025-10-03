@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Entrée</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f7fc;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #333;
+      }
+
+      .navbar {
+        width: 100%;
+        background-color: #343a40;
+        color: white;
+        padding: 15px 0;
+        text-align: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-container {
+        margin-top: 350px;
+        max-width: 700px;
+        width: 100%;
+        padding: 30px;
+        background-color: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-container h2 {
+        text-align: center;
+        margin-bottom: 25px;
+        color: #495057;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #495057;
+      }
+
+      select,
+      input {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        transition: border-color 0.3s ease;
+      }
+
+      select:focus,
+      input:focus {
+        border-color: #80bdff;
+        outline: none;
+      }
+
+      .button-container {
+        text-align: center;
+        margin-top: 25px;
+      }
+
+      .button {
+        background-color: #28a745;
+        color: white;
+        padding: 14px 32px;
+        font-size: 18px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: opacity 0.3s ease;
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      .button.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .cart-table {
+        width: 100%;
+        margin-top: 30px;
+        margin-bottom: 30px;
+        border-collapse: collapse;
+        background-color: #fff;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .cart-table th,
+      .cart-table td {
+        padding: 14px;
+        text-align: center;
+        border-bottom: 1px solid #dee2e6;
+      }
+
+      .cart-table th {
+        background-color: #f1f3f5;
+        font-weight: 600;
+      }
+
+      .cart-footer {
+        text-align: right;
+        padding: 15px;
+        font-weight: bold;
+        background-color: #f8f9fa;
+      }
+
+      .cart-empty {
+        text-align: center;
+        padding: 30px;
+        font-style: italic;
+      }
+
+      #valider {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 15px 35px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      #valider:hover {
+        background-color: #0056b3;
+      }
+
+      .form-group input,
+      .form-group select {
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="navbar">
+      <h6>Section : Entrée</h6>
+    </div>
+
+    <div class="form-container">
+      <h2>Formulaire de sortie</h2>
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label for="fournisseur">Fournisseur :</label>
+          <select id="fournisseur" name="fournisseur" required>
+            <option value="ACM">ACM</option>
+            <option value="fournisseur1">Fournisseur 1</option>
+            <option value="fournisseur2">Fournisseur 2</option>
+            <option value="fournisseur3">Fournisseur 3</option>
+            <option value="fournisseur4">Fournisseur 4</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="type">Type :</label>
+          <select id="type" name="type" required>
+            <option value="">Sélectionner...</option>
+            <option value="Matiere premiere">Matière première</option>
+            <option value="Premix">Premix</option>
+            <option value="Primary packaging">Primary packaging</option>
+            <option value="Secondary packaging">Secondary packaging</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="sub_type">Sub Type :</label>
+          <select id="sub_type" name="sub_type" required>
+            <option value="">Sélectionner...</option>
+            <option value="local">Local</option>
+          </select>
+        </div>
+
+        <table id="existing_lots" style="width: 600px"></table>
+
+        <div class="form-group">
+          <label for="quantite">Quantité | الكمية</label>
+          <input
+            type="number"
+            id="quantite"
+            min="1"
+            onchange="validateForm()"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="unite">Unité | الوحدة</label>
+          <select id="unite" onchange="validateForm()">
+            <option value="">Sélectionner...</option>
+            <option value="kg">Kilogramme</option>
+            <option value="g">Gramme</option>
+            <option value="l">Litre</option>
+            <option value="ml">Millilitre</option>
+          </select>
+        </div>
+
+        <table class="cart-table" id="cart-table">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Quantité</th>
+              <th>Sous-total</th>
+            </tr>
+          </thead>
+          <tbody id="cart-items">
+            <tr class="cart-empty">
+              <td colspan="4">Le panier est vide</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" class="cart-footer">Total :</td>
+              <td id="total">0 DZ</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div class="button-container">
+          <a id="approvisionner" class="button" disabled> Ajouter au Panier </a>
+        </div>
+      </form>
+
+      <div class="button-container">
+        <button id="valider">Valider</button>
+      </div>
+    </div>
+
+    <script>
+      async function sendFormData() {
+        const fournisseur = document.getElementById("fournisseur").value;
+        const e_type = document.getElementById("type").value;
+        const subtype = document.getElementById("sub_type").value;
+
+        // Assuming a row gets the class 'selected' when clicked
+        const selectedRow = document.querySelector(
+          "#existing_lots tr.selected"
+        );
+        const selectedRowId = selectedRow
+          ? selectedRow.getAttribute("data-id")
+          : null;
+
+        if (!selectedRowId) {
+          alert("Veuillez sélectionner un lot avant d'envoyer.");
+          return;
+        }
+
+        const csrftoken = document.querySelector(
+          "[name=csrfmiddlewaretoken]"
+        ).value;
+
+        // Récupérer tous les éléments du panier (cart-table)
+        const cartItems = [];
+        const rows = document.querySelectorAll(
+          "#cart-items tr:not(.cart-empty)"
+        );
+
+        rows.forEach(function (row) {
+          cartItems.push({
+            quantity,
+          });
+        });
+
+        // Vérification si le panier est vide
+        if (cartItems.length === 0) {
+          alert("Le panier est vide. Ajoutez des éléments avant de valider.");
+          return;
+        }
+
+        const postaData = {
+          fournisseur,
+          e_type,
+          subtype,
+          selectedRowId, // Send the selected row id here
+          cartItems,
+        };
+
+        try {
+          const response = await fetch(
+            "https://app.liliumpharma.com/production/sortie/add/",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrftoken, // CSRF token for security
+              },
+              body: JSON.stringify(postaData),
+            }
+          );
+
+          const result = await response.json();
+          if (response.ok) {
+            alert("Entree créée avec succès");
+          } else {
+            alert("Erreur lors de la création : " + result.errors);
+          }
+        } catch (error) {
+          alert("Erreur lors de l'envoi des données : " + error);
+        }
+      }
+
+      document
+        .getElementById("valider")
+        .addEventListener("click", function (event) {
+          event.preventDefault();
+          sendFormData();
+        });
+
+      function validateForm() {
+        const quantite = document.getElementById("quantite").value;
+        const unite = document.getElementById("unite").value;
+
+        if (quantite && unite) {
+          document.getElementById("approvisionner").classList.add("active");
+          document.getElementById("approvisionner").disabled = false;
+        } else {
+          document.getElementById("approvisionner").classList.remove("active");
+          document.getElementById("approvisionner").disabled = true;
+        }
+      }
+
+      document
+        .getElementById("approvisionner")
+        .addEventListener("click", function (event) {
+          event.preventDefault();
+
+          const quantite = document.getElementById("quantite").value;
+          const unite = document.getElementById("unite").value;
+
+          if (!quantite || !unite) {
+            alert("Veuillez remplir tous les champs requis.");
+            return;
+          }
+
+          const tableBody = document.getElementById("cart-items");
+
+          const emptyRow = document.querySelector(".cart-empty");
+          if (emptyRow) {
+            emptyRow.remove();
+          }
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+          <td>${quantite} ${unite}</td>
+        `;
+
+          tableBody.appendChild(row);
+          calculateTotal();
+          clearFormInputs();
+        });
+
+      function calculateTotal() {
+        const rows = document.querySelectorAll("#cart-items tr");
+        let total = 0;
+      }
+
+      function clearFormInputs() {
+        document.getElementById("produit").value = "";
+        document.getElementById("quantite").value = "";
+        document.getElementById("unite").value = "";
+        validateForm();
+      }
+
+      document.getElementById("type").addEventListener("change", function () {
+        const typeValue = this.value;
+        const subTypeSelect = document.getElementById("sub_type");
+        subTypeSelect.innerHTML = "<option value=''>Sélectionner...</option>";
+
+        if (typeValue === "Matiere premiere") {
+          subTypeSelect.innerHTML +=
+            "<option value='Coating'>Coating</option> <option value='Excipient'>Excipient</option> <option value='Active ingredient'>Active ingredient</option>";
+        } else if (typeValue === "Premix") {
+          subTypeSelect.innerHTML +=
+            "<option value='Premix powder'>Premix powder</option> <option value='Premix liquide'>Premix liquide</option>";
+        } else if (typeValue === "Primary packaging") {
+          subTypeSelect.innerHTML +=
+            "<option value='Aluminium'>Aluminium</option>  <option value='Aluminium Formage'>Aluminium Formage</option> <option value='PVC'>PVC</option> <option value='PVDC'>PVDC</option>   <option value='Triplex'>Triplex</option>";
+        } else if (typeValue === "Secondary packaging") {
+          subTypeSelect.innerHTML +=
+            "<option value='Box'>Box</option>  <option value='Carton'>Carton</option>";
+        }
+      });
+    </script>
+
+    <script>
+      const typeSelect = document.getElementById("type");
+      const subtypeSelect = document.getElementById("sub_type");
+      const fournisseur = document.getElementById("fournisseur");
+
+      // Fonction pour faire un fetch et mettre à jour les sous-types
+      async function fetchEntryslots(typeValue) {
+        // Fetch API to get filtered data based on selected type (you can customize this)
+        const response = await fetch(
+          `https://app.liliumpharma.com/production/entree/list/?subtype=${typeValue}&e_type=${typeSelect.value}&fournisseur=${fournisseur.value}`
+        );
+        const data = await response.json();
+        populateExistingLotsTable(data);
+      }
+
+      function populateExistingLotsTable(data) {
+        const table = document.getElementById("existing_lots");
+
+        // Clear any previous table rows
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>-</th> <!-- New checkbox column header -->
+              <th>ID</th>
+              <th>Lot</th>
+              <th>Produit</th>
+              <th>Quantité</th>
+              <th>Prix</th>
+              <th>Date d'entrée</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+
+        const tbody = table.querySelector("tbody");
+
+        if (data.length === 0) {
+          const emptyRow = document.createElement("tr");
+          emptyRow.innerHTML = `<td colspan="6" class="cart-empty">Aucun lot disponible</td>`;
+          tbody.appendChild(emptyRow);
+        } else {
+          data.forEach((entry) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                  <td><input type="checkbox" class="lot-checkbox" value="${
+                    entry.id
+                  }" /></td> <!-- New checkbox for selecting the row -->
+                  <td>${entry.id}</td>
+                  <td>${entry.lot}</td>
+                  <td>${entry.produit}</td>
+                  <td>${entry.quantity}${entry.unite}</td>
+                  <td>${entry.price} ${entry.devise}</td>
+                  <td>${new Date(entry.added).toLocaleDateString()}</td>
+                `;
+            tbody.appendChild(row);
+          });
+        }
+      }
+
+      // Écouteur de changement sur le select "type"
+      subtypeSelect.addEventListener("change", function () {
+        console.log("st select cahnge");
+        const selectedSubType = this.value;
+
+        if (selectedSubType) {
+          fetchEntryslots(selectedSubType);
+        }
+      });
+    </script>
+  </body>
+</html>

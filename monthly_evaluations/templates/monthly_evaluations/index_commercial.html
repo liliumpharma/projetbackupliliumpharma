@@ -1,0 +1,1913 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/styles.css'%}">
+  <link rel="stylesheet" href="{% static 'css/toast/vanilla-toast.css'%}">
+
+  {%block styles%}
+  {%endblock styles%}
+  <title>{% block title %}{%endblock title%}</title>
+</head>
+<body>
+  <div id="backButton" class="d-inline-block p-2 rounded col-12" style="cursor: pointer;background-color: green;color: white;">
+    <span class="align-middle">Back</span>
+  </div>
+
+  <script>
+    document.getElementById("backButton").addEventListener("click", function() {
+      window.history.back(); // This line takes the user back to the previous page
+  });
+  
+  </script>
+{% block body %}{%endblock body%}
+<script src="{% static 'js/jquery.min.js'%}"></script>
+<script src="{% static 'js/toast/vanilla-toast.js'%}"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+{% block scripts %}{%endblock scripts%}
+<div id="main" class="text-center">
+    <h4 class="mr-3 font-weight-bold">Evaluation mensuelle</h4>
+</div>
+<div class="d-flex mt-3 mb-4" style="justify-content: space-between;">
+  <!-- <div class="d-flex" style="margin-left: 20px;">
+    <img class="mr-2" src="../../../static/img/schedule.png" alt="calendrier" width="30px" height="30px">
+    <h5>Fixez un mois</h5>
+    <input id="min" type="date" class="form-control">
+  </div> -->
+
+</div>
+<div class="col-12">
+  <div class="alert alert-success" role="alert" style="display: flex; flex-wrap: wrap;">
+    <div class="col-md-6" style="box-sizing: border-box; padding: 5px;">
+      <h4 class="alert-heading">Important!</h4>
+      <p class="card-text">Avant de commencer Vous devez vérifier le mois séléctionné</p>
+      <p class="card-text">Vous devez remplir tous les champs pour pouvoir valider votre évaluation</p>
+      <p class="card-text">L'action de validation est irréversible, vérifiez vos réponses avant de valider, vous serez responsables de vos reponses</p>
+    </div>
+    <div class="col-md-6" style="box-sizing: border-box; padding: 5px; word-break: break-all;">
+      <h4 class="alert-heading text-md-right">!هام</h4>
+      <p class="card-text text-md-right">قبل أن تبدأ يجب عليك التحقق من الشهر المحدد</p>
+      <p class="card-text text-md-right">يجب عليك ملء جميع الحقول لتتمكن من تسجيل تقييمك</p>
+      <p class="card-text text-md-right">إجراء التحقق لا رجوع فيه ، تحقق من إجاباتك قبل التحقق من الصحة ، وستكون مسؤولاً عن إجاباتك</p>
+    </div>
+  </div>
+</div>
+
+<!-- FETCHING USERS UNDER -->
+
+
+
+
+
+
+
+
+
+<form method="post">
+  <div class="col-md-6 d-flex mt-5">
+    <label for="monthSelect" style="font-weight: bold;" >Sélectionnez un mois :</label>
+    <select class="form-control" id="monthSelect" onchange="updateURL()">
+    </select>
+  </div>
+
+
+<div class="col-md-12 d-flex mt-2  d-none">
+  <table class="table table-bordered d-none" id="userTable" >
+      <thead>
+          <tr>
+              <th>Nom d'utilisateur</th>
+              <th>Le délégué a effectué son évaluation</th>
+              <th>Le Superviseur a évalué son délégué</th>
+              <th>Le Direction à consulté l'évaluation</th>
+              <th>Action</th>
+          </tr>
+      </thead>
+      <tbody>
+          <!-- Les utilisateurs seront ajoutés ici dynamiquement -->
+      </tbody>
+  </table>
+</div>
+  <div id="MAIN">
+
+    <div class="d-flex m-4" style="display: flex; justify-content: space-between; align-items: center; margin-right: 20px;">
+      <button id="submit" class="btn btn-primary" type="submit">
+        Valider l'evaluation
+      </button>
+      <a id="imprimer-bouton">
+        <img src="{% static 'img/printer.png' %}" alt="print" width="35px" height="35px">
+      </a>
+    </div>
+  <!-- Evaluation pour votre Superviseur -->
+<div id="sup">
+  <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+    <h4>Evaluation pour votre Superviseur</h4>
+  </div>
+    <div class="card bg-white m-4">
+      <div class="card-body d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left h5">Comment est-ce que vous évaluez le travail de votre superviseur</h5>
+        <h5 class="card-title font-weight-bold text-right" >كيف تقيّم أداء سوبرفيزرك؟</h5>
+      </div>
+      <div class="d-flex justify-content-center d-sm-block" style="margin-left: 60px;margin-right: 60px;">
+        <div class="mb-3">
+            <input type="radio" id="Excellent" name="qualite" value="tres-bon">
+            <img src="static/img/icons/excellence.png" alt="Excellent" width="40px" height="40px">
+            <label for="tres-bon">Excellent</label><br>
+        </div>
+
+        <div class="mb-3">
+            <input type="radio" id="Bon" name="qualite" value="moyen">
+            <img src="static/img/icons/good.png" alt="Good" width="40px" height="40px">
+            <label for="moyen">Bon</label><br>
+        </div>
+      
+        <div>
+            <input type="radio" id="Mauvais" name="qualite" value="mauvais">
+            <img src="static/img/icons/dislike.png" alt="Dislike" width="40px" height="40px">
+            <label for="mauvais">Mauvais</label><br>
+        </div>
+    </div>
+
+    </div>
+    <a id="next" class="btn btn-primary col-12 disabled" type="" style="margin-top: 5px; margin-bottom: 5px;color: white;">
+      Passer à l'étape suivante
+    </a>
+
+    <script>
+    const radioButtons = document.querySelectorAll('input[name="qualite"]');
+    const next = document.getElementById('next');
+
+    // Ajout d'un gestionnaire d'événements à chaque bouton radio
+    radioButtons.forEach(button => {
+        button.addEventListener('change', function() {
+            // Vérifier si un bouton radio est sélectionné
+            if (isChecked()) {
+                // Retirer la classe "disabled" du bouton de validation
+                next.classList.remove('disabled');
+
+            } else {
+                // Ajouter la classe "disabled" au bouton de validation
+                next.classList.add('disabled');
+            }
+        });
+    });
+    // Fonction pour vérifier si un bouton radio est sélectionné
+function isChecked() {
+    for (let i = 0; i < radioButtons.length; i++) {
+        if (radioButtons[i].checked) {
+            return true;
+        }
+    }
+    return false;
+}
+    </script>
+</div>
+
+
+<div id="all" class="d-none">
+  <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+    <h4>Partie Rapports</h4>
+  </div>
+    <div class="row mb-3 d-bleck" style="font-size: 22px;">
+      <div class="d-flex justify-content-end col-12">
+        <p class="align-self-center" style="font-size: 13px; margin-top: 2px; color: red;"></p>
+        <h5 class="mb-sm-0" style="margin-left: auto;color: black; "><span style="font-size: 13px;color: red;">Note totale 20 points, chaque rapport manquant moins un point |  العلامة الإجمالية 20 علامة, كل تقرير غير موجود, ناقص علامة</span><strong> Note:</strong><span id="note_q0" style="color: red; font-weight: bold;"></span>/20</h5>
+      </div>
+
+
+      <div class="d-flex flex-column flex-sm-row justify-content-between col-12 mt-4">
+        <p class="font-weight-bold  text-center text-sm-left mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 20px;">• Nombre de jour de travail:</p>
+        <p class="font-weight-bold text-center text-sm-center col-2" style="flex: 1; font-size: 20px;"><span id="nombre_rapport"></span></p>
+        <p class="font-weight-bold  text-center text-sm-right mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 20px;">عدد أيام العمل •</p>
+      </div>
+
+      <div class="d-flex flex-column flex-sm-row justify-content-between col-12">
+        <p class="font-weight-bold  text-center text-sm-left mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 20px;">• Nombre de rapport(s) manquant(s):</p>
+        <p class="font-weight-bold text-center text-sm-center col-2" style="flex: 1; font-size: 20px;"><span id="nombre_absence"></span></p>
+        <p class="font-weight-bold  text-center text-sm-right mb-2 mb-sm-0 col-5" style="flex: 1; font-size: 20px;">عدد الرابورات الناقصة •</p>
+      </div>
+
+      <div class="d-flex flex-column flex-sm-row justify-content-between col-12">
+        <p class="font-weight-bold  text-center text-sm-left mb-2 mb-sm-0 col-4" style="flex: 1; font-size: 20px;">• Dates des rapports manquant(s)</p>
+        <p class=" text-center text-sm-center col-4" style="flex: 1; font-size: 15px;"><span id="dates_absence">0</span></p>
+        <p class="font-weight-bold  text-center text-sm-right mb-2 mb-sm-0 col-4" style="flex: 1; font-size: 20px;">تواريخ التقارير الناقصة •</p>
+      </div>
+
+  </div>
+
+<script>
+    nombre_rapport = document.getElementById("nombre_rapport")
+    nombre_absence = document.getElementById("nombre_absence") 
+    dates_absence = document.getElementById("dates_absence") 
+    var note_q0;
+
+    const urlParamss = new URLSearchParams(window.location.search);
+
+    // Get the value of the 'month' parameter
+    const month = urlParamss.get('month');
+
+
+
+    function fetchData(){
+    fetch('https://app.liliumpharma.com/rapports/RapportSummaryAPIView?month='+month)
+      .then((response) => response.json())
+      .then((data) => {
+        nombre_rapport.textContent = data.num_reports+'/'+data.days_in_month
+        nombre_absence.textContent = data.num_absence  
+        // nbr_de_jour.textContent = data.days_in_month  
+        const absenceDatesText = data.absence_dates.join(" | ");
+        if (data.absence_dates.length > 0) {
+          dates_absence.textContent = absenceDatesText;
+        }
+note_q0 = 20- (data.days_in_month-data.num_reports)
+if (note_q0 < 0) {
+  note_q0= 0;
+}
+document.getElementById("note_q0").innerText = note_q0 ;
+
+
+        
+      })
+  }
+  fetchData()
+
+  </script>
+  <!-- MEDICAL -->
+  <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+    <h4>Medical</h4>
+  </div>
+  <script>
+    var selectedValue=''
+    // Sélection du bouton "Next" et des divs
+    const successButton = document.getElementById('next');
+    const allDiv = document.getElementById('all');
+    const supDiv = document.getElementById('sup');
+    
+    // Récupération des boutons radio
+    
+    // Ajout d'un gestionnaire d'événements au clic sur le bouton "Next"
+    successButton.addEventListener('click', function() {
+        // Retirer la classe d-none du div #all
+        allDiv.classList.remove('d-none');
+        // Ajouter la classe d-none au div #sup
+        supDiv.classList.add('d-none');
+    });
+</script>
+
+  <!-- Q1 -->
+  <style>
+    @media (max-width: 576px) {
+      .card-body {
+        flex-direction: column;
+        align-items: center;
+        margin: 0px;
+        width:100%;
+      }
+      .card-body h5 {
+        font-size: 15px;
+      }
+      .card-title.text-right {
+        text-align: left;
+      }
+    }
+  </style>
+
+  <div class="card bg-white m-4">
+    <div class="d-flex justify-content-end col-12">
+      <p class="align-self-center" style="font-size: 13px; margin-top: 2px; color: red;"></p>
+      <h5 class="mb-sm-0" style="margin-left: auto;color: black; "><span style="font-size: 13px;color: red;">Note totale 25 points, moins un point pour chaque medecin en dessous de 100 |  العلامة الإجمالية 25 علامة.معدل عدد الأطباء 100, كل طبيب ناقص عن مئة,ناقص علامة</span><strong> Note:</strong><span id="note_q1" style="color: red; font-weight: bold;"></span>/25</h5>
+    </div>
+    <h6 class="text-center">Q1</h6>
+    <div class="card-body d-flex" style="justify-content: space-between;">
+      <h5 class="card-title font-weight-bold text-left h5">Combien de communes non visitée ce mois ?</h5>
+      <h5 id="response_1" class="card-title font-weight-bold text-left"></h5>
+      <h5 class="card-title font-weight-bold text-right" >ما هي المناطق الغير مزارة هذا الشهر</h5>
+    </div>
+    <textarea id="doctors_1" class="form-control" rows="6" style=" height: auto;max-height: 500px; overflow-y: scroll; background-color: white;" readonly>Clients list</textarea>
+  </div>
+  <br>
+  <script>
+    setTimeout(function() {
+
+        q1Value = document.getElementById("response_1").textContent
+
+        if (q1Value > 100) {
+          note_q1 = 25;
+        } else {
+          note_q1 = Math.max(25 - (100 - q1Value), 0);
+        }
+        document.getElementById("note_q1").innerText = note_q1 ;
+    }, 2000);
+  </script>
+  <!-- Q2 -->
+  <div class="card bg-white m-4">
+    <div class="d-flex justify-content-end col-12">
+      <p class="align-self-center" style="font-size: 13px; margin-top: 2px; color: red;"></p>
+      <h5 class="mb-sm-0" style="margin-left: auto;color: black; "><strong> Note:</strong><span style="color: red; font-weight: bold;">0</span>/0</h5>
+    </div>
+    <h6 class="text-center">Q2</h6>
+    <p style="margin-left:15px; color: red;">* Champ obligatoire</p>
+    <div class="card-body">
+      <div class="card-body d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left" style="width: 100%;">Quelle sont les régions qui ont été visitées plus d'une fois ce mois-ci, et la raison</h5>
+        <h5 id="response_2_medecins" class="card-title font-weight-bold text-left"></h5>
+        <h5 class="card-title font-weight-bold text-right" style="width: 100%;"> ما هي المناطق التي تمت زيارتها أكثر من مرة هذا الشهر مع ذكر السبب</h5>
+      </div>
+      <div id="raison_2" style="padding: 10px;">
+      </div>
+    </div>
+  </div>
+  <br>
+  <!-- Q3 -->
+  <div class="card bg-white m-4">
+    <div class="d-flex justify-content-end col-12">
+      <p class="align-self-center" style="font-size: 13px; margin-top: 2px; color: red;"></p>
+      <h5 class="mb-sm-0" style="margin-left: auto;color: black; "><span style="font-size: 13px;color: red;">Note totale 25 points, moins un demi point pour chaque medecin non visité |  العلامة الإجمالية 25 علامة. لكل طبيب غير مزار ,ناقص نصف علامة</span><strong> Note:</strong><span id="note_q3" style="color: red; font-weight: bold;"></span>/25</h5>
+    </div>
+    <h6 class="text-center">Q3</h6>
+    <p style="margin-left:15px; color: red;">* Champ obligatoire</p>
+      <div class="card-body d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left">Qui sont les clients qui ont été visités plus d'une fois ce mois-ci, et la raison</h5>
+        <h5 id="response_3_medecins" class="card-title font-weight-bold text-left"></h5>
+        <h5 class="card-title font-weight-bold text-right">ما سبب زيارة هؤلاء الزبائن اكثر من مرة هذا الشهر ؟</h5>
+      </div>
+      <div id="raison_3" style="padding: 10px;">
+      </div>
+    </div>
+  <br>
+  <script>
+    setTimeout(function() {
+        var note_q3 = document.getElementById("response_3_medecins").textContent;
+        if (note_q3 > 0) {
+            const excessAbove50 = note_q3 - 0;
+            const reduction = Math.ceil(excessAbove50 / 2);
+            note_q3 = Math.max(25 - reduction, 0);
+        } else {
+            note_q3 = 25;
+        }
+
+        document.getElementById("note_q3").innerText = note_q3;
+    }, 2000);
+</script>
+
+  <!-- Q4 -->
+  <div class="card bg-white m-4">
+    <div class="d-flex justify-content-end col-12">
+      <p class="align-self-center" style="font-size: 13px; margin-top: 2px; color: red;"></p>
+      <h5 class="mb-sm-0" style="margin-left: auto;color: green; "><span style="font-size: 13px;color: red;">Note totale 6 points, plus un demi point pour chaque médecin ajouté |  العلامة الإجمالية 6 علامات. زائد نصف نقطة لكل طبيب مضاف</span><strong> Bonus:</strong><span id="note_q4" style="color: green; font-weight: bold;"></span>/6</h5>
+    </div>
+    <h6 class="text-center">Q4</h6>
+    <p style="margin-left:15px; color: red;">* Champ obligatoire</p>
+    <div class="card-body d-flex" style="justify-content: space-between;">
+      <h5 class="card-title font-weight-bold text-left">Qui sont les grossistes qui n'ont pas été visité ce mois-ci ?</h5>
+        <h5 id="response_4_medecins" class="card-title font-weight-bold text-left" style="margin-left: 8px; margin-right: 8px;"></h5>
+        <h5 class="card-title font-weight-bold text-right">من هم تجار الجملة الذين لم يتم زيارتهم هذا الشهر؟</h5>
+      </div>
+      <div id="raison_4" style="padding: 10px;">
+      </div>
+    </div>
+  <br>
+  <script>
+    setTimeout(function() {
+        var note_q4 = document.getElementById("response_4_medecins").textContent;
+
+        note_q4 = note_q4/2
+        if(note_q4>6){
+          note_q4=6
+        }
+
+        document.getElementById("note_q4").innerText = note_q4;
+    }, 2000);
+</script>
+
+  <!-- Q5 -->
+  <div class="card bg-white m-4">
+    <div class="d-flex justify-content-end col-12">
+      <p class="align-self-center" style="font-size: 13px; margin-top: 2px; color: red;"></p>
+      <h5 class="mb-sm-0" style="margin-left: auto;color: black; "><span style="font-size: 13px;color: red;">Note totale 15 points, plus un demi point pour chaque medecin ajouté |  العلامة الإجمالية 15 علامة. زائد نصف علامة لكل طبيب مضاف </span><strong> Note:</strong><span id="note_q5" style="color: red; font-weight: bold;">0</span>/15</h5>
+    </div>
+
+    <h6 class="text-center">Q5</h6>
+    <p style="margin-left:15px; color: green;">*<u>non obligatoire</u></p>
+  <div class="card-body">
+    <div class="card-body d-flex" style="justify-content: space-between;">
+      <h5 class="card-title font-weight-bold text-left">Écrivez cinq médecins importants en écriture pour chaque produit</h5>
+          <h5 class="card-title font-weight-bold text-right">اكتب خمسة أطباء مهمين بالكتابة لكل منتج</h5>
+    </div>
+    <div class="row" id="productContainer">
+    </div>
+
+  </div>
+  </div>
+  <br>
+
+
+  <!-- COMMERCIAL -->
+  <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+    <h4>Commercial</h4>
+  </div>
+  <!-- Q11 -->
+  <div class="card bg-white m-4">
+    <h6 class="text-center">Q11</h6>
+    <div class="card-body d-flex" style="justify-content: space-between;">
+      <h5 class="card-title font-weight-bold text-left">Combien de pharmacies et de grossistes avez vous visités au cours du mois</h5>
+      <h5 id="response_11" class="card-title font-weight-bold text-left" style="margin-left: 10px;"></h5>
+      <h5 class="card-title font-weight-bold text-right">كم عدد الصيدليات وتجار الجملة الذين قمت بزيارتها خلال الشهر</h5>
+    </div>
+    <div class="d-flex mb-3">
+      <div class="card"  style="height: 90px; margin-right: 50px;">
+        <p class="card-header" style="color: green;">Nombre de pharmacies</p>
+        <div class="card-body d-flex justify-content-center align-items-center">
+          <strong id="total_pharma"></strong>
+        </div>
+      </div>
+      <div class="card" style="height: 90px;">
+        <p class="card-header" style="color: green;">Nombre de grossistes</p>
+        <div class="card-body d-flex justify-content-center align-items-center">
+          <strong id="total_gro"></strong>
+        </div>
+      </div>    
+    </div>
+    <textarea id="doctors_11" class="form-control" rows="6" style=" height: auto;max-height: 500px; overflow-y: scroll; background-color: white;" readonly>doctors list</textarea>
+  </div>
+  <br>
+
+  <!-- Q12 -->
+  <div class="card bg-white m-4">
+    <h6 class="text-center">Q12</h6>
+    <p style="margin-left:15px; color: red;">* Champ obligatoire</p>
+    <div class="card-body">
+      <div class="card-body d-flex" style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left text-left-mobile">Combien de super grossistes avez vous visité ce mois-ci, en mentionnant le nom du super grossistes et la raison de la visite</h5>
+        <h5 id="response_12_medecins" class="card-title font-weight-bold text-left"></h5>
+        <h5 class="card-title font-weight-bold text-right text-right-mobile">كم عدد سوبر جروسيست الذين زرتها هذا الشهر ، مع ذكر اسم تاجر الجملة وسبب الزيارة </h5>    
+      </div>
+      <div id="raison_12" style="padding: 10px;">
+      </div>
+    </div>
+  </div>
+  <br>
+
+  <!-- Q13 -->
+  <div class="card bg-white m-4">
+    <div class="d-block col-12">
+      <h5 class="text-right">Note:<span id="note_q13" style="font-size: 20px; margin-top: 2px; color: red; font-weight: bold;">0</span>/15</h5>
+      <div class="row">
+        <div class="col-md-6">
+            <p style="color: red; font-size: 13px;">Note totale 15 points, plus un demi point pour chaque bon de commande de : pharmacie à grossiste où de grossiste à supergrossite</p>
+        </div>
+          <div class="col-md-6 text-right">
+              <p style="color: red; font-size: 13px;">العلامة الإجمالية 15 علامة, نصف علامة إضافية لكل طلبية من الصيدلية إلى جروسيست أو من جروسيست إلى السوبر جروسيست</p>
+          </div>
+      </div>
+  </div>
+  
+    <h6 class="text-center">Q13</h6>
+    <div class="card-body">
+      <div class="card-body d-flex " style="justify-content: space-between;">
+        <h5 class="card-title font-weight-bold text-left">Combien de bon de commandes durant ce mois, en mentionnant le nom du client, le produit et la quantité</h5>
+        <h5 id="response_13_nombre" class="card-title font-weight-bold text-left" style="margin-left: 8px; margin-right: 8px;"></h5>
+        <h5 class="card-title font-weight-bold text-right">كم عدد بوند كوموند خلال هذا الشهر ، مع ذكر اسم الزبون ,المنتج والكمية </h5>
+      </div>
+      <h6 class="mb-3" id="raison_13_resume"></h6>
+      <div id="raison_13_summary"></div>
+    
+      <div id="raison_13" style="padding: 10px; overflow-x: auto;">
+        <table id="order_table" class="table table-bordered table-hover" style="font-size: 14px;">
+          <thead class="table-dark">
+            <tr>
+              <th>Date</th>
+              <th>ID bon de commande</th>
+              <th>Status</th>
+              <th>Pharmacie</th>
+              <th>Grossiste</th>
+              <th>Super grossiste</th>
+              <th>Produits</th>
+            </tr>
+          </thead>
+          <tbody id="field_13">
+          
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <style>
+      @media screen and (max-width: 575px) {
+
+        .card-body.d-flex {
+          flex-direction: column;
+        }
+        .card-title.text-right {
+          text-align: left;
+        }
+        #raison_13 {
+          overflow-x: auto;
+        }
+      }
+    </style>
+  </div>
+
+  <br>
+  <!-- Q14 -->
+  <div class="card bg-white m-4">
+    <h6 class="text-center">Q14</h6>
+    <p style="margin-left:15px; color: green;">*<u>non obligatoire</u></p>
+    <div class="card-body d-flex" style="justify-content: space-between;">
+      <h5 class="card-title font-weight-bold text-left">Quelles sont vos suggestions pour améliorer les ventes</h5>
+      <h5 class="card-title font-weight-bold text-right">ما هي اقتراحاتك لتحسين المبيعات</h5>
+    </div>
+    <textarea id="response_14" class="form-control" placeholder="Suggestions..." rows="8" style=" height: auto;max-height: 500px; overflow-y: scroll; background-color: white;"></textarea>
+  </div>
+  <div class="d-flex justify-content-between w-100">
+    <h4 style="color: green; margin-left: 10px;">Merci pour votre coopération!</h4>
+    <h4 style="color: green; margin-right: 20px;">! شكرا لتعاونكم</h4>
+  </div>
+  <div class="col text-center" style="margin-top: 5px; margin-bottom: 10px;">
+    <a href="#" id="scrollToTop" class="scroll-to-top">
+      <span style="font-size: 20px;">Aller en haut</span>
+      <i class="fa fa-arrow-up fas-bounce"></i>
+      <span style="font-size: 20px;" class="arabic-text">العودة للأعلى</span>
+    </a>
+  </div>
+  <!-- Ajoutez le lien vers Font Awesome si vous n'avez pas déjà ajouté -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+  <!-- <button id="submit_2" class="btn btn-primary col-12" type="submit" style="margin-top: 5px; margin-bottom: 5px;">
+    Valider l'evaluation
+  </button> -->
+  <div style="background-color: green; height: 70px; display: flex; align-items: center;">
+    <a id="submit_2" class="btn col-12" type="submit" style="color: white;">
+      <strong style="margin-top: 40px;">Valider l'évaluation</strong>
+    </a>
+  </div>
+</div>
+</div>
+</div>
+
+
+
+
+<!-- TTTTESSSSSTTTTTTT -->
+<div class="container">
+  <div class="row" id="productContainer">
+      <!-- The generated product cards will be inserted here -->
+  </div>
+</div>
+
+
+
+
+
+</body> 
+<div>{{ errors }}</div>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+  const scrollToTopBtn = document.getElementById("scrollToTop");
+
+  window.addEventListener("scroll", function () {
+    if (window.scrollY > 100) {
+      scrollToTopBtn.classList.add("show");
+    } else {
+      scrollToTopBtn.classList.remove("show");
+    }
+  });
+
+  scrollToTopBtn.addEventListener("click", function (e) {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+});
+</script>
+<script>
+  const mediaQuery = window.matchMedia('(max-width: 767px)'); 
+  let minLength_4 =0
+  let nombre_medecins_non_visites=0
+  $('document').ready(() => {
+    function fetchData() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const monthUrl = urlParams.get('month');
+
+      fetch('https://app.liliumpharma.com/rapports/api/communes_non_visitees/?mois='+monthUrl)
+        .then((response) => response.json())
+        .then((data) => {
+        document.getElementById("response_1").innerHTML = data.total_non_visitees
+        document.getElementById("doctors_1").innerHTML = data.communes_concatenees
+      })
+
+      fetch('https://app.liliumpharma.com/rapports/api/visites_communes_multiple/?mois='+monthUrl)
+        .then((response) => response.json())
+        .then((data) => {
+        document.getElementById("response_2_medecins").innerHTML = data.total_communes_visitees
+        
+        field_2 = document.getElementById("raison_2")
+        const max_display_2 = 5
+        counter_2=0
+
+        for (elt in data.communes){
+          const newDiv = document.createElement("div");
+          newDiv.id="NomsMedecinsMultiplesVisitesDiv_"+elt
+          newDiv.className = "d-flex";
+          newDiv.style = "margin-bottom:15px;";
+
+          const blockDiv = document.createElement("div");
+          blockDiv.className = "d-block";
+          blockDiv.style = "margin-bottom:5px;";
+
+          const doctorNameElement = document.createElement("p");
+          doctorNameElement.id = "NomsMedecinsMultiplesVisites_"+elt;
+          doctorNameElement.style = "color:green;font-weight: bold;width:30rem; margin:0"
+          doctorNameElement.textContent = data.communes[elt].nom;
+
+          // const specialite = document.createElement("p");
+          // specialite.id = "spec_"+elt;
+          // specialite.style = "color:black; margin:0"
+          // specialite.innerHTML ="<strong>Specialité</strong>: " + data.noms_medecins_visites[elt].specialite;
+
+          // const classification = document.createElement("p");
+          // classification.id = "clas_"+elt;
+          // classification.style = "color:black; margin:0"
+          // classification.innerHTML ="<strong>Classification</strong>: " + data.noms_medecins_visites[elt].classification;
+
+          const nombreVisites = document.createElement("label");
+          nombreVisites.id = "NomsMedecinsMultiplesVisites_"+elt;
+          nombreVisites.style = "color:black; margin:0"
+          nombreVisites.textContent ="Total visites :" + data.communes[elt].nombre_de_visites;
+
+          blockDiv.appendChild(doctorNameElement); 
+          // blockDiv.appendChild(specialite); 
+          // blockDiv.appendChild(classification); 
+          blockDiv.appendChild(nombreVisites);
+
+          newDiv.appendChild(blockDiv);
+
+          const textAreaElement = document.createElement("textarea");
+          textAreaElement.id="RaisonsMedecinsMultiplesVisites_"+elt;
+          textAreaElement.className = "form-control text-left";
+          textAreaElement.placeholder = "Raison...";
+          newDiv.appendChild(textAreaElement); // Ajoute le textarea au div
+
+          
+          if(counter_2 >= max_display_2){
+            newDiv.className = "d-none";
+          }
+
+          field_2.appendChild(newDiv);
+          counter_2++
+                  // ADDING RESPONSIVE CLASS
+          if (mediaQuery.matches) {
+            newDiv.classList.add("flex-column");
+          }
+        }
+        const voir_plus_button = document.createElement("p")
+        voir_plus_button.textContent="+ Voir plus"
+        voir_plus_button.cursor="pointer"
+        voir_plus_button.className="btn btn-primary"
+        if(counter_2>5)
+          field_2.appendChild(voir_plus_button)
+        voir_plus_button.addEventListener("click", ()=>{
+          for(i=max_display_2; i<counter_2;i++){
+            div = document.getElementById("NomsMedecinsMultiplesVisitesDiv_"+i)
+            div.classList.add("d-flex")
+            div.classList.remove("d-none")
+          }
+          voir_plus_button.remove();
+        })        
+
+      })
+
+      fetch('https://app.liliumpharma.com/rapports/api/visites_clients_multiple/?mois='+monthUrl)
+      .then((response) => response.json())
+      .then((data) => {
+      document.getElementById("response_3_medecins").innerHTML = data.total_medecins_visites
+
+      const field_3 = document.getElementById("raison_3");
+      const max_display = 5
+      counter=0
+      
+      cpt=1
+      for (const elt of data.medecins) {
+        const newDiv = document.createElement("div");
+        newDiv.id="MedecinsNonVisitesDiv_"+cpt
+        newDiv.className = "d-flex";
+        newDiv.style = "margin-bottom: 15px;";
+
+        const div_doctor = document.createElement("div");
+        div_doctor.id="div_doctor_"+elt
+        div_doctor.className = "d-bock";
+
+        const doctorNameElement = document.createElement("p");
+        doctorNameElement.id = "NomsMedecinsNonVisites_" + elt;
+        doctorNameElement.style = "color:green;font-weight: bold;width:400px; margin:0px";
+        // doctorNameElement.innerHTML = data.medecins[elt].id +" "+data.medecins[elt].nom
+        doctorNameElement.innerHTML = elt.id +" "+elt.nom
+
+        div_doctor.appendChild(doctorNameElement);
+
+        const derniere_visite = document.createElement("label");
+        derniere_visite.id = "derniere_visite_"+elt;
+        derniere_visite.style = "color:black ;font-size:14px";
+        derniere_visite.textContent ="Jamais Visité !";
+        // if (elt.medecins_non_visites[elt].date_derniere_visite != null) {
+        //   // derniere_visite.textContent ="Derniére visite: "+data.medecins[elt].nombre_de_visites; 
+        // }
+        derniere_visite.textContent ="Nombre de visites: "+elt.nombre_de_visites; 
+        div_doctor.appendChild(derniere_visite);
+
+
+        newDiv.appendChild(div_doctor);
+
+        const textAreaElement = document.createElement("textarea");
+        textAreaElement.id = "RaisonsMedecinsNonVisites_" + elt;
+        textAreaElement.className = "form-control text-left";
+        textAreaElement.placeholder = "Raison des visites...";
+        newDiv.appendChild(textAreaElement); // Ajoute le textarea au div
+
+        const brElement = document.createElement("br");
+
+        if(counter >= max_display){
+          newDiv.className = "d-none";
+        }
+
+        field_3.appendChild(newDiv);
+        counter++
+        // ADDING RESPONSIVE CLASS
+        if (mediaQuery.matches) {
+          newDiv.classList.add("flex-column");
+        }
+
+        cpt++
+
+      }
+
+      const voir_plus_button = document.createElement("p")
+      voir_plus_button.textContent="+ Voir plus"
+      voir_plus_button.cursor="pointer"
+      voir_plus_button.className="btn btn-primary"
+      if(counter > max_display)
+        field_3.appendChild(voir_plus_button)
+      voir_plus_button.addEventListener("click", ()=>{
+        for(i=max_display; i<counter;i++){
+          div = document.getElementById("MedecinsNonVisitesDiv_"+i)
+          div.classList.add("d-flex")
+          div.classList.remove("d-none")
+        }
+        
+        voir_plus_button.remove();
+      })
+      
+      
+    });
+
+      fetch('https://app.liliumpharma.com/rapports/api/client_non_visites/?mois='+monthUrl)
+      .then((response) => response.json())
+      .then((data) => {
+        const field_4 = document.getElementById("raison_4");
+        document.getElementById("response_4_medecins").innerHTML = data.total_grossistes_non_visites
+
+        const max_display = 5
+        counter=0
+        cpt=1
+
+        for (const elt of data.medecins) {
+          const newDiv = document.createElement("div");
+          newDiv.id="MedecinsNonVisitesDiv2_"+cpt
+          newDiv.className = "d-flex";
+          newDiv.style = "margin-bottom: 15px;";
+        
+          const div_doctor = document.createElement("div");
+          div_doctor.id="div_doctor_"+elt
+          div_doctor.className = "d-bock";
+        
+          const doctorNameElement = document.createElement("p");
+          doctorNameElement.id = "NomsMedecinsNonVisites2_" + elt;
+          doctorNameElement.style = "color:green;font-weight: bold;width:400px; margin:0px";
+          // doctorNameElement.innerHTML = data.medecins[elt].id +" "+data.medecins[elt].nom
+          doctorNameElement.innerHTML = elt.id +" "+elt.nom
+        
+          div_doctor.appendChild(doctorNameElement);
+        
+          const derniere_visite = document.createElement("label");
+          derniere_visite.id = "derniere_visite2_"+elt;
+          derniere_visite.style = "color:black ;font-size:14px";
+          derniere_visite.textContent ="Jamais Visité !";
+          // if (elt.medecins_non_visites[elt].date_derniere_visite != null) {
+          //   // derniere_visite.textContent ="Derniére visite: "+data.medecins[elt].nombre_de_visites; 
+          // }
+        
+        
+          newDiv.appendChild(div_doctor);
+        
+          const textAreaElement = document.createElement("textarea");
+          textAreaElement.id = "RaisonsMedecinsNonVisites2_" + elt;
+          textAreaElement.className = "form-control text-left";
+          textAreaElement.placeholder = "Raison des visites...";
+          newDiv.appendChild(textAreaElement); // Ajoute le textarea au div
+        
+          const brElement = document.createElement("br");
+        
+          if(counter >= max_display){
+            newDiv.className = "d-none";
+          }
+        
+          field_4.appendChild(newDiv);
+          counter++
+          // ADDING RESPONSIVE CLASS
+          if (mediaQuery.matches) {
+            newDiv.classList.add("flex-column");
+          }
+        
+          cpt++
+        
+        }
+
+        const voir_plus_button = document.createElement("p")
+        voir_plus_button.textContent="+ Voir plus"
+        voir_plus_button.cursor="pointer"
+        voir_plus_button.className="btn btn-primary"
+        if(counter > max_display)
+          field_4.appendChild(voir_plus_button)
+        voir_plus_button.addEventListener("click", ()=>{
+          for(i=max_display; i<counter;i++){
+            div = document.getElementById("MedecinsNonVisitesDiv2_"+i)
+            div.classList.add("d-flex")
+            div.classList.remove("d-none")
+          }
+
+          voir_plus_button.remove();
+        })
+
+
+        });
+    }
+
+fetchData(); 
+  })
+
+</script>
+
+
+<!-- POST DATA SCRIPT -->
+<script>
+
+
+// CHECKING IF FIELDS ARE NOT EMPTY, AND ADD IS-INVALUD FOR EMPTY ONE
+let previousFocusedTextArea = null;
+
+document.addEventListener("focus", function(event) {
+  const target = event.target;
+  if (target.matches('[id^="RaisonsMedecinsNonVisites_"]')) {
+    previousFocusedTextArea = target;
+  }
+});
+
+document.addEventListener("blur", function(event) {
+  const target = event.target;
+  if (target.matches('[id^="RaisonsMedecinsNonVisites_"]') && previousFocusedTextArea !== null) {
+    validateAndAddClass(previousFocusedTextArea);
+    previousFocusedTextArea = null;
+  }
+});
+
+document.addEventListener("input", function(event) {
+  const target = event.target;
+  if (target.matches('[id^="RaisonsMedecinsNonVisites_"], [id^="RaisonMedecinsVisitesDuo_"], [id^="RaisonsMedecinsMultiplesVisites_"],[id^="RaisonsSuperGroVisites_"]')) {
+    validateAndAddClass(target);
+  }
+});
+
+function validateAndAddClass(textArea) {
+  const textAreaValue = textArea.value.trim();
+
+  if (textAreaValue === "") {
+    textArea.classList.remove("is-valid");
+    textArea.classList.add("is-invalid");
+  } else {
+    textArea.classList.remove("is-invalid");
+    textArea.classList.add("is-valid");
+  }
+}
+
+const textAreasAndInputs = document.querySelectorAll(
+  '[id^="RaisonsSuperGroVisites_"]');
+
+function validateAndAddClass(element) {
+  const elementValue = element.value.trim();
+
+  if (elementValue === "") {
+    element.classList.remove("is-valid");
+    element.classList.add("is-invalid");
+  } else {
+    element.classList.remove("is-invalid");
+    element.classList.add("is-valid");
+  }
+}
+
+textAreasAndInputs.forEach(element => {
+  element.addEventListener("input", () => {
+    validateAndAddClass(element);
+  });
+
+  element.addEventListener("blur", () => {
+    validateAndAddClass(element);
+  });
+});
+
+
+
+
+
+
+
+function makePostRequest(e) {
+
+
+
+
+
+var somme_totale = 0
+
+function calculerSomme() {
+    var note = document.getElementById("notee");
+    var note_totale = document.getElementById("note_totale");
+    var bonus = document.getElementById("bonus");
+    var pourcentageElement = document.getElementById("pourcentage");
+    var note_q0 = parseFloat(document.getElementById("note_q0").innerText);
+    var note_q1 = parseFloat(document.getElementById("note_q1").innerText);
+    var note_q3 = parseFloat(document.getElementById("note_q3").innerText);
+    var note_q13 = parseFloat(document.getElementById("note_q13").innerText);
+    var note_q5 = parseFloat(document.getElementById("note_q5").innerText);
+    var note_q4 = parseFloat(document.getElementById("note_q4").innerText);
+
+    
+    var somme_note = note_q0 + note_q1 + note_q3 + note_q13+note_q5;
+    var somme_bonus =  note_q4;
+
+    somme_totale = somme_note + somme_bonus
+  }
+  calculerSomme()
+          
+  e.preventDefault()
+  var csrfToken = '{{ csrf_token }}';
+
+  response_1 = document.getElementById("response_1").innerHTML
+
+
+  const response_2 = {answers: []}
+
+  field_2 = document.getElementById("raison_2")
+  const nombreEnfants_2 = field_2.childElementCount;
+  const children_2_1 = raison_2.querySelectorAll('p'); 
+  const children_2_2 = raison_2.querySelectorAll('textArea');  
+  response_2.total = parseInt(document.getElementById("response_2_medecins").innerHTML)
+
+  for (let i = 0; i <= children_2_1.length-1; i++) {
+    const name = children_2_1[i].textContent;
+    const raison = children_2_2[i] ? children_2_2[i].value : '';
+
+    // const specialty = document.getElementById("spec_" + i).querySelector("strong").textContent;
+    // const classification = document.getElementById("clas_" + i).querySelector("strong").textContent;
+
+
+    // Pushing to Array
+    response_2.answers.push({doctor: name, reason: raison});
+  }
+        
+  
+  const response_3 = {answers: []}
+  field_3 = document.getElementById("raison_3")
+  var h5Element = document.querySelector('#response_3_medecins');
+
+var textContent = h5Element.textContent;
+
+response_3.total = parseInt(textContent)
+
+  const children = field_3.querySelectorAll('p');
+  const children_2 = field_3.querySelectorAll('textArea');
+  const children_3 = field_3.querySelectorAll('label');
+  const minLength = Math.min(children.length, children_2.length);
+  let namesString = '';
+
+  for (let i = 0; i < minLength; i++) {
+    const name = children[i].textContent;
+    const raison = children_2[i].value;
+    const derniere_visite = children_3[i].textContent; 
+    namesString += '-Docteur:  ' + name +"\n"+ '    Raison de la non visite :  ' + raison + "\n-----------------------------------\n";
+    response_3.answers.push({doctor: name, derniere_visite: derniere_visite, reason: raison});
+
+  }
+
+  const response_4 = {answers: []}
+  field_4 = document.getElementById("raison_4")
+  var h5Element = document.querySelector('#response_4_medecins');
+
+  var textContent = h5Element.textContent;
+
+  response_4.total = parseInt(textContent)
+  
+  
+  const children_q4 = field_4.querySelectorAll('p');
+  const children_2_q4 = field_4.querySelectorAll('textArea');
+  const minLength_q4 = Math.min(children_q4.length, children_2_q4.length);
+  let namesString_q4 = '';
+  
+  for (let i = 0; i < minLength_q4; i++) {
+    const name = children_q4[i].textContent;
+    const raison = children_2_q4[i].value;
+    response_4.answers.push({doctor: name, reason: raison});
+    
+  }
+  
+  const response_5 = { answers: [] };
+
+document.querySelectorAll('[id^="productName_"]').forEach(productNameElement => {
+    const productId = productNameElement.id.split("_")[1];
+    const productName = productNameElement.textContent.replace("Produit: ", "");
+    
+    const textareaElement = document.getElementById(`textarea_${productId}`);
+    const medecinsText = textareaElement.value.trim() || "none";
+
+    response_5.answers.push({ produit: productName, medecins: medecinsText });
+});
+
+
+  // COMMERCIAL
+const response_11 = { answers: [] };
+
+// const field_11 = document.getElementById("raison_12");
+
+const total_11 = document.getElementById("response_11").innerHTML;
+const total_pharm = document.getElementById("total_pharma").innerHTML;
+const total_gros = document.getElementById("total_gro").innerHTML;
+
+response_11.answers.push({ total: total_11 });
+response_11.answers.push({ total_pharma: total_pharm });
+response_11.answers.push({ total_gro: total_gros });
+
+
+const response_12 = {answers: []}
+field_12 = document.getElementById("raison_12")
+response_12.total = parseInt(nombre_gro_visites)
+
+const children_12 = field_12.querySelectorAll('p');
+const children_2_12 = field_12.querySelectorAll('textArea');
+const minLength_12 = Math.min(children_12.length, children_2_12.length);
+
+const elementsWithMatchingIds = [];
+for (let i = 0; i < children_12.length;i=i+5) {
+    elementsWithMatchingIds.push(children_12[i].textContent);
+}
+
+  for (let i = 0; i < minLength_12; i++) {
+    const name = elementsWithMatchingIds[i];
+    // const name = children_12[i].textContent;
+    const raison = children_2_12[i].value;
+    const nbrVisiteElement = document.getElementById("NombreVisites_" + i);
+    const date_stock = document.getElementById("DateDuStock_" + i);
+    const date_derniere_visite=document.getElementById("DateDerniereVisite_" + i);
+    const ProduitsVisites_=document.getElementById("ProduitsVisites_" + i);
+
+    let nbrVisite = null;
+    if (nbrVisiteElement) {
+      nbrVisite = nbrVisiteElement.textContent;
+    }
+    let stock = null;
+    if (date_stock) {
+      stock = date_stock.textContent;
+    }
+    let derniere_visite = null;
+    if (date_derniere_visite) {
+      derniere_visite = date_derniere_visite.textContent;
+    }
+    let produits = null;
+    if (ProduitsVisites_) {
+      produits = ProduitsVisites_.textContent;
+    }
+    response_12.answers.push({doctor: name, reason: raison, nombre_visites:nbrVisite, etat_stock:stock, date_derniere_visite:derniere_visite, stock: produits});
+  } 
+
+  const response_14 = document.getElementById("response_14").value
+
+var selectedValue = '';
+const radioButtons = document.querySelectorAll('input[name="qualite"]');
+        radioButtons.forEach(button => {
+            if (button.checked) {
+                selectedValue = button.value;
+            }
+        });
+
+
+  // PREPARING POST DATA
+  
+
+  var postData = {    
+            csrfmiddlewaretoken: csrfToken,
+            q1: response_1,
+            own_perc: somme_totale,
+            q2: JSON.stringify(response_2),
+            q3: JSON.stringify(response_3),
+            q4: JSON.stringify(response_4),
+            q5: JSON.stringify(response_5),
+            q6: JSON.stringify(response_11),
+            q7: JSON.stringify(response_12),
+            q8: JSON.stringify(response_13),
+            q9: JSON.stringify(response_14),
+            q10: selectedValue
+            };
+
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const monthUrl = urlParams.get('month');
+
+  const textAreas = document.querySelectorAll(
+  '[id^="RaisonsMedecinsNonVisites_"], ' +
+  '[id^="RaisonMedecinsVisitesDuo_"], ' +
+  '[id^="RaisonsMedecinsMultiplesVisites_"], ' +
+  '[id^="RaisonsSuperGroVisites_"] ' );
+
+let hasEmptyField = false;
+let firstEmptyField = null;
+
+for (let i = 0; i < textAreas.length; i++) {
+  const textAreaValue = textAreas[i].value.trim();
+
+  if (textAreaValue === "") {
+    hasEmptyField = true;
+    textAreas[i].classList.add("is-invalid");
+    textAreas[i].classList.remove("is-valid");
+
+    if (firstEmptyField === null) {
+      firstEmptyField = textAreas[i];
+    }
+  } else {
+    textAreas[i].classList.remove("is-invalid");
+    textAreas[i].classList.add("is-valid");
+  }
+}
+
+if (hasEmptyField && firstEmptyField !== null) {
+  const windowHeight = window.innerHeight;
+  const textAreaHeight = firstEmptyField.offsetHeight;
+
+  const scrollPosition = firstEmptyField.getBoundingClientRect().top + window.scrollY - (windowHeight / 2) + (textAreaHeight / 2);
+
+  window.scrollTo({
+    top: scrollPosition,
+    behavior: "smooth"
+  });
+}
+
+
+// if (hasEmptyField) {
+//   vanillaToast.error("ATTENTION: Remplissez tous les champs avant de soumettre le formulaire.");   
+// }else{
+  $.ajax({
+      url: '/monthly_evaluation/AddCommercialeMonthlyEvaluation/?month=' + monthUrl,
+      type: 'POST',
+      data: postData,
+      success: function (response) {
+        vanillaToast.success('SUCCESS');
+      },
+      error: function (xhr, status, error) {
+        vanillaToast.error("ATTENTION: Vous avez deja un rapport mensuel pour le mois courant");
+      }
+    });
+}
+
+// }
+
+document.getElementById('submit').addEventListener('click', makePostRequest);
+document.getElementById('submit_2').addEventListener('click', makePostRequest);
+</script>
+<script>
+  const monthSelect = document.getElementById("monthSelect");
+
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const monthUrl = urlParams.get('month');
+
+  if (!monthUrl) {
+    const baseUrl = window.location.href.split('?')[0]; 
+    const newUrl = `${baseUrl}?month=${currentMonth}`;
+    history.replaceState({}, document.title, newUrl);
+  }
+
+  for (let i = 0; i < currentMonth; i++) {
+    const option = document.createElement("option");
+    option.value = i + 1; 
+    option.textContent = getMonthName(i); // Fonction pour obtenir le nom du mois
+    monthSelect.appendChild(option);
+  }
+
+  function getMonthName(monthIndex) {
+    const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+    return monthNames[monthIndex];
+  }
+
+  if (monthUrl && 1 <= monthUrl <= 12) {
+    monthSelect.value = monthUrl;
+    monthSelect.selectedIndex = monthUrl - 1;
+  } else {
+    monthSelect.value = currentMonth; // Sélectionner le mois courant par défaut
+    monthSelect.selectedIndex = currentMonth - 1; // Sélectionner l'option correspondant au mois courant
+  }
+
+  // Gestionnaire d'événement pour écouter le changement de sélection dans le <select>
+  monthSelect.addEventListener("change", function() {
+    updateURL(); // Mettre à jour l'URL avec le mois sélectionné
+    window.location.reload(); // Rafraîchir la page pour effectuer le fetch avec le mois sélectionné
+  });
+
+  // Mettre à jour l'URL avec le mois sélectionné sans rafraîchir la page
+  function updateURL() {
+    const selectedMonth = monthSelect.value;
+    const baseUrl = window.location.href.split('?')[0]; // Récupérer l'URL de base sans les paramètres
+    const newUrl = `${baseUrl}?month=${selectedMonth}`; // Construire la nouvelle URL avec le mois sélectionné
+    history.replaceState({}, document.title, newUrl); // Mettre à jour l'URL sans recharger la page
+  }
+</script>
+
+
+<!-- BUTTON PRINT -->
+<script>
+  const printButton = document.getElementById('imprimer-bouton');
+  const monthUrl_2 = urlParams.get('month');
+
+  printButton.addEventListener('click', function() {
+    const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/print_evaluation/?month=' + monthUrl_2;
+    fetch(apiUrl)
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        } else {
+          throw new Error('Evaluation not found for the selected month.');
+        }
+      })
+      .then(data => {
+        if (data.url) {
+          // Mettre à jour l'URL de la page actuelle avec celle de la réponse
+          window.location.href = data.url;
+        } else {
+          console.log('URL not provided in response.');
+        }
+      })
+      .catch(error => {
+        console.error('Fetch error:', error);
+        if (error.message === 'Evaluation not found for the selected month.') {
+          vanillaToast.error("ATTENTION: Vous n'avez pas d'évaluation pour le mois choisi");
+        }
+      });
+  });
+</script>
+
+
+
+
+<!-- COMMERCIALS SCRIPTS  -->
+<script>
+  nombre_gro_visites=0
+  function fetchSuperGro() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const monthUrl = urlParams.get('month');
+
+    fetch('https://app.liliumpharma.com/medecins/api/SuperGrossitesVisitsPerUser?month=' + monthUrl)
+    .then((response) => response.json())
+    .then((data) => {
+      nombre_super_grossites_visites = data.nombre_visites;
+      nombre_gro_visites = data.total_des_visites;
+      document.getElementById("response_12_medecins").innerHTML = data.total_des_visites;
+
+      const field_12 = document.getElementById("raison_12");
+      const max_display = 5;
+      let counter = 0;
+      cpt=0
+
+      data.medecins.forEach((medecin) => {
+        const newDiv = document.createElement("div");
+        newDiv.id = "GrossitesVisitesDiv_" + cpt;
+        newDiv.style = "margin-bottom: 15px;";
+
+        const div_doctor = document.createElement("div");
+        div_doctor.id = "div_supergro_" + counter;
+        div_doctor.className = "d-block";
+
+        const doctorNameElement = document.createElement("p");
+        doctorNameElement.id = "NomsSuperGroVisites_" + counter;
+        doctorNameElement.style = "color:green;font-weight: bold;width:400px; margin:0px";
+        doctorNameElement.innerHTML = medecin.id+" "+medecin.nom;
+
+        div_doctor.appendChild(doctorNameElement);
+
+        const nombreVisitesElement = document.createElement("p");
+        nombreVisitesElement.id = "NombreVisites_" + counter;
+        nombreVisitesElement.style = "margin: 0px";
+        nombreVisitesElement.innerHTML = "<strong>Nombre de visites: </strong>" + medecin.nombre_visites;
+
+        div_doctor.appendChild(nombreVisitesElement);
+
+        const dateDerniereVisiteElement = document.createElement("p");
+        dateDerniereVisiteElement.id = "DateDerniereVisite_" + counter;
+        dateDerniereVisiteElement.style = "margin: 0px";
+        dateDerniereVisiteElement.innerHTML = "<strong>Dernière visite: </strong>" + medecin.date_derniere_visite;
+
+        div_doctor.appendChild(dateDerniereVisiteElement);
+
+        const dateDuStockElement = document.createElement("p");
+        dateDuStockElement.id = "DateDuStock_" + counter;
+        dateDuStockElement.style = "margin: 0px";
+        dateDuStockElement.innerHTML = "<strong>Date du stock: </strong>" + medecin.date_du_stock;
+
+        div_doctor.appendChild(dateDuStockElement);
+
+        const produitsVisitesElement = document.createElement("p");
+        produitsVisitesElement.id = "ProduitsVisites_" + counter;
+        produitsVisitesElement.style = "margin: 0px";
+        produitsVisitesElement.innerHTML = "<strong>Stock: </strong>" + medecin.produits_visite;
+
+        div_doctor.appendChild(produitsVisitesElement);
+
+        newDiv.appendChild(div_doctor);
+
+        const textAreaElement = document.createElement("textarea");
+        textAreaElement.id = "RaisonsSuperGroVisites_" + counter;
+        textAreaElement.className = "form-control text-left";
+        textAreaElement.placeholder = "Raison de la visite...";
+        newDiv.appendChild(textAreaElement);
+
+        const brElement = document.createElement("br");
+
+        if (counter >= max_display) {
+          newDiv.className = "d-none";
+        }
+
+        field_12.appendChild(newDiv);
+        counter++;
+        cpt++
+      });
+
+      const voir_plus_button = document.createElement("p");
+      voir_plus_button.textContent = "+ Voir plus";
+      voir_plus_button.cursor = "pointer";
+      voir_plus_button.className = "btn btn-primary";
+      if (counter > max_display)
+        field_12.appendChild(voir_plus_button);
+      voir_plus_button.addEventListener("click", () => {
+        for (i = max_display; i < counter; i++) {
+          div = document.getElementById("GrossitesVisitesDiv_" + cpt);
+          div.classList.add("d-flex");
+          div.classList.remove("d-none");
+        }
+        voir_plus_button.remove();
+      });
+    });
+    // ADDING RESPONSIVE CLASS
+    // if (mediaQuery.matches) {
+    //     newDiv.classList.add("flex-column");
+    //   }
+}
+fetchSuperGro();
+</script>
+<script>
+  function fetchPharmacies(){
+    const urlParams = new URLSearchParams(window.location.search);
+    const monthUrl = urlParams.get('month');
+
+    fetch('https://app.liliumpharma.com/medecins/api/PharmaciesGrossitesVisitsPerUser?month='+monthUrl)
+      .then((response) => response.json())
+      .then((data) => {
+        document.getElementById("response_11").innerHTML = data.nombre_visites
+        document.getElementById("doctors_11").innerHTML = data.noms_medecins_visites
+        document.getElementById("total_pharma").innerHTML = data.total_pharmacies_visitees
+        document.getElementById("total_gro").innerHTML = data.total_grossistes_visites
+         
+         
+      })
+  }
+fetchPharmacies()
+</script>
+<script>
+const response_13=''
+function fetchOrders() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const monthUrl = urlParams.get('month');
+  
+  fetch('https://app.liliumpharma.com/orders/ordersPerUserPerMonth?month=' + monthUrl)
+    .then((response) => response.json())
+    .then((data) => {
+      const tableBody = document.getElementById("field_13");
+      
+      const nombre_de_bons = document.getElementById("response_13_nombre");
+      const summary = document.getElementById("raison_13_summary");
+      const resume=document.getElementById("raison_13_resume")
+      nombre_de_bons.innerHTML = data.total_orders;
+
+      let currentRow = document.createElement("div"); 
+      currentRow.className = "row";
+
+      for (const productName in data.product_summary) { 
+        console.log("--> product summary" + productName + "--  "+data.product_summary[productName])
+
+
+        const productQuantity = data.product_summary[productName];
+
+        const cardCol = document.createElement("div");
+        cardCol.className = "col-12 col-md-2";
+
+        const productCard = document.createElement("div");
+        productCard.className = "card mb-3";
+
+        const cardHeader = document.createElement("div");
+        cardHeader.className = "card-header";
+        cardHeader.textContent = productName;
+        cardHeader.style = "color:green";
+
+        const cardBody = document.createElement("div");
+        cardBody.className = "card-body";
+        cardBody.style = "color:black";
+        cardBody.textContent = `Quantité: ${productQuantity}`;
+
+        productCard.appendChild(cardHeader);
+        productCard.appendChild(cardBody);
+        cardCol.appendChild(productCard);
+        currentRow.appendChild(cardCol);
+      }
+
+      summary.appendChild(currentRow);
+        
+      let pharmacyGrossisteCount = 0;
+      let grossisteSuperGrossisteCount = 0;
+      let pharmacySuperGrossisteCount = 0;
+      let supergrotooffice = 0;
+
+      data.orders.forEach((order, index) => {
+        const newRow = document.createElement("tr"); 
+
+        const dateCell = document.createElement("td");
+        dateCell.innerHTML = order.date;
+        
+        const idCell = document.createElement("td");
+        idCell.innerHTML = order.order_id;
+
+        const statusCell = document.createElement("td");
+        statusCell.innerHTML = order.status;
+
+        let statusColor;
+        switch (order.status) {
+          case "initial":
+            statusColor = "blue";
+            break;
+          case "confirme":
+            statusColor = "green";
+            break;
+          case "en cours":
+            statusColor = "orange";
+            break;
+          default:
+            statusColor = "black"; 
+            break;
+        }
+        statusCell.style.color = statusColor;
+
+        const pharmacyCell = document.createElement("td");
+        pharmacyCell.innerHTML = order.pharmacy || "-"; 
+
+        const grosCell = document.createElement("td");
+        grosCell.innerHTML = order.gros || "-"; 
+
+        const superGrosCell = document.createElement("td");
+        superGrosCell.innerHTML = order.super_gros || "-"; 
+
+        const productsCell = document.createElement("td");
+        const productList = document.createElement("ul");
+        order.products.forEach((product) => {
+          const productItem = document.createElement("li");
+          productItem.innerHTML = product.product_name + " - Quantity: " + product.quantity;
+          productList.appendChild(productItem);
+        });
+        productsCell.appendChild(productList);
+
+        newRow.appendChild(dateCell);
+        newRow.appendChild(idCell);
+        newRow.appendChild(statusCell);
+        newRow.appendChild(pharmacyCell);
+        newRow.appendChild(grosCell);
+        newRow.appendChild(superGrosCell);
+        newRow.appendChild(productsCell);
+
+        tableBody.appendChild(newRow);
+
+        const pharmacyValue = order.pharmacy;
+        const grossisteValue = order.gros;
+        const superGrossisteValue = order.super_gros;
+
+        if (pharmacyValue === "-" && grossisteValue !== "-" && superGrossisteValue !== "-") {
+          grossisteSuperGrossisteCount++;
+        } else if (pharmacyValue !== "-" && grossisteValue !== "-" && superGrossisteValue === "-") {
+          pharmacyGrossisteCount++;
+        } else if (pharmacyValue !== "-" && grossisteValue === "-" && superGrossisteValue !== "-") {
+          pharmacySuperGrossisteCount++;
+        }
+        if(pharmacyValue == "-" && grossisteValue == "-" &&superGrossisteValue !== "-"){
+          supergrotooffice++
+        }
+      });
+
+
+      const orders = [];
+
+      const tableRows = document.querySelectorAll("#field_13 tr");
+      for (let i = 0; i < tableRows.length; i++) {
+        const cells = tableRows[i].querySelectorAll("td");
+        
+        const order = {
+          date: cells[0].textContent,
+          order_id: cells[1].textContent,
+          status: cells[2].textContent,
+          pharmacy: cells[3].textContent,
+          gros: cells[4].textContent,
+          super_gros: cells[5].textContent,
+          products: []
+        };
+
+        const productListItems = cells[6].querySelectorAll("li");
+        productListItems.forEach((item) => {
+          const productInfo = item.textContent.split(" - Quantity: ");
+          const productName = productInfo[0];
+          const quantity = parseInt(productInfo[1]);
+          order.products.push({ product_name: productName, quantity: quantity });
+        });
+
+        orders.push(order);
+      }
+
+      const jsonData = {
+        total_orders: parseInt(document.getElementById("response_13_nombre").textContent),
+        orders: orders
+      };
+
+      const jsonString = JSON.stringify(jsonData, null, 2);
+
+      note_q13 = (pharmacyGrossisteCount + grossisteSuperGrossisteCount)*0.5
+
+      const summaryText = `
+        <strong>From pharmacies to grossistes: </strong>${pharmacyGrossisteCount}<br>
+        <strong>From grossistes to super grossistes: </strong> ${grossisteSuperGrossisteCount}<br>
+        <strong>From pharmacies to super grossistes: </strong> ${pharmacySuperGrossisteCount}<br>
+        <strong>Super grossistes to lilium office: </strong> ${supergrotooffice}<br>
+      `;
+
+      resume.innerHTML = summaryText;
+      
+      if (note_q13>15){
+        note_q13=15
+      }
+
+      document.getElementById("note_q13").innerText = note_q13;
+
+
+    })
+    .catch((error) => {
+      console.error("Error fetching orders:", error);
+    });
+}
+
+fetchOrders();
+
+</script>
+<!-- GETTING USER PRODUCT -->
+<script>
+  $('document').ready(() => {
+    nombre_medecins_added = 0
+    note_q5 = document.getElementById("note_q5")
+
+
+    function fetchProduits() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const monthUrl = urlParams.get('month');
+
+        fetch('https://app.liliumpharma.com/produits/api/get_user_products/')
+            .then((response) => response.json())
+            .then((data) => {
+                generateProductCards(data);
+            })
+            .catch((error) => {
+                console.error('Error fetching data:', error);
+            });
+    }
+
+    function generateProductCards(products) {
+      const productContainer = document.getElementById("productContainer");
+      let idCounter = 1; 
+
+      products.forEach(product => {
+        const productCard = document.createElement("div");
+        productCard.classList.add("col-lg-12", "mb-4");
+
+        const productId = product.product_id;
+
+        productCard.innerHTML = `
+            <div class="card mb-2">
+                <div class="card-body">
+                    <h6 id="productName_${productId}" style="color: green;">Produit: ${product.product_name}</h6>
+                    <div style="position: relative">
+                        <input class="form-control text-left" id="input_${productId}" placeholder="Entrez l'ID ou le nom du medecin" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+                        <div id="dropdown_${productId}" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer">
+                        </div>
+                    </div>
+                    <textarea id="textarea_${productId}" class="form-control" rows="2" placeholder="Liste des medecins" disabled></textarea>
+                </div>
+            </div>
+        `;
+
+        productContainer.appendChild(productCard);
+
+        const inputElement = document.getElementById(`input_${productId}`);
+        const dropdownElement = document.getElementById(`dropdown_${productId}`);
+        const textareaElement = document.getElementById(`textarea_${productId}`);
+
+        inputElement.addEventListener("input", (e) => {
+          const value = e.target.value.toLowerCase();
+          if (value.length >= 3) {
+            // SEARCH DOCTORS
+            fetch(`https://app.liliumpharma.com/medecins/api/v2/search?name=${value}`)
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.length > 0) {
+                  let innerHTML = "";
+                  for (const d of data) {
+                    innerHTML += `<p onclick="addMedecin_${productId}('${d.nom}')">${d.nom}</p>`;
+                  }
+                  dropdownElement.innerHTML = innerHTML;
+                  dropdownElement.classList.remove("d-none");
+                  dropdownElement.style.zIndex = "9999";
+                }
+              });
+          } else {
+            dropdownElement.classList.add("d-none");
+          }
+        });
+
+        document.body.addEventListener("click", (e) => {
+          if (!inputElement.contains(e.target) && !dropdownElement.contains(e.target)) {
+            dropdownElement.classList.add("d-none");
+          }
+        });
+
+        const isDoctorAlreadyAdded = (textareaElement, name) => {
+          const doctors = textareaElement.value.split(" - ");
+          return doctors.includes(name);
+        };
+
+        const addDoctorNameToTextArea = (textareaElement, selectedDoctor) => {
+          if (!isDoctorAlreadyAdded(textareaElement, selectedDoctor)) {
+            if (textareaElement.value.trim() !== "") {
+              textareaElement.value = textareaElement.value + " - " + selectedDoctor;
+            } else {
+              textareaElement.value = selectedDoctor;
+            }
+          }
+        };
+        const addMedecin = (name) => {
+          nombre_medecins_added++
+          note_q5 = nombre_medecins_added/2
+          if(note_q5>15){
+            note_q5=15
+          }
+          document.getElementById("note_q5").textContent = note_q5 ;
+          inputElement.value = "";
+          addDoctorNameToTextArea(textareaElement, name);
+          dropdownElement.classList.add("d-none");
+        };
+        window[`addMedecin_${productId}`] = addMedecin;
+      });
+    }
+    fetchProduits(); 
+
+})
+  
+</script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      // Scroll to the 'main' div when the page loads
+      document.getElementById('main').scrollIntoView({ behavior: 'smooth' });
+  });
+</script>
+
+
+
+<script>
+  
+  function updateUserTable(users) {
+      var tableBody = document.querySelector('#userTable tbody');
+      // Efface le contenu existant de la table
+      tableBody.innerHTML = '';
+      user_has_eval=false
+      // Parcours la liste des utilisateurs et les ajoute au tableau
+      users.forEach(function(user) {
+
+        var row = document.createElement('tr');
+
+        var usernameCell = document.createElement('td');
+        usernameCell.textContent = user.user;
+        row.appendChild(usernameCell);
+
+        // Colonne 2 : Evaluation du délégué
+        // Colonne combinée : Evaluation du délégué + Pourcentage
+        var combinedEvalAndPercentageCell = document.createElement('td');
+
+        // Création de l'icône pour l'évaluation du délégué
+        var delegateEvalIcon = document.createElement('i');
+        delegateEvalIcon.className = user.has_eval ? 'fas fa-check text-success' : 'fas fa-times text-danger';
+        combinedEvalAndPercentageCell.appendChild(delegateEvalIcon);
+
+        // Ajout du pourcentage de l'utilisateur s'il existe
+        if (typeof user.own_perc === 'string') {
+            var percentageValue = user.own_perc.replace('%', ''); // Retirer le signe de pourcentage (%)
+            var ownPercentageText = document.createElement('span'); // Créer un élément <span>
+            ownPercentageText.textContent = ' ' + percentageValue + '/100'; // Ajout de "/100"
+            ownPercentageText.style.fontSize = 'larger'; // Définir une taille de texte plus grande
+            ownPercentageText.style.marginLeft = '5px'; // Ajouter une marge à gauche
+            ownPercentageText.style.fontWeight = 'bold'; // Définir la police en gras
+            
+            combinedEvalAndPercentageCell.appendChild(ownPercentageText);
+        } else {
+            // Si own_perc est null ou n'est pas une chaîne, affichez un message par défaut
+            var placeholderText = document.createTextNode(" ");
+            combinedEvalAndPercentageCell.appendChild(placeholderText);
+        }
+
+        // Ajout de la cellule combinée à la ligne
+        row.appendChild(combinedEvalAndPercentageCell);
+
+        var combinedCell = document.createElement('td');
+        combinedCell.classList.add('d-flex'); // Ajout de la classe flexbox
+
+        // Contenu de la colonne 5 : Direction a consulté l'eval;
+        var pourcentageEvalIcon = document.createElement('p');
+        pourcentageEvalIcon.textContent = user.pourcentage+"/15";
+        pourcentageEvalIcon.style.fontSize = '18px';
+        pourcentageEvalIcon.style.fontWeight = 'bold'; // Définir la police en gras
+
+
+        // Contenu de la colonne 3 : Evaluation du superviseur
+        var supervisorEvalIcon = document.createElement('i');
+        supervisorEvalIcon.className = user.has_sup_eval ? 'fas fa-check text-success' : 'fas fa-times text-danger';
+
+        // Ajout du contenu des deux colonnes à la cellule combinée
+        // Ajout d'une marge pour séparer les deux éléments
+        combinedCell.appendChild(supervisorEvalIcon);
+        combinedCell.innerHTML += '<div style="margin-left: 5px;"></div>';
+        combinedCell.appendChild(pourcentageEvalIcon);
+
+        // Ajout de la cellule combinée à la ligne
+        row.appendChild(combinedCell);
+
+        var mainDiv = document.getElementById('MAIN');
+        var recap = document.getElementById('userTable');
+        
+
+        if (user.has_eval) {
+          mainDiv.style.display = 'none'; // Cache le div MAIN
+          recap.classList.remove('d-none');
+
+        } else {
+          mainDiv.style.display = 'block'; // Affiche le div MAIN
+        }
+        if (user.has_eval) {
+          recap.classList.remove('d-none');
+          recap.classList.add('d-block');
+
+        }
+
+
+        // Colonne 4 : Direction a consulté l'eval;
+        var directionEvalCell = document.createElement('td');
+        var directionEvalIcon = document.createElement('i');
+        directionEvalIcon.className = user.has_direction_eval ? 'fas fa-check text-success' : 'fas fa-times text-danger';
+        directionEvalCell.appendChild(directionEvalIcon);
+        row.appendChild(directionEvalCell);
+
+
+
+        // Colonne 6 : Bouton "Evaluer" ou lien vers une autre vue
+        var actionCell = document.createElement('td');
+
+        if (user.has_eval && user.has_sup_eval) {
+            // Créez un lien de vue alternative "View"
+            var viewLink = document.createElement('a');
+            viewLink.textContent = 'View';
+            actionCell.appendChild(viewLink);
+            viewLink.onclick = function() {
+              user=user.user
+              viewEvaluation(user)
+            }
+        } else {
+
+
+          if (!user.has_eval) {
+            // Créez un lien de vue alternative "View"
+            var viewLink = document.createElement('a');
+            viewLink.textContent = '-';
+            actionCell.appendChild(viewLink);
+
+        }else{
+
+            // Créez le bouton "Evaluer"
+            var evaluateButton = document.createElement('a');
+            evaluateButton.classList.add('vbutton');
+            evaluateButton.textContent = 'View';
+            evaluateButton.onclick = function() {
+              const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/print_evaluation/?month=' + monthUrl_2;
+
+              fetch(apiUrl)
+                .then(response => {
+                  if (response.ok) {
+                    return response.json();
+                  } else {
+                    throw new Error('Evaluation not found for the selected month.');
+                  }
+                })
+                .then(data => {
+                  if (data.url) {
+                    // Mettre à jour l'URL de la page actuelle avec celle de la réponse
+                    window.location.href = data.url;
+                  } else {
+                    console.log('URL not provided in response.');
+                  }
+                })
+                .catch(error => {
+                  console.error('Fetch error:', error);
+                  if (error.message === 'Evaluation not found for the selected month.') {
+                    vanillaToast.error("ATTENTION: Vous n'avez pas d'évaluation pour le mois choisi");
+                  }
+                });
+                      };
+                      actionCell.appendChild(evaluateButton);
+                  }
+                }
+    row.appendChild(actionCell);
+
+    tableBody.appendChild(row);
+});
+
+  }
+  
+  const monthUrll = urlParams.get('month');
+  fetch('https://app.liliumpharma.com/clients/users-with-target-month/?month='+monthUrll)
+      .then(response => response.json())
+      .then(data => {
+          updateUserTable(data);
+      })
+      .catch(error => console.error('Erreur lors de la récupération des utilisateurs:', error));
+</script>
+<script>
+  function viewEvaluation(userId) {
+      var currentUrl = window.location.href;
+      var urlParams = new URLSearchParams(currentUrl.split('?')[1]);
+      var month = urlParams.get('month');
+      var userParam = userId; // Utilisez le paramètre passé à la fonction
+  
+      var monthUrl = month;
+      var userUrl = userParam;
+  
+  
+  
+  
+  
+  
+  
+      const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/get-monthly-evaluation/?month=' + monthUrl+ '&user='+userUrl;
+      // ECRIRE LES ERRORS EN ARABE
+      fetch(apiUrl)
+        .then(response => {
+          if (response.ok) {
+            return response.json();
+          } else {
+            vanillaToast.error("ATTENTION: L'utilisateur n'a pas d'évaluation pour le mois choisi تنبيه: ليس لدى المستخدم أي تقييم للشهر المختار");
+  
+          }
+        })
+        .then(data => {
+          id= JSON.parse(data)[0]
+          if (id != undefined) {
+            var idUrl = 'https://app.liliumpharma.com/monthly_evaluation/monthly_evaluations/' + id + '/';
+            window.open(idUrl, '_blank');
+          }
+  
+        })
+  
+  }
+  
+    </script>
+
+</html>

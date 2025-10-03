@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interface Simple</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        background-color: #f4f4f4;
+        padding: 0 20px;
+      }
+
+      /* Navbar */
+      .navbar {
+        width: 100%;
+        background-color: green;
+        color: white;
+        padding: 20px 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 10;
+      }
+
+      .navbar h1 {
+        font-size: 24px;
+      }
+
+      /* Conteneur des boutons en grille */
+      .container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr); /* 3 colonnes */
+        gap: 20px; /* Espace entre les éléments */
+        width: 100%;
+        padding: 20px;
+        margin-top: 80px; /* Décalage pour laisser de l'espace sous la navbar */
+        justify-items: center; /* Centrer les éléments horizontalement */
+      }
+
+      .button {
+        width: 250px; /* Largeur du bouton */
+        height: 150px; /* Hauteur du bouton */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        font-size: 18px;
+        color: white;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 15px;
+        transition: transform 0.3s ease;
+        border-radius: 10px; /* Légèrement arrondi */
+      }
+
+      .button:hover {
+        transform: scale(1.05); /* Zoom léger au survol */
+      }
+
+      /* Couleurs spécifiques pour chaque bouton */
+      .red {
+        background-color: #e74c3c; /* Rouge */
+      }
+
+      .green {
+        background-color: #2ecc71; /* Vert */
+      }
+
+      .blue {
+        background-color: #3498db; /* Bleu */
+      }
+
+      .orange {
+        background-color: #e67e22; /* Orange */
+      }
+
+      .purple {
+        background-color: #9b59b6; /* Violet */
+      }
+
+      .yellow {
+        background-color: #f1c40f; /* Jaune */
+        color: #333; /* Texte noir pour contraste */
+      }
+
+      /* Texte en dessous des boutons (facultatif) */
+      .text {
+        font-size: 18px;
+        color: #333;
+        text-align: center;
+      }
+
+      /* Bouton retour dans la navbar */
+      .back-button {
+        padding: 10px 20px;
+        background-color: #ccc;
+        color: #333;
+        text-decoration: none;
+        border-radius: 5px;
+        font-weight: bold;
+        margin-right: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <div class="navbar">
+      <h1>Section : Matière premièreee</h1>
+    </div>
+
+    <!-- Conteneur des boutons -->
+    <div class="container">
+      <a
+        href="https://app.liliumpharma.com/production/mp_coating_front/"
+        class="button orange"
+        >Coating</a
+      >
+      <a
+        href="https://app.liliumpharma.com/production/mp_excipient_front/"
+        class="button purple"
+        >Excipient</a
+      >
+      <a
+        href="https://app.liliumpharma.com/production/mp_active_ingredients_front/"
+        class="button blue"
+        >Active ingredients</a
+      >
+    </div>
+  </body>
+</html>

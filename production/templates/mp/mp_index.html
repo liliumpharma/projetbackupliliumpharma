@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interface Simple</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      /* Styles généraux */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, sans-serif;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+        background-color: #f4f4f4;
+        padding: 0 20px;
+      }
+
+      /* Navbar */
+      .navbar {
+        width: 100%;
+        background-color: green;
+        color: white;
+        padding: 20px 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 10;
+      }
+
+      .navbar h1 {
+        font-size: 24px;
+      }
+
+      /* Conteneur des boutons en grille */
+      .container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        width: 100%;
+        padding: 20px;
+        margin-top: 80px; /* Décalage pour laisser de l'espace sous la navbar */
+        justify-items: center;
+      }
+
+      .button {
+        width: 250px;
+        height: 150px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        font-size: 18px;
+        color: white;
+        text-decoration: none;
+        font-weight: bold;
+        padding: 15px;
+        transition: transform 0.3s ease;
+        border-radius: 10px;
+      }
+
+      .button:hover {
+        transform: scale(1.05); /* Zoom léger au survol */
+      }
+
+      /* Couleurs spécifiques pour chaque bouton */
+      .red {
+        background-color: #e74c3c;
+      }
+      .green {
+        background-color: #2ecc71;
+      }
+      .blue {
+        background-color: #3498db;
+      }
+      .orange {
+        background-color: #e67e22;
+      }
+      .purple {
+        background-color: #9b59b6;
+      }
+      .yellow {
+        background-color: #f1c40f;
+        color: #333; /* Texte noir pour contraste */
+      }
+
+      /* Modal pour le clavier numérique */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+        transition: all 0.3s ease;
+      }
+
+      .modal-content {
+        background-color: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        width: 300px;
+      }
+
+      .modal-title {
+        font-size: 20px;
+        margin-bottom: 20px;
+        color: #333;
+      }
+
+      .input-code {
+        font-size: 24px;
+        margin-bottom: 20px;
+        padding: 10px;
+        width: 150px;
+        text-align: center;
+        letter-spacing: 5px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+      }
+
+      .keypad {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        justify-content: center;
+      }
+
+      .keypad-btn {
+        font-size: 24px;
+        padding: 15px;
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+      }
+
+      .keypad-btn:hover {
+        background-color: #2980b9;
+      }
+
+      .clear-btn {
+        background-color: #e74c3c;
+      }
+      .ok-btn {
+        background-color: #2ecc71;
+      }
+
+      .close-btn {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #e74c3c;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: background-color 0.2s ease;
+      }
+
+      .close-btn:hover {
+        background-color: #c0392b;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <div class="navbar">
+      <h1>Section : Matière première</h1>
+    </div>
+
+    <!-- Conteneur des boutons -->
+    <div class="container">
+      <a
+        href="https://app.liliumpharma.com/production/mp/"
+        class="button orange"
+        data-url="https://app.liliumpharma.com/production/mp/"
+        >Production</a
+      >
+      <a href="#" class="button purple" data-url="#">Finish Product</a>
+    </div>
+
+    {% comment %}
+    <!-- Modal pour le clavier numérique -->
+    <div id="modal" class="modal">
+      <div class="modal-content">
+        <h2 class="modal-title">Entrez le Code</h2>
+        <input
+          type="password"
+          id="input-code"
+          class="input-code"
+          maxlength="4"
+          readonly
+        />
+        <div class="keypad">
+          <button class="keypad-btn" onclick="appendNumber(1)">1</button>
+          <button class="keypad-btn" onclick="appendNumber(2)">2</button>
+          <button class="keypad-btn" onclick="appendNumber(3)">3</button>
+          <button class="keypad-btn" onclick="appendNumber(4)">4</button>
+          <button class="keypad-btn" onclick="appendNumber(5)">5</button>
+          <button class="keypad-btn" onclick="appendNumber(6)">6</button>
+          <button class="keypad-btn" onclick="appendNumber(7)">7</button>
+          <button class="keypad-btn" onclick="appendNumber(8)">8</button>
+          <button class="keypad-btn" onclick="appendNumber(9)">9</button>
+          <button class="keypad-btn clear-btn" onclick="clearInput()">C</button>
+          <button class="keypad-btn" onclick="appendNumber(0)">0</button>
+          <button class="keypad-btn ok-btn" onclick="validateCode()">OK</button>
+        </div>
+        <button class="close-btn" onclick="closeModal()">Fermer</button>
+      </div>
+    </div>
+
+    <script>
+      let targetUrl = "";
+
+      document.querySelectorAll(".button").forEach((button) => {
+        button.addEventListener("click", function (e) {
+          e.preventDefault();
+          targetUrl = this.getAttribute("data-url");
+          openModal();
+        });
+      });
+
+      function openModal() {
+        document.getElementById("modal").style.display = "flex";
+      }
+
+      function closeModal() {
+        document.getElementById("modal").style.display = "none";
+        clearInput();
+      }
+
+      function appendNumber(number) {
+        const input = document.getElementById("input-code");
+        if (input.value.length < 4) {
+          input.value += number;
+        }
+      }
+
+      function clearInput() {
+        document.getElementById("input-code").value = "";
+      }
+
+      function validateCode() {
+        const inputCode = document.getElementById("input-code").value;
+        const correctCode = "1234";
+
+        if (inputCode === correctCode) {
+          window.location.href = targetUrl;
+        } else {
+          alert("Code incorrect. Veuillez réessayer.");
+          clearInput();
+        }
+      }
+    </script>
+    {% endcomment %}
+  </body>
+</html>

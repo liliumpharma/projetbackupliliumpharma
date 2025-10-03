@@ -1,0 +1,76 @@
+
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-16">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link href="https://fonts.googleapis.com/css2?family=Lalezar&display=swap" rel="stylesheet">
+  <title>PDF</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <style>
+  @media print {
+    body{
+        width: 21cm;
+
+        /* change the margins as you want them to be. */
+   }
+}</style>
+</head>
+<body>
+{% load static %}
+
+      <div class='container text-dark'>
+
+        <h1 class="observation py-2"><img src="/static/img/logo32.png" alt=""> Liste des visites {{produit}}</h1>
+        <div class="row pb-3">
+          <div class="col-md-6">
+            <h5><small><b> medecin:</b> {{medecin.id}} {{medecin.nom}} </small></h5>
+            <h5><small><b> date d'ajout:</b> {{medecin.added}}  </small></h5>
+            <h5 class=''><small><b> telephone:</b> {{medecin.telephone}}</small></h5>
+            <h5 class=''><small><b> specialité:</b> {{medecin.specialite}}</small></h5>
+            <h5 class=''><small><b> classification:</b> {{medecin.classification}}</small></h5>
+          </div>
+          <div class="col-md-6">
+            <h5 class=''><small><b> periode:</b>  <span class="text-secondary">{{request.GET.mindate}} / {{request.GET.maxdate}}</span></small></h5>
+            <h5 class=''><small><b> nombre de visites:</b> {{nbr_visites}}</small></h5>
+            <h5 class=''><small><b> region:</b> {{medecin.medecin_region}}</small></h5>
+            <h5 class=''><small><b> adresse:</b> {{medecin.adresse}}</small></h5>
+          </div>
+        </div>
+
+
+        <table class="table table-sm table-bordered">
+          <thead>
+            <tr>
+              <th class="text-left">ID</th>
+              <th class="text-left">date</th>
+              <th class="text-left">delegué</th>
+              <th class="text-left">prior</th>
+              <th class="text-left">prds</th>
+              <th class="text-left">observation</th>
+            </tr>
+          </thead>
+          <tbody>
+              {% for visite in visites %}
+                <tr>
+                  <td>{{visite.id}}</td>
+                  <td>{{visite.rapport.added}}</td>
+                  <td>{{visite.rapport.user.userprofile.user_nom}}</td>
+                  <td>{{visite.priority}}</td>
+                  <td>{{visite.products_to_admin}}</td>
+                  <td  dir="rtl">{{visite.observation}}</td>
+                </tr>
+            {%endfor%}
+          </tbody>
+        </table>
+      </div>
+      <div class="pt-2 container text-right">
+        <b>Signature et cachet:</b>
+      </div>
+
+
+
+
+</body>
+</html>

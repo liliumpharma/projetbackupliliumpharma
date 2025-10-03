@@ -1,0 +1,181 @@
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/styles.css'%}">
+  <link rel="stylesheet" href="{% static 'css/toast/vanilla-toast.css'%}">
+  {%block styles%}
+  {%endblock styles%}
+  <title>{% block title %}{%endblock title%}</title>
+</head>
+{% block body%}
+<style>
+  header {
+      background-color: #e0f0e9;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+  }
+  
+  .back-arrow a {
+      color: #333;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 16px;
+  }
+  
+  .back-arrow a:hover {
+      text-decoration: underline;
+  }
+  
+  h1 {
+      margin: 0;
+      padding-left: 20px;
+  }
+  
+  .content {
+      padding: 20px;
+  }
+  
+  .fa-arrow-left {
+      margin-right: 5px;
+      color: #fff;
+      background-color: #4CAF50;
+      border-radius: 50%;
+      padding: 8px;
+  }
+  
+  
+  </style>
+  
+<body>
+<header>
+  <div class="back-arrow">
+      <a onclick="goBack()"><i class="fas fa-arrow-left"></i></a>
+  </div>
+  <h1>Liste Médecins</h1>
+</header>
+
+<div class="container mt-4">
+  <div id="meet-cards"></div>
+
+</div>
+
+<script>
+function goBack() {
+  window.history.back();
+}
+</script>
+  <div id="main" class="col-12">
+    <div class="row">
+      <div class="col">
+      <small>  total: <b>({{medecin_number}})</b> clients {% if request.GET.cat == '0' or  request.GET.cat == '1' %} dont: <b>({{nbr}})</b> {% if request.GET.cat == '0' %} non visités {%else%} visités {%endif%}</small> {%endif%}<br/>
+      <small> {{details|safe}}</small>
+      </div>
+      <div class="col text-right">
+        <small>
+          {% if request.GET.cat != '1' %}
+            <a href="{% url 'HomeMedecin' %}?cat=1"> voir liste visités</a> <br/>
+            {%endif%}
+            {% if request.GET.cat != '0' %}
+            <a href="{% url 'HomeMedecin' %}?cat=0"> voir liste non visités</a> <br/>
+            {%endif%}
+            {% if request.GET.cat == '0' or  request.GET.cat == '1' %}
+            <a href="{% url 'HomeMedecin' %}?cat=2"> voir tous</a>
+          {%endif%}
+        </small>
+      </div>
+    </div>
+    <hr/>
+
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th scope="col">nom</th>
+          <th scope="col">flag</th>
+          <th scope="col">spec</th>
+          <th scope="col">class</th>
+          <th scope="col">tel</th>
+          <th scope="col">adresse</th>
+          <th scope="col">visite</th>
+        </tr>
+      </thead>
+      <tbody>
+          {% for medecin in medecins %}
+        <tr>
+          <td><small>{{medecin.id}} {% if medecin.updatable %} <a href="{% url 'UpdateMedecin' medecin.id %}">{{medecin.nom}}</a>  {% else %} {{medecin.nom}}  {%endif%}  {% if medecin.contact %} / {{medecin.contact}} {% endif %}</small></td>
+          <td><small>  <span class="flag {% if medecin.flag %}  text-danger  {% endif %}" style="font-size:20px" data-url="{% url 'ChangeFlag' medecin.id %}" > <i class="fas fa-flag"></i> </span>  </small></td>
+          <td><small>{{medecin.specialite}}</small></td>
+          <td><small>{{medecin.classification}}</small></td>
+          <td><small>{{medecin.telephone}}</small></td>
+          <td><small>{{medecin.adresse}} {{medecin.commune}}</small></td>
+          <td><small>{% if request.user.userprofile.can_view_visites%} {{medecin.medecin_visites_links | safe }}  <a href="{% url 'medecin_last_six_months' medecin.id %}"> voir tous </a> {% else %}{{medecin.medecin_visites}} {% endif %}</small></td>
+        </tr>
+        {%endfor%}
+      </tbody>
+    </table>
+
+
+
+  </div>
+
+  <div class="container pb-4">
+
+
+    <span class="current">
+        Page {{ medecins.number }} sur {{ medecins.paginator.num_pages }}.
+    </span>
+
+
+    <ul class="pagination">
+      {% if medecins.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page=1&cat={{request.GET.cat}}"> << </a>
+      </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ medecins.previous_page_number }}&cat={{request.GET.cat}}" tabindex="-1">{{ medecins.previous_page_number }}</a>
+        </li>
+        {% endif %}
+
+        <li class="page-item active">
+          <a class="page-link" href="#"> {{ medecins.number }}</a>
+        </li>
+        {% if medecins.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ medecins.next_page_number }}&cat={{request.GET.cat}}"> {{ medecins.next_page_number }} </a>
+        </li>
+          <li class="page-item">
+            <a class="page-link" href="?page={{ medecins.paginator.num_pages }}&cat={{request.GET.cat}}" tabindex="-1"> >> </a>
+          </li>
+          {% endif %}
+      </ul>
+  </div>
+
+{% endblock body%}
+
+
+{% block scripts %}
+<script>
+  $(document).ready(function(){
+    $('.flag').click(function(){
+      var ths=$(this)
+      $.get({
+        url:ths.attr('data-url'),
+        success:function(st){
+          ths.toggleClass('text-danger')
+        }
+      })
+    })
+  })
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      // Scroll to the 'main' div when the page loads
+      // document.getElementById('main').scrollIntoView({ behavior: 'smooth' });
+  });
+</script>
+{%endblock scripts%}

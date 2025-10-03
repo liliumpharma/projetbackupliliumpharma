@@ -1,0 +1,194 @@
+{
+    "Adrar": {
+        "latitude": 27.8756,
+        "longitude": -0.2857
+    },
+    "Chlef": {
+        "latitude": 36.1659,
+        "longitude": 1.3361
+    },
+    "Laghouat": {
+        "latitude": 33.8147,
+        "longitude": 2.8282
+    },
+    "Oum El Bouaghi": {
+        "latitude": 35.8713,
+        "longitude": 7.1135
+    },
+    "Batna": {
+        "latitude": 35.5431,
+        "longitude": 6.1722
+    },
+    "Béjaïa": {
+        "latitude": 36.7588,
+        "longitude": 5.0844
+    },
+    "Biskra": {
+        "latitude": 34.8494,
+        "longitude": 5.7276
+    },
+    "Béchar": {
+        "latitude": 31.6167,
+        "longitude": -2.2167
+    },
+    "Blida": {
+        "latitude": 36.4700,
+        "longitude": 2.8276
+    },
+    "Bouira": {
+        "latitude": 36.3776,
+        "longitude": 3.9023
+    },
+    "Tamanrasset": {
+        "latitude": 22.7850,
+        "longitude": 5.5266
+    },
+    "Tébessa": {
+        "latitude": 35.4150,
+        "longitude": 8.1244
+    },
+    "Tlemcen": {
+        "latitude": 34.8783,
+        "longitude": -1.3144
+    },
+    "Tiaret": {
+        "latitude": 35.3749,
+        "longitude": 1.3160
+    },
+    "Tizi Ouzou": {
+        "latitude": 36.7039,
+        "longitude": 4.0491
+    },
+    "Alger": {
+        "latitude": 36.7528,
+        "longitude": 3.0422
+    },
+    "Djelfa": {
+        "latitude": 34.6667,
+        "longitude": 3.2500
+    },
+    "Jijel": {
+        "latitude": 36.8190,
+        "longitude": 5.7667
+    },
+    "Sétif": {
+        "latitude": 36.1884,
+        "longitude": 5.4147
+    },
+    "Saïda": {
+        "latitude": 34.8339,
+        "longitude": 0.1514
+    },
+    "Skikda": {
+        "latitude": 36.8663,
+        "longitude": 6.9070
+    },
+    "Sidi Bel Abbès": {
+        "latitude": 35.2049,
+        "longitude": -0.6326
+    },
+    "Annaba": {
+        "latitude": 36.9147,
+        "longitude": 7.7411
+    },
+    "Guelma": {
+        "latitude": 36.4641,
+        "longitude": 7.4286
+    },
+    "Constantine": {
+        "latitude": 36.3650,
+        "longitude": 6.6147
+    },
+    "Médéa": {
+        "latitude": 36.2622,
+        "longitude": 2.7557
+    },
+    "Mostaganem": {
+        "latitude": 35.9333,
+        "longitude": 0.0899
+    },
+    "M'Sila": {
+        "latitude": 35.7015,
+        "longitude": 4.5444
+    },
+    "Mascara": {
+        "latitude": 35.3941,
+        "longitude": 0.1406
+    },
+    "Ouargla": {
+        "latitude": 31.9475,
+        "longitude": 5.3276
+    },
+    "Oran": {
+        "latitude": 35.6911,
+        "longitude": -0.6417
+    },
+    "El Bayadh": {
+        "latitude": 33.6833,
+        "longitude": 1.0000
+    },
+    "Illizi": {
+        "latitude": 26.4833,
+        "longitude": 8.4667
+    },
+    "Bordj Bou Arréridj": {
+        "latitude": 36.0733,
+        "longitude": 4.7617
+    },
+    "Boumerdès": {
+        "latitude": 36.7589,
+        "longitude": 3.4747
+    },
+    "El Tarf": {
+        "latitude": 36.7500,
+        "longitude": 8.3000
+    },
+    "Tindouf": {
+        "latitude": 27.6761,
+        "longitude": -8.1464
+    },
+    "Tissemsilt": {
+        "latitude": 35.6000,
+        "longitude": 1.7167
+    },
+    "El Oued": {
+        "latitude": 33.3700,
+        "longitude": 6.8500
+    },
+    "Khenchela": {
+        "latitude": 35.4344,
+        "longitude": 7.1431
+    },
+    "Souk Ahras": {
+        "latitude": 36.3000,
+        "longitude": 7.9500
+    },
+    "Tipaza": {
+        "latitude": 36.5900,
+        "longitude": 2.4500
+    },
+    "Mila": {
+        "latitude": 36.4500,
+        "longitude": 6.2667
+    },
+    "Aïn Defla": {
+        "latitude": 36.2500,
+        "longitude": 2.2500
+    },
+    "Naâma": {
+        "latitude": 33.2667,
+        "longitude": 0.3167
+    },
+    "Aïn Témouchent": {
+        "latitude": 35.3022,
+        "longitude": -1.1394
+    },
+    "Ghardaïa": {
+        "latitude": 32.4900,
+        "longitude": 3.6736
+    },
+    "Relizane": {
+        "latitude": 35.7500,
+        "longitude": 0.5550
+    }
+}

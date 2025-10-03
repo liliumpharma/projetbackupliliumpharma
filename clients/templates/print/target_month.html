@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+{% load static %}
+
+<html>
+<head>
+    <title>Impression des Cibles du Mois</title>
+    <style>
+                .signature_block {
+            display: flex;
+            justify-content: space-between;
+            padding-left: 20px;
+            padding-right: 20px;
+            margin-top: 40px;
+        }
+
+        /* Style de base pour le document */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9; /* Couleur de fond légère */
+            color: #333; /* Couleur du texte */
+        }
+
+        /* Style de l'en-tête */
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            background-color: #e7f4e4; /* Fond vert clair */
+            padding: 10px;
+            border-radius: 8px; /* Bordures arrondies */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Ombre pour la profondeur */
+        }
+
+        .header .col-2 {
+            width: 20%;
+        }
+
+        .header .col-10 {
+            width: 80%;
+            text-align: center;
+            height:70px;
+        }
+
+        h4 {
+            margin: 5px 0; /* Espacement vertical */
+        }
+
+        h5 {
+            margin: 10px 0; /* Espacement vertical */
+        }
+
+        /* Style de la table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            /* margin: 20px 0; */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 3px;
+            text-align: left;
+            font-size: 12px;
+        }
+
+        th {
+            background-color: #4CAF50; /* Couleur de fond verte pour les en-têtes */
+            color: white; /* Texte en blanc */
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2; /* Lignes paires en gris clair */
+        }
+
+        /* Style pour les informations utilisateur */
+        .user-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #ffffff; /* Fond blanc */
+            border-radius: 8px; /* Bordures arrondies */
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1); /* Ombre pour la profondeur */
+        }
+
+        .user-info p {
+            margin: 5px 0; /* Espacement vertical */
+        }
+
+        /* Style des petits textes */
+        small {
+            color: #777; /* Couleur grise pour le texte secondaire */
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="col-2">
+            <img src="https://app.liliumpharma.com/{% static 'img/logo.png' %}" style="height: 60px;">
+        </div>
+        <div class="col-10">
+            <h6 class="text-center">LILIUM PHARMA ALGERIE</h6>
+            <h6 class='text-center text-uppercase'>Objectif Mensuelle pour <b>{{ user_target_month.user.first_name }} {{ user_target_month.user.last_name }}</b></h6>
+            <h6 style="font-size: 16px;">Mois : {{ user_target_month.date }}</h6>
+            <h6 class='text-center text-uppercase'>
+                <small style="font-size: 7px;">Le: {% now "j F Y" %}</small>
+                <small style="font-size: 7px;">{% now "H:i" %}</small>
+            </h6>
+        </div>
+    </div>
+
+    <div class="user-info">
+        <p><strong>Nom :</strong> {{ user_target_month.user.first_name }} {{ user_target_month.user.last_name }}</p>
+        <p><strong>Poste :</strong> {{ user_target_month.user.userprofile.speciality_rolee }}</p>
+        <p><strong>Numéro de téléphone :</strong> {{ user_target_month.user.userprofile.telephone }}</p>
+    </div>
+    
+    <table>
+        <tr>
+            <th>Produit</th>
+            <th>Quantité</th>
+        </tr>
+        {% for product in products %}
+        <tr>
+            <td>{{ product.product.nom }}</td>
+            <td>{{ product.quantity }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div style="text-align: right">
+        <h4 class="h4" style="margin: 0">حسب القانون الداخلي للشركة</h4>
+        <div>
+                                                                 إذا حقق المندوب ثلاث أشهر متتالية _ كوارتر يضاف له راتب شهر كحوافز.
+            </br>إذا حقق المندوب ستة أشهر متتالية كواترين متتالين يحسب له راتب شهر إضافي كحوافز ويتم رفع الراتب 10000 دينار جزائري.
+                </br>إذا حقق المندوب السنة كاملة يحسب له راتب شهرين كحوافز او سفر خارج البلاد ويتم رفع الراتب 15000 دينار جزائري.
+            </div>
+        </div>
+    </div>
+
+
+    <div class="signature_block">
+        <span style="font-size: 8px;">Signature du Délégué</span>
+        <span style="font-size: 8px;">Signature du Superviseur</span>
+        <span style="font-size: 8px;">Signature du Country Manager</span>
+    </div>
+</body>
+</html>

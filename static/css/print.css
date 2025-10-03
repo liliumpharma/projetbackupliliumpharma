@@ -1,0 +1,85 @@
+    /* @page {
+      size: a4 portrait;
+      margin-top: 30px;
+      margin-bottom: 30px;
+   } */
+
+
+
+   @font-face {
+    font-family: "Galano";
+    src: url("https://app.liliumpharma.com/static/css/medium.otf") format("opentype");
+    }
+    @font-face {
+        font-family: "Galano";
+        src: url("https://app.liliumpharma.com/static/css/bold.otf") format("opentype");
+        font-weight: bold;
+    }
+    @font-face {
+        font-family: "Galano";
+        src: url("https://app.liliumpharma.com/static/css/light.otf") format("opentype");
+        font-weight: 100;
+    }
+    
+    table 
+    {
+      border-collapse: collapse;
+    }
+    .text-night 
+    {
+      color:#2ca030;
+    }
+    th 
+    {
+      text-transform: uppercase;
+      font-weight: bold;
+      
+    }
+    .table td, .table th, table tr 
+    {
+      border: 1px solid #000 !important;
+    }
+    
+    .bottom-night
+    {
+      border-bottom: 3px solid #2ca030 !important;
+      width: 90%;
+      margin: 4px auto;
+    }
+    body 
+    {
+        font-family: Galano , sans-serif !important;
+        color:#3a3a3a;
+    }
+    .qr-code 
+    {
+      /* position: absolute;
+      top: 8%;
+      right: 8%; */
+      width: 2cm;
+    }
+    .top-info
+    {
+      position: absolute;
+      left: 95px;
+      top: 60%;  
+      transform: translateY(-50%);
+      -webkit-transform: translateY(-50%);
+      -moz-transform: translateY(-50%);
+      -ms-transform: translateY(-50%);
+      -o-transform: translateY(-50%);
+    }
+    .flex-center
+    {
+      align-items: center;
+      justify-content: center;
+      align-content: center;
+      justify-items: center;
+    }
+    .border-black 
+    {
+        border: 2px solid black
+    }
+
+
+  

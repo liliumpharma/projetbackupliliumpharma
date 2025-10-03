@@ -1,0 +1,97 @@
+{% extends 'base.html'%}
+
+{% load accounts_extras %}
+
+{% load static %}
+{%block styles%}
+<link rel="stylesheet" href="{% static 'css/login.css'%}">
+{%endblock styles%}
+{%block title%} Login {%endblock title%}
+
+{%block body%}
+<style>
+  @keyframes fadeIn {
+      0% {
+          opacity: 0;
+      }
+      100% {
+          opacity: 1;
+      }
+  }
+  
+  .container-fluid.center-md {
+      opacity: 0;
+      animation: fadeIn 1s ease-in-out forwards;
+  }
+  
+  @keyframes fallAndBounce {
+    0% {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    30% {
+        opacity: 1;
+    }
+    60% {
+        transform: translateY(50%);
+    }
+    80% {
+        transform: translateY(0%);
+    }
+    100% {
+        transform: translateY(0%);
+    }
+}
+
+h1.fall-and-bounce {
+    animation: fallAndBounce 1.5s ease-in-out;
+}
+
+
+  </style>
+<div class="col-12 text-center mt-5">
+  <h1 class="fall-and-bounce" style="color: white; font-weight: bold;">Welcome to Lilium Pharma !</h1>
+</div>
+<div class=" container-fluid center-md">
+  <div class="row bg-gray py-3 my-3">
+    <div class="col-md-5 offset-md-2 d-md-block d-none shadow" style="background: url({% static 'img/login.jpg'%}); -webkit-background-size: cover;background-size: cover;background-position: center center;">
+    </div>
+    <div class="col-md-3  shadow  pb-4 bg-light py-3"  style="border-radius: 5px;">
+      <h2 class="pt-4 text-day text-center pb-3"> <img src="{% static 'img/logo.png' %}" style="height:80px;"><br> <small>Connexion</small> </h2>
+
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="container text-secondary">
+          <div class="col-md-10 offset-md-1">
+            <div class="pb-2">
+              <label for="">Nom d'utilisateur :</label>
+              <div class='position-relative'>
+                {{ form.username|add_class:"form-control" }}
+              </div>
+
+
+            </div>
+            <div class="pb-2">
+              <label for="">Mot de Passe :</label>
+              {{ form.password|add_class:"form-control" }}
+            </div>
+
+            <div class="py-1"><small class="text-danger">{{form.non_field_errors | safe}}</small></div>
+            {% if 'compte' in form.non_field_errors.as_text  %}
+            <a class='text-light font-weight-light' href="{% url 'activate_account_form' %}">Activer mon compte</a>
+            {%endif%}
+            <div class="text-center py-3">
+              <button type="submit" class="text-white btn btn-block bg-green">Connexion</button>
+            </div>
+            <a class='text-green font-weight-light' href="{% url 'password_reset'%}"> Mot de passe oublié ? </a>
+          </div>
+
+
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+ {%endblock body%}

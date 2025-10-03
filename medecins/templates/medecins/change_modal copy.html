@@ -1,0 +1,106 @@
+{% comment %}
+<div
+  class="modal"
+  id="csv_modal"
+  role="dialog"
+  aria-labelledby="csv_modal"
+  aria-hidden="true"
+>
+  <form
+    method="post"
+    action="{% url 'ChangeMedecin' %}"
+    enctype="multipart/form-data"
+    class="userchangemedecin"
+  >
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">
+            Transfert Visite à un autre medecin
+          </h5>
+          <button
+            type="button"
+            class="close"
+            data-dismiss="modal"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          {% csrf_token %}
+          <label for="csv">Pour le client : &nbsp;</label>
+          <input
+            type="text"
+            name="medecins"
+            class="medecins_list_modal d-none"
+            required
+          />
+          <select
+            name="changeusers"
+            required=""
+            id="id_users"
+            class="change_users"
+            multiple="multiple"
+          ></select>
+        </div>
+        <div class="modal-footer">
+          <a type="button" class="btn btn-secondary" data-dismiss="modal"
+            >annuler</a
+          >
+          <a class="btn btn-primary submit-change-user-medecin">Changer</a>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+  var isDataLoaded = false;
+
+  function load_data() {
+    return fetch("{% url 'AllMedecinsApi' %}")
+      .then((res) => res.json())
+      .then((res) => {
+        res.map((user) => {
+          console.log("dataa");
+          id = user.id;
+          name = user.medecin;
+          $(".change_users").append(
+            `<option value="${id}">${id} - ${name}</option>`
+          );
+        });
+        $(".modal .change_users").select2({ width: "100%" });
+
+        isDataLoaded = true;
+
+        // Store the options in localStorage for subsequent visits
+        localStorage.setItem("medecinsOptions", JSON.stringify(res));
+
+        return res;
+      });
+  }
+
+  $(document).ready(function () {
+    if (window.location.href.indexOf("admin/rapports/visite") > -1) {
+      if (!isDataLoaded) {
+        load_data();
+      } else {
+        var storedOptions = localStorage.getItem("medecinsOptions");
+        if (storedOptions) {
+          $(".change_users").append(JSON.parse(storedOptions));
+          $(".modal .change_users").select2({ width: "100%" });
+        }
+      }
+    }
+  });
+
+  $(".submit-change-user-medecin").click(function (e) {
+    var medecins = "";
+    $(".action-select").each(function () {
+      if ($(this).is(":checked")) medecins += $(this).val() + ",";
+    });
+    $(".medecins_list_modal").val(medecins.replace(/,\s*$/, ""));
+    $(".userchangemedecin").submit();
+  });
+</script>

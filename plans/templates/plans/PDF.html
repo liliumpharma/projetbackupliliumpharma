@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-16">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link href="https://fonts.googleapis.com/css2?family=Lalezar&display=swap" rel="stylesheet">
+  <title>PDF MONTHLY PLAN</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+</head>
+<body>
+{% load static %}
+{% load accounts_extras %}
+{% load custom_filters %}
+
+
+
+  <style>
+       @font-face {
+          font-family: "Galano";
+          src: url("https://app.liliumpharma.com/static/css/medium.otf") format("opentype");
+        }
+    @font-face {
+        font-family: "Galano";
+        src: url("https://app.liliumpharma.com/static/css/bold.otf") format("opentype");
+        font-weight: bold;
+    }
+    @font-face {
+        font-family: "Galano";
+        src: url("https://app.liliumpharma.com/static/css/light.otf") format("opentype");
+        font-weight: 100;
+    }
+
+    body {
+        font-family: Galano , sans-serif !important;
+        color: #3a3a3a;
+    }
+
+    th {
+        text-transform: uppercase;
+        font-weight: bold;
+    }
+
+    .table td, .table th {
+        border: 1px solid #000 !important;
+    }
+
+    .section-title {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-top: 30px;
+        margin-bottom: 10px;
+    }
+
+    .no-visits {
+        font-size: 0.9em;
+    }
+  </style>
+
+  {% for plans in all_plans %}
+  
+  <div class="container text-dark position-relative pt-5">
+      <div class="row mb-4">
+          <div class="col-2">
+              <img src="https://app.liliumpharma.com/{% static 'img/logo.png' %}" style="height: 90px;">
+          </div>
+          <div class="col-10 text-center">
+              <h2>LILIUM PHARMA ALGERIE</h2>
+              <h3 class="text-uppercase">PLANNING MOIS {{ periode.month }} - {{ periode.year }}</h3>
+              <h4 class="text-uppercase">DELEGUE <b>{{ user }}</b></h4>
+              <h4 class="text-uppercase">Du <b>{{ from_to }}</b></h4>
+          </div>
+      </div>
+  </div>
+
+  <!-- Section des communes non visitées - Médical -->
+  <div class="container">
+    <h4 class="section-title">Communes non visitées</h4>
+    <div class="no-visits">
+        {% if non_visite_communes %}
+            <p>
+                {% for commune, counts in non_visite_communes.items %}
+                <strong>{{ commune.nom }}</strong> 
+                ({{ counts.medecins }} médecin{% if counts.medecins > 1 %}s{% endif %}, 
+                    {{ counts.pharmacies }} pharmacie{% if counts.pharmacies > 1 %}s{% endif %}){% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </p>
+        {% else %}
+            <p>Aucune commune non visitée.</p>
+        {% endif %}
+    </div>
+</div>
+
+    
+
+
+  <!-- Affichage des plans -->
+  {% for plan in plans %}
+  <div class="container text-dark position-relative pt-5">
+      <table class="table table-sm table-bordered w-100">
+          <thead>
+              <tr>
+                  {% for single in plan %}
+                      <th class="text-left">{{ single.get_date }}</th>
+                  {% endfor %}
+              </tr>
+          </thead>
+          <tbody>
+              <tr>
+                  {% for single in plan %}
+                      <td>
+                          <small><b>Régions:</b></small><br/>
+                          {% for commune in single.communes.all %}
+                          <small>{{ commune }} <b style="color: red;">({{ single.clients.count }})</b> sur ({{ visited_commune_medecin_count|get_item:commune }})</small><br/>
+                          {% endfor %}
+                      </td>
+                  {% endfor %}
+              </tr>
+              <tr>
+                  {% for single in plan %}
+                      <td>
+                          <small><b>Médecins:</b></small><br/>
+                          {% for medecin in single.clients.all %}
+                              <small>- {{ medecin.nom }}</small><br/>
+                          {% endfor %}
+                      </td>
+                  {% endfor %}
+              </tr>
+              <tr>
+                  {% for single in plan %}
+                      <td>
+                          <small><b>Tâches:</b></small><br/>
+                          {% for task in single.plantask_set.all %}
+                              <small>- {{ task.order }}. {{ task.task }}</small><br/>
+                          {% endfor %}
+                      </td>
+                  {% endfor %}
+              </tr>
+          </tbody>
+      </table>
+  </div>
+  {% endfor %}
+  
+  {% endfor %}
+
+<script>
+  print()
+</script>
+</body>
+</html>

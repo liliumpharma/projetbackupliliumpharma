@@ -1,0 +1,241 @@
+{% if user.is_authenticated %}
+{% load static %}
+<style>
+        .bg-animation {
+            position: relative;
+
+            overflow: hidden;
+            background: linear-gradient(120deg, #305030, #305030);
+        }
+
+        .bg-green {
+            position: relative;
+            background-color: #305030; /* Votre couleur d'arrière-plan vert foncé */
+        }
+
+        .bg-green::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(120deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0));
+            z-index: -1;
+        }
+</style>
+<div class="flex-wrap bg-green py-1 " >
+  <div class="d-flex justify-content-between bg-animation">
+    <h5 style="padding: 11px; color: white;font-weight: bold;">
+      <img class="styled-img"  src="{% static 'img/icons/logo-2.png' %}" />
+      User Profile</h5>
+      <div class="container text-md-right text-center text-white mt-3">
+        <div class="d-md-none d-block"></div>
+        {% now "l jS F Y" %} &nbsp; &nbsp; &nbsp;
+        <div class="container text-md-right text-center text-white mt-3">
+          <div class="d-md-none d-block"></div>
+            <div style="display: flex; align-items: center; margin-right: 5px;">
+                <div style="flex: 1;"></div>
+                  <i class="fa fa-user"></i> {{user}}
+                  <a class="text-white" href="{% url 'logout'%}" style="margin-left: 20px;">
+                    <i class="fas fa-sign-out-alt"></i> Deconnexion
+                  </a>
+                </div>
+              </div>
+            </div>
+
+  </div>
+  <div class="d-flex">
+    <a class="btn" style="color: black;" href="http://192.168.100.3/open_second" target="_blank">
+      <div style="background: white; padding: 5px; border-radius: 5px; display: inline-block;">
+        <img class="icon-door" src="{% static 'img/open_entrance.png' %}" />
+        <strong>Open Exterior Door</strong>
+      </div>
+    </a>
+
+    <a class="btn" style="color: black;" href="http://192.168.100.3/open" target="_blank">
+      <div  style="background: white; padding: 5px; border-radius: 5px; display: inline-block;">
+        <img class="icon-door" src="{% static 'img/door.png' %}" />
+        <strong>Open Interior Door</strong>
+      </div>
+    </a>
+  </div>
+
+
+
+  <script>
+
+    function httpGet(url) {
+      fetch(url)
+    }
+  </script>
+
+
+
+</div>
+
+<style>
+  .styled-img {
+      width: 35px;
+      height: 35px;
+  }
+  .navbar li {
+    margin-right: 3px;
+  }
+
+  .navbar li:last-child {
+    margin-right: 0px;
+  }
+</style>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="#"></a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown"
+    aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown">
+    <ul class="navbar-nav">
+      <li class="nav-item text-center">
+        <a class="nav-link" href="{% url 'HomeMedecin'%}">
+          <img class="styled-img" src="{% static 'img/icons/liste_medecins.png' %}" />
+          <br/> Liste des médecins</br> (قائمة الأطباء)
+        </a>
+      </li>
+      <li class="nav-item text-center">
+        <a class="nav-link" href="{% url 'HomeRapport'%}">
+          <img class="styled-img" src="{% static 'img/icons/rapports.png' %}" alt="">
+          <br /> Liste des rapports</br> (قائمة التقارير)
+        </a>
+      </li>
+      <li class="nav-item text-center">
+        <a class="nav-link" href="{% url 'AddVisite'%}">
+          <img class="styled-img" src="{% static 'img/icons/visite.png' %}" alt="">
+          <br /> Nouvelle Visite</br> (أضف زيارة)
+        </a>
+      </li>
+      <!-- Add more navigation items here -->
+    </ul>
+    <ul class="navbar-nav ml-auto"> <!-- Right-aligned items -->
+      {% if request.user.userprofile.can_add_medecin or request.user.userprofile.can_add_client %}
+      <li class="nav-item text-center">
+        <a class="nav-link" href="{% url 'AddMedecin'%}">
+          <img class="styled-img" src="{% static 'img/icons/add_medecin.png' %}" alt="">
+          <br /> Nouveau médecin</br>(أضف طبيب)
+        </a>
+      </li>
+      {% endif %}
+      <li class="nav-item text-center">
+        <a class="nav-link" href="{% url 'HomeDownloads'%}">
+          <img class="styled-img" src="{% static 'img/icons/download.png' %}" alt="">
+          <br /> Téléchargement</br>(التحميلات)
+        </a>
+      </li>
+      <li class="nav-item text-center">
+        <a class="nav-link" href="{% url 'MsOrders'%}">
+          <img class="styled-img" src="{% static 'img/icons/bon_de_commande.png' %}" alt="">
+          <br /> Bon de commande</br> (الطلبات)
+        </a>
+      </li>
+      <li class="nav-item text-center">
+        <a class="nav-link" href="{% url 'MsExitOrders'%}">
+          <img class="styled-img" src="{% static 'img/icons/bons_de_sortie.png' %}" alt="">
+          <br /> Bon de sortie</br> (العينات)
+        </a>
+      </li>
+      {% if request.user.is_superuser or request.user.userprofile.rolee != "Commercial" %}
+      <li class="nav-item text-center">
+        <a class="nav-link" href="{% url 'Home'%}">
+          <img class="styled-img" src="{% static 'img/icons/supervisor.png' %}" alt="">
+          <br /> Superviseur</br>
+        </a>
+      </li>
+      <li class="nav-item text-center">
+        <a class="nav-link" href="/admin/">
+          <img class="styled-img" src="{% static 'img/icons/admin.png' %}" alt="">
+          <br /> Admin</br>
+        </a>
+      </li>
+      {% endif %}
+      <li class="nav-item text-center">
+        <a class="nav-link" href="/plans/mServices/monthly_planning/">
+          <img class="styled-img" src="{% static 'img/icons/planning.png' %}" alt="">
+          <br /> Planning</br>
+        </a>
+      </li>
+      <li class="nav-item text-center">
+        <a class="nav-link" href="{% url 'target_front' %}">
+          <img class="styled-img" src="{% static 'img/icons/sales-2.png' %}" />
+          <br /> Ventes</br>
+        </a>
+      </li>
+      <li class="nav-item text-center">
+        <a class="nav-link" href="{% url 'depenses_front'%}">
+          <img class="styled-img" src="{% static 'img/icons/spends.png' %}" />
+          <br /> Dépenses <br>مصاريف
+        </a>
+      </li>
+      <li class="nav-item text-center">
+        <a class="nav-link" href="{% url 'LeavesFrontend' %}">
+          <img class="styled-img" src="{% static 'img/icons/holiday_96.png' %}" />
+          <br /> Congé & Absences</br>
+        </a>
+      </li>
+      <li class="nav-item text-center">
+        <a class="nav-link" href="{% url 'MonthlyEvaluationsFrontEnd' %}">
+          <img class="styled-img" src="{% static 'img/icons/evaluation.png' %}" />
+          <br /> Evaluation mensuelle</br>
+        </a>
+      </li>
+      <li class="nav-item text-center">
+        <a class="nav-link" href="{% url 'VisiteDuoFrontEnd'%}">
+          <img class="styled-img" src="{% static 'img/icons/duo.png' %}" />
+          <br /> Visite Duo</br>
+        </a>
+      </li>
+      <li class="nav-item text-center">
+        <a class="nav-link" href="{% url 'manual_front'%}">
+          <img class="styled-img" src="{% static 'img/icons/app.png' %}" />
+          <br /> Utilisation application <br>دليل الاستخدام
+        </a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+
+
+
+<!-- <nav class="navbar navbar-expand-lg navbar-light bg-light shadow">
+  <a class="navbar-brand" href="{% url 'HomeRapport' %}"><img src="{% static 'img/logo.png'%}" style="max-height:50px"></a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+      <h1 class='font-weight-light text-green d-none d-md-block'> {{page_title}} </h1>
+    <div class="navbar-nav ml-auto ">
+      {% if request.user.is_superuser or request.user.userprofile.rolee != "Commercial" %}
+      <a class="nav-item dropdown my-1 mx-md-2 btn nav-link">
+        <a class="dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <i class="fa fa-user-cog"></i> Supervisor
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+          <a class="dropdown-item" href="{% url 'Home'%}">Supervisor</a>
+          <a class="dropdown-item" href="/admin">Admin</a>
+        </div>
+      </a> -->
+<!-- <a class="nav-item nav-link my-1 mx-md-2 btn" href="{% url 'Home'%}"><i class="fa fa-user-cog"></i> Superviseur </a> -->
+<!-- {%endif%} -->
+<!-- <a class="nav-item nav-link my-1 mx-md-2 btn" href="{% url 'HomeDownloads'%}"><i class="fas fa-download"></i> Telechargement </a>
+      <a class="nav-item nav-link my-1 mx-md-2 btn" href="{% url 'HomeMedecin'%}"><i class="far fa-calendar-check"></i> Liste des  medecins (قائمة الأطباء) </a>
+      <a class="nav-item nav-link my-1 mx-md-2 btn" href="{% url 'HomeRapport'%}"><i class="far fa-calendar-check"></i> Liste des  rapports (قائمة التقارير)</a>
+      <a class="nav-item nav-link my-1 mx-md-2 btn" href="{% url 'AddVisite'%}"><i class="fa fa-plus-circle"></i> Nouvelle Visite (أضف زيارة)</a> -->
+<!-- {% if request.user.userprofile.can_add_medecin or  request.user.userprofile.can_add_client %}  -->
+<!-- <a class="nav-item nav-link my-1 mx-md-2 btn" href="{% url 'AddMedecin'%}"><i class="fa fa-plus-circle"></i> Nouveau medecin (أضف طبيب)</a> -->
+<!-- {% endif%}    
+    </div>
+  </div>
+</nav> -->
+<h5 class="text-green text-center pt-3 ">{{page_title}}</h5>
+{% endif %}

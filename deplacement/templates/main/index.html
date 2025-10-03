@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calcul de distance par route entre deux wilayas</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .titre {
+        color: black;
+        font-weight: bold;
+      }
+
+      .donnée {
+        color: black;
+        font-weight: normal;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f6f9;
+        color: #333;
+        line-height: 1.6;
+        padding: 0 20px;
+      }
+      h2 {
+        text-align: center;
+        color: #2c3e50;
+        margin-top: 40px;
+        font-size: 24px;
+      }
+      .container {
+        max-width: 90%;
+        margin: 40px auto;
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+      .select-container,
+      .date-container {
+        margin-bottom: 20px;
+        display: flex;
+      }
+      label {
+        display: block;
+        font-weight: bold;
+        color: #34495e;
+        margin-bottom: 8px;
+      }
+      select,
+      button,
+      input {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        outline: none;
+        transition: all 0.3s ease;
+      }
+      select:focus,
+      button:focus,
+      input:focus {
+        border-color: #3498db;
+      }
+      select {
+        background-color: #fff;
+      }
+      button {
+        background-color: #3498db;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+        margin-top: 15px;
+      }
+      button:hover {
+        background-color: #2980b9;
+      }
+      button:disabled {
+        background-color: #bdc3c7;
+        cursor: not-allowed;
+      }
+      #result,
+      #coastResult {
+        margin-top: 20px;
+        font-size: 18px;
+        text-align: left;
+        font-weight: bold;
+        color: #2ecc71;
+        display: flex;
+      }
+      .footer {
+        text-align: center;
+        font-size: 14px;
+        color: #7f8c8d;
+        margin-top: 40px;
+      }
+      .flex-container {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .flex-item {
+        display: flex;
+        justify-content: flex-start;
+        margin-bottom: 8px; /* Espacement entre les lignes */
+      }
+
+      /* Responsive Styles */
+      @media (max-width: 768px) {
+        body {
+          padding: 0 10px;
+        }
+        .container {
+          padding: 20px;
+          width: 2000px;
+        }
+        h2 {
+          font-size: 22px;
+        }
+      }
+      /* Styling for the dynamically generated div */
+      .styled-night {
+        display: flex;
+        flex-direction: column; /* Stack labels and inputs vertically */
+        margin-bottom: 15px;
+        padding: 10px;
+        background-color: #f0f0f5; /* Light background */
+        border: 1px solid #d9d9e3;
+        border-radius: 8px;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      .styled-night label {
+        font-size: 14px;
+        color: #333;
+        margin-right: 5px;
+      }
+
+      .styled-night input[type="date"] {
+        padding: 5px;
+        margin: 5px 0;
+        width: 100%; /* Full width of the input */
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      .styled-night input[type="date"]:focus {
+        border-color: #007bff; /* Change border color on focus */
+        outline: none;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Highlight input on focus */
+      }
+      /* Styling the result text in a professional way */
+      .styled-result {
+        font-size: 18px; /* Increase font size for readability */
+        font-weight: bold; /* Make the text bold */
+        color: #333; /* Use a professional dark color */
+        background-color: #f9f9f9; /* Light background for contrast */
+        padding: 10px;
+        border: 1px solid #ccc; /* Add a border for emphasis */
+        border-radius: 4px;
+        text-align: center; /* Center the text */
+        margin-top: 15px; /* Add space from the top */
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1); /* Slight shadow for a polished look */
+      }
+      /* Styling the result text */
+      #result {
+        font-size: 18px; /* Set a good readable size */
+        color: #000; /* Black color for the main text */
+        margin-top: 15px; /* Add space from the top */
+        text-align: center; /* Center the text */
+      }
+
+      /* Styling the distance part in dark green */
+      .distance-value {
+        color: #006400; /* Dark green color */
+        font-weight: bold; /* Make the distance bold */
+      }
+      .select-container {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        margin-bottom: 10px;
+      }
+
+      .label-container {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        margin-bottom: 5px;
+      }
+
+      .label-fr {
+        font-size: 14px;
+        color: #333;
+        margin-right: 5px;
+      }
+
+      .label-ar {
+        font-size: 14px;
+        color: #333;
+        margin-left: auto;
+        text-align: right;
+        direction: rtl;
+      }
+
+      .select2 {
+        width: 100%;
+        padding: 5px;
+        font-size: 14px;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          width: 100%;
+          padding: 15px;
+        }
+        h2 {
+          font-size: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Formulaire de Déplacement</h2>
+
+      <div>
+        <div class="label-container">
+          <label for="debutDeplacement" class="label-fr"
+            >Date Début déplacement :</label
+          >
+
+          <label for="debutDeplacement" class="label-fr"
+            >تاريخ بدء التنقل :</label
+          >
+        </div>
+        <input type="date" id="start_date" />
+      </div>
+      <div>
+        <div class="label-container">
+          <label for="finDeplacement" class="label-fr"
+            >Date Fin déplacement :</label
+          >
+
+          <label for="finDeplacement" class="label-fr"
+            >تاريخ نهاية التنقل :</label
+          >
+        </div>
+        <input type="date" id="end_date" />
+      </div>
+
+      <!-- Nombre de jours -->
+      <div class="select-container">
+        <div class="label-container">
+          <label for="nbJours" class="label-fr">Nombre de jours :</label>
+          <label for="wilaya2" class="label-ar">عدد الأيام :</label>
+        </div>
+
+        <input
+          type="number"
+          id="nbJours"
+          placeholder="Entrez le nombre de jours"
+          min="1"
+        />
+      </div>
+
+      <!-- Nombre de jours -->
+      <div class="select-container">
+        <div class="label-container">
+          <label for="nbNuits" class="label-fr">Nombre de nuitées :</label>
+          <label for="nbNuits" class="label-ar">عدد الليالي :</label>
+        </div>
+
+        <input
+          type="number"
+          id="nbNuits"
+          placeholder="Entrez le nombre de jours"
+          min="1"
+        />
+      </div>
+
+      <div id="jourDetailsContainer"></div>
+
+      <script>
+        // Référence à l'input et au conteneur
+        const nbNuitsInput = document.getElementById("nbNuits");
+        const jourDetailsContainer = document.getElementById(
+          "jourDetailsContainer"
+        );
+
+        // Fonction pour générer les éléments jourDetails avec input date
+        function generateJourDetails(nombre) {
+          // Efface le contenu précédent
+          jourDetailsContainer.innerHTML = "";
+
+          // Génère les éléments jourDetails en fonction du nombre
+          for (let i = 1; i <= nombre; i++) {
+            const jourDetail = document.createElement("div");
+            jourDetail.classList.add("date-container", "styled-night");
+
+            jourDetail.innerHTML = `
+              <label for="jour${i}">Nuit ${i} :</label>
+              <label for="du${i}">Du</label>
+              <input type="date" id="nuit${i}" />
+              <label for="au${i}">Au</label>
+              <input type="date" id="nuit${i}_end" readonly />
+            `;
+
+            jourDetailsContainer.appendChild(jourDetail);
+          }
+        }
+
+        // Ajoute un écouteur d'événements sur l'input
+        nbNuitsInput.addEventListener("input", function () {
+          const nombre = parseInt(nbNuitsInput.value, 10);
+
+          // Vérifie que le nombre est valide
+          if (!isNaN(nombre) && nombre > 0) {
+            generateJourDetails(nombre);
+          }
+        });
+
+        // Génère les éléments jourDetails par défaut au chargement de la page
+        generateJourDetails(nbNuitsInput.value);
+
+        // Écoute les changements sur les champs de date
+        document.addEventListener("change", function (e) {
+          if (e.target && e.target.matches('input[type="date"]')) {
+            const nuitInput = e.target;
+
+            // Ignorer les champs de fin de nuit ("nuit_end")
+            if (
+              nuitInput.id.includes("nuit") &&
+              nuitInput.id.endsWith("_end")
+            ) {
+              return;
+            }
+
+            const startDate = nuitInput.value;
+
+            if (startDate) {
+              // Convertit la date de début en objet Date et ajoute 1 jour
+              const start = new Date(startDate);
+              start.setDate(start.getDate() + 1);
+              const endDate = start.toISOString().split("T")[0];
+
+              // Associe la date de fin et la rend non modifiable
+              const nuitEndInput = nuitInput
+                .closest(".date-container")
+                .querySelector(`input[id="${nuitInput.id}_end"]`);
+
+              if (nuitEndInput) {
+                nuitEndInput.value = endDate;
+                nuitEndInput.readOnly = true;
+              }
+            }
+          }
+        });
+      </script>
+
+      <!-- Sélection des wilayas -->
+      <div class="select-container">
+        <div class="label-container">
+          <label for="wilaya1" class="label-fr"
+            >Wilaya 1 (point de départ)</label
+          >
+          <label for="wilaya1" class="label-ar"> ولاية 1 (نقطة البداية)</label>
+        </div>
+        <select id="wilaya1" class="select2">
+          <option value="27.8997,-0.2831">Adrar</option>
+          <option value="36.7631,3.0506">Alger</option>
+          <option value="36.2661,2.5953">Ain Defla</option>
+          <option value="35.3125,-1.1458">Ain Temouchent</option>
+          <option value="36.8997,7.7667">Annaba</option>
+          <option value="35.5553,6.1786">Batna</option>
+          <option value="36.7500,5.0831">Bejaia</option>
+          <option value="31.6167,-2.2167">Bechar</option>
+          <option value="34.8500,5.7331">Biskra</option>
+          <option value="36.4667,2.8331">Blida</option>
+          <option value="36.3800,3.9014">Bouira</option>
+          <option value="36.7667,3.4667">Boumerdes</option>
+          <option value="36.0667,4.7667">Bordj Bou Arreridj</option>
+          <option value="36.1647,1.3349">Chlef</option>
+          <option value="36.3650,6.6147">Constantine</option>
+          <option value="34.6667,3.2500">Djelfa</option>
+          <option value="33.6861,1.0140">El Bayadh</option>
+          <option value="36.7686,8.3186">El Tarf</option>
+          <option value="33.3331,6.8831">El Oued</option>
+          <option value="32.4890,3.6726">Ghardaïa</option>
+          <option value="36.4661,7.4341">Guelma</option>
+          <option value="26.4831,8.4667">Illizi</option>
+          <option value="36.7997,5.7667">Jijel</option>
+          <option value="35.4350,7.1497">Khenchela</option>
+          <option value="33.7997,2.8831">Laghouat</option>
+          <option value="35.3944,0.1394">Mascara</option>
+          <option value="36.2667,2.7500">Medea</option>
+          <option value="36.5831,6.2653">Mila</option>
+          <option value="35.9331,0.0881">Mostaganem</option>
+          <option value="33.2667,-0.3167">Naama</option>
+          <option value="31.9500,5.3331">Ouargla</option>
+          <option value="35.8775,7.1136">Oum Bouaghi</option>
+          <option value="35.6911,-0.6417">Oran</option>
+          <option value="36.0667,2.4500">Tipaza</option>
+          <option value="35.4042,8.1242">Tebessa</option>
+          <option value="22.7831,5.5167">Tamanrasset</option>
+          <option value="27.6742,-8.1489">Tindouf</option>
+          <option value="35.3758,1.3131">Tiaret</option>
+          <option value="36.7170,4.0497">Tizi Ouzou</option>
+          <option value="34.8783,-1.3150">Tlemcen</option>
+          <option value="35.6078,1.8111">Tissemsilt</option>
+          <option value="36.1914,5.4094">Setif</option>
+          <option value="34.8331,0.1500">Saida</option>
+          <option value="35.1942,-0.6417">Sidi Belabbes</option>
+          <option value="36.8622,6.9467">Skikda</option>
+          <option value="36.2697,7.1433">Souk Ahras</option>
+          <option value="35.7255,4.5278">M’sila</option>
+          <option value="35.7425,0.5583">Relizane</option>
+        </select>
+      </div>
+
+      <div class="select-container">
+        <div class="label-container">
+          <label for="wilaya2" class="label-fr"
+            >Wilaya 2 (point de départ)</label
+          >
+          <label for="wilaya2" class="label-ar"> ولاية 2 (نقطة البداية)</label>
+        </div>
+        <select id="wilaya2" class="select2">
+          <option value="27.8997,-0.2831">Adrar</option>
+          <option value="36.7631,3.0506">Alger</option>
+          <option value="36.2661,2.5953">Ain Defla</option>
+          <option value="35.3125,-1.1458">Ain Temouchent</option>
+          <option value="36.8997,7.7667">Annaba</option>
+          <option value="35.5553,6.1786">Batna</option>
+          <option value="36.7500,5.0831">Bejaia</option>
+          <option value="31.6167,-2.2167">Bechar</option>
+          <option value="34.8500,5.7331">Biskra</option>
+          <option value="36.4667,2.8331">Blida</option>
+          <option value="36.3800,3.9014">Bouira</option>
+          <option value="36.7667,3.4667">Boumerdes</option>
+          <option value="36.0667,4.7667">Bordj Bou Arreridj</option>
+          <option value="36.1647,1.3349">Chlef</option>
+          <option value="36.3650,6.6147">Constantine</option>
+          <option value="34.6667,3.2500">Djelfa</option>
+          <option value="33.6861,1.0140">El Bayadh</option>
+          <option value="36.7686,8.3186">El Tarf</option>
+          <option value="33.3331,6.8831">El Oued</option>
+          <option value="32.4890,3.6726">Ghardaïa</option>
+          <option value="36.4661,7.4341">Guelma</option>
+          <option value="26.4831,8.4667">Illizi</option>
+          <option value="36.7997,5.7667">Jijel</option>
+          <option value="35.4350,7.1497">Khenchela</option>
+          <option value="33.7997,2.8831">Laghouat</option>
+          <option value="35.3944,0.1394">Mascara</option>
+          <option value="36.2667,2.7500">Medea</option>
+          <option value="36.5831,6.2653">Mila</option>
+          <option value="35.9331,0.0881">Mostaganem</option>
+          <option value="33.2667,-0.3167">Naama</option>
+          <option value="31.9500,5.3331">Ouargla</option>
+          <option value="35.8775,7.1136">Oum Bouaghi</option>
+          <option value="35.6911,-0.6417">Oran</option>
+          <option value="36.0667,2.4500">Tipaza</option>
+          <option value="35.4042,8.1242">Tebessa</option>
+          <option value="22.7831,5.5167">Tamanrasset</option>
+          <option value="27.6742,-8.1489">Tindouf</option>
+          <option value="35.3758,1.3131">Tiaret</option>
+          <option value="36.7170,4.0497">Tizi Ouzou</option>
+          <option value="34.8783,-1.3150">Tlemcen</option>
+          <option value="35.6078,1.8111">Tissemsilt</option>
+          <option value="36.1914,5.4094">Setif</option>
+          <option value="34.8331,0.1500">Saida</option>
+          <option value="35.1942,-0.6417">Sidi Belabbes</option>
+          <option value="36.8622,6.9467">Skikda</option>
+          <option value="36.2697,7.1433">Souk Ahras</option>
+          <option value="35.7255,4.5278">M’sila</option>
+          <option value="35.7425,0.5583">Relizane</option>
+        </select>
+      </div>
+
+      <!-- Bouton pour calculer la distance -->
+
+      <!-- Résultats de la distance -->
+      <!-- Result -->
+      <div id="result">
+        Distance calculée : <span class="distance-value"></span> km / المسافة
+        المحسوبة: <span class="distance-value"></span> كم
+      </div>
+      <!-- Détails des jours -->
+      <div id="jourDetails"></div>
+
+      <!-- Bouton pour calculer le coût -->
+      <button id="calculateCoastBtn" style="display: none">
+        Soumettre Le formulaire
+      </button>
+
+      <!-- Résultat du coût -->
+      <div id="coastResult"></div>
+
+      <button id="validateBtn" style="display: none; background-color: green">
+        Valider
+      </button>
+    </div>
+
+    <div class="footer">
+      <p>© 2025 Calcul de distance. Tous droits réservés.</p>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+    <script>
+      const distanceKm = 0;
+
+      $(document).ready(function () {
+        let distanceKm = 0;
+        $(".select2").select2();
+
+        // Calculer la distance
+        $("#wilaya1, #wilaya2").on("change", function () {
+          const wilaya1 = $("#wilaya1").val().split(",");
+          const wilaya2 = $("#wilaya2").val().split(",");
+          const nbNuits = parseInt($("#nbNuits").val(), 10);
+
+          const lat1 = wilaya1[0];
+          const lon1 = wilaya1[1];
+          const lat2 = wilaya2[0];
+          const lon2 = wilaya2[1];
+
+          if (!lat1 || !lat2 || isNaN(nbNuits) || nbNuits <= 0) {
+            alert(
+              "Veuillez sélectionner les deux wilayas et entrer un nombre valide de jours."
+            );
+            return;
+          }
+
+          // Construct the API request URL
+          const url = `https://api.allorigins.win/get?url=${encodeURIComponent(
+            `http://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`
+          )}`;
+
+          // Show loading state
+          $("#result").text("Chargement...").show();
+          $("#jourDetails").html(""); // Clear previous details
+
+          fetch(url)
+            .then((response) => response.json())
+            .then((data) => {
+              const osrmData = JSON.parse(data.contents);
+
+              if (osrmData.routes && osrmData.routes.length > 0) {
+                const distanceMeters = osrmData.routes[0].distance;
+                distanceKm = (distanceMeters / 1000).toFixed(2);
+                console.log("Distance: " + distanceKm + " km");
+
+                if (distanceKm >= 150) {
+                  // Affiche la distance en km
+                  $("#result").html(`
+                  La distance par route est de <span class="distance-value"> : ${distanceKm} km</span>
+                  المسافة عبر الطريق  </br>
+                `);
+
+                  // Affiche le bouton "Calculer Coast"
+                  $("#calculateCoastBtn").show();
+                } else {
+                  $("#result").html(`
+                  La distance par route est de <span class="distance-value"> : ${distanceKm} km</span>
+                  المسافة عبر الطريق  </br>
+                `);
+
+                  // Écoute les changements sur les champs de date
+
+                  // Affiche le bouton "Calculer Coast"
+                  $("#calculateCoastBtn").show();
+                }
+              }
+            })
+            .catch((error) => {
+              $("#result").text(
+                "Erreur lors de la récupération de la distance."
+              );
+              console.error("Erreur:", error);
+            });
+        });
+
+        $("#calculateCoastBtn").click(function () {
+          if (distanceKm >= 150) {
+            const nbJours = parseInt($("#nbJours").val(), 10);
+            const dates = [];
+
+            for (let i = 1; i <= nbJours; i++) {
+              const dateInput = $(`#nuit${i}`).val();
+              if (dateInput) {
+                dates.push(new Date(dateInput));
+              }
+            }
+
+            if (dates.length === 0) {
+              alert("Veuillez choisir les dates pour chaque jour.");
+              return;
+            }
+
+            const firstDate = dates[0];
+            const lastDate = dates[dates.length - 1];
+            const differenceInTime = lastDate.getTime() - firstDate.getTime();
+            const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+
+            const nbNuitsInput = document.getElementById("nbNuits");
+
+            // Get the value of the input
+            const nbNuitsValue = nbNuitsInput.value;
+            // Arrondir les nuitées à l'entier supérieur
+            const nuitées = nbNuitsValue; // Utilisation de Math.ceil pour arrondir au supérieur
+            const jours = nbJours;
+
+            // Calcul du coût
+            const tarifParNuitée = 7000;
+            const tarifParJour = 2000;
+            const tarifDeplacement = 20; // 20 DA par km
+            const coûtNuitées = nuitées * tarifParNuitée;
+            const coûtJours = jours * tarifParJour;
+            const coûtDeplacement = distanceKm * tarifDeplacement;
+            const coûtEntier = Math.round(coûtDeplacement);
+            const coûtTotall = coûtNuitées + coûtJours + coûtDeplacement;
+            const coûtTotal = Math.round(coûtTotall);
+
+            // Affichage des détails
+            $("#coastResult")
+              .html(
+                `
+                <div class="flex-container">
+                  <div class="flex-item">
+                    <p class="titre">Détails du calcul :</p>
+                  </div>
+                  <div class="flex-item">
+                    <p class="titre">Nombre de nuitées : </p><span class="donnée">${nuitées}</span>
+                  </div>
+                  <div class="flex-item">
+                    <p class="titre">Tarif hébergement Lilium Pharma : </p><p class="donnée">${tarifParNuitée} DZD / nuitée</p>
+                  </div>
+                  <div class="flex-item">
+                    <p class="titre">Total des nuitées : </p><p class="donnée">${nuitées} * ${tarifParNuitée} = ${coûtNuitées} DZD</p>
+                  </div>
+                  <div class="flex-item">
+                    <p class="titre">Nombre de jours : </p><p class="donnée">${jours}</p>
+                  </div>
+                  <div class="flex-item">
+                    <p class="titre">Tarif restauration Lilium Pharma : </p><span class="donnée">${tarifParJour} DZD / jour</span>
+                  </div>
+                  <div class="flex-item">
+                    <p class="titre">Total des jours : </p><p class="donnée">${jours} * ${tarifParJour} = ${coûtJours} DZD</p>
+                  </div>
+                  <div class="flex-item">
+                    <p class="titre">Tarif déplacement Lilium Pharma : </p><p class="donnée">20 DZD / km</p>
+                  </div>
+                  <div class="flex-item">
+                    <p class="titre">Total déplacement : </p><p class="donnée">${distanceKm} * 20 = ${coûtEntier} DZD</p>
+                  </div>
+                  <div class="flex-item">
+                    <p class="titre">Coût total : </p><p class="donnée">${coûtTotal} DZD</p>
+                  </div>
+                </div>
+                `
+              )
+              .show();
+            $("#calculateCoastBtn").hide();
+            $("#validateBtn").show();
+          } else {
+            // Calcul du coût
+            const tarifParJour = 2000;
+            const tarifDeplacement = 20; // 20 DA par km
+            const jours = 1;
+            const coûtJours = jours * tarifParJour;
+            const coûtDeplacement = distanceKm * tarifDeplacement;
+            const coûtEntier = Math.round(coûtDeplacement);
+            const coûtTotall = coûtJours + coûtDeplacement;
+            const coûtTotal = Math.round(coûtTotall);
+
+            // Affichage des détails
+            $("#coastResult")
+              .html(
+                `
+                    <div class="flex-container">
+                      <div class="flex-item">
+                        <p class="titre">Détails du calcul :</p>
+                      </div>
+                      <div class="flex-item">
+                        <p class="titre">Nombre de jours : </p><p class="donnée">${jours}</p>
+                      </div>
+                      <div class="flex-item">
+                        <p class="titre">Tarif restauration Lilium Pharma : </p><span class="donnée">${tarifParJour} DZD / jour</span>
+                      </div>
+                      <div class="flex-item">
+                        <p class="titre">Total des jours : </p><p class="donnée">${jours} * ${tarifParJour} = ${coûtJours} DZD</p>
+                      </div>
+                      <div class="flex-item">
+                        <p class="titre">Tarif Semi déplacement Lilium Pharma : </p><p class="donnée">20 DZD / km</p>
+                      </div>
+                      <div class="flex-item">
+                        <p class="titre">Total Semi déplacement : </p><p class="donnée">${distanceKm} * 20 = ${coûtEntier} DZD</p>
+                      </div>
+                      <div class="flex-item">
+                        <p class="titre">Coût total : </p><p class="donnée">${coûtTotal} DZD</p>
+                      </div>
+                    </div>
+                    `
+              )
+              .show();
+            $("#calculateCoastBtn").hide();
+            $("#validateBtn").show();
+          }
+        });
+      });
+    </script>
+    <script>
+      // Sélectionner les éléments des champs de dates
+      const startDateInput = document.getElementById("start_date");
+      const endDateInput = document.getElementById("end_date");
+
+      // Fonction pour vérifier si la date de fin est inférieure à la date de début
+      function validateDates() {
+        const startDate = new Date(startDateInput.value);
+        const endDate = new Date(endDateInput.value);
+
+        if (endDate < startDate) {
+          // Alerte en français avec emoji
+          alert(
+            "⚠️ Oups ! La date de fin de déplacement ne peut pas être inférieure à la date de début. ⚠️ ! لا يمكن أن تكون تاريخ نهاية الرحلة أقل من تاريخ بداية الرحلة. 🛑"
+          );
+          const today = new Date().toISOString().split("T")[0];
+
+          // Réinitialiser les deux champs à la date d'aujourd'hui
+          location.reload();
+        }
+      }
+
+      // Ajouter des écouteurs d'événements 'onchange' pour les deux champs de dates
+      startDateInput.addEventListener("change", validateDates);
+      endDateInput.addEventListener("change", validateDates);
+    </script>
+
+    <script>
+      document
+        .getElementById("validateBtn")
+        .addEventListener("click", function () {
+          // Collect form data
+          const formData = {
+            startDate: document.getElementById("start_date").value,
+            endDate: document.getElementById("end_date").value,
+            nbJours: document.getElementById("nbJours").value,
+            nbNuits: document.getElementById("nbNuits").value,
+            wilaya1:
+              document.getElementById("wilaya1").options[
+                document.getElementById("wilaya1").selectedIndex
+              ].text,
+            wilaya2:
+              document.getElementById("wilaya2").options[
+                document.getElementById("wilaya2").selectedIndex
+              ].text,
+            distance: document
+              .querySelector("#result .distance-value")
+              .innerText.trim(),
+            nuitsDetails: [],
+          };
+
+          // Collect nuit details
+          const nuitElements = document.querySelectorAll(".date-container");
+          nuitElements.forEach((nuitElement, index) => {
+            const nuitStart = nuitElement.querySelector(
+              `input[id="nuit${index + 1}"]`
+            );
+            const nuitEnd = nuitElement.querySelector(
+              `input[id="nuit${index + 1}_end"]`
+            );
+
+            if (nuitStart && nuitEnd) {
+              formData.nuitsDetails.push({
+                nuit: index + 1,
+                startDate: nuitStart.value,
+                endDate: nuitEnd.value,
+              });
+            }
+          });
+
+          // Specify the URL to send data to
+          const url =
+            "https://app.liliumpharma.com/deplacement/deplacement/create/"; // Replace with your API endpoint
+
+          // Send data using fetch
+          console.log("sent data " + JSON.stringify(formData));
+
+          // Send data using fetch
+          fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+          })
+            .then((response) => {
+              if (response.ok) {
+                return response.json();
+              }
+              throw new Error("Network response was not ok.");
+            })
+            .then((data) => {
+              console.log("Success:", data);
+              alert("Data submitted successfully!");
+            })
+            .catch((error) => {
+              console.error("Error:", error);
+              alert("Failed to submit data.");
+            });
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,145 @@
+
+<!-- templates/rapports/griffe_de_passage_medical_2.html -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Griffe de Passage</title>
+    <style>
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 0;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .pages {
+        margin: 0; /* Reset margins */
+    }
+
+    .page {
+        page-break-after: always;
+        padding: 20px;
+        border: 2.5px solid black;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .header-left, .header-right {
+        font-size: 20px;
+    }
+
+    .header-center {
+        position: relative; /* Changed from absolute */
+        text-align: center;
+    }
+    .qr-code {
+                width: 50px;
+                height:50px;
+            }
+
+    
+    .date-cell {
+            position: relative; /* Positionner les enfants relativement à la cellule */
+        }
+
+    .date {
+            position: absolute; /* Positionner la date absolument par rapport à la cellule */
+            top: 0; /* Aligné en haut */
+            left: 0; /* Aligné à gauche */
+            margin: 5px; /* Ajouter un petit espace */
+    }
+
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 20px;
+    }
+
+    td {
+        width: 50px;
+        height: 100px;
+        border: 1px solid black;
+    }
+
+    /* Additional styles as needed */
+}
+
+    </style>
+</head>
+<body>
+    {% if pages %}
+    <div class="pages">
+        {% for page in pages %}
+            <div class="page">
+                <div class="col-12">
+                    <img src="/static/img/logo22.png" alt="LOGO" class="logo">
+                </div>
+
+                <h6 class="title mt-2">Griffe de passage des médecins</h6>
+                
+                <header>
+                    <div class="header-left">
+                        <strong>Date :</strong> {{ page.date }}
+                    </div>
+                    
+                    <div class="header-center">
+                        <img src="{{ page.qr_code_url }}" alt="QR Code" class="qr-code" width="50px" height="50px">
+                    </div>
+
+                    <div class="header-right">
+                        <strong>Nom:</strong> <span class="selected-user">{{ page.user_name }}</span>
+                    </div>
+                </header>
+
+                <table>
+                    <tr>
+                        <td class="date-cell">
+                            <small class="date">{{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date">{{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date">{{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date">{{ page.date }}</small>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="date-cell">
+                            <small class="date">{{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date">{{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date">{{ page.date }}</small>
+                        </td>
+                        <td class="date-cell">
+                            <small class="date">{{ page.date }}</small>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        <p>Aucune donnée disponible.</p>
+    {% endif %}
+</body>
+</html>

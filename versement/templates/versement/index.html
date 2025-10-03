@@ -1,0 +1,1056 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/toast/vanilla-toast.css'%}">
+    <title>Company Informations</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.18.0/js/md5.min.js"></script>
+    <script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
+    <!-- Cloudinary configuration -->
+    <script type="text/javascript">
+      // Initialize Cloudinary
+      var cloudinary = cloudinary || {};
+      cloudinary.setCloudName('YOUR_CLOUD_NAME');
+      // Set the upload preset
+      var uploadPreset = 'YOUR_UPLOAD_PRESET';
+    </script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        position: relative;
+      }
+
+      .background-image {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: -1;
+      }
+
+      .content {
+        z-index: 1;
+        position: relative;
+      }
+
+      footer {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        padding: 10px;
+        text-align: center;
+      }
+
+      @media print {
+        body {
+          width: 210mm;
+          height: 367mm;
+          position: relative;
+          padding-bottom: 100px;
+          /* Changement de l'attachement pour l'impression */
+        }
+
+        table {
+          font-size: 13px;
+        }
+
+        .content {
+          page-break-before: always;
+        }
+
+        footer {
+          position: absolute;
+          bottom: 0;
+          /* on le colle en bas */
+          width: 100%;
+          height: 100px;
+        }
+
+        hr {
+          margin-left: 80px;
+          margin-right: 80px;
+          margin-bottom: 0;
+          border: 2px solid green;
+        }
+
+        .ligne {
+          border: 0.5px solid grey;
+          color: green;
+        }
+      }
+    </style>
+    <script src="{% static 'js/jquery.min.js'%}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+  </head>
+  <body>
+    <div class="all_page align-items-center">
+      <img src="{% static 'img/logo_less.png' %}" alt="Background Image" class="background-image" width="35%" style="margin-top: 300px;">
+    </div>
+    {% if request.user.userprofile.work_as_commercial or request.user.is_superuser or request.user.userprofile.speciality_rolee == "Finance_et_comptabilité" %}
+    <!-- Your content goes here -->
+    <style>
+        #title {
+      background: radial-gradient(circle,#228B22  ,#67CB57,#fff);
+
+      color: white;
+  }
+    </style>
+
+<div id="title" style="background: linear-gradient(to right, white, green, white); text-align: center; height: 50px;" class="mt-2 mb-4">
+  <h4 style="color: white;">Versements</h4>
+</div>
+
+
+  
+    <style>
+      @keyframes blink {
+          0% {
+              opacity: 1;
+          }
+          50% {
+              opacity: 0.5;
+          }
+          100% {
+              opacity: 1;
+          }
+      }
+  
+      #upload_widget {
+          border-radius: 3px;
+          background-color: green;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          cursor: pointer;
+          transition: background-color 0.3s, color 0.3s;
+          animation: blink 1s infinite; /* Adjust animation duration as needed */
+      }
+  
+      #upload_widget:hover {
+          background-color: white;
+          color: green;
+          animation: none; /* Disable animation on hover */
+
+      }
+  </style>
+  
+  <style>
+    /* Style supplémentaire pour le tableau si nécessaire */
+    .table th,
+    .table td {
+      white-space: nowrap; /* Pour empêcher le contenu de se briser sur plusieurs lignes */
+    }
+    .table th.col,
+    .table td.col {
+      width: auto; /* Ajustement automatique de la largeur */
+    }
+  </style>
+
+
+<div id="main-div" class="container">
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4 col-sm-12 mb-3">
+        <button id="creance-btn" class="btn btn-primary active mt-1" style="background-color: white; color: green; border-color: green; width: 100%;">Mes Créances</button>
+      </div>
+      <div class="col-md-4 col-sm-12 mb-3">
+        <button id="encaissement-btn" class="btn btn-primary mt-1" style="background-color: white; color: green; border-color: green; width: 100%;">Mes Encaissements</button>
+      </div>
+      <div class="col-md-4 col-sm-12 mb-3">
+        <button id="upload_widget" class="cloudinary-button w-100 mt-1">Ajouter un encaissement</button>
+      </div>
+    </div>
+  </div>
+  
+
+  <div id="creance" class="container col-12">
+      <h2>Tableau Des Créances</h2>
+      <div class="table-responsive">
+          <table class="table table-striped mt-3">
+              <thead>
+                  <tr>
+                      <th class="col">ID</th>
+                      <th class="col">Période</th>
+                      <th class="col">Attachement</th>
+                  </tr>
+              </thead>
+              <tbody></tbody>
+          </table>
+      </div>
+      
+      <div class="table-responsive">
+        <h2>Tableau Des Créances Par Client</h2>
+        <table id="client_creance" class="table table-striped mt-3">
+            <thead>
+                <tr>
+                    <th class="col">ID</th>
+                    <th class="col">Période</th>
+                    <th class="col">Client</th>
+                    <th class="col">Attachement</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+  </div>
+
+  <div id="encaissement" class="container col-12 d-none">
+      <h2>Mes Encaissements</h2>
+      <div class="table-responsive">
+          <table id="encaissement_table" class="table table-striped mt-2">
+              <thead>
+                  <tr>
+                      <th class="col">ID</th>
+                      <th class="col">N° Carnet</th>
+                      <th class="col">N° Bon</th>
+                      <th class="col">Date Document</th>
+                      <th class="col">Client</th>
+                      <th class="col">Type</th>
+                      <th class="col">Montant</th>
+                      <th class="col">Attachement</th>
+                  </tr>
+              </thead>
+              <tbody></tbody>
+          </table>
+      </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('creance-btn').addEventListener('click', function () {
+      document.getElementById('creance').classList.remove('d-none');
+      document.getElementById('encaissement').classList.add('d-none');
+      document.getElementById('creance-btn').classList.add('active');
+      document.getElementById('encaissement-btn').classList.remove('active');
+  });
+
+  document.getElementById('encaissement-btn').addEventListener('click', function () {
+      document.getElementById('encaissement').classList.remove('d-none');
+      document.getElementById('creance').classList.add('d-none');
+      document.getElementById('encaissement-btn').classList.add('active');
+      document.getElementById('creance-btn').classList.remove('active');
+  });
+</script>
+
+<style>
+  /* Ajout de marges pour les boutons */
+  .btn {
+      margin-bottom: 10px;
+  }
+  /* Style pour le bouton actif */
+  .btn.active {
+      background-color: green;
+      color: white;
+  }
+</style>
+
+  
+    <form id="myForm" enctype="multipart/form-data" class="d-none">
+      <div id="container" class="container">
+        <div class="d-flex">
+          <img src="/static/img/true.png" width="20px" height="20px" alt="Okay">
+          <h5 style="color: green;">Etape 1 Valide :</h5>
+          <span class="text">Votre image a bien été ajoutée</span>
+        </div>
+        <div class="d-flex align-items-center">
+          <label class="switch">
+            <input type="checkbox" id="annule" onchange="toggleStyles()">
+            <span class="slider"></span>
+          </label>
+          <h6 class="mr-3">Bon de versement Annulé</h6>
+      </div>
+      
+<style>
+  /* Le style du switch button */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+    border-radius: 20px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: red;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px red;
+}
+
+input:checked + .slider:before {
+    -webkit-transform: translateX(20px);
+    -ms-transform: translateX(20px);
+    transform: translateX(20px);
+}
+
+/* Style facultatif pour les divs cachées lorsque le switch est activé */
+#num_cheque, #div_type, #div_somme, #div_client,#Somme_en_lettres {
+    visibility: visible;
+}
+
+#annule:checked ~ #num_cheque, #annule:checked ~ #div_type, #annule:checked ~ #div_somme, #annule:checked ~ #div_client, #annule:checked ~ #Somme_en_lettres {
+    visibility: hidden;
+}
+
+#annule:checked ~ #Somme_en_lettres {
+    visibility: hidden;
+}
+
+</style>
+
+<script>
+  function toggleStyles() {
+    var annuleSwitch = document.getElementById('annule');
+    var numChequeDiv = document.getElementById('num_cheque');
+    var divType = document.getElementById('div_type');
+    var divSomme = document.getElementById('div_somme');
+    var divClient = document.getElementById('div_client');
+
+    if (annuleSwitch.checked) {
+        numChequeDiv.style.visibility = 'hidden';
+        divType.style.visibility = 'hidden';
+        divSomme.style.visibility = 'hidden';
+        divClient.style.visibility = 'hidden';
+    } else {
+        numChequeDiv.style.visibility = 'visible';
+        divType.style.visibility = 'visible';
+        divSomme.style.visibility = 'visible';
+        divClient.style.visibility = 'visible';
+    }
+}
+
+</script>
+
+        <div id="card" class="card">
+          <div class="d-flex">
+            <img src="/static/img/alert-sign.png" width="20px" height="20px" alt="Okay">
+            <h5 style="color: orange;">Etape 2 En cours :</h5>
+            <span class="text">Vous devez remplir ce formulaire pour pouvoir valider votre versement</span>
+          </div>
+          <!-- ------------------------------------------------- -->
+          <div class="d-flex flex-column flex-md-row mb-3 mt-3">
+            <div class="col-md-4 custom-mobile-width order-1 order-md-1">
+              <h5 class="card-title font-weight-bold text-left">Date de document : </h5>
+            </div>
+            <div class="col-md-4 custom-mobile-width order-3 order-md-2">
+              <input id="date" type="date" class="form-control text-left" />
+            </div>
+            <div class="col-md-4 custom-mobile-width order-2 order-md-3">
+              <h5 class="card-title font-weight-bold text-right"> : تاريخ الوثيقة</h5>
+            </div>
+          </div>
+          <!-- ------------------------------------------------- -->
+          <div class="d-flex flex-column flex-md-row mb-3">
+            <div class="col-md-4 custom-mobile-width order-1 order-md-1">
+              <h5 class="card-title font-weight-bold text-left">Numéro de reçu : </h5>
+            </div>
+            <div class="col-md-4 custom-mobile-width order-3 order-md-2">
+              <input id="num_recu" class="form-control" type="text" disabled>
+            </div>
+            <div class="col-md-4 custom-mobile-width order-2 order-md-3">
+              <h5 class="card-title font-weight-bold text-right"> : رقم الإيصال</h5>
+            </div>
+          </div>
+          <!-- ------------------------------------------------- -->
+          <div id="div_client" class="d-flex flex-column flex-md-row mb-3">
+            <div class="col-md-4 custom-mobile-width order-1 order-md-1">
+              <h5 class="card-title font-weight-bold text-left">Client : </h5>
+            </div>
+            <div class="col-md-4 custom-mobile-width order-3 order-md-2">
+              <input class="form-control text-left" id="doctor_input_6_1" placeholder="Entrez le nom ou l'ID du client" style="width: 20.5rem; margin-top: 4px; margin-right: 5px; color: green;" />
+              <div id="doctor_dropdown_6_1" class="d-none position-absolute shadow p-2 bg-white rounded w-100" style="max-height: 300px; overflow-y: scroll; cursor: pointer"></div>
+            </div>
+            <div class="col-md-4 custom-mobile-width order-2 order-md-3">
+              <h5 class="card-title font-weight-bold text-right"> : الزبون</h5>
+            </div>
+          </div>
+          <!-- ------------------------------------------------- -->
+          <div id="div_somme" class="d-flex flex-column flex-md-row mb-1">
+            <div class="col-md-4 custom-mobile-width order-1 order-md-1">
+              <h5 class="card-title font-weight-bold text-left">Somme Encaissée : </h5>
+            </div>
+            <div class="col-md-4 custom-mobile-width order-3 order-md-2">
+              <!-- <input id="numberInput" class="form-control" type="text" placeholder="Tarif en dinars Algerien | السعر بالدينار الجزائري" oninput="this.value = this.value.replace(/[^0-9.,]/g, '');"> -->
+              <input id="numberInput" class="form-control" type="text" placeholder="Tarif en dinars Algerien | السعر بالدينار الجزائري" oninput="this.value = this.value.replace(/[^0-9.]/g, '');">
+
+            </div>
+            <div class="col-md-4 custom-mobile-width order-2 order-md-3">
+              <h5 class="card-title font-weight-bold text-right">  : المبلغ المقبوض </h5>
+            </div>
+          </div>
+          <p id="Somme_en_lettres" class="text-center" style="color: #808080; font-size: 10px;">Somme en lettres : <span style="font-weight: 400;" id="letterOutput">-</span>
+          </p>
+          <!-- ------------------------------------------------- -->
+          <div id="div_type" class="d-flex flex-column flex-md-row mb-3">
+            <div class="col-md-4 custom-mobile-width order-1 order-md-1">
+              <h5 class="card-title font-weight-bold text-left">Type de paiement: </h5>
+            </div>
+            <div class="col-md-4 custom-mobile-width order-3 order-md-2">
+              <select name="spend_type_select" id="spend_type" class="form-control">
+                <option value="0" selected>------</option>
+                <option value="1">Chéque</option>
+                <option value="2">Espéce</option>
+              </select>
+            </div>
+            <div class="col-md-4 custom-mobile-width order-2 order-md-3">
+              <h5 class="card-title font-weight-bold text-right"> : طريقة الدفع</h5>
+            </div>
+          </div>
+          <!-- ------------------------------------------------- -->
+          <div id="num_cheque" style="align-items: center; display: none;" class="mb-3">
+            <div class="col-md-4 custom-mobile-width order-1 order-md-1">
+              <h5 id="name" class="card-title font-weight-bold text-left">Numéro de chéque: </h5>
+            </div>
+            <div class="col-md-4 custom-mobile-width order-2 order-md-2">
+              <input id="cheque_num" class="form-control" type="text" placeholder="N°" oninput="this.value = this.value.replace(/[^0-9.,]/g, '');">
+            </div>
+            <div class="col-md-4 custom-mobile-width order-3 order-md-3">
+              <h5 class="card-title font-weight-bold text-right"> : رقم الشيك</h5>
+            </div>
+          </div>
+          <!-- ------------------------------------------------- -->
+        </div>
+        <!-- ------------------------------------------------- -->
+        <!-- <button id="upload_widget_2" class="cloudinary-button w-100 d-none" onclick="uploadImage()">Modifier l'image</button> -->
+        <div style="align-items: center;">
+
+          <button id="vali" type="submit" class="btn btn-success col-12 mt-5" style="align-self: center; text-align: center;">
+            <a href="" style="color: white;">Valider le versement !</a>
+          </button>
+        </div>
+      </div>
+      </div>
+    </form>
+    {% else %}
+    <div class="alert alert-danger" role="alert">
+      <div class="alert alert-danger" role="alert">
+        <strong>Attention :</strong> Cher/chère {{ request.user.first_name  }} {{ request.user.last_name  }}, vous n'avez pas l'autorisation d'accéder à cette rubrique. Si vous pensez qu'il s'agit d'une erreur, veuillez contacter l'administration.
+    </div>
+
+    <div class="alert alert-danger" role="alert" dir="rtl" style="text-align: right;">
+      <strong>تنبيه:</strong> عزيزي/عزيزتي {% if request.user.first_name %}{{ request.user.first_name }}{% else %}المستخدم{% endif %}، ليس لديك الإذن للوصول إلى هذا القسم. إذا كنت تعتقد أن هذا خطأ، يرجى الاتصال بالإدارة.
+  </div>
+  
+  
+      </div>
+  
+{% endif %}
+<style>
+  .en-attente {
+  color: red;
+}
+
+.effectue {
+  color: green;
+}
+
+</style>
+  </body>
+    <!-- GETTING CREANCES -->
+
+    <script>
+          function getMonthName(dateString) {
+            const months = [
+                "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+                "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+            ];
+            const date = new Date(dateString);
+            const monthIndex = date.getMonth();
+            return months[monthIndex];
+          }
+      fetch('https://app.liliumpharma.com/versement/api/creances/')
+        .then(response => response.json())
+        .then(data => {
+          const tableBody = document.querySelector('.table-striped tbody');
+          const today = new Date();
+          all_creance = data[0]
+          
+          all_creance.forEach(creance => {
+            const row = document.createElement('tr');
+            let echeanceCellStyle = '';
+            let statusCellStyle = '';
+            const echeanceDate = new Date(creance.date_echeance);
+            
+            // Calculer la différence en jours
+            const differenceInDays = Math.floor((echeanceDate - today) / (1000 * 60 * 60 * 24));
+            console.log("difference de jour "+differenceInDays)
+            console.log("done ? "+creance.done)
+    
+            if (differenceInDays <= 5 && creance.done === false) {
+              echeanceCellStyle = 'color: red; animation: blinker 1s linear infinite;';
+              statusCellStyle = 'color: red;';
+            } else if (differenceInDays > 5 && creance.done === false) {
+              echeanceCellStyle = 'color: black;';
+              statusCellStyle = 'color: red;';
+            } else if (creance.done === true) {
+              echeanceCellStyle = 'color: green;';
+              statusCellStyle = 'color: green;';
+            } else {
+              echeanceCellStyle = 'color: black;';
+              statusCellStyle = 'color: black;';
+            }
+            const monthName = getMonthName(creance.date_echeance);
+
+            row.innerHTML = `
+              <td class="col">${creance.id}</td>
+              <td class="col" style="${echeanceCellStyle}">${monthName}</td>
+              <td class="col"><a href="https://app.liliumpharma.com${creance.attachement}" target="_blank" class="btn btn-primary">Voir la pièce jointe</a></td>
+            `;
+    
+            tableBody.appendChild(row);
+          });
+
+
+
+          creance_client = data[1]
+          const table = document.getElementById('client_creance');
+          const tableBodyCreanceClient = table.querySelector('tbody');
+
+          
+          creance_client.forEach(creance => {
+            const row = document.createElement('tr');
+            const date = new Date(creance.date);
+            const monthName = getMonthName(date);
+            const client = creance.client
+
+            row.innerHTML = `
+              <td class="col">${creance.id}</td>
+              <td class="col">${monthName}</td>
+              <td class="col">${client}</td>
+              <td class="col"><a href="${creance.attachement}" target="_blank" class="btn btn-primary">Voir la pièce jointe</a></td>
+            `;
+    
+            tableBodyCreanceClient.appendChild(row);
+          });
+        })
+
+
+
+
+    </script>
+    
+    <style>
+      @keyframes blinker {
+        50% {
+          opacity: 0;
+        }
+      }
+    </style>
+    <!-- GETTING ENCAISSEMENT -->
+    <script>
+
+    fetch('https://app.liliumpharma.com/versement/api/encaissement/')
+    .then(response => response.json())
+    .then(data => {
+        const tableBody = document.querySelector('#encaissement_table tbody');
+
+        data.forEach(versement => {
+            const row = document.createElement('tr');
+
+            row.innerHTML = `
+                <td>${versement.id}</td>
+                <td>${versement.carnet}</td>
+                <td>${versement.bon}</td>
+                <td>${versement.date}</td>
+                <td>${versement.client}</td>
+                <td>${versement.type}</td>
+                <td>${versement.montant}</td>
+                <td><a href="${versement.attachement}" class="btn btn-primary" target="_blank">Voir</a></td>
+            `;
+            if (versement.updatable === true) {
+              row.innerHTML += `
+                <td><a id="update-button" onClick="update(${versement.id})" class="btn btn-primary" target="_blank">Modifier</a></td>
+              `;
+            }
+            tableBody.appendChild(row);
+        });
+    })
+    .catch(error => console.error('Erreur lors du chargement des données:', error));
+
+    function update(id){
+
+      // date = document.getElementById("date")
+      // num_recu = document.getElementById("num_recu")
+      // client = document.getElementById("doctor_input_6_1")
+      // somme = document.getElementById("somme")
+      // type_paiement=document.getElementById("spend_type")
+      // n_cheque=document.getElementById('cheque_num');
+      // num_recu=document.getElementById("num_recu");
+      //  vali = document.getElementById("vali");
+      
+      //  update_button = document.getElementById("update");
+      //  vali.classList.add("d-none")
+      //  update_button.classList.remove("d-none")
+
+      update_img = document.getElementById("upload_widget_2")
+      update_img.classList.remove("d-none")
+
+
+      fetch(`https://app.liliumpharma.com/versement/api/encaissement/?id=${id}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            const client = document.getElementById("doctor_input_6_1");
+            const type = document.getElementById("spend_type");
+            const somme = document.getElementById('numberInput');
+            const cheque_num = document.getElementById('cheque_num');
+            const date = document.getElementById("date");
+            const numChequeDiv = document.getElementById("num_cheque");
+            const typeSelect = document.getElementById("spend_type");
+
+
+
+            // Assurez-vous que data[0] est défini avant d'accéder à ses propriétés
+            if (data[0]) {
+                client.value = data[0].client;
+                num_recu.value = data[0].bon
+                type.value = data[0].type;
+                somme.value = data[0].montant;
+                cheque_num.value = data[0].num_cheque;
+                date.value = data[0].date;
+                Array.from(typeSelect.options).forEach(option => {
+                  if (option.text === data[0].type) {
+                    option.selected = true;
+                  }
+                });
+                if (data[0].type === "Chéque") {
+                  numChequeDiv.style.display="flex";
+                }
+            }
+        })
+        .catch(error => console.error('Erreur lors de la mise à jour :', error));
+
+
+
+      
+      main = document.getElementById('main-div')
+      const formulaire = document.getElementById("myForm");
+      upload = document.getElementById('upload_widget')
+      upload2 = document.getElementById('upload_widget_2')
+      formulaire.classList.remove("d-none")
+      upload.classList.add("d-none")
+      main.classList.add("d-none")
+
+      var year = new Date(keyDate).getFullYear();
+
+
+    }
+
+
+
+  </script>
+
+    
+
+  <!-- SCRIPT POUR CONVERTIR LES TARIFS EN LETTRES -->
+  <script>
+    function convertToWords(number) {
+      const words = ["", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"];
+      const tensWords = ["", "", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante-dix", "quatre-vingt", "quatre-vingt-dix"];
+      const unitWords = ["", "mille", "million", "milliard"];
+      let result = "";
+      if (number === "0") {
+        result = "zéro";
+      } else {
+        const num = parseFloat(number.replace(',', '.'));
+        let integerPart = Math.floor(num);
+        const decimalPart = Math.round((num - integerPart) * 100);
+        let unitIndex = 0;
+        while (integerPart > 0) {
+          const currentPart = integerPart % 1000;
+          if (currentPart > 0) {
+            if (result !== "") {
+              result = " et " + result;
+            }
+            if (currentPart < 20) {
+              result = words[currentPart] + " " + unitWords[unitIndex] + " " + result;
+            } else {
+              const hundreds = Math.floor(currentPart / 100);
+              const tens = Math.floor((currentPart % 100) / 10);
+              const ones = currentPart % 10;
+              let partResult = "";
+              if (hundreds > 0) {
+                partResult = words[hundreds] + " cent";
+              }
+              if (tens === 7 || tens === 9) {
+                if (ones === 0) {
+                  partResult += " " + tensWords[tens];
+                } else {
+                  partResult += " " + tensWords[tens - 1] + "-" + words[10 + ones];
+                }
+              } else {
+                if (tens > 0) {
+                  partResult += " " + tensWords[tens];
+                }
+                if (ones > 0) {
+                  partResult += "-" + words[ones];
+                }
+              }
+              result = partResult + " " + unitWords[unitIndex] + " " + result;
+            }
+          }
+          integerPart = Math.floor(integerPart / 1000);
+          unitIndex++;
+        }
+        if (decimalPart > 0) {
+          if (result !== "") {
+            result += " et ";
+          }
+          result += decimalPart + "/100 dinars";
+        }
+      }
+      document.getElementById("letterOutput").textContent = result + "DINARS ALGERIEN";
+    }
+    // Récupérer l'élément d'entrée
+    const numberInput = document.getElementById("numberInput");
+    // Ajouter un gestionnaire d'événements pour l'événement "input"
+    numberInput.addEventListener("input", function() {
+      // Appeler la fonction de conversion lorsque l'entrée change
+      convertToWords(this.value);
+    });
+  </script>
+  <!-- ------------------------------------------------- -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      var selectOption = document.getElementById("spend_type");
+      var textareaOption = document.getElementById("num_cheque");
+      selectOption.addEventListener("change", function() {
+        var selectedOption = selectOption.value;
+        if (selectedOption === "1") {
+          textareaOption.style.display = "flex";
+        } else {
+          textareaOption.style.display = "none";
+        }
+      });
+    });
+  </script>
+  <!-- ---------------GETTING DOCTORS LIST-------------------- -->
+  <script>
+    //UPLOADING IMAGE USING CLOUDINARY
+    var uploadedImageLink;
+    upload = document.getElementById('upload_widget')
+    upload2 = document.getElementById('upload_widget_2')
+    main = document.getElementById('main-div')
+    upload.addEventListener('click', function() {
+      cloudinary.openUploadWidget({
+        cloud_name: 'dkzcu8rze',
+        upload_preset: 'u0krsk2h',
+        sources: ['local', 'camera'],
+        multiple: true,
+        resource_type: 'image'
+      }, function(error, result) {
+        if (!error && result && result.event === "success") {
+          uploadedImageLink = result.info.secure_url;
+          // Now you can use the 'uploadedImageLink' variable wherever you need it
+          if (uploadedImageLink.length > 0) {
+            const formulaire = document.getElementById("myForm");
+            formulaire.classList.remove("d-none")
+            upload.classList.add("d-none")
+            main.classList.add("d-none")
+          }
+          var formData = new FormData();
+          result.info.files.forEach(function(file) {
+            formData.append('file', file);
+          });
+          var timestamp = Math.floor(Date.now() / 1000);
+          formData.append('api_key', '319435164165235');
+          formData.append('timestamp', timestamp);
+          // Generate the signature using the appropriate method, e.g., an MD5 library
+          var signature = generateSignature(timestamp);
+          formData.append('signature', signature);
+          var xhr = new XMLHttpRequest();
+          xhr.open('POST', 'https://api.cloudinary.com/v1_1/dkzcu8rze/image/upload', true);
+          xhr.send(formData);
+        }
+      });
+    });
+
+    
+
+
+    // GETTING DOCTORS LIST
+    doctor_dropdown_6_1 = document.getElementById("doctor_dropdown_6_1")
+    doctor_input_6_1 = document.getElementById("doctor_input_6_1")
+    // Add Doctor Name V2
+    const addMedecin_6 = (name) => {
+      doctor_input_6_1.value = name
+    }
+    // FETCH DOCTORS USING INPUT
+    doctor_input_6_1.addEventListener("input", (e) => {
+      const value = e.target.value.toLowerCase();
+      const value_text = e.target.textContent
+      if (value.length >= 3) fetch("https://app.liliumpharma.com/medecins/api/v2/versement_search?name=" + value).then((response) => {
+        return response.json();
+      }).then((data) => {
+        if (data.length > 0) {
+          let innerHTML = "";
+          for (d of data) {
+            innerHTML += `
+											
+										<p onclick="addMedecin_6('${d.nom}')">${d.nom}</p>`
+          }
+          doctor_dropdown_6_1.innerHTML = innerHTML
+          doctor_dropdown_6_1.classList.remove("d-none")
+          doctor_dropdown_6_1.style.zIndex = "9999";
+        }
+      })
+      else {
+        doctor_dropdown_6_1.classList.add("d-none")
+      }
+      // Hide dropdown when clicking outside
+      document.body.addEventListener("click", (e) => {
+        if (!doctor_input_6_1.contains(e.target) && !doctor_dropdown_6_1.contains(e.target)) {
+          doctor_dropdown_6_1.classList.add("d-none");
+        }
+      });
+    })
+  </script>
+  <!-- ------------------------------------------------- -->
+  <script>
+
+const endpoint = 'https://app.liliumpharma.com/versement/paybook/user/list/';
+
+fetch(endpoint)
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        } else {
+            throw new Error('Network response was not ok.');
+        }
+    })
+    .then(data => {
+      console.log(data)
+      var keyDate = data[0].date;
+      var year = new Date(keyDate).getFullYear();
+
+      var pageActuelle = data[0].page_actuelle.toString();
+
+      // Add leading zeros to ensure the length is 4 digits
+      while (pageActuelle.length < 4) {
+        pageActuelle = '0' + pageActuelle;
+      }
+        document.getElementById('num_recu').value = year + "-" + pageActuelle;
+      })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+
+</script>
+  <!-- ---------------Verivying infos-------------------- -->
+  <!-- PREPARING POST REQUEST DATAS -->
+  <script src="{% static 'js/toast/vanilla-toast.js'%}"></script>
+  <script>
+    var csrfToken = '{{ csrf_token }}';
+    client = document.getElementById("doctor_input_6_1")
+    type = document.getElementById("spend_type")
+    somme = document.getElementById('numberInput');
+    cheque_num = document.getElementById('cheque_num');
+    var date = document.getElementById("date");
+    var dateValue=''
+    // Add event listener for 'input' event
+    date.addEventListener("input", function() {
+        // Get the value of the date input field
+        dateValue = date.value;
+    
+        // Do something with the date value, for example, log it to the console
+        console.log("New date value:", dateValue);
+    });
+    
+    num_recu = document.getElementById("num_recu")
+    // attachement = document.getElementById('attachement');
+    const formulaire = document.getElementById("myForm");
+    const vali = document.getElementById("vali");
+    var nameInput = document.getElementById("name_input");
+    vali.addEventListener("click", function(event) {
+      event.preventDefault();
+      
+      this.style.display = "none"
+      var selectedIndex = type.selectedIndex;
+      var selectedText = type.options[selectedIndex].value;
+      if (selectedText === '0') {
+        type.classList.add('is-invalid');
+        type.classList.remove('is-valid');
+      } else {
+        type.classList.remove('is-invalid');
+        type.classList.add('is-valid');
+      }
+      ALL_OKAY = true
+      // EMPTY FIELDS VERIFICATIONS
+      // Additional validation for cheque_num when type is selected index 1
+      if (selectedIndex === 1) {
+        function handleChequeNum() {
+          if (cheque_num.value.trim() === '') {
+            ALL_OKAY = false
+            cheque_num.classList.add('is-invalid');
+            cheque_num.classList.remove('is-valid');
+            cheque_num.scrollIntoView({
+              behavior: 'smooth'
+            });
+            console.log("Le champ Numéro de chéque est vide.");
+          } else {
+            cheque_num.classList.remove('is-invalid');
+            cheque_num.classList.add('is-valid');
+          }
+        }
+        handleChequeNum()
+        cheque_num.addEventListener('input', handleChequeNum);
+        cheque_num.addEventListener('blur', handleChequeNum);
+      }
+      // Validate the client input
+      function handleClient() {
+        if (client.value.trim() === '') {
+          ALL_OKAY = false;
+          client.classList.add('is-invalid');
+          client.classList.remove('is-valid');
+          client.scrollIntoView({
+            behavior: 'smooth'
+          });
+          console.log("Le champ client est vide.");
+        } else {
+          client.classList.remove('is-invalid');
+          client.classList.add('is-valid');
+        }
+      }
+      handleClient();
+      client.addEventListener('input', handleClient);
+      client.addEventListener('blur', handleClient);
+      // Validate the somme input
+      function handleSomme() {
+        if (somme.value.trim() === '') {
+          ALL_OKAY = false;
+          somme.classList.add('is-invalid');
+          somme.classList.remove('is-valid');
+          somme.scrollIntoView({
+            behavior: 'smooth'
+          });
+          console.log("Le champ somme est vide.");
+        } else {
+          somme.classList.remove('is-invalid');
+          somme.classList.add('is-valid');
+        }
+      }
+      handleSomme();
+      somme.addEventListener('input', handleSomme);
+      somme.addEventListener('blur', handleSomme);
+      // const attachement = document.getElementById('attachement').files[0]; // Récupérer le fichier attaché
+      if(uploadedImageLink.length <= 0){
+        ALL_OKAY = false
+      }
+
+
+      // Validate the num_recu input
+      function handleNumRecu() {
+        if (num_recu.value === '') {
+          ALL_OKAY = false;
+          num_recu.classList.add('is-invalid');
+          num_recu.classList.remove('is-valid');
+          num_recu.scrollIntoView({
+            behavior: 'smooth'
+          });
+          console.log("Le champ numéro de reçu est vide.");
+        } else {
+          num_recu.classList.remove('is-invalid');
+          num_recu.classList.add('is-valid');
+        }
+      }
+      handleNumRecu();
+      num_recu.addEventListener('input', handleNumRecu);
+      num_recu.addEventListener('blur', handleNumRecu);
+
+
+      var dateAujourdhui = new Date().toISOString().split('T')[0];
+        // Vérifier si le champ de date est vide\
+        console.log("daate "+ dateValue)
+        if (dateValue === "") {
+          dateValue = dateAujourdhui;
+        }
+      
+      var annuleSwitch = document.getElementById('annule');
+
+      if(annuleSwitch.checked){
+        ALL_OKAY=true
+        client.value="-"
+        somme.value="0"
+        type.options[selectedIndex].text = "annulé"
+      }
+
+
+      if (ALL_OKAY) {
+        var formData = new FormData();
+        formData.append('csrfmiddlewaretoken', csrfToken);
+        formData.append('date_document', dateValue);
+        formData.append('num_recu', num_recu.value);
+        formData.append('client', client.value);
+        formData.append('somme', somme.value);
+        formData.append('type', type.options[selectedIndex].text);
+        var chequeValue = cheque_num.value;
+        formData.append('link', uploadedImageLink);
+        // Check if chequeValue is null or empty
+        if (chequeValue == null || chequeValue.trim() === '') {
+          formData.append('numero_de_cheque', '-');
+        } else {
+          formData.append('numero_de_cheque', chequeValue);
+        }
+        $.ajax({
+          url: '/versement/api/create-versement/',
+          type: 'POST',
+          data: formData,
+          contentType: false,
+          processData: false,
+          success: function(response) {
+            vanillaToast.success('Votre versement a été enregistrée avec succès. | .تم تسجيل بنجاح');
+            setTimeout(function() {
+              location.reload();
+            }, 1000);
+          },
+          error: function(xhr, status, error) {
+            vanillaToast.error("ERREUR");
+          }
+        });
+      } else {
+        vanillaToast.error("Veuillez remplir les champs vides");
+      }
+    });
+  </script>
+</html>

@@ -1,0 +1,21 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <title>Congé & Absence - Lilium Pharma</title>
+    <link href="{% static 'micro_frontends/competors/build/static/css/main.6f421fa8.css' %}" rel="stylesheet">
+</head>
+
+<body><noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+</body>
+    {% if not request.GET.is_mobile %}
+    <script>
+        window.localStorage.setItem("token", "{{ token }}")
+    </script> {% endif %}
+    <script defer="defer" src="{% static 'micro_frontends/competors/build/static/js/main.48cf8c58.js' %}"></script>
+</html>

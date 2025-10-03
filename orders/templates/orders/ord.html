@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Choix</title>
+
+  <style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+
+    header {
+      background-color: #e0f0e9;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+    }
+
+    .back-arrow a {
+      color: #fff;
+      background-color: #4CAF50;
+      padding: 8px;
+      border-radius: 50%;
+      text-decoration: none;
+      font-size: 16px;
+      margin-right: 15px;
+      display: inline-block;
+    }
+
+    .back-arrow a:hover {
+      background-color: #45a049;
+    }
+
+    h1 {
+      margin: 0;
+      color: #333;
+    }
+
+    .bloc {
+      width: 300px;
+      margin: 50px auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .bloc p {
+      color: #666;
+      margin-bottom: 30px;
+    }
+
+    .bloc a {
+      display: block;
+      text-decoration: none;
+      padding: 12px 20px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+
+    .link-blue {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .link-blue:hover {
+      background-color: #0056b3;
+    }
+
+    .link-green {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .link-green:hover {
+      background-color: #218838;
+    }
+  </style>
+
+  <!--<link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">-->
+  
+</head>
+
+<body>
+  <header>
+    <div class="back-arrow">
+      <a onclick="goBack()" title="Retour"><i class="fas fa-arrow-left"></i></a>
+    </div>
+    <h1>Veuillez Choisir</h1>
+  </header>
+
+  <div class="bloc">
+    
+    {% if m %}
+      <p style="color: white; background:red;">{{m}}</p>
+    {% endif %}
+      
+    <a href="{{ urlll }}" class="link-blue">🔗 Vers vos Bons de Commandes</a>
+    <a href="{% url 'addorder' %}" class="link-green">➕ Ajouter un Bon de Commande</a>
+  </div>
+
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <script>
+    function goBack() {
+      window.history.back();
+    }
+  </script>
+</body>
+</html>

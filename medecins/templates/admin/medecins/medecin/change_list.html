@@ -1,0 +1,165 @@
+{% extends "admin/change_list.html" %}
+{% load i18n static %}
+
+{% block object-tools-items %}
+
+
+    {{ block.super }}
+    <div class="container">
+      <a id="import" class="btn btn-primary" data-toggle="modal" data-target="#csv_modal"><i class="fas fa-user"></i> Change User</a>
+      <a id="statistic" class="btn btn-primary d-none" href="https://app.liliumpharma.com/medecins/pdf/StatisticMedecinsPerUser" target="_blank"><i class="fas fa-download"></i>Clients par région</a>
+      <div class="object-tools">
+        <ul class="object-tools">
+            <li>
+                <a class="btn btn-primary" href="{% url 'admin:upload_excel' %}" target="_blank"><i class="fas fa-download"></i> Upload Excel</a>
+
+            </li>
+        </ul>
+    </div>
+      <a id="export" class="btn btn-primary" href="http://app.liliumpharma.com/medecins/excel-loading/" target="_blank"><i class="fas fa-download"></i>Exporter Liste Medecin Excel</a>
+      <!--<a id="export" class="btn btn-primary" href="http://app.liliumpharma.com/medecins/update-Medecins/" target="_blank"><i class="fas fa-download"></i>Mise a jours Medecins</a>-->
+    </div>
+    
+    <style>
+      .container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .btn {
+      margin-top: 5px;
+    }
+
+    </style>    
+    
+        <script>
+          // alert("hello")
+          document.getElementById('import').parentElement.classList.remove("col-sm-4");
+          document.getElementById('import').parentElement.classList.add('col-sm-6');
+          document.getElementById('import').parentElement.previousSibling.previousSibling.classList.remove("col-sm-8");
+          document.getElementById('import').parentElement.previousSibling.previousSibling.classList.add('col-sm-6');
+          document.querySelectorAll("#changelist-search select").forEach((e,i)=>{
+            const label=document.createElement("label")
+              label.innerText = e.firstElementChild.text
+              e.firstElementChild.remove()  
+              e.parentElement.prepend(label)
+              e.parentElement.style.display = "block"
+          })
+
+          
+        </script>
+
+
+        <script>
+          document.addEventListener("DOMContentLoaded", function() {
+              // Créez un nouvel objet URL à partir de l'URL actuelle
+              let url = new URL(window.location.href);
+          
+              // Extrait tous les paramètres de la requête
+              let user = url.searchParams.get("users__id__exact");
+              let specialite = url.searchParams.get("specialite");
+              let flag = url.searchParams.get("flag__exact");
+              let updatable = url.searchParams.get("updatable__exact");
+              let commune = url.searchParams.get("commune__id__exact");
+              let classification = url.searchParams.get("classification__exact");
+              let blocked = url.searchParams.get("blocked__exact");
+              let wilaya = url.searchParams.get("wilaya__id__exact");
+              let uploadedFromExcel = url.searchParams.get("uploaded_from_excel__exact");
+              let visited = url.searchParams.get("visited");
+              let uid = url.searchParams.get("uid");
+          
+              // Fonction pour vérifier si une valeur est définie et non vide
+              function isNotEmpty(value) {
+                  return value !== null && value.trim() !== '';
+              }
+            
+              // Fonction pour construire l'URL en excluant les paramètres nuls
+              function buildUrl(baseUrl, params) {
+                  let url = new URL(baseUrl);
+                  for (let key in params) {
+                      if (isNotEmpty(params[key])) {
+                          url.searchParams.set(key, params[key]);
+                      }
+                  }
+                  return url.toString();
+              }
+            
+              // Préparez les paramètres pour les URL
+              let params = {
+                  user: user,
+                  specialite: specialite,
+                  flag: flag === '1' ? 'true' : (flag === '0' ? 'false' : null), // Convertir en chaîne 'true' ou 'false'
+                  updatable: updatable === '1' ? 'true' : (updatable === '0' ? 'false' : null), // Convertir en chaîne 'true' ou 'false'
+                  commune: commune,
+                  wilaya: wilaya,
+                  uploaded_from_excel: uploadedFromExcel === '1' ? 'true' : (uploadedFromExcel === '0' ? 'false' : null), // Convertir en chaîne 'true' ou 'false'
+                  visited: visited === 'yes' ? 'true' : (visited === 'no' ? 'false' : null), // Convertir en chaîne 'true' ou 'false'
+                  uid: uid,
+                  classification: classification,
+                  blocked: blocked === '1' ? 'true' : (blocked === '0' ? 'false' : null) // Convertir en chaîne 'true' ou 'false'
+              };
+            
+              // Sélectionne les éléments du DOM
+              let element2 = document.getElementById("statistic");
+              let exporter = document.getElementById("export");
+            
+              // Si un utilisateur ou autre paramètre est spécifié, configure les liens et les rend visibles
+              if (Object.values(params).some(param => param !== null)) {
+                  if (element2) {
+                      element2.classList.remove("d-none");
+                      element2.classList.add("d-block");
+
+                      // Construit les URLs en utilisant les paramètres nettoyés
+                      let pdfUrl = buildUrl("https://app.liliumpharma.com/medecins/pdf/StatisticMedecinsPerUser", { user: user });
+                      
+                      // Met à jour les attributs href avec les URLs générées
+                      element2.href = pdfUrl;
+                    }
+                    if (exporter) {
+                      console.log("clicked exporter button ")
+                      let excelUrl = buildUrl("https://app.liliumpharma.com/medecins/export/excel", params);
+                      exporter.href = excelUrl;
+                  }
+              }
+          });
+        </script>
+
+        <!-- <script>
+          document.addEventListener("DOMContentLoaded", function() {
+            // Créez un nouvel objet URL à partir de l'URL actuelle
+            let url = new URL(window.location.href);
+          
+            // Extrait tous les paramètres de la requête
+            let user = url.searchParams.get("users__id__exact");
+            let specialite = url.searchParams.get("specialite");
+            let flag = url.searchParams.get("flag__exact");
+            let updatable = url.searchParams.get("updatable__exact");
+            let commune = url.searchParams.get("commune__id__exact");
+            let uploadedFromExcel = url.searchParams.get("uploaded_from_excel__exact");
+            let visited = url.searchParams.get("visited");
+            let uid = url.searchParams.get("uid");
+            
+            // Sélectionne les éléments du DOM
+            let element2 = document.getElementById("statistic");
+            let exporter = document.getElementById("export");
+          
+            // Si un utilisateur est spécifié, configure les liens et les rend visibles
+            if (user || specialite || flag || updatable || commune || uploadedFromExcel || visited || uid) {
+              element2.classList.remove("d-none");
+              element2.classList.add("d-block");
+            
+              // Construit les URLs en ajoutant les paramètres extraits
+              let baseUrl = "https://app.liliumpharma.com/medecins/";
+              let pdfUrl = `${baseUrl}pdf/StatisticMedecinsPerUser?user=${user}`;
+              let excelUrl = `${baseUrl}export/excel?user=${user}&specialite=${specialite}&flag=${flag}&updatable=${updatable}&commune=${commune}&uploaded_from_excel=${uploadedFromExcel}&visited=${visited}&uid=${uid}`;
+              
+              // Assigne les URLs aux éléments
+              element2.href = pdfUrl;
+              exporter.href = excelUrl;
+            }
+          });
+        </script> -->
+        
+{% endblock %}
+

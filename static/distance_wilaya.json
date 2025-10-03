@@ -1,0 +1,268 @@
+{
+    "distances": {
+        "Constantine": {
+            "Skikda": 88,
+            "Annaba": 146,
+            "Mila": 44,
+            "Khenchela": 136,
+            "Oum El Bouaghi": 81
+        },
+        "Skikda": {
+            "Constantine": 88,
+            "Annaba": 110,
+            "Mila": 93,
+            "Khenchela": 213,
+            "Oum El Bouaghi": 156
+        },
+        "Annaba": {
+            "Skikda": 100,
+            "Constantine": 146,
+            "Mila": 179,
+            "Khenchela": 275,
+            "Oum El Bouaghi": 160,
+            "Guelma": 67,
+            "El Tarf": 70,
+            "Souk-Ahras": 96,
+            "El Kala": 94
+        },
+        "Mila": {
+            "Skikda": 111,
+            "Annaba": 174,
+            "Constantine": 44,
+            "Khenchela": 202,
+            "Oum El Bouaghi": 102
+        },
+        "Khenchela": {
+            "Skikda": 226,
+            "Annaba": 276,
+            "Mila": 201,
+            "Constantine": 136,
+            "Oum El Bouaghi": 57
+        },
+        "Oum El Bouaghi": {
+            "Skikda": 171,
+            "Annaba": 221,
+            "Mila": 146,
+            "Khenchela": 57,
+            "Constantine": 80
+        },
+        "Alger": {
+            "Boumerdes": 45,
+            "Chlef": 210,
+            "Blida": 51
+        },
+        "Boumerdes": {
+            "Alger": 59,
+            "Chlef": 236,
+            "Blida": 79
+        },
+        "Blida": {
+            "Alger": 53,
+            "Boumerdes": 79,
+            "Chlef": 161,
+            "Zeralda": 43
+        },
+        "Zeralda": {
+            "Blida": 43
+        },
+        "Djelfa": {
+            "Laghouat": 109,
+            "Ain Oussera": 100,
+            "Bou Saada": 111,
+            "Ghardaia": 303
+        },
+        "Laghouat": {
+            "Djelfa": 109,
+            "Ain Oussera": 208,
+            "Bou Saada": 219,
+            "Ghardaia": 195
+        },
+        "Ain Oussera": {
+            "Laghouat": 207,
+            "Djelfa": 99,
+            "Bou Saada": 139,
+            "Ghardaia": 400
+        },
+        "Bou Saada": {
+            "Laghouat": 219,
+            "Ain Oussera": 139,
+            "Djelfa": 111,
+            "Ghardaia": 414
+        },
+        "Ghardaia": {
+            "Laghouat": 195,
+            "Ain Oussera": 403,
+            "Bou Saada": 414,
+            "Djelfa": 304
+        },
+        "Batna": {
+            "Biskra": 112
+        },
+        "Biskra": {
+            "Batna": 113
+        },
+        "Tizi Ouzou": {
+            "Bejaia": 121,
+            "Bouira": 114,
+            "Boumerdes": 62,
+            "Ghardaia": 694
+        },
+        "Bejaia": {
+            "Tizi Ouzou": 122,
+            "Bouira": 140,
+            "Boumerdes": 215,
+            "Ghardaia": 677
+        },
+        "Bouira": {
+            "Bejaia": 143,
+            "Tizi Ouzou": 110,
+            "Boumerdes": 79,
+            "Ghardaia": 549
+        },
+        "Bayadha": {
+            "El-Oued": 9,
+            "Touggourt": 101
+        },
+        "El-Oued": {
+            "Bayadha": 9,
+            "Touggourt": 95
+        },
+        "Touggourt": {
+            "Ouargla": 162,
+            "El-Oued": 96,
+            "Bayadha": 100
+        },
+        "Oran": {
+            "Chlef": 217,
+            "Tiaret": 234,
+            "Saida": 175,
+            "Sidi Bel Abbes": 94,
+            "Mostaganem": 81,
+            "Mascara": 98,
+            "Tissemsilt": 290,
+            "Ain Temouchent": 80,
+            "Relizane": 135,
+            "Tlemcen": 174
+        },
+        "Chlef": {
+            "Oran": 216,
+            "Tiaret": 131,
+            "Saida": 256,
+            "Sidi Bel Abbes": 236,
+            "Mostaganem": 135,
+            "Mascara": 182,
+            "Tissemsilt": 103,
+            "Ain Temouchent": 286,
+            "Relizane": 97,
+            "Tlemcen": 317
+        },
+        "Tiaret": {
+            "Oran": 232,
+            "Chlef": 132,
+            "Saida": 161,
+            "Sidi Bel Abbes": 252,
+            "Mostaganem": 168,
+            "Mascara": 132,
+            "Tissemsilt": 56,
+            "Ain Temouchent": 308,
+            "Relizane": 97,
+            "Tlemcen": 332
+        },
+        "Saida": {
+            "Chlef": 256,
+            "Tiaret": 161,
+            "Oran": 175,
+            "Sidi Bel Abbes": 96,
+            "Mostaganem": 150,
+            "Mascara": 73,
+            "Tissemsilt": 216,
+            "Ain Temouchent": 156,
+            "Relizane": 136,
+            "Tlemcen": 182
+        },
+        "Sidi Bel Abbes": {
+            "Chlef": 236,
+            "Tiaret": 253,
+            "Saida": 96,
+            "Oran": 94,
+            "Mostaganem": 127,
+            "Mascara": 84,
+            "Tissemsilt": 309,
+            "Ain Temouchent": 64,
+            "Relizane": 154,
+            "Tlemcen": 92
+        },
+        "Mostaganem": {
+            "Chlef": 136,
+            "Tiaret": 167,
+            "Saida": 152,
+            "Sidi Bel Abbes": 128,
+            "Oran": 81,
+            "Mascara": 80,
+            "Tissemsilt": 210,
+            "Ain Temouchent": 154,
+            "Relizane": 68,
+            "Tlemcen": 208
+        },
+        "Mascara": {
+            "Chlef": 183,
+            "Tiaret": 132,
+            "Saida": 74,
+            "Sidi Bel Abbes": 84,
+            "Mostaganem": 78,
+            "Oran": 98,
+            "Tissemsilt": 185,
+            "Ain Temouchent": 144,
+            "Relizane": 65,
+            "Tlemcen": 198
+        },
+        "Tissemsilt": {
+            "Chlef": 104,
+            "Tiaret": 56,
+            "Saida": 216,
+            "Sidi Bel Abbes": 308,
+            "Mostaganem": 211,
+            "Oran": 288,
+            "Mascara": 186,
+            "Ain Temouchent": 357,
+            "Relizane": 152,
+            "Tlemcen": 388
+        },
+        "Ain Temouchent": {
+            "Chlef": 286,
+            "Tiaret": 303,
+            "Saida": 156,
+            "Sidi Bel Abbes": 63,
+            "Mostaganem": 154,
+            "Mascara": 144,
+            "Tissemsilt": 163,
+            "Oran": 78,
+            "Relizane": 204,
+            "Tlemcen": 76
+        },
+        "Relizane": {
+            "Chlef": 97,
+            "Tiaret": 97,
+            "Saida": 137,
+            "Sidi Bel Abbes": 155,
+            "Mostaganem": 69,
+            "Mascara": 65,
+            "Tissemsilt": 152,
+            "Ain Temouchent": 205,
+            "Oran": 135,
+            "Tlemcen": 236
+        },
+        "Tlemcen": {
+            "Oran": 175,
+            "Saida": 183,
+            "Sidi Bel Abbes": 92,
+            "Mostaganem": 209,
+            "Mascara": 199,
+            "Tissemsilt": 388,
+            "Ain Temouchent": 75,
+            "Chlef": 318,
+            "Tiaret": 332,
+            "Relizane": 236
+        }
+    }
+}

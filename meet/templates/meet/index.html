@@ -1,0 +1,171 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Header avec icône de retour</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    </head>
+    <style>
+        .card {
+            display: flex;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .card img {
+            width: 100px;
+            height: auto;
+            margin-right: 10px;
+        }
+
+        .title-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .meet-info p {
+            margin-top: 10px;
+        }
+
+        @media (max-width: 576px) {
+            .card img {
+                width:80px;
+                margin-right: 5px;
+            }
+        }
+    </style>
+    <style>
+        header {
+            background-color: #e0f0e9;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .back-arrow a {
+            color: #333;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .back-arrow a:hover {
+            text-decoration: underline;
+        }
+        
+        h1 {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .fa-arrow-left {
+            margin-right: 5px;
+            color: #fff;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            padding: 8px;
+        }
+        
+        
+        </style>
+        
+<body>
+    <header>
+        <div class="back-arrow">
+            <a onclick="goBack()"><i class="fas fa-arrow-left"></i></a>
+        </div>
+        <h1>Réunion</h1>
+    </header>
+
+    <div class="container mt-4">
+        <div id="meet-cards"></div>
+
+    </div>
+</body>
+
+<script>
+    function goBack() {
+        window.history.back();
+    }
+</script>
+
+
+<script>
+        fetch('https://app.liliumpharma.com/meet/api/meet/')
+            .then(response => response.json())
+            .then(data => {
+                const today = new Date();
+
+                data.forEach(meet => {
+                    console.log(meet)
+                    const card = document.createElement('div');
+                    card.className = 'card';
+
+                    const cardBody = document.createElement('div');
+                    cardBody.className = 'card-body';
+
+                    const titleInfo = document.createElement('div');
+                    titleInfo.className = 'title-info';
+
+                    const img = document.createElement('img');
+                    img.src = '{% static "img/icons/meet.png" %}';
+                    img.alt = 'Licorne';
+
+                    const h2 = document.createElement('h2');
+                    h2.textContent = meet.title;
+                    console.log(h2.textContent)
+
+                    titleInfo.appendChild(img);
+                    titleInfo.appendChild(h2);
+
+                    const meetInfo = document.createElement('div');
+                    meetInfo.className = 'meet-info';
+
+                    const pDate = document.createElement('p');
+                    pDate.textContent = 'Date: ' + new Date(meet.date_meet).toLocaleDateString();
+
+                    const pHeureDebut = document.createElement('p');
+                    pHeureDebut.textContent = 'Heure de début: ' + meet.heure_debut;
+
+                    const pHeureFin = document.createElement('p');
+                    pHeureFin.textContent = 'Heure de fin: ' + meet.heure_fin;
+
+                    const pParticipants = document.createElement('p');
+                    pParticipants.textContent = 'Nombre de participants: ' + meet.user;
+
+                    const a = document.createElement('a');
+                    a.className = 'btn btn-success btn-sm';
+                    a.href = meet.link;
+                    a.textContent = 'Accéder à la réunion';
+
+                    meetInfo.appendChild(pDate);
+                    meetInfo.appendChild(pHeureDebut);
+                    meetInfo.appendChild(pHeureFin);
+                    meetInfo.appendChild(pParticipants);
+                    meetInfo.appendChild(a);
+
+                    cardBody.appendChild(titleInfo);
+                    cardBody.appendChild(meetInfo);
+
+                    card.appendChild(cardBody);
+
+                    document.getElementById('meet-cards').appendChild(card);
+                });
+            });
+    </script>
+</html>

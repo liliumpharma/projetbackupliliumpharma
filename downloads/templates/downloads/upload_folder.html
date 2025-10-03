@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Folder</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
+    <style>
+        .upload-container {
+            max-width: 800px;
+            margin: auto;
+            padding: 2rem;
+            border-radius: 8px;
+            background: #f9f9f9;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .btn-primary {
+            background-color:#427b3b; /* Vert clair */
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background-color: #10B981; /* Vert plus foncé */
+        }
+        .alert {
+            color: red;
+        }
+        .rtl {
+            direction: rtl;
+            text-align: right;
+        }
+        .lang-section {
+            flex: 1;
+            padding: 0 1rem;
+        }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #427b3b; /* Vert clair */
+            color: #fff;
+            padding: 1rem;
+            text-align: left;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .navbar a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .navbar a:hover {
+            text-decoration: underline;
+        }
+        .navbar svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+        .spacer {
+            margin-top: 4rem; /* Spacing for content below the fixed navbar */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 items-center justify-center min-h-screen">
+    <div class="navbar">
+        <a href="https://app.liliumpharma.com/admin/downloads/downloadable/">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="text-white">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Retour à l'administration  |   العودة إلى الإدارة
+        </a>
+    </div>
+    <div class="spacer"></div> 
+    <div class="upload-container">
+        <div class="lang-section">
+            <h1 class="text-2xl font-bold mb-4 text-center">
+                Formulaire d'upload de fiche de paie
+            </h1>
+            <p class="mb-4">
+                Veuillez suivre les étapes ci-dessous pour télécharger votre dossier :
+                <ol class="list-decimal pl-5">
+                    <li>Préparez un fichier ZIP contenant les fiches de paie.</li>
+                    <li>Assurez-vous que chaque fichier PDF dans le ZIP est nommé avec le nom d'utilisateur correspondant.</li>
+                    <li>Sélectionnez le fichier ZIP ci-dessous et cliquez sur "Importer".</li>
+                </ol>
+            </p>
+        </div>
+        <div class="lang-section rtl">
+            <h1 class="text-2xl font-bold mb-4 text-center">
+                نموذج تحميل كشف الرواتب
+            </h1>
+            <p class="mb-4">
+                </br>
+                يرجى اتباع الخطوات أدناه لتحميل ملفك:
+                <ol class="list-decimal pl-5">
+                    <li>قم بإعداد ملف ZIP يحتوي على كشوف الرواتب.</li>
+                    </br>
+                    <li>تأكد من أن كل ملف PDF في ملف ZIP مسمى باسم المستخدم المطابق.</li>
+                    </br>
+                    <li>اختر ملف ZIP أدناه وانقر على "استيراد".</li>
+                </ol>
+            </p>
+        </div>
+    </div>
+    <div class="upload-container">
+        <form method="post" enctype="multipart/form-data" action="{% url 'upload_folder' %}" class="w-full">
+            {% csrf_token %}
+            {{ form.as_p }}
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    {{ form.errors }}
+                </div>
+            {% endif %}
+            <div class="text-center mt-4">
+                <button type="submit" class="btn-primary py-2 px-4 rounded-md text-lg font-semibold">
+                    Importer / استيراد
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

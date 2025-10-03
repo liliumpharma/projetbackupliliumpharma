@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    
+    {% for pr in prls %}
+        <p>{{pr.id}} -- {{pr.user}} -- {{pr.product.nom}} -- {{pr.quantity}}</p>
+     
+    {% endfor %}
+        
+</body>
+</html>

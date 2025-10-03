@@ -1,0 +1,131 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload de liste de médecins en Excel</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-image: url("{% static 'img/logo_less.png' %}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Arial', sans-serif;
+            color: #333;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #4CAF50;
+        }
+        .instructions {
+            text-align: left;
+        }
+        .instructions h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .instruction {
+            margin-bottom: 20px;
+        }
+        .instruction-arabic {
+            text-align: right;
+        }
+        .btn-custom {
+            margin: 10px 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+        }
+        .btn-custom:hover {
+            background-color: #45a049;
+        }
+        .alert {
+            margin-top: 20px;
+        }
+        .loader {
+            display: none;
+            border: 16px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 16px solid #3498db;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+            margin: auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-5">
+    <h1 class="text-center">Upload de liste de pharmacie en Excel</h1>
+    <h1 class="text-center">تحميل قائمة الصيدليات في إكسل</h1>
+    <div class="instructions">
+        <div class="instruction">
+            <h3>Instructions en Français</h3>
+            <ol>
+                <li>Téléchargez le template Excel pré-défini en cliquant <a href="{% static 'upload_template/upload_template_3.xlsx' %}">ici</a>.</li>
+                <li>Remplissez le fichier Excel avec les colonnes suivantes : nom, spécialité, spécialité_fk, classification, téléphone, email, wilaya, commune, adresse, flag, updatable, blocked, contact, lat, lon, note, users.</li>
+                <li>Assurez-vous que toutes les colonnes sont remplies avec des informations correctes.</li>
+                <li>Pour la colonne "users", séparez les noms des délégués avec des tirets (exemple : user1-user2-user3).</li>
+                <li>Choisissez le fichier Excel préparé en utilisant le bouton ci-dessous et cliquez sur "Télécharger".</li>
+            </ol>
+            <a href="{% static 'upload_template/upload_template_3.xlsx' %}" class="btn btn-primary btn-custom" download>Télécharger le template Excel</a>
+        </div>
+        <div class="instruction instruction-arabic">
+            <h3>التعليمات بالعربية</h3>
+            <ol>
+                <li>قم بتنزيل قالب الإكسل المُحدد مسبقًا بالنقر <a href="{% static 'upload_template/upload_template_3.xlsx' %}">هنا</a>.</li>
+                <li>املأ ملف الإكسل بالأعمدة التالية: الاسم، التخصص، التصنيف، الهاتف، البريد الإلكتروني، الولاية، البلدية، العنوان، العلم، قابل للتحديث، محظور، جهة الاتصال، خط العرض، خط الطول، ملاحظة، مندوبين.</li>
+                <li>تأكد من أن جميع الأعمدة معبأة بمعلومات صحيحة.</li>
+                <li>بالنسبة لعمود "مندوبين"، افصل بين أسماء المندوبين بشرطات (مثال: مندوب 1-مندوب 2-مندوب 3).</li>
+                <li>اختر ملف الإكسل الذي أعددته باستخدام الزر أدناه وانقر على "تحميل".</li>
+            </ol>
+            <a href="{% static 'upload_template/upload_template_3.xlsx' %}" class="btn btn-primary btn-custom" download>تحميل قالب الإكسل</a>
+        </div>
+    </div>
+    
+    {% if error %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+    {% endif %}
+    
+    <form method="post" enctype="multipart/form-data" onsubmit="showLoader()">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ form.as_p }}
+        </div>
+        <div class="text-center">
+            <button type="submit" class="btn btn-primary btn-custom">Télécharger</button>
+        </div>
+    </form>
+    <div class="loader mt-4"></div>
+</div>
+
+<script>
+    function showLoader() {
+        document.querySelector('.loader').style.display = 'block';
+    }
+</script>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

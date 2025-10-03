@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Commandes de Production</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      rel="stylesheet"
+      <link
+      href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* Ajout d'un style propre */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f6f9;
+        padding: 20px;
+      }
+
+      .cards-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+      }
+
+      .card {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 0;
+        background-color: #fff;
+        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .card-header h3 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .card-body {
+        margin-top: 10px;
+      }
+
+      .item-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .start-production-btn {
+        background-color: #28a745;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .start-production-btn:hover {
+        background-color: #218838;
+      }
+
+      .item-table th,
+      .item-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+
+      .item-table th {
+        background-color: #f5f5f5;
+      }
+
+      .card:hover {
+        transform: translateY(-10px);
+      }
+
+      .card-header {
+        display: block;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: bold;
+      }
+
+      .expand-icon {
+        cursor: pointer;
+      }
+
+      .expand-content {
+        display: none;
+        margin-top: 10px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      table,
+      th,
+      td {
+        border: 1px solid #ddd;
+      }
+
+      th,
+      td {
+        padding: 8px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #f4f6f9;
+      }
+
+      .receive-button,
+      .transfer-button {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: bold;
+        color: white;
+        text-align: center;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+
+      .receive-button {
+        background-color: blue; /* Style for "Réceptionner" button */
+      }
+
+      .transfer-button {
+        background-color: green; /* Style for "Transférer" button */
+      }
+
+      .modal {
+        display: block;
+        position: fixed;
+        z-index: 999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        font-family: Arial, sans-serif;
+      }
+
+      .modal-content {
+        background-color: #ffffff;
+        margin: 10% auto;
+        padding: 30px;
+        border-radius: 10px;
+        width: 40%;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        text-align: center;
+      }
+
+      .close {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 28px;
+        color: #aaa;
+        cursor: pointer;
+      }
+
+      h2,
+      h3 {
+        font-size: 20px;
+        margin-bottom: 10px;
+        color: #333;
+      }
+
+      p {
+        font-size: 16px;
+        color: #555;
+        margin-bottom: 20px;
+      }
+
+      .checklist {
+        text-align: left;
+        margin-bottom: 20px;
+      }
+
+      .checklist-item {
+        margin-bottom: 15px;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+      }
+
+      .checklist-item input[type="checkbox"] {
+        margin-right: 10px;
+        transform: scale(1.3);
+      }
+
+      .checklist-item label {
+        color: #333;
+      }
+
+      .transfer-button {
+        background-color: #4caf50;
+        color: #fff;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        width: 100%;
+        max-width: 200px;
+      }
+
+      .transfer-button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+      }
+
+      .transfer-button:hover:enabled {
+        background-color: #45a049;
+      }
+
+      .status-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        margin-top: 10px;
+        font-family: "Special Elite", cursive;
+      }
+
+      .status-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 14px;
+        font-weight: bold;
+        color: white;
+      }
+
+      .status.waiting .status-circle {
+        background-color: orange;
+      }
+
+      .status.reception .status-circle {
+        background-color: blue;
+      }
+
+      .status.transfer .status-circle {
+        background-color: green;
+      }
+      .status {
+        max-width: 100%; /* Make sure the status takes up no more than the card width */
+        white-space: normal; /* Allow the text to wrap */
+        word-wrap: break-word; /* Ensure long words or URLs break and wrap */
+        overflow-wrap: break-word; /* Break long text to prevent overflow */
+        font-family: "Special Elite", cursive; /* Utilisation de la police spéciale */
+      }
+
+      .arrow {
+        margin: 0 10px;
+        font-size: 20px;
+        color: #aaa; /* Color for the arrow */
+      }
+
+      .status.waiting.active {
+        color: orange;
+      }
+
+      .status.reception.active {
+        color: blue;
+      }
+
+      .status.transfer.active {
+        color: green;
+      }
+      .expand-content {
+        display: none; /* Cacher par défaut */
+      }
+      /* Classe pour la bordure clignotante */
+      .waiting-border {
+        border: 2px solid orange;
+        animation: blink 1s infinite alternate;
+      }
+
+      @keyframes blink {
+        0% {
+          border-color: orange;
+        }
+        100% {
+          border-color: transparent;
+        }
+      }
+
+      /* Classe pour la bordure clignotante de 'Waiting' */
+      .waiting-border {
+        border: 2px solid orange;
+        animation: blink 1s infinite alternate;
+      }
+
+      /* Classe pour la bordure non clignotante de 'Réceptionnée' */
+      .reception-border {
+        border: 2px solid blue;
+        animation: none;
+      }
+
+      /* Classe pour la bordure non clignotante de 'Transférée' */
+      .transfer-border {
+        border: 2px solid green;
+        animation: none;
+      }
+
+      /* Animation de clignotement pour la bordure de 'Waiting' */
+      @keyframes blink {
+        0% {
+          border-color: orange;
+        }
+        100% {
+          border-color: transparent;
+        }
+      }
+
+      /* Classe pour 'Waiting' (clignote orange) */
+      .status.waiting.active {
+        color: orange;
+      }
+
+      /* Classe pour 'Réceptionnée' (bleu sans clignotement) */
+      .status.reception.active {
+        color: blue;
+      }
+
+      /* Classe pour 'Transférée' (vert sans clignotement) */
+      .status.transfer.active {
+        color: green;
+      }
+      .date-heure {
+        font-size: 12px;
+        color: #777;
+        margin-top: 5px;
+      }
+
+      .modal-large {
+        display: block;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        font-family: Arial, sans-serif;
+      }
+
+      .modal-large-content {
+        background-color: #ffffff;
+        margin: 5% auto;
+        padding: 30px;
+        border-radius: 10px;
+        width: 90%;
+        height: 90%;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+      }
+
+      .close {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        font-size: 40px;
+        color: #aaa;
+        cursor: pointer;
+      }
+
+      h2,
+      h3 {
+        font-size: 24px;
+        margin-bottom: 10px;
+        color: #333;
+      }
+
+      .timer-container {
+        margin: 40px 0;
+      }
+
+      #production-timer {
+        font-size: 64px;
+        color: #333;
+        font-weight: bold;
+      }
+
+      .production-actions {
+        margin-top: 30px;
+      }
+
+      .action-button {
+        background-color: #4caf50;
+        color: #fff;
+        padding: 20px 40px;
+        border: none;
+        border-radius: 5px;
+        font-size: 18px;
+        margin: 10px;
+        cursor: pointer;
+        width: 200px;
+      }
+
+      .action-button:hover {
+        background-color: #45a049;
+      }
+
+      .finish {
+        background-color: #f44336;
+      }
+
+      .finish:hover {
+        background-color: #d32f2f;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="date-heure" id="date-heure"></div>
+    <h1>Salle de Tablette</h1>
+    <h4>Liste des Commandes de Production</h4>
+
+    <script>
+      // Fonction pour obtenir la date et l'heure actuelle
+      function afficherDateHeure() {
+        const now = new Date();
+        const options = {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+          second: "numeric",
+          hour12: false,
+        };
+        const formattedDate = now.toLocaleDateString("fr-FR", options);
+        document.getElementById("date-heure").textContent = formattedDate;
+      }
+
+      // Appeler la fonction pour afficher la date et l'heure
+      afficherDateHeure();
+    </script>
+    <div class="date-heure" id="date-heure"></div>
+
+    <script>
+      // Fonction pour obtenir la date et l'heure actuelle
+      function afficherDateHeure() {
+        const now = new Date();
+        const options = {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+          second: "numeric",
+          hour12: false,
+        };
+        const formattedDate = now.toLocaleDateString("fr-FR", options);
+        document.getElementById("date-heure").textContent = formattedDate;
+      }
+
+      // Appeler la fonction pour afficher la date et l'heure
+      afficherDateHeure();
+    </script>
+
+    <div class="loading">Chargement des commandes...</div>
+
+    <div class="cards-container" id="ordersContainer">
+      <!-- Les cartes de commandes de production seront ajoutées ici -->
+    </div>
+
+    <!-- Modal for transferring order -->
+    <div id="transferModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+
+        <!-- Informations de l'Opération -->
+        <h2>Check liste de debut de production <span id="id_op"></span></h2>
+        <h3>Bash: <span id="op_bash"></span></h3>
+        <h3>Date: <span id="op_date"></span></h3>
+
+        <p>Veuillez vérifier les éléments suivants avant de procéder :</p>
+
+        <!-- Checklist -->
+        <div class="checklist">
+          <div class="checklist-item">
+            <input
+              type="checkbox"
+              id="check-machine"
+              onchange="checkValidation()"
+            />
+            <label for="check-machine">Machine propre</label>
+          </div>
+          <div class="checklist-item">
+            <input
+              type="checkbox"
+              id="check-salle"
+              onchange="checkValidation()"
+            />
+            <label for="check-salle">Salle propre</label>
+          </div>
+          <div class="checklist-item">
+            <input
+              type="checkbox"
+              id="check-outils"
+              onchange="checkValidation()"
+            />
+            <label for="check-outils">Outils stériles</label>
+          </div>
+        </div>
+
+        <!-- Bouton de soumission -->
+        <button
+          id="submit-button"
+          class="transfer-button"
+          onclick="openProductionModal(2)"
+          disabled
+        >
+          Lancer Production !
+        </button>
+      </div>
+    </div>
+
+    <!-- Grand Modal de Production -->
+    <div id="productionModal" class="modal-large" style="display: none">
+      <div class="modal-large-content">
+        <span class="close" onclick="closeProductionModal()">&times;</span>
+
+        <!-- Informations du Order -->
+        <h2>Production pour l'order <span id="production_id_op"></span></h2>
+        <h3>Bash: <span id="production_bash"></span></h3>
+        <h3>Date: <span id="production_date"></span></h3>
+
+        <!-- Minuteur -->
+        <div class="timer-container">
+          <h1 id="production-timer">00:00:00</h1>
+        </div>
+
+        <!-- Boutons d'Actions -->
+        <div class="production-actions">
+          <button class="action-button" onclick="handleMaintenance()">
+            Maintenance
+          </button>
+          <button class="action-button" onclick="handleQcCheck()">
+            QC Check
+          </button>
+          <button class="action-button finish" onclick="endProduction()">
+            Fin de la production
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function checkValidation() {
+        const isMachineChecked =
+          document.getElementById("check-machine").checked;
+        const isSalleChecked = document.getElementById("check-salle").checked;
+        const isOutilsChecked = document.getElementById("check-outils").checked;
+
+        const submitButton = document.getElementById("submit-button");
+
+        if (isMachineChecked && isSalleChecked && isOutilsChecked) {
+          submitButton.disabled = false;
+        } else {
+          submitButton.disabled = true;
+        }
+      }
+
+      function closeModal() {
+        document.getElementById("transferModal").style.display = "none";
+      }
+
+      function openModal(id_op, bash, date) {
+        document.getElementById("id_op").textContent = id_op;
+        document.getElementById("op_bash").textContent = bash;
+        document.getElementById("op_date").textContent = date;
+        document.getElementById("transferModal").style.display = "block";
+      }
+
+      function openTransferModal(orderId, bash, date) {
+        const modal = document.getElementById("transferModal");
+        const op_id = document.getElementById("id_op");
+        const op_bash = document.getElementById("op_bash");
+        const op_date = document.getElementById("op_date");
+
+        op_id.textContent = orderId;
+        op_bash.textContent = bash;
+        op_date.textContent = date;
+
+        // Afficher le modal
+        modal.style.display = "block";
+      }
+
+      function closeModal() {
+        const modal = document.getElementById("transferModal");
+        modal.style.display = "none";
+      }
+
+      const baseUrl =
+        "https://app.liliumpharma.com/production/order-productions-bashes/tablette/";
+
+      async function fetchOrders() {
+        const loadingElement = document.querySelector(".loading");
+        const ordersContainer = document.querySelector("#ordersContainer");
+
+        try {
+          loadingElement.style.display = "none";
+
+          const response = await fetch(baseUrl);
+
+          if (!response.ok) {
+            throw new Error("Échec de la récupération des données");
+          }
+
+          const groupedOrders = await response.json();
+
+          if (groupedOrders.length > 0) {
+            ordersContainer.innerHTML = "";
+
+            groupedOrders.forEach((group) => {
+              const card = document.createElement("div");
+              card.className = "card";
+              card.id = `group_${group.ref}`;
+
+              card.innerHTML = `
+              <div class="card-header">
+                <h3>Référence Bash size : ${group.ref}</h3>
+                <p><strong>Location :</strong> ${group.location}</p>
+              </div>
+    
+              <div class="card-body">
+                <table class="item-table">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Quantité</th>
+                      <th>Unité</th>
+                      <th>Location</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${group.items
+                      .map(
+                        (item) => `
+                        <tr>
+                          <td>${item.item_order_production.item}</td>
+                          <td>${item.qtt}</td>
+                          <td>${item.item_order_production.unite}</td>
+                          <td>${item.location}</td>
+                        </tr>`
+                      )
+                      .join("")}
+                  </tbody>
+                </table>
+              </div>
+    
+              <!-- Bouton Start Production -->
+              <div class="card-footer">
+                <button class="start-production-btn" onclick="openProductionModal('${
+                  group.ref
+                }')">
+                  Start Production
+                </button>
+              </div>
+            `;
+
+              ordersContainer.appendChild(card);
+            });
+          } else {
+            ordersContainer.innerHTML =
+              '<div class="error-message">Aucune commande trouvée.</div>';
+          }
+        } catch (error) {
+          loadingElement.style.display = "none";
+          const errorMessage = document.createElement("div");
+          errorMessage.className = "error-message";
+          errorMessage.textContent = "Erreur lors du chargement des données.";
+          document.body.appendChild(errorMessage);
+        }
+      }
+
+      // Fonction pour afficher le modal de confirmation
+      function openProductionModal(ref) {
+        const modal = document.getElementById("productionModal");
+        const modalMessage = document.getElementById("modalMessage");
+        const confirmButton = document.getElementById("confirmProduction");
+
+        modal.style.display = "block";
+        modalMessage.innerHTML = `Voulez-vous lancer la production de Bash Ref <strong>${ref}</strong> ?`;
+
+        confirmButton.onclick = function () {
+          startProduction(ref);
+          closeProductionModal();
+        };
+      }
+
+      // Fonction pour fermer le modal
+      function closeProductionModal() {
+        document.getElementById("productionModal").style.display = "none";
+      }
+
+      // Fonction pour lancer la production (logique à compléter selon API)
+      function startProduction(ref) {
+        alert(`Production lancée pour Bash Ref ${ref}`);
+        // ICI : Ajouter la requête API pour démarrer la production
+      }
+
+      async function fetchItemOrderProduction(orderId) {
+        baseUrl2 =
+          "https://app.liliumpharma.com/production/item-order-productions-pesee/?id=" +
+          orderId;
+        try {
+          console.log(baseUrl2 + orderId);
+          const response = await fetch(`${baseUrl2}`);
+          const items = await response.json();
+
+          const itemTableBody = document.querySelector(
+            `#item-table-${orderId} tbody`
+          );
+          if (items.length > 0) {
+            items.forEach((item) => {
+              const row = document.createElement("tr");
+              row.innerHTML = `
+                      <td>${item.produit} ${item.item}</td>
+                      <td>${item.qtt}</td>
+                      <td>${item.qtt_from_stock_to_weight}</td>
+                    `;
+              itemTableBody.appendChild(row);
+            });
+          } else {
+            const row = document.createElement("tr");
+            row.innerHTML = `<td colspan="2">Aucun item trouvé.</td>`;
+            itemTableBody.appendChild(row);
+          }
+        } catch (error) {
+          console.error("Erreur de récupération des items:", error);
+        }
+      }
+
+      function toggleExpand(orderId) {
+        const expandContent = document.getElementById(`expand-${orderId}`);
+        const expandIcon = document.querySelector(
+          `#expand-${orderId} .expand-icon`
+        );
+
+        if (
+          expandContent.style.display === "none" ||
+          !expandContent.style.display
+        ) {
+          expandContent.style.display = "block";
+          expandIcon.innerHTML = '<i class="fas fa-chevron-up"></i>';
+        } else {
+          expandContent.style.display = "none";
+          expandIcon.innerHTML = '<i class="fas fa-chevron-down"></i>';
+        }
+      }
+
+      function receiveOrder(orderId, location) {
+        if (location === "pesee") {
+          // Trigger the transfer action
+          transferOrder(orderId);
+        } else {
+          // Trigger the reception action
+          receptionOrder(orderId);
+        }
+      }
+
+      function transferOrder(orderId) {
+        alert(`Commande ${orderId} transférée !`);
+        // Implement the transfer logic (e.g., update location to 'transferred')
+      }
+
+      function receptionOrder(orderId) {
+        // URL de l'API pour mettre à jour la location
+        const url = `https://app.liliumpharma.com/production/order-productions/tablette/${orderId}/receptionner/`;
+
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}", // Assurez-vous que le token CSRF est envoyé avec la requête
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.message === "Location mise à jour à pesee") {
+              alert(
+                `Commande ${orderId} réceptionnée et location mise à jour à pesee !`
+              );
+
+              // Mettre à jour la carte avec la nouvelle location
+              const orderCard = document.querySelector(`#order_${orderId}`);
+              const locationElement = orderCard.querySelector(".card-body p");
+              locationElement.textContent = `Location: ${data.new_location}`;
+
+              // Désactiver le bouton "Réceptionner" pour éviter un clic multiple
+              const receiveButton = orderCard.querySelector(".receive-button");
+              receiveButton.disabled = true;
+              receiveButton.textContent = "Réceptionnée";
+            } else {
+              alert(
+                "Une erreur est survenue lors de la mise à jour de la location."
+              );
+            }
+          })
+          .catch((error) => {
+            console.error("Erreur:", error);
+            alert("Erreur lors de la mise à jour de la location.");
+          });
+      }
+
+      window.onload = fetchOrders;
+
+      let timerInterval;
+
+      function openProductionModal(orderId) {
+        console.log("Lancement de la production pour l'ordre", orderId);
+        document.getElementById("production_id_op").textContent = orderId; // Utilisez l'ID réel ici
+        document.getElementById("production_bash").textContent = "Batch XYZ"; // Remplacez par bash réel
+        document.getElementById("production_date").textContent =
+          new Date().toLocaleDateString(); // Date actuelle
+
+        document.getElementById("productionModal").style.display = "block";
+        startTimer();
+      }
+
+      function closeProductionModal() {
+        document.getElementById("productionModal").style.display = "none";
+        clearInterval(timerInterval); // Stopper le minuteur
+      }
+
+      function startTimer() {
+        let seconds = 0;
+        const timerDisplay = document.getElementById("production-timer");
+
+        timerInterval = setInterval(() => {
+          seconds++;
+          const hours = Math.floor(seconds / 3600);
+          const minutes = Math.floor((seconds % 3600) / 60);
+          const secs = seconds % 60;
+
+          timerDisplay.textContent =
+            String(hours).padStart(2, "0") +
+            ":" +
+            String(minutes).padStart(2, "0") +
+            ":" +
+            String(secs).padStart(2, "0");
+        }, 1000);
+      }
+
+      function handleMaintenance() {
+        alert("Mode maintenance activé.");
+        // Ajoutez ici la logique pour la maintenance
+      }
+
+      function handleQcCheck() {
+        alert("Contrôle qualité lancé.");
+        // Ajoutez ici la logique pour le QC Check
+      }
+
+      function endProduction() {
+        clearInterval(timerInterval);
+        alert("Production terminée.");
+        closeProductionModal();
+      }
+    </script>
+  </body>
+</html>

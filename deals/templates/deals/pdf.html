@@ -1,0 +1,272 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+  <title>PDF</title>
+  <!-- <link href="{% static 'css/print.css' %}" rel="stylesheet"/> -->
+</head>
+<body>
+  <style>
+    @media print {
+            .page-break {page-break-after: always;}
+            }
+  </style>
+  {% for deal in deals %}
+  <div class="container pt-4">
+    <div class="position-relative">
+      <img src="{% static 'img/logo.png' %}" style="height: 80px;position:absolute;top:0px;left:10px">
+    </div>
+    <h2 class="text-center">LILIUM PHARMA ALGERIE </h2>
+    <h3 class="text-center">   Demande de convention - طلب اتفاقية  </h3>
+  </div>
+    <div class="container">
+
+      
+      
+      <div class="container mt-5">
+        <div class="row mb-3" style="font-size: 22px;">
+          <div class="col-3">
+            <b>DEAL Nº</b> {{deal.id}} <br>
+          </div>
+          <div class="col-3">
+            <b>DATE:</b> {{deal.added | date:'Y-m-d'}} <br>
+          </div>
+          <div class="col-3">
+            <b>STATUS:</b> {{deal.status}} <br>
+          </div>
+          <div class="col-3">
+            <b>DELEGUE</b> {{deal.user}} <br>
+          </div>
+        </div>
+        <div class="py-1" style="background: #6b6b6b;"></div>
+        <div class="row pt-3" style="font-size:23px">
+          <div class="col-6">
+             <b>Information sur le medecin</b>
+          </div>
+          <div class="col-6 text-right">
+           <b>  معلومات الطبيب  </b>
+          </div>
+        </div>
+
+        <div class="row mt-2" style="font-size: 22px;">
+          <div class="col" >
+            {% for medecin in deal.medecin.all %}
+
+              <b>MEDECIN:</b>  {{medecin.id}} {{medecin.nom}}</b> <br>
+              <b>SPECIALITE:</b>  {{medecin.specialite}} <br>
+              <b>ADRESSE:</b>  {{medecin.adresse}} <br>
+              <b>TELEPHONE:</b>  {{medecin.telephone}} <br>
+              <b>User:</b>    {% for user in medecin.users.all %}
+                              {{ user.username }}
+                              {% endfor %}<br>
+              <div style="height:10px"></div>
+              <div class="pt-1" style="background: rgba(200, 200, 200, 0.5);"></div>
+
+            {% endfor %}
+
+          </div>
+        </div>
+      </div>
+      
+        <div class="pt-1" style="background: #6b6b6b"></div>
+
+      <div class="row pt-3" style="font-size:23px">
+        <div class="col-6">
+            <b> Type convention </b>
+        </div>
+        <div class="col-6 text-right">
+           <b> نوع الاتفاق </b>   
+        </div>
+      </div>
+        <p class="text-center">
+          <b>{{deal.dtype.description}}</b>
+        </p>
+      <div class="pt-1" style="background: #6b6b6b"></div>
+      
+      <div class="row pt-3" style="font-size:23px">
+        <div class="col-6">
+            <b> La valeur proposée  en dinars </b>
+        </div>
+        <div class="col-6 text-right">
+           <b>  القيمة المقترحة بالدينار  </b>   
+        </div>
+      </div>
+      <p class="text-center" style="font-size: 22px;">
+        <b>{{deal.cost}} Da</b>
+      </p>
+      
+
+      <div class="pt-1" style="background: #6b6b6b"></div>
+
+      <div class="row pt-3" style="font-size:23px">
+        <div class="col-6">
+            <b> Produits conventionnés </b>
+        </div>
+        <div class="col-6 text-right">
+           <b> المنتوجات المعنية بالاتفاقية </b>   
+        </div>
+      </div>
+
+
+
+        <!--<pdf:language name="arabic"/>-->
+      <div class='commande-content pt-4 position-relative'>
+        <!-- <img src="{% static 'img/qr.png' %}" class="qr-code"> -->
+        
+        
+              <div class="container">
+                <table class="table table-sm table-bordered">
+                  <thead>
+                    <tr>
+                      <th>
+                        PRODUITS
+                      </th>
+                    {% for item in deal.dealproduct_set.all %}
+                     <th>{{item.product}} </th> 
+                     {%endfor%}
+                    </tr>
+                  </thead>
+                  <tbody> 
+                    <tr>
+                      <th>
+                        QUANTITE
+                      </th>
+                      {% for item in deal.dealproduct_set.all %}
+                        <th>{{item.qtt}} </th> 
+                      {%endfor%}
+                    </tr>
+                  </tbody>
+
+                </table>
+                <!-- <div class="row">
+                  <div class="col-2 p-1 border-black" >
+                    <b>PRODUIT</b>
+                  </div>
+                  
+                </div>
+                <div class="row">
+                  <div class="col-2 p-1 border-black" >
+                    <b>QUANTITE</b>
+                  </div>
+                  {% for item in deal.dealproduct_set.all %}
+                   <div class="col p-1 border-black" >{{item.qtt}} </div> 
+                   {%endfor%}
+                </div> -->
+              </div>
+
+              
+          <br>
+          <div class="pt-1" style="background: #6b6b6b"></div>
+          <div class="row pt-3" style="font-size:23px">
+            <div class="col-6">
+                <b> Durée de la convention </b>
+            </div>
+            <div class="col-6 text-right">
+              <b> مدة الاتفاقية</b>   
+            </div>
+          </div>
+
+          <p class="text-center" style="font-size: 22px;">
+           à partir du:   <b>{{deal.starting_date | date:'Y-m-d' }} </b> &nbsp; au: <b>{{deal.ending_date | date:'Y-m-d' }} </b>
+          </p>
+          <br>
+          
+    
+          <div class="pt-1" style="background: #6b6b6b"></div>
+          <div class="row pt-3" style="font-size:23px">
+            <div class="col-6">
+                <b> Notes spéciales du le délégué  </b>
+            </div>
+            <div class="col-6 text-right">
+              <b>  ملاحظات خاصة للمندوب  </b>   
+            </div>
+          </div>
+
+          <p class="text-center" style="font-size: 22px;">
+             {{deal.description}} 
+          </p>
+          <p class="text-center" style="font-size: 22px;">
+            
+          </p>
+          <br>
+          
+    
+          <div class="pt-1" style="background: #6b6b6b"></div>
+          <div class="row pt-3" style="font-size:23px">
+            <div class="col-6">
+                <b> Notes spéciales de l'administration  </b>
+            </div>
+            <div class="col-6 text-right">
+              <b>  ملاحظات خاصة بالادارة  </b>   
+            </div>
+          </div>
+          {% for c in deal.dealcomment_set.all%}
+          <p class="text-center">
+            {{c.comment}}
+          </p>
+          {% endfor %}
+
+
+        <div class="pt-1" style="background: #6b6b6b"></div>
+        <div class="row pt-3" style="font-size:23px">
+          <div class="col-6">
+              <b> Membre représentant </b>
+          </div>
+          <div class="col-6 text-right">
+            <b> العضو ممثل </b>   
+          </div>
+        </div>
+        
+        <!-- Boucle pour afficher les délégués -->
+        {% for delegue in delegues %}
+
+
+
+        <div class="d-flex" style="font-size:13px">
+          <div>
+              <p><b>User: </b>{{ delegue.user.username }}   -</p>
+          </div>
+          <div >
+            <p> <b>Poste: </b>{{ delegue.user.userprofile.speciality_rolee }}  -</p>   
+          </div>
+          <div >
+            <p> <b>Family: </b>{{ delegue.user.userprofile.family }}  - </p>   
+          </div>
+          <div >
+            <p> <b>Date début de récuperation: </b>{{ delegue.date_debut_recuperation}}  -</p>   
+          </div>
+          <div >
+            <p> <b>Date de reprise du travail : </b>{{ delegue.date_reprise_recuperation}}  -</p>   
+          </div>
+        </div>
+
+
+        {% endfor %}
+
+        <br>
+
+        <div class="row pt-3" style="font-size:23px">
+          <div class="col-6">
+              <b>Signature </b>
+          </div>
+          <div class="col-6 text-right">
+            <b> الامضاء  </b>   
+          </div>
+        </div>
+
+      </div>
+      
+
+    </div>
+    <div class="page-break"></div>
+  {% endfor %}
+
+</body>
+</html>

@@ -1,0 +1,46 @@
+{% extends "admin/change_list.html" %}
+{% load i18n static %}
+
+{% block object-tools-items %}
+    {{ block.super }}
+    <div style="display: flex; gap: 10px; justify-content: end; margin-right: 18px;">
+        <div class="d-flex justify-content-end" style="margin-right: 20px;">
+            <a id="" class="btn btn-primary" href="http://app.liliumpharma.com/versement/export_excel">
+                Export Excel
+            </a>
+        </div>
+    </div>
+    <div class="mt-3" style="width: 100%;display: flex; gap: 10px; justify-content: end; margin-right: 18px;">
+
+        <div>Total des sommes : <span id="somme-total"></span></div>
+
+    </div>
+{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        /* Add custom CSS styles if needed */
+    </style>
+{% endblock %}
+
+{% block extrahead %}
+    <script>
+        window.addEventListener('load', function() {
+            var sommeTotal = 0;
+            var sommeElements = document.querySelectorAll('.field-formatted_somme');
+            sommeElements.forEach(function(element) {
+                var valueWithSpaces = element.textContent.trim();
+                var valueWithoutSpaces = valueWithSpaces.replace(/\s/g, '');
+                var value = parseFloat(valueWithoutSpaces.replace(',', '.'));
+
+                sommeTotal += value;
+            });
+
+            // Afficher la somme dans un élément avec l'ID "somme-total"
+            document.getElementById('somme-total').textContent = sommeTotal.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+        });
+    </script>
+{% endblock %}
+
+

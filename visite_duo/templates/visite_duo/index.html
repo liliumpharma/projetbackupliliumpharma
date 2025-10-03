@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat&display=swap" rel="stylesheet">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/styles.css'%}">
+  {%block styles%}
+  {%endblock styles%}
+  <title>{% block title %}{%endblock title%}</title>
+</head>
+<body>
+  {% include 'header.html' %}
+{% block body %}{%endblock body%}
+<script src="{% static 'js/jquery.min.js'%}"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+{% block scripts %}{%endblock scripts%}
+<div class="d-flex" style="margin-left: 20px;">
+    <h2 >Visite Duo</h2>
+</div>
+</body> 
+
+<div>{{ errors }}</div>
+<div class="d-flex mt-3 mb-4" style="justify-content: space-between;">
+  <div class="d-flex" style="margin-left: 20px;">
+    <img class="mr-2" src="../../../static/img/schedule.png" alt="calendrier" width="30px" height="30px">
+    <h5>Date min : </h5>
+    <input id="min" type="date" class="form-control">
+  </div>
+  <div class="d-flex" style="margin-right: 20px;">
+    <img class="mr-2" src="../../../static/img/schedule.png" alt="calendrier" width="30px" height="30px">
+
+    <h5>Date max : </h5>
+    <input id="max" type="date" class="form-control">
+  </div>
+</div>
+
+<table id="table" class="table">
+    <thead>
+      <tr>
+        <th scope="col" style="width: 130px;">Date</th>
+        <th scope="col">id_medecin</th>
+        <th scope="col" style="width: 230px;">nom medecin</th>
+        <th scope="col" style="width: 200px;">utilisateurs</th>
+        <th scope="col">Observations</th>
+
+      </tr>
+    </thead>
+    <tbody>
+      
+    </tbody>
+  </table>
+  
+<script>
+   $('document').ready(() => {
+    function table_row(item) {
+
+  const observations = item.observations.join('<br>');
+
+  return (`
+    <tr>
+      <td>${item.date_visite}</td>
+      <td>${item.id}</td>
+      <td>${item.nom}</td>
+      <td>${item.utilisateurs.join(', ')}</td>
+      <td>${observations}</td>
+    </tr>`);
+}
+// TO ADD OBSERVATION  class="table-cell-scroll" style="max-width: 200px; max-height: 100px; overflow: auto;"
+  function showSpinner() {
+    $('#table tbody').html(`
+      <tr id="spinner">
+        <td colspan="5" class="text-center">
+          <div class="spinner-border" role="status" style="color:green">
+          </div>
+        </td>
+      </tr>
+    `);
+  }
+  function fetchData() {
+    showSpinner();
+    // fetch('https://app.liliumpharma.com/medecins/api/v2/medecin_visite_duo_per_user_with_qtt_products?date_max=2023-05-05&date_min=2023-01-01')
+    fetch('https://app.liliumpharma.com/medecins/api/v2/medecin_visite_duo_per_user_with_qtt_products?date_max=2023-12-30&date_min=2023-01-01')
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data)
+        if(data.length!=0){
+            // Sort
+            data.sort((a, b) => {
+              const dateA = new Date(a.date_visite);
+              const dateB = new Date(b.date_visite);
+              return dateB - dateA;
+            });
+            for (const item of data) {
+            $('#spinner').remove();
+              $('#table tbody').append(table_row(item));
+            }
+        }else{
+            $('#spinner').remove();
+            $('#table tbody').html(`
+                <tr id="spinner">
+                    <td colspan="5" class="text-center">
+                        <h5>Aucune visite duo trouvée</h5>
+                    </td>
+                </tr>
+            `);
+        }
+      })
+      .catch(() => setTimeout(fetchData, 3000));
+  }
+
+  fetchData();
+});
+</script>
+<!-- FILTRE DU TABLEAU  -->
+
+<script>
+  // Récupérer les éléments d'entrée de date
+var minDateInput = document.getElementById('min');
+var maxDateInput = document.getElementById('max');
+
+// Écouter l'événement "input" sur les champs de date
+minDateInput.addEventListener('input', filterTableByDate);
+maxDateInput.addEventListener('input', filterTableByDate);
+
+
+// Écouter l'événement "input" sur les champs de date
+minDateInput.addEventListener('input', filterTableByDate);
+maxDateInput.addEventListener('input', filterTableByDate);
+
+// Fonction de filtrage du tableau
+function filterTableByDate() {
+  var minDate = minDateInput.value;
+  var maxDate = maxDateInput.value;
+
+  // Récupérer toutes les lignes du tableau
+  var table = document.getElementById('table');
+  var rows = table.getElementsByTagName('tr');
+
+  // Parcourir les lignes du tableau et afficher celles qui se trouvent entre les dates
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var dateCell = row.cells[0]; // La cellule contenant la date
+    var currentDate = dateCell.textContent;
+
+    // Vérifier si la date est supérieure ou égale à la date minimale et inférieure ou égale à la date maximale
+    if (minDate && maxDate && (currentDate < minDate || currentDate > maxDate)) {
+      row.style.display = 'none'; // Masquer la ligne
+    }
+    // Vérifier si seule la date minimale est sélectionnée
+    else if (minDate && !maxDate && currentDate < minDate) {
+      row.style.display = 'none'; // Masquer la ligne
+    }
+    // Vérifier si seule la date maximale est sélectionnée
+    else if (!minDate && maxDate && currentDate > maxDate) {
+      row.style.display = 'none'; // Masquer la ligne
+    }
+    else {
+      row.style.display = ''; // Afficher la ligne
+    }
+  }
+}
+
+</script>
+
+</html>

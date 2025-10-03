@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Rapport PDF</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+  <style>
+    @media print {
+      body {
+        width: 21cm;
+      }
+    }
+  </style>
+</head>
+<body>
+  {% load static %}
+  {% load custom_filters %}
+
+
+  <div class="container pt-4">
+    <div class="d-flex flex-column align-items-center text-center">
+      <img src="{% static 'img/logo.png' %}" style="height: 30px;">
+      <h6 class="mb-3">LILIUM PHARMA ALGERIE</h6>
+    </div>
+    <h6 class="text-center">Rapport de travail du délégué |  | تقرير عمل المندوب</h6>
+    <h6 class="text-center">Du : {{ request.GET.maxdate }} / {{ request.GET.mindate }} :  الفترةخلال</h6>
+  </div>
+
+  <hr style="width: 25%; height: 2px; border: none; background: #6b6b6b; border-radius: 5px; margin: 10px auto;">
+</br>
+
+<style>
+.page-break {
+    width: 70%; /* Sets the width to 60% */
+    margin: 20px 0; /* Optional: Add some vertical margin */
+    page-break-after: always; /* Ensures a page break after this div when printing */
+}
+.main-container {
+  display: flex;
+  justify-content: center; /* Centers the page-break div horizontally */
+}
+
+
+
+</style>
+
+
+
+
+<div class="main-container">
+
+
+  <div class="container page-break">
+
+    <div class="row">
+      <div class="col-md-12">
+        <div class="row mb-2">
+          <div class="col-md-6 d-flex"><h5><b>Délèguè / المندوب :</b></h5></div>
+          <div class="col-md-6 text-right"><h5 style="color:green"><b>{{ commerciale_name }}</b></h5></div>
+        </div>
+
+      
+
+
+        <div class="row mb-2">
+          <div class="col-md-6"><h5><b>Similarité Rapport/Planning / نسبة الإلتزام بالبرنامج</b></h5></div>
+          <div class="col-md-6 text-right"><h5 style="color:green"> {{ average_similarity_percentage|floatformat:0 }} %</h5></div>
+        </div>
+
+        <div class="row mb-2">
+          <div class="col-md-6"><h5><b>Nombre de rapports / عدد التقارير :</b></h5></div>
+          <div class="col-md-6 text-right"><h5><span style="color:green">{{ rapports_count }}</span> / {{ days }}</h5></div>
+        </div>
+        <div class="row">
+          <div class="col-md-6"><h5><b>Rapports vides  /  </b></h5></div>
+          
+        </div>
+        {% for rap in rapports_vides %}
+                  <span style="color:black; font-size:15px; font-weight:1px">
+                      {{ rap.infos}}
+                  </span>
+                  <span style="font-size:15px; font-weight:1px">
+                      rapport vide |
+                  </span>
+        {% endfor %}
+
+          <h5>
+
+            <div class="row">
+              <div class="col-md-6"><h5><b>Absences  /  عدد الغيابات:</b></h5></div>
+              <div class="col-md-6 text-right"><h5 style="color:green">{{ absence_dates|length}}</h5></div>
+            </div>
+
+              {% if absence == 0 %}
+                  <span style="font-size:15px; font-weight:1px">Pas d'absence |  لا يوجد غيابات</span>
+              {% else %}
+
+
+                  {% if absence == 0 %}
+                  
+                    Pas d'absence
+                  {% else %}
+                  {% for first_name, last_name, date in absence_dates %}
+                  <span style="color:black; font-size:15px; font-weight:1px">
+                      {{ first_name }} {{ last_name }} - {{ date|date:"d/m/Y" }}
+                  </span>
+                  <span style="font-size:15px; font-weight:1px">
+                      rapport manquant{% if not forloop.last %} | {% endif %}
+                  </span>
+              {% endfor %}
+                
+                {% endif %}
+                {% endif %}
+
+
+
+
+          </br>
+
+          </br>
+
+          <div class="row">
+            <div class="col-md-6"><h5><b>Congés  /  عدد الإجازات:</b></h5></div>
+            <div class="col-md-6 text-right"><h5 style="color:green">{{ leaves|length }}</h5></div>
+        </div>
+                  
+
+                  {% if leaves|length == 0 %}
+                  <span style="font-size:15px; font-weight:1px">Pas de congé |  لا يوجد الإجازات</span>
+                  {% else %}
+
+                    
+                      {% for leave in leaves %}
+                          <span style="color:black; font-size:15px; font-weight:1px">
+                              -<span style="color:black;font-weight:bold">{{ leave.leave_type }}:</span> {{ leave.start_date }} au {{ leave.end_date }}{% if not forloop.last %} | {% endif %}
+                          </span>
+                      {% endfor %}
+                  {% endif %}
+              
+
+
+
+          </h5>
+
+        <span class="text-secondary">{{ details|safe }}</span>
+
+
+
+        </br>
+
+          <div class="row">
+            <div class="col-md-12">
+<h5>
+  <b>
+    Bons de commandes / عدد الطلبيات المحققه من صيدليه لجروسيست ومن جروسيست لسوبر جرو :
+  </b>
+</h5>
+
+<div class="container">
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th scope="col">Catégorie</th>
+        <th scope="col" style="color: green;">Nombre</th>
+        {% for product in unique_products %}
+          <th scope="col">{{ product }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Pharmacie / Gros</td>
+        <td style="color: green;">{{ count_orders_with_pharmacy_and_gros }}</td>
+        {% for product in unique_products %}
+          <td>
+            {% if product in product_qty_pharmacy_and_gros %}
+              {{ product_qty_pharmacy_and_gros|get_item:product }}
+            {% else %}
+              0
+            {% endif %}
+          </td>
+        {% endfor %}
+      </tr>
+      <tr>
+        <td>Gros / Super Gros</td>
+        <td style="color: green;">{{ count_orders_with_gros_and_super_gros }}</td>
+        {% for product in unique_products %}
+          <td>
+            {% if product in product_qty_gros_and_super_gros %}
+              {{ product_qty_gros_and_super_gros|get_item:product }}
+            {% else %}
+              0
+            {% endif %}
+          </td>
+        {% endfor %}
+      </tr>
+      <tr style="font-size: 1.1em; font-weight: bold;">
+        <td><b>Total</b></td>
+        <td style="color: green;">
+          <b>{{ count_orders_with_pharmacy_and_gros|add:count_orders_with_gros_and_super_gros }}</b>
+        </td>
+        {% for product in unique_products %}
+          <td>
+            <b>
+              {% with pharmacy_qty=product_qty_pharmacy_and_gros|get_item:product|default:0 %}
+                {% with gros_qty=product_qty_gros_and_super_gros|get_item:product|default:0 %}
+                  {{ pharmacy_qty|add:gros_qty }}
+                {% endwith %}
+              {% endwith %}
+            </b>
+          </td>
+        {% endfor %}
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- SCRIPT DE TRI -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const table = document.querySelector(".table");
+    const headerRow = table.querySelector("thead tr");
+    const headerCells = Array.from(headerRow.querySelectorAll("th")).slice(2); // colonnes produits
+    const totalRow = table.querySelector("tbody tr:last-child");
+    const totalCells = Array.from(totalRow.querySelectorAll("td")).slice(2);
+
+    // Associer produit et total
+    let productsWithTotals = headerCells.map((th, index) => ({
+        name: th.innerText.trim(),
+        total: parseInt(totalCells[index].innerText.trim()) || 0
+    }));
+
+    // Sauvegarde noms initiaux
+    const initialNames = headerCells.map(th => th.innerText.trim());
+
+    // Trier du plus grand au plus petit
+    productsWithTotals.sort((a, b) => a.total - b.total);
+
+    // Nouvel ordre d'index
+    const orderIndexes = productsWithTotals.map(p => initialNames.indexOf(p.name));
+
+    // Réordonner en-tête
+    headerCells.forEach((cell, i) => {
+        cell.innerText = productsWithTotals[i].name;
+    });
+
+    // Réordonner lignes et mettre en rouge si total < 30
+    table.querySelectorAll("tbody tr").forEach((row, rowIndex) => {
+        const cells = Array.from(row.querySelectorAll("td")).slice(2);
+        const reordered = orderIndexes.map(i => cells[i].innerHTML);
+
+        reordered.forEach((html, idx) => {
+            cells[idx].innerHTML = html;
+
+            // Coloration rouge si ligne Total et total < 30
+            if (rowIndex === table.querySelectorAll("tbody tr").length - 1) {
+                if (productsWithTotals[idx].total < 30) {
+                    cells[idx].style.color = "red";
+                    cells[idx].style.fontWeight = "bold";
+                }
+            }
+        });
+    });
+});
+</script>
+
+
+          </div>
+          
+          </div>
+      </div>
+      
+      <style>
+          /* Rendre le texte dans les tableaux plus petit */
+          .table {
+              font-size: 0.8em; /* Ajustez cette valeur selon vos besoins */
+          }
+      </style>
+      
+      
+
+
+
+      </div>
+      
+      {% if orders_per_user %}
+<div class="row">
+  <div class="col-md-12">
+    <h5><b>Détails Bon de Commandes</b></h5>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped table-sm">
+        <thead class="thead-light">
+          <tr>
+            <th>Nom du Délégué</th>
+            <th>Nombre de Bon de Commandes</th>
+            <th>Produits & Quantités</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ord in orders_per_user %}
+          <tr>
+            <td>{{ ord.User }}</td>
+            <td>{{ ord.Nombre_Orders }}</td>
+            <td>
+              {% for a in ord.c %}
+                <span>({{ a.produit }} : {{ a.qtt }})</span>{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+      <br><br>
+
+      {% if user_with_no_orders %}
+      <div class="row">
+        <div class="col-md-12">
+          <h5><b>Liste des utilisateur avec 0 Bon de Commenades</b></h5>
+          <div class="container">
+        {% for ord in user_with_no_orders %}
+          <span style="color:black; font-size:15px; font-weight:1px">
+            <span style="font-weight: bold;">Delegue : </span> {{ord.User}} | 
+            <span style="font-weight: bold;"> Nombre de Bon de Commandes </span> {{ord.Nombre_Orders}}
+          </span>
+          <br>
+        {% endfor %}
+        </div></div></div>
+          
+      {% endif %}
+        
+      <div class="text-right" style="margin-right: 100px;">
+        <b>Signature et cachet:</b>
+    </div>
+    
+    </div>
+  </div>
+
+  {% comment %} <div class="container text-dark">
+    <table class="table table-sm table-bordered">
+      <tbody>
+        {% for rapport in rapports %}
+        <tr>
+          <td>
+            {{ rapport.added | date:"D d M Y" }}
+            <br/> {{ rapport.id }} 
+          </td>
+          <td>{{ rapport.user.first_name }} {{ rapport.user.last_name }}</td>
+          <td>
+            <table class="table table-sm table-bordered">
+              <thead>
+                <tr>
+                  <th class="text-left">Médecin</th>
+                  <th class="text-left">Spécialité</th>
+                  <th class="text-left">Priorité</th>
+                  <th class="text-left">Produits</th>
+                  <th class="text-left">Observation</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for visite in rapport.visite_set.all %}
+                <tr>
+                  <td class="text-left">
+                    <h5>{{ visite.medecin.id }}</h5> {{ visite.medecin }} {% if visite.medecin.has_deal %} <b>Partenaire</b>{% endif %}
+                    <br/> <h5>{{ visite.medecin.classification }}</h5>
+                    <br/>
+                    {% for usr in visite.medecin.users.all %}
+                      <span style="font-size:12px;">{{ usr }}</span>
+                    {% endfor %}
+                  </td>
+                  <td class="text-left"><h5>{{ visite.medecin.specialite }} {{ visite.medecin.classification }}</h5></td>
+                  <td class="text-left"><h5>{{ visite.priority }}</h5></td>
+                  <td class="text-left"><h5>{{ visite.products_to_pdf }}</h5></td>
+                  <td class="text-left">
+                    <a href="https://app.liliumpharma.com/medecins/visites/PDF/{{ visite.medecin.id }}?priority=&mindate={% now 'Y' %}-01-01&maxdate=&produit=&stock=" target="_blank">
+                      <h5>{{ visite.medecin.nbr_visites_year }}</h5>
+                    </a> <br/>
+                    <h5>{{ visite.observation }}</h5>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            <div class="my-4">
+              <table class="table table-sm table-bordered">
+                <thead>
+                  <tr>
+                    <th class="text-left">Tâches Complétées</th>
+                    <th class="text-center">Tâches Non Complétées</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      {% for t in rapport.related_plan.plantask_set.all %}
+                        {% if t.completed %}
+                          - {{ t.task }} <br/>
+                        {% endif %}
+                      {% endfor %}
+                    </td>
+                    <td>
+                      {% for t in rapport.related_plan.plantask_set.all %}
+                        {% if not t.completed %}
+                          - {{ t.task }} <br/>
+                        {% endif %}
+                      {% endfor %}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            {% for comment in rapport.comment_set.all %}
+              <div style="font-size:14px"><b>{{ comment.added }} {{ comment.user.username }}:</b> {{ comment.comment }} </div>
+            {% endfor %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="row">
+      
+
+  </div> {% endcomment %}
+
+
+  
+
+
+
+
+
+
+</div>
+
+</body>
+</html>

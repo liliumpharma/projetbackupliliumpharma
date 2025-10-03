@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+{% load clients_extra %}
+
+
+{% block styles %}
+<style>
+    @page {
+        size: A4;
+        margin: 0;
+    }
+
+    .header {
+        text-align: center;
+        font-size: xx-large;
+        font-style: bold;
+        margin-bottom: 10px
+    }
+
+    .logo {
+        width: 70px;
+        height: 70px
+    }
+
+    .title {
+        text-align: center;
+        font-size: x-large;
+    }
+
+
+    .region {
+        display: inline-block;
+        font-size: x-large;
+        font-weight: bold;
+    }
+
+    .user {
+        display: inline-block;
+        font-size: x-large;
+        font-weight: bold;
+    }
+
+    .achieve_percentage {
+        display: flex;
+        gap: 5px;
+        padding: 10px;
+        border: 2px solid green;
+        border-radius: 5px;
+        -webkit-border-radius: 5px;
+        -moz-border-radius: 5px;
+        -ms-border-radius: 5px;
+        -o-border-radius: 5px;
+    }
+
+    .main_column {
+        width: 15%;
+        font-size: 20px;
+        font-weight: bold
+    }
+
+    .signature_block {
+        display: flex;
+        justify-content: space-between;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    table {
+        width: 100%;
+    }
+
+    th {
+        outline: thin solid;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        color: black;
+        font-weight: bold;
+        text-align: center
+    }
+
+    td {
+        outline: thin solid;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+
+{% block title %} Objectifs {% endblock%}
+
+
+
+{% block body %}
+
+
+<div class="alert alert-success">
+
+<div class="h4 text-center">حسب القانون الداخلي للشركة</div>
+
+<div class="text-right">
+                                                </br>إذا حقق المندوب ثلاث أشهر متتالية _ كوارتر يضاف له راتب شهر كحوافز.
+</br>إذا حقق المندوب ستة أشهر متتالية كواترين متتالين يحسب له راتب شهر إضافي كحوافز ويتم رفع الراتب 10000 دينار جزائري.
+       </br>إذا حقق المندوب السنة كاملة يحسب له راتب شهرين كحوافز او سفر خارج البلاد ويتم رفع الراتب 15000 دينار جزائري.
+</div>
+</div>
+<form action="{% url 'target' %}" method="post">
+
+    {% csrf_token %}
+
+    <div class="d-flex justify-content-between flex-wrap px-5 mb-5" >
+        <div class="h3">
+            Filtre d'Objectifs
+        </div>
+        <div class="flex row align-items-center">
+
+            {% if users %}
+                <div>
+                    Délégué
+                    <select class="form-control col ml-1 mr-3" name="user_id">
+                        {% for user in users %}
+                            {% if user.id|equals:target_per_user.user_id %}      
+                                <option value="{{ user.id }}" selected="selected">{{ user.username|upper }}</option>
+                            {% else %}
+                                <option value="{{ user.id }}">{{ user.username|upper }}</option>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if target_per_user.user_id|equals:request.user.id %}      
+                            <option value="0" selected="selected">Toutes Ventes</option>
+                        {% else %}
+                            <option value="0">Toutes Ventes</option>
+                        {% endif %}
+                    </select>
+                </div>
+            {% endif %}
+
+            <div class="ml-3">
+                Mois
+
+                <select class="form-control col ml-1 mr-3" name="months">
+                    {% for month in all_months %}
+                        {% if month|equals:target_per_user.month %}      
+                            <option value="{{ month }}" selected="selected">{{ month }}</option>
+                        {% else %}
+                            <option value="{{ month }}">{{ month }}</option>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if not target_per_user.month %}      
+                        <option value="0" selected="selected">Tout les Mois</option>
+                    {% else %}
+                        <option value="0">Tout les Mois</option>
+                    {% endif%}
+                        
+                </select>
+            </div>
+
+            <div class="ml-3">
+                Année(s)
+                <select class="form-control col mx-1" name="years" id="">
+                    {% for year in all_years %}
+                        {% if year|equals:target_per_user.year %}     
+                            <option value="{{ year }}" selected="selected">{{ year }}</option>
+                        {% else %}
+                            <option value="{{ year }}">{{ year }}</option>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if not target_per_user.year %}      
+                        <option value="0" selected="selected">Toutes les Années</option>
+                    {% else %}
+                        <option value="0">Toutes les Années</option>
+                    {% endif%}
+                </select>
+            </div>
+
+            <div class="ml-3" style="align-self: end">
+                <input type="submit" class="btn btn-secondary" value="Rechercher">
+                <a class="btn btn-secondary ml-1" href="{{ print_target_per_user_url }}" target="_blank"><i class="fa fa-print"></i></a>
+            </div>
+
+        </div>    
+
+
+    </div>
+
+</form>
+
+<div class="px-5">
+
+    <div class="my-3">
+    {% if not current_user|equals:0 %}      
+    <div class="region">Délégué: </div>
+        {% for user in users %}
+            {% if user.id|equals:target_per_user.user_id %}      
+                {{ user.first_name|upper }} {{ user.last_name|upper }}
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        <div class="h3 text-center">
+            Toutes les Ventes de l'équipe de {{ request.user.first_name|upper }} {{ request.user.last_name|upper }}
+        </div>
+    {% endif %}
+
+
+
+    </div>
+
+
+    <div class="my-3">
+    <div class="region">Date: </div>
+
+        {% if not target_per_user.month %}      
+            Tout les Mois
+        {% else %}
+            {{ target_per_user.month }}
+        {% endif%}
+        /
+        {% if not target_per_user.year %}      
+            Toutes les années
+        {% else %}
+            {{ target_per_user.year }}
+        {% endif%}
+
+    </div>
+
+    <div class="my-3">
+        <div class="region">Région(s):</div>
+        {% for wilaya in target_per_user.wilayas %}
+            {{ wilaya }} |
+        {% endfor %}
+    </div>
+
+    {% if target_per_user %}
+
+    <table>
+        <thead>
+            <th class="main_column">Products</th>
+            {% for product in target_per_user.products %}
+            <th>{{ product.nom }}</th>
+            {% endfor %}
+        </thead>
+
+        <tbody>
+
+            <tr style="background-color: #90EE90">
+                <td class="main_column">Objectif</td>
+                {% for t in target_per_user.targets %}
+                <td>{{ t|thousand_separator }}</td>
+                {% endfor %}
+            </tr>
+
+            <tr style="background-color: yellow">
+                <td class="main_column">Prix</td>
+                {% for p in target_per_user.prices %}
+                <td>{{ p|thousand_separator }}</td>
+                {% endfor %}
+
+            </tr>
+
+            <tr>
+                <td class="main_column">Achevé (par unité)</td>
+                {% for q in target_per_user.quantities %}
+                <td><a href="{{ q.target_report_details_link }}" style="font-weight: bold" target="_blank">{{ q.total|thousand_separator }}</a></td>
+                {% endfor %}
+
+            </tr>
+
+            <tr style="background-color: #90EE90">
+                <td class="main_column">Total Objectif</td>
+                {% for tt in target_per_user.total_targets %}
+                <td>{{ tt|thousand_separator }}</td>
+                {% endfor %}
+
+            </tr>
+
+            <tr style="background-color: pink">
+                <td class="main_column">Total Achevé</td>
+                {% for ta in target_per_user.total_achievements %}
+                <td>{{ ta|thousand_separator }}</td>
+                {% endfor %}
+
+            </tr>
+
+        </tbody>
+    </table>
+
+    <div style="display: flex; justify-content: flex-end; margin-top: 10px">
+
+        <div class="achieve_percentage">
+            <div>
+                <div>Montant Objectif</div>
+                <div>Montant Atteint</div>
+                <div>Pourcentage d'Achévement</div>
+            </div>
+
+            <div style="text-align: end;">
+                <div>{{ target_per_user.total_target|thousand_separator }} Da</div>
+                <div>{{ target_per_user.total_reached|thousand_separator }} Da</div>
+                <div>{{ target_per_user.percentage_reached }}%</div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+{% endif %}
+
+
+{% endblock%}

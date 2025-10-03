@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Entrée</title>
+    <link rel="stylesheet" href="styles.css" />
+    <!-- Include jQuery (Select2 requires jQuery) -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<!-- Include Select2 CSS and JS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f7fc;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #333;
+      }
+
+      .navbar {
+        width: 100%;
+        background-color: #343a40;
+        color: white;
+        padding: 15px 0;
+        text-align: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-container {
+        margin-top:1700px;
+        width: 100%;
+        padding: 30px;
+        background-color: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-container h2 {
+        text-align: center;
+        margin-bottom: 25px;
+        color: #495057;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #495057;
+      }
+
+      select,
+      input {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        transition: border-color 0.3s ease;
+      }
+
+      select:focus,
+      input:focus {
+        border-color: #80bdff;
+        outline: none;
+      }
+
+      .button-container {
+        text-align: center;
+        margin-top: 25px;
+      }
+
+      .button {
+        background-color: #28a745;
+        color: white;
+        padding: 14px 32px;
+        font-size: 18px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: opacity 0.3s ease;
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      .button.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .cart-table {
+        width: 100%;
+        margin-top: 30px;
+        margin-bottom: 30px;
+        border-collapse: collapse;
+        background-color: #fff;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .cart-table th,
+      .cart-table td {
+        padding: 14px;
+        text-align: center;
+        border-bottom: 1px solid #dee2e6;
+      }
+
+      .cart-table th {
+        background-color: #f1f3f5;
+        font-weight: 600;
+      }
+
+      .cart-footer {
+        text-align: right;
+        padding: 15px;
+        font-weight: bold;
+        background-color: #f8f9fa;
+      }
+
+      .cart-empty {
+        text-align: center;
+        padding: 30px;
+        font-style: italic;
+      }
+
+      #valider {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 15px 35px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      #valider:hover {
+        background-color: #0056b3;
+      }
+
+      .form-group input,
+      .form-group select {
+        font-size: 14px;
+      }
+
+      select {
+        width: 100%;
+        padding: 10px 15px;
+        font-size: 16px;
+        font-family: 'Arial', sans-serif;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+        color: #333;
+        transition: border-color 0.3s, background-color 0.3s ease;
+        box-sizing: border-box;
+      }
+    
+      /* Effet au focus */
+      select:focus {
+        border-color: #007bff;
+        background-color: #f0f8ff;
+        outline: none;
+      }
+    
+      /* Style pour les options */
+      select option {
+        padding: 10px;
+        background-color: white;
+        color: #333;
+      }
+    
+      /* Ajouter des effets aux options au survol */
+      select option:hover {
+        background-color: #f1f1f1;
+      }
+    
+      /* Amélioration de l'affichage sur les navigateurs modernes */
+      select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+        background-repeat: no-repeat;
+        background-position: right 15px center;
+        background-size: 12px;
+      }
+      
+
+      .visible {
+        display: block !important; /* Assure-toi que l'élément est bien affiché */
+      }
+
+      /* Classe pour cacher l'élément */
+      .hidden {
+        display: none !important; /* Cache l'élément */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="navbar">
+      <h6>Section : Entrée</h6>
+    </div>
+    <br />
+
+    <div class="form-container">
+      <h2>Bon d'entrée N°</h2>
+      <h2 id="id_entree">2024/34</h2>
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <div style="display: flex">
+            <div class="form-group">
+              <label for="quantite">Réference BL : </label>
+              <input
+                type="number"
+                id="number"
+                min="1"
+                onchange="validateForm()"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="quantite">Date BL:</label>
+              <input
+                type="date"
+                id="date_bl"
+                min="1"
+                onchange="validateForm()"
+              />
+            </div>
+          </div>
+
+          <label for="fournisseur">Fournisseur :</label>
+          <select id="fournisseur" name="fournisseur" required>
+            <option value="ACM">ACM</option>
+            <option value="fournisseur1">Fournisseur 1</option>
+            <option value="fournisseur2">Fournisseur 2</option>
+            <option value="fournisseur3">Fournisseur 3</option>
+            <option value="fournisseur4">Fournisseur 4</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="type">Type :</label>
+          <select id="type" name="type" required>
+            <option value="">Sélectionner...</option>
+            <option value="Matiere premiere">Matière première</option>
+            <option value="Premix">Premix</option>
+            <option value="Primary packaging">Primary packaging</option>
+            <option value="Secondary packaging">Secondary packaging</option>
+          </select>
+        </div>
+
+
+        <div class="form-group">
+          <label for="produit">Produit | المنتج</label>
+          <select id="produit">
+            <option value="">Sélectionner...</option>
+            <option value="FM">FM</option>
+            <option value="FF">FF</option>
+            <option value="MENOLIB">MENOLIB</option>
+            <option value="SOPK FREE">SOPK FREE</option>
+            <option value="HEPALIB">HEPALIB</option>
+            <option value="THYROLIB">THYROLIB</option>
+            <option value="SUB12">SUB12</option>
+            <option value="HAIRVOL">HAIRVOL</option>
+            <option value="DHEA 75mg">DHEA 75mg</option>
+            <option value="ADVAGEN">ADVAGEN</option>
+            <option value="YES VIT">YES VIT</option>
+            <option value="YES CAL">YES CAL</option>
+            <option value="autre">Autre</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="sub_type">Sub Type :</label>
+          <select id="sub_type" name="sub_type" required>
+            <option value="">Sélectionner...</option>
+            <option value="local">Local</option>
+          </select>
+        </div>
+
+        <div id="ing_div" class="form-group">
+          <label for="ingredient_name">Ingredient Name :</label>
+          <select id="ingredient_name" name="ingredient_name">
+            <option value="">Sélectionner...</option>
+          </select>
+        </div>
+
+        <div class="form-container-colis">
+
+
+        <div class="form-group">
+          <label for="quantite">Lot Fournisseur</label>
+          <input type="number" id="lot_ext" min="1" onchange="validateForm()" />
+        </div>
+
+        <div class="form-group">
+          <label for="quantite">Lot interne</label>
+          <input type="number" id="lot" min="1" onchange="validateForm()" />
+        </div>
+
+        
+      </div>
+
+        <div class="form-container-colis">
+
+
+        <div class="form-group">
+          <label for="quantite">Manifacture Date</label>
+          <input
+            type="date"
+            id="manifacture_date"
+            min="1"
+            onchange="validateForm()"
+          />
+        </div>
+        <div class="form-group">
+          <label for="quantite">Expiry date </label>
+          <input
+            type="date"
+            id="expiry_date"
+            min="1"
+            onchange="validateForm()"
+          />
+        </div>
+      </div>
+
+
+      
+
+      <style>
+
+        /* Style du bouton dropdown */
+.dropbtn {
+  background-color: #4CAF50;
+  color: white;
+  padding: 10px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+/* Style du conteneur dropdown */
+.dropdown {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+/* Contenu du dropdown (caché par défaut) */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 100%;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+/* Affichage du dropdown au survol/clic */
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown-content label {
+  display: block;
+  padding: 5px;
+  cursor: pointer;
+}
+
+/* Style pour éviter le clic accidentel */
+.dropdown-content label:hover {
+  background-color: #f1f1f1;
+}
+
+      </style>
+      
+      
+      
+
+
+        <div class="form-container-colis">
+
+        <div class="form-group">
+          <label for="quantite">Quantité Brut | الكمية</label>
+          <input
+            type="number"
+            id="quantite"
+            min="1"
+            onchange="validateForm()"
+          />
+        </div>
+
+
+        <div class="form-group">
+          <label for="unite">Unité | الوحدة</label>
+          <select id="unite" onchange="validateForm()">
+            <option value="">Sélectionner...</option>
+            <option value="kg">Kilogramme</option>
+            <option value="g">Gramme</option>
+            <option value="l">Litre</option>
+            <option value="ml">Millilitre</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-container-colis">
+
+
+        <div class="form-group">
+          <label for="quantite">Quantité Nette | الكمية</label>
+          <input
+            type="number"
+            id="quantite_nette"
+            min="1"
+            onchange="validateForm()"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="unite">Unité | الوحدة</label>
+          <select id="unite" onchange="validateForm()">
+            <option value="">Sélectionner...</option>
+            <option value="kg">Kilogramme</option>
+            <option value="g">Gramme</option>
+            <option value="l">Litre</option>
+            <option value="ml">Millilitre</option>
+          </select>
+        </div>
+
+      </div>
+
+
+        <div class="form-container-colis">
+          <div class="form-group">
+            <label for="type">Colis Type :</label>
+            <select id="packaging_type" name="type" required>
+              <option value="">Sélectionner...</option>
+              <option value="Bobine">Bobine</option>
+              <option value="Drum">Drum</option>
+              <option value="Sachets">Sachets</option>
+            </select>
+          </div>
+        
+          <div class="form-group">
+            <label for="nbr_colis">Nombre de colis</label>
+            <input type="number" id="nbr_colis" min="1" required />
+          </div>
+        
+          <div class="form-group">
+            <label for="quantite_colis">Quantité Par colis | الكمية</label>
+            <input type="number" id="quantite_colis" min="1" required />
+          </div>
+
+
+          <div class="form-group">
+            <label for="ref_colis">Réference</label>
+            <input type="text" id="ref_colis" min="1" placeholder="2024/34" disabled/>
+          </div>
+
+
+          <div class="form-group">
+            <label for="location">Location</label>
+            <div class="dropdown">
+              <button class="dropbtn">Sélectionner des locations</button>
+              <div class="dropdown-content">
+                <label>
+                  <input type="checkbox" id="A-001" name="location" value="A-001">
+                  A-001
+                </label>
+                <label>
+                  <input type="checkbox" id="A-002" name="location" value="A-002">
+                  A-002
+                </label>
+                <label>
+                  <input type="checkbox" id="A-003" name="location" value="A-003">
+                  A-003
+                </label>
+                <label>
+                  <input type="checkbox" id="B-001" name="location" value="B-001">
+                  B-001
+                </label>
+                <label>
+                  <input type="checkbox" id="B-002" name="location" value="B-002">
+                  B-002
+                </label>
+              </div>
+            </div>
+          </div>
+
+
+
+
+          <button type="button"  onclick="addColis()">Ajouter un colis</button>
+        </div>
+        
+
+
+
+        <style>
+
+          .form-container-colis {
+            display: flex;
+            justify-content: space-between; /* espace entre les divs */
+            gap: 15px; /* espacement entre les éléments */
+          }
+          
+          .form-group {
+            flex: 1; /* pour que chaque div prenne une part égale d'espace */
+          }
+          
+
+          .delete-btn {
+            background-color: #e74c3c; /* Rouge pour la suppression */
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+          }
+      
+          .delete-btn:hover {
+            background-color: #c0392b; /* Couleur plus sombre au survol */
+          }
+          button {
+            background-color: #007bff; /* Couleur bleue */
+            color: white;
+            border: none;
+            border-radius: 15px; /* Bordures arrondies */
+            font-size: 16px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Animation pour le survol */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Légère ombre */
+          }
+          
+          button:hover {
+            background-color: #0056b3; /* Changement de couleur au survol */
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2); /* Ombre plus profonde au survol */
+          }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: white;
+    }
+
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+      font-weight: bold;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    tr:hover {
+      background-color: #f1f1f1;
+    }
+    button {
+      background-color: #007bff; /* Couleur bleue */
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 25px; /* Bordures arrondies */
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Animation pour le survol */
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Légère ombre */
+    }
+    
+    button:hover {
+      background-color: #0056b3; /* Changement de couleur au survol */
+      box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2); /* Ombre plus profonde au survol */
+    }
+  </style>
+        </style>
+
+        <h3>Colis Ajoutés :</h3>
+        <table id="colis_table" border="1">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Nombre de colis</th>
+              <th>Quantité par colis</th>
+              <th>Références</th>
+              <th>Total</th>
+              <th>Locations</th> <!-- Colonne pour les locations -->
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Les colis ajoutés seront affichés ici -->
+          </tbody>
+        </table>
+
+
+        
+        
+        
+        <div class="form-group">
+          <label for="prix">Prix</label>
+          <input type="number" id="prix" min="1" onchange="validateForm()" />
+        </div>
+
+        <div class="form-group">
+          <label for="devise">Devise</label>
+          <select id="devise" onchange="validateForm()">
+            <option value="">Sélectionner...</option>
+            <option value="DZ">DZ</option>
+            <option value="USD">$</option>
+            <option value="EUR">€</option>
+          </select>
+        </div>
+
+        <table class="cart-table" id="cart-table">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Quantité</th>
+              <th>Packaging</th>
+              <th>Prix Unitaire</th>
+              <th>Sous-total</th>
+            </tr>
+          </thead>
+          <tbody id="cart-items">
+            <tr class="cart-empty">
+              <td colspan="4">Le panier est vide</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" class="cart-footer">Total :</td>
+              <td id="total">0 DZ</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div class="button-container">
+          <a id="approvisionner" class="button" disabled> Ajouter au Panier </a>
+        </div>
+        <script>
+          let colisList = [];
+          let initial_qtt = 0; // Initialiser initial_qtt à 0
+          let sequenceNumber = 1; // Numéro séquentiel global qui s'incrémente pour chaque colis ajouté
+        
+          function addColis() {
+            
+            const id_entree = document.getElementById("id_entree").textContent;
+            const type = document.getElementById("packaging_type").value;
+            const nbrColis = document.getElementById("nbr_colis").value;
+            const quantiteColis = document.getElementById("quantite_colis").value;
+            const lot = document.getElementById("lot_ext").value; // Récupérer le numéro du lot
+            const qtt = document.getElementById("quantite").value; // Quantité maximale autorisée
+          
+            // Récupérer les locations sélectionnées
+            const selectedLocations = Array.from(document.querySelectorAll('input[name="location"]:checked')).map(checkbox => checkbox.value);
+          
+            if (type && nbrColis && quantiteColis && lot) {
+              // Calculer le total pour le colis actuel
+              const total = nbrColis * quantiteColis;
+          
+              // Vérifier si la somme des quantités dépasse la quantité autorisée
+              console.log("initial_qtt"+initial_qtt)
+              console.log("qtt"+qtt)
+              console.log("total"+total)
+              if (initial_qtt + total > qtt) {
+                alert("La quantité totale dépasse la limite autorisée.");
+                return; // Empêche l'ajout de la ligne si la limite est dépassée
+              }
+          
+              // Générer les références pour chaque colis en fonction du lot et du séquentiel
+              let refs = [];
+              for (let i = 1; i <= nbrColis; i++) {
+                refs.push(`${id_entree}/${sequenceNumber++}`);
+              }
+          
+              // Ajouter les données dans le tableau colisList
+              colisList.push({ type, nbrColis, quantiteColis, refs, locations: selectedLocations });
+          
+              // Mettre à jour la somme des quantités
+              initial_qtt += total;
+          
+              // Mettre à jour l'affichage du tableau
+              updateTable();
+          
+              // Réinitialiser les champs
+              document.getElementById("packaging_type").value = "";
+              document.getElementById("nbr_colis").value = "";
+              document.getElementById("quantite_colis").value = "";
+            } else {
+              alert("Veuillez remplir tous les champs.");
+            }
+          }
+          
+        
+          function updateTable() {
+            const tbody = document.getElementById("colis_table").getElementsByTagName("tbody")[0];
+            tbody.innerHTML = ""; // Réinitialiser le contenu
+          
+            colisList.forEach((colis, index) => {
+              const row = tbody.insertRow();
+              row.insertCell(0).innerText = colis.type;
+              row.insertCell(1).innerText = colis.nbrColis;
+              row.insertCell(2).innerText = colis.quantiteColis;
+          
+              // Ajouter les références pour chaque colis
+              const refsCell = row.insertCell(3);
+              colis.refs.forEach(ref => {
+                const refText = document.createElement("p");
+                refText.innerText = ref;
+                refsCell.appendChild(refText);
+              });
+          
+              // Calculer le total (quantité par colis * nombre de colis)
+              const total = colis.nbrColis * colis.quantiteColis;
+              row.insertCell(4).innerText = total;
+          
+              // Ajouter les locations sélectionnées
+              const locationsCell = row.insertCell(5);
+              locationsCell.innerText = colis.locations.join(', '); // Afficher les locations séparées par une virgule
+          
+              // Ajouter un bouton de suppression
+              const deleteCell = row.insertCell(6);
+              const deleteButton = document.createElement("button");
+              deleteButton.innerText = "Supprimer";
+              deleteButton.classList.add("delete-btn");
+              deleteButton.onclick = () => deleteColis(index, total, colis.refs.length); // Passer la longueur des références pour le décrément
+              deleteCell.appendChild(deleteButton);
+            });
+          }
+          
+        
+          function deleteColis(index, total, refCount) {
+            // Supprimer le colis de la liste
+            colisList.splice(index, 1);
+            
+            // Décrémenter la somme des quantités
+            initial_qtt -= total;
+        
+            // Décrémenter le numéro séquentiel en fonction du nombre de colis supprimés
+            sequenceNumber -= refCount;
+        
+            // Mettre à jour le tableau
+            updateTable();
+          }
+          
+
+
+          document
+          .getElementById("approvisionner")
+          .addEventListener("click", function () {
+            const produit = document.getElementById("produit").value;
+            const quantite = document.getElementById("quantite").value;
+            const prix = document.getElementById("prix").value;
+            const type = document.getElementById("type").value;
+            const sub_type = document.getElementById("sub_type").value;
+        
+            // Calcul du sous-total
+            const sousTotal = quantite * prix;
+        
+            // Récupérer les colis du tableau colis_table
+            const colisTableRows = document
+              .getElementById("colis_table")
+              .getElementsByTagName("tbody")[0].rows;
+        
+            // Préparer les informations sur les colis dans un mini tableau
+            let colisInfoHTML = `
+              <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Type</th>
+                    <th>Quantité</th>
+                    <th>Référence</th>
+                    <th>Location</th>
+                  </tr>
+                </thead>
+                <tbody>
+            `;
+            for (let i = 0; i < colisTableRows.length; i++) {
+              const colisNbr = colisTableRows[i].cells[1].innerText; // Nombre de colis
+              const colisType = colisTableRows[i].cells[0].innerText; // Type du colis
+              const colisQuantite = colisTableRows[i].cells[2].innerText; // Quantité par colis
+              const colisRefs = colisTableRows[i].cells[3].innerText; // Référence du colis
+              const colisLoc = colisTableRows[i].cells[5].innerText; // Référence du colis
+        
+              // Ajouter une ligne de colis avec les informations sous forme de tableau
+              colisInfoHTML += `
+                <tr>
+                  <td>${colisNbr}</td>
+                  <td>${colisType}</td>
+                  <td>${colisQuantite}</td>
+                  <td>${colisRefs}</td>
+                  <td>${colisLoc}</td>
+                </tr>`;
+            }
+            colisInfoHTML += `
+                </tbody>
+              </table>
+            `;
+        
+            // Récupérer le tableau du panier
+            const cartItems = document.getElementById("cart-items");
+            const newRow = document.createElement("tr");
+        
+            // Création de la nouvelle ligne avec produit, quantité, prix unitaire, sous-total, et mini tableau des colis
+            newRow.innerHTML = `
+              <td>${produit} ${type} ${sub_type}</td>
+              <td>${quantite}</td>
+              <td>${colisInfoHTML}</td> <!-- Ajout du mini tableau des colis dans une cellule -->
+              <td>${prix}</td>
+              <td>${sousTotal}</td>
+            `;
+        
+            // Ajout de la nouvelle ligne au tableau du panier
+            cartItems.appendChild(newRow);
+        
+            // Mise à jour du total
+            updateTotal();
+
+            colisList = [];
+            initial_qtt = 0; 
+
+        
+            // Réinitialiser les champs après l'ajout
+            document.getElementById("quantite").value = "";
+            document.getElementById("quantite_nette").value = "";
+            document.getElementById("prix").value = "";
+            document.getElementById("unite").value = "";
+            document.getElementById("produit").value = "";
+            document.getElementById("lot").value = "";
+            document.getElementById("lot_ext").value = "";
+            document.getElementById("type").value = "";
+            document.getElementById("sub_type").value = "";
+            document.getElementById("manifacture_date").value = "";
+            document.getElementById("expiry_date").value = "";
+            document.getElementById("location").value = "";
+            document.getElementById("devise").value = "";
+
+            document.getElementById("approvisionner").disabled = true;
+          });
+        
+
+
+
+
+        </script>
+
+      </form>
+
+      <div class="button-container">
+        <button id="valider">Valider</button>
+      </div>
+    </div>
+
+    <script>
+      async function sendFormData() {
+        const fournisseur = document.getElementById("fournisseur").value;
+        const produit = document.getElementById("produit").value;
+        const e_type = document.getElementById("type").value;
+        const subtype = document.getElementById("sub_type").value;
+        const ingredient_name =
+          document.getElementById("ingredient_name").value;
+
+        const number = document.getElementById("number").value;
+        const lot = document.getElementById("lot").value;
+        const manifacture_date =
+          document.getElementById("manifacture_date").value;
+        const expiry_date = document.getElementById("expiry_date").value;
+
+        const csrftoken = document.querySelector(
+          "[name=csrfmiddlewaretoken]"
+        ).value;
+
+        // Récupérer tous les éléments du panier (cart-table)
+        const cartItems = [];
+        const rows = document.querySelectorAll(
+          "#cart-items tr:not(.cart-empty)"
+        );
+        nbr_rows=0
+        rows.forEach(function (row) {
+          nbr_rows = nbr_rows+1
+        });
+
+        // Vérification si le panier est vide
+        if (nbr_rows === 0) {
+          alert("Le panier est vide. Ajoutez des éléments avant de valider.");
+          return;
+        }
+
+        const postaData = {
+          fournisseur,
+          e_type,
+          subtype,
+          ingredient_name,
+          number,
+          lot,
+          manifacture_date,
+          expiry_date,
+          nbr_rows,
+        };
+
+        console.log(postaData)
+
+        try {
+          const response = await fetch(
+            "https://app.liliumpharma.com/production/entree/add/",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrftoken, // CSRF token pour sécurité
+              },
+              body: JSON.stringify(postaData),
+            }
+          );
+
+          const result = await response.json();
+          if (response.ok) {
+            alert("Entree créée avec succès");
+          } else {
+            alert("Erreur lors de la création : " + result.errors);
+          }
+        } catch (error) {
+          alert("Erreur lors de l'envoi des données : " + error);
+        }
+      }
+
+      document.getElementById("valider").addEventListener("click", function () {
+        sendFormData();
+      });
+
+      document.getElementById("type").addEventListener("change", function () {
+        const typeValue = this.value;
+        const subTypeSelect = document.getElementById("sub_type");
+        subTypeSelect.innerHTML = "<option value=''>Sélectionner...</option>";
+        const ingredient_name = document.getElementById("ing_div");
+
+        if (typeValue === "Matiere premiere") {
+          subTypeSelect.innerHTML +=
+            "<option value='Coating'>Coating</option> <option value='Excipient'>Excipient</option> <option value='Active ingredient'>Active ingredient</option>";
+
+          // Vérifier si l'élément est bien sélectionné
+
+          // Modification de l'affichage
+        } else if (typeValue === "Premix") {
+          subTypeSelect.innerHTML +=
+            "<option value='Premix powder'>Powder</option> <option value='Premix liquide'>Liquide</option>";
+          ingredient_name.classList.add("hidden");
+        } else if (typeValue === "Primary packaging") {
+          subTypeSelect.innerHTML +=
+            "<option value='Aluminium'>Aluminium</option>  <option value='Aluminium Formage'>Aluminium Formage</option> <option value='PVC'>PVC</option> <option value='PVDC'>PVDC</option>   <option value='Triplex'>Triplex</option>";
+          ingredient_name.classList.add("hidden");
+        } else if (typeValue === "Secondary packaging") {
+          subTypeSelect.innerHTML +=
+            "<option value='Box'>Box</option>  <option value='Carton'>Carton</option>";
+          ingredient_name.classList.add("hidden");
+        }
+      });
+
+      document
+        .getElementById("sub_type")
+        .addEventListener("change", function () {
+          const typeValue = this.value;
+          const subTypeSelect = document.getElementById("ingredient_name");
+          subTypeSelect.innerHTML = "<option value=''>Sélectionner...</option>";
+
+          if (typeValue === "Coating") {
+            subTypeSelect.innerHTML +=
+              "<option value='Opadry 2 blanc'>Opadry 2 blanc</option> ";
+          } else if (typeValue === "Excipient") {
+            subTypeSelect.innerHTML +=
+              "<option value='Hydroxypropyl Cellulose'>Hydroxypropyl Cellulose</option> <option value='Magnesium Stearate (Vegetable)'>Magnesium Stearate (Vegetable)</option>";
+          } else if (typeValue === "Active ingredient") {
+            subTypeSelect.innerHTML +=
+              "<option value='Vitamin A (as beta-caroten)'>Vitamin A (as beta-caroten)</option>  <option value='VItamin C(as ascorbic acid)'>VItamin C(as ascorbic acid)</option> ";
+          }
+        });
+
+      function validateForm() {
+        const quantite = document.getElementById("quantite").value;
+        const unite = document.getElementById("unite").value;
+        const prix = document.getElementById("prix").value;
+
+        if (quantite && unite && prix) {
+          document.getElementById("approvisionner").classList.add("active");
+          document.getElementById("approvisionner").disabled = false;
+        } else {
+          document.getElementById("approvisionner").classList.remove("active");
+          document.getElementById("approvisionner").disabled = true;
+        }
+      }
+
+
+
+      function updateTotal() {
+        let total = 0;
+        const rows = document.querySelectorAll("#cart-items tr");
+        rows.forEach(function (row) {
+          if (row.cells[3]) {
+            total += parseFloat(row.cells[3].textContent.split(" ")[0]);
+          }
+        });
+
+        document.getElementById("total").textContent = `${total} DZ`;
+      }
+    </script>
+  </body>
+</html>

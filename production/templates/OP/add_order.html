@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Entrée</title>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f7fc;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #333;
+      }
+
+      .navbar {
+        width: 100%;
+        background-color: #343a40;
+        color: white;
+        padding: 15px 0;
+        text-align: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 10;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-container {
+        margin-top: 20px;
+        max-width: 100%;
+        width: 100%;
+        padding: 30px;
+        background-color: #ffffff;
+        border-radius: 15px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-container h2 {
+        text-align: center;
+        margin-bottom: 25px;
+        color: #495057;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #495057;
+      }
+
+      select,
+      input {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        transition: border-color 0.3s ease;
+      }
+
+      select:focus,
+      input:focus {
+        border-color: #80bdff;
+        outline: none;
+      }
+
+      .button-container {
+        text-align: center;
+        margin-top: 25px;
+      }
+
+      .button {
+        background-color: #28a745;
+        color: white;
+        padding: 14px 32px;
+        font-size: 18px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: opacity 0.3s ease;
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      .button.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .cart-table {
+        width: 100%;
+        margin-top: 30px;
+        margin-bottom: 30px;
+        border-collapse: collapse;
+        background-color: #fff;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .cart-table th,
+      .cart-table td {
+        padding: 14px;
+        text-align: center;
+        border-bottom: 1px solid #dee2e6;
+      }
+
+      .cart-table th {
+        background-color: #f1f3f5;
+        font-weight: 600;
+      }
+
+      .cart-footer {
+        text-align: right;
+        padding: 15px;
+        font-weight: bold;
+        background-color: #f8f9fa;
+      }
+
+      .cart-empty {
+        text-align: center;
+        padding: 30px;
+        font-style: italic;
+      }
+
+      #valider {
+        background-color: green;
+        color: white;
+        border: none;
+        padding: 15px 35px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      #valider:hover {
+        background-color: #0056b3;
+      }
+
+      .form-group input,
+      .form-group select {
+        font-size: 14px;
+      }
+
+      .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 25px 0;
+        font-size: 12px;
+        text-align: left;
+        border-radius: 8px 8px 0 0;
+        overflow: hidden;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+      }
+
+      .styled-table thead tr {
+        background-color: #009879;
+        color: #ffffff;
+        text-align: left;
+        font-weight: bold;
+      }
+
+      .styled-table th,
+      .styled-table td {
+        padding: 12px 15px;
+      }
+
+      .styled-table tbody tr {
+        border-bottom: 1px solid #dddddd;
+      }
+
+      .styled-table tbody tr:nth-of-type(even) {
+        background-color: #f3f3f3;
+      }
+
+      .styled-table tbody tr:last-of-type {
+        border-bottom: 2px solid #009879;
+      }
+
+      .styled-table tbody tr:hover {
+        background-color: #f1f1f1;
+        cursor: pointer;
+      }
+
+      /* Style pour les labels contenant les cases à cocher */
+      .checkbox-container {
+        display: flex;
+        align-items: center;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        cursor: pointer;
+        margin-bottom: 15px;
+        position: relative;
+        padding-left: 35px; /* Espace pour le bouton personnalisé */
+        line-height: 1.5;
+      }
+
+      /* Masquer la case à cocher native */
+      .checkbox-container input[type="checkbox"] {
+        display: none;
+      }
+
+      /* Création du bouton personnalisé */
+      .checkbox-container input[type="checkbox"] + .checkbox-label::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 20px;
+        height: 20px;
+        background-color: #f0f0f0;
+        border: 2px solid #ccc;
+        border-radius: 5px;
+        transition: background-color 0.3s, border-color 0.3s;
+      }
+
+      /* Changer la couleur du bouton lors du survol */
+      .checkbox-container:hover
+        input[type="checkbox"]
+        + .checkbox-label::before {
+        border-color: #6c757d;
+        background-color: #f7f7f7;
+      }
+
+      /* Apparence du bouton activé */
+      .checkbox-container
+        input[type="checkbox"]:checked
+        + .checkbox-label::before {
+        background-color: #007bff;
+        border-color: #007bff;
+      }
+
+      /* Ajout d'une coche sur le bouton activé */
+      .checkbox-container
+        input[type="checkbox"]:checked
+        + .checkbox-label::after {
+        content: "\2713"; /* Symbole de coche */
+        position: absolute;
+        left: 4px;
+        top: 2px;
+        color: #fff;
+        font-size: 14px;
+      }
+
+      /* Style pour le texte */
+      .checkbox-label {
+        padding-left: 10px;
+        color: #333;
+        font-weight: 500;
+      }
+
+      /* Effet au survol du label */
+      .checkbox-container:hover .checkbox-label {
+        color: #007bff;
+      }
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #4caf50;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        font-size: 16px;
+        opacity: 0;
+        transition: opacity 0.5s ease;
+        z-index: 1000;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="navbar">
+      <h6>Section : Entrée</h6>
+    </div>
+    <br />
+
+    <div class="form-container">
+      <h2>Order Production N°2024/34</h2>
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label for="produit">Produit | المنتج</label>
+          <select id="produit">
+            <option value="">Sélectionner...</option>
+            <option value="FM">FM</option>
+            <option value="FF">FF</option>
+            <option value="MENOLIB">MENOLIB</option>
+            <option value="SOPK FREE">SOPK FREE</option>
+            <option value="HEPALIB">HEPALIB</option>
+            <option value="THYROLIB">THYROLIB</option>
+            <option value="SUB12">SUB12</option>
+            <option value="HAIRVOL">HAIRVOL</option>
+            <option value="DHEA 75mg">DHEA 75mg</option>
+            <option value="ADVAGEN">ADVAGEN</option>
+            <option value="YES VIT">YES VIT</option>
+            <option value="YES CAL">YES CAL</option>
+            <option value="autre">Autre</option>
+          </select>
+        </div>
+
+        <table id="productInfoTable" class="styled-table" style="display: none">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Forme</th>
+              <th>Serving size</th>
+              <th>Tablet weight</th>
+              <th>Dosage Form</th>
+              <th>Presentation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Lignes du tableau à ajouter dynamiquement -->
+          </tbody>
+        </table>
+
+        <div class="form-group">
+          <div style="display: flex">
+            <div class="form-group">
+              <label for="quantite">Bach N° : </label>
+              <input
+                type="number"
+                id="number"
+                min="1"
+                onchange="validateForm()"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex !important">
+          <div class="form-group">
+            <label for="quantite">Quantité | الكمية المطلوبه</label>
+            <input type="number" id="quantite" min="1" placeholder="En KG" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="quantite"
+            >Estimated : <span id="estimated" style="color: red"></span
+            ><span id="estimated2" style="color: red"></span>Boite</label
+          >
+        </div>
+
+        <label class="checkbox-container">
+          <input
+            type="checkbox"
+            id="fullProcess"
+            name="process"
+            onclick="checkOnlyOne('fullProcess'); toggleTables();"
+          />
+          <span class="checkbox-label">Full Process</span>
+        </label>
+
+        <label class="checkbox-container">
+          <input
+            type="checkbox"
+            id="premix"
+            name="process"
+            onclick="checkOnlyOne('premix'); toggleTables(); fetchProductionData();"
+          />
+          <span class="checkbox-label">Premix</span>
+        </label>
+
+        <script>
+          function toggleTables() {
+            const checkbox = document.getElementById("fullProcess");
+            const checkbox2 = document.getElementById("premix");
+
+            const activeTable = document.getElementById("AllIngredientsTable");
+
+            const PremixTable = document.getElementById("productionTable");
+
+            if (checkbox.checked) {
+              activeTable.style.display = "table";
+            } else {
+              activeTable.style.display = "none";
+            }
+
+            if (checkbox2.checked) {
+              activeTable.style.display = "none";
+              PremixTable.style.display = "table";
+            } else {
+              PremixTable.style.display = "none";
+            }
+          }
+
+          function checkOnlyOne(selected) {
+            var checkboxes = document.getElementsByName("process");
+            checkboxes.forEach(function (checkbox) {
+              if (checkbox.id !== selected) {
+                checkbox.checked = false;
+              }
+            });
+          }
+        </script>
+
+        <!-- Ajout d'une nouvelle table pour Premix si nécessaire -->
+        <table id="productionTable" class="styled-table" style="display: none">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Type</th>
+              <th>Sous-type</th>
+              <th>Quantité demandée</th>
+              <th>Quantité disponible</th>
+              <th>Disponible</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Les lignes seront ajoutées ici dynamiquement -->
+          </tbody>
+        </table>
+
+        <div id="totalTabletWeight"></div>
+
+        <table
+          id="AllIngredientsTable"
+          class="styled-table"
+          style="display: none"
+        >
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Ingredient</th>
+              <th>Quantity (mg)</th>
+              <th>Percentage per Tablet</th>
+              <th>Quantity (gr)</th>
+              <th>Quantity (kg)</th>
+              <th>Concentration/ (kg)</th>
+              <th>In stock</th>
+              <th>Concentration/ (kg)</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <script>
+          function checkOnlyOne(selected) {
+            var checkboxes = document.getElementsByName("process");
+            checkboxes.forEach(function (checkbox) {
+              if (checkbox.id !== selected) {
+                checkbox.checked = false;
+              }
+            });
+          }
+        </script>
+      </form>
+
+      <div id="toast-container"></div>
+
+      <div class="button-container">
+        <button id="valider" onclick="submitFormData()">Valider</button>
+      </div>
+    </div>
+    <script>
+      let tabletWeight = 0;
+      let blisterPerBox = 0;
+      let tablet_per_blister = 0;
+      let dosage_form = "";
+      let packaging_form = "";
+
+      // Fonction qui fait le fetch quand on sélectionne un produit
+      document
+        .getElementById("produit")
+        .addEventListener("change", function () {
+          const produit = document.getElementById("produit").value;
+
+          if (produit !== "") {
+            const apiUrl = `https://app.liliumpharma.com/produits/product_infos/?produit=${produit}&qtt=150`;
+
+            // Appel API pour obtenir les informations du produit
+            fetch(apiUrl)
+              .then((response) => response.json())
+              .then((data) => {
+                console.log(JSON.stringify(data));
+
+                tabletWeight = data.produit.Tablet_weight;
+                dosage_form = data.produit.dosage_form;
+                packaging_form = data.produit.packaging_form;
+
+                // Regular expression to capture the number at the start
+                let match = tabletWeight.match(/^[\d.]+/);
+                // Mettre à jour les informations du produit
+                tabletWeight =
+                  data.production_info.tablet_weight || tabletWeight;
+                blisterPerBox =
+                  data.production_info.blister_per_box || blisterPerBox;
+                tablet_per_blister =
+                  data.production_info.tablet_per_blister || blisterPerBox;
+
+                tablet_weight = match[0];
+
+                displayProductInfos(data.produit);
+
+                displayAllIngredients(
+                  data.active_ingredients,
+                  data.inactive_ingredients,
+                  data.coating_ingredients,
+                  tablet_weight
+                );
+              })
+              .catch((error) => {
+                console.error(
+                  "Erreur lors de la récupération des informations du produit :",
+                  error
+                );
+              });
+          }
+        });
+
+      // Fonction pour afficher dynamiquement les ingrédients actifs
+      function displayProductInfos(produit) {
+        const table = document.getElementById("productInfoTable");
+        const tbody = table.querySelector("tbody");
+        tbody.innerHTML = ""; // Réinitialiser le contenu du tableau
+
+        // Vérifier si 'produit' est un objet et qu'il contient des propriétés
+        if (produit && typeof produit === "object") {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${produit.nom || "Inconnu"}</td>
+            <td>${produit.galenic_form || "Inconnu"}</td>
+            <td>${produit.serving_size || "Inconnu"}</td>
+            <td>${produit.Tablet_weight || "Inconnu"}</td>
+            <td>${produit.dosage_form || "Inconnu"}</td>
+            <td>${produit.Presentation || "Inconnu"}</td>
+          `;
+          tbody.appendChild(row);
+          table.style.display = "block";
+        } else {
+          console.error("L'objet produit n'est pas valide", produit);
+        }
+      }
+
+      // Fonction pour afficher dynamiquement les ingrédients actifs
+      function displayActiveIngredients(active_ingredients, tablet_weight) {
+        estimated = 89820;
+        const table = document.getElementById("activeIngredientsTable");
+        const tbody = table.querySelector("tbody");
+        tbody.innerHTML = ""; // Réinitialiser le contenu du tableau
+        const quantite = document.getElementById("quantite").value;
+        console.log(quantite);
+
+        active_ingredients.forEach((ingredient) => {
+          qtt_mg = ingredient.quantity_mg * estimated;
+          qtt_in_gr = qtt_mg / 1000;
+          quantite_in_kg = quantite * 1000;
+
+          qtt_in_kg = qtt_in_gr / 1000;
+          pourcentage_per_tablet = (
+            ingredient.quantity_mg /
+            (tablet_weight * 1000)
+          ).toFixed(4);
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${ingredient.ingredient}</td>
+            <td><span class="quantity0">${ingredient.quantity_mg}</span></td>
+            <td><span class="quantity0">${pourcentage_per_tablet}%</span></td>
+                        <td><span class="quantity">${qtt_in_gr} </span></td>
+
+                        <td><span class="quantity">${qtt_in_kg.toFixed(
+                          3
+                        )} </span></td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+
+      // Fonction pour afficher dynamiquement les ingrédients inactifs
+      function displayInActiveIngredients(inactive_ingredients) {
+        const table2 = document.getElementById("InactiveIngredientsTable");
+        const tbody2 = table2.querySelector("tbody");
+        tbody2.innerHTML = ""; // Réinitialiser le contenu du tableau
+
+        inactive_ingredients.forEach((ingredient) => {
+          console.log(ingredient);
+          estimated = 89820;
+
+          qtt_mg = ingredient.quantity_mg * estimated;
+          qtt_in_gr = qtt_mg / 1000;
+          quantite_in_kg = quantite * 1000;
+
+          qtt_in_kg = qtt_in_gr / 1000;
+          pourcentage_per_tablet = (
+            ingredient.quantity_mg /
+            (tablet_weight * 1000)
+          ).toFixed(4);
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${ingredient.ingredient}</td>
+            <td><span class="quantity0">${ingredient.quantity_mg}</span></td>
+            <td><span class="quantity0">${pourcentage_per_tablet}%</span></td>
+                        <td><span class="quantity">${qtt_in_gr} </span></td>
+
+                        <td><span class="quantity">${qtt_in_kg.toFixed(
+                          3
+                        )} </span></td>
+          `;
+          tbody2.appendChild(row);
+        });
+      }
+
+      // Fonction pour afficher dynamiquement les ingrédients de revêtement
+      function displayCoatingIngredients(coating_ingredients) {
+        const table3 = document.getElementById("CoatingIngredientsTable");
+        const tbody3 = table3.querySelector("tbody");
+        tbody3.innerHTML = ""; // Réinitialiser le contenu du tableau
+
+        coating_ingredients.forEach((ingredient) => {
+          console.log(ingredient);
+          estimated = 89820;
+
+          qtt_mg = ingredient.quantity_mg * estimated;
+          qtt_in_gr = qtt_mg / 1000;
+          quantite_in_kg = quantite * 1000;
+
+          qtt_in_kg = qtt_in_gr / 1000;
+          pourcentage_per_tablet = (
+            ingredient.quantity_mg /
+            (tablet_weight * 1000)
+          ).toFixed(4);
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${ingredient.ingredient}</td>
+            <td><span class="quantity0">${ingredient.quantity_mg}</span></td>
+            <td><span class="quantity0">${pourcentage_per_tablet}%</span></td>
+                        <td><span class="quantity">${qtt_in_gr} </span></td>
+
+                        <td><span class="quantity">${qtt_in_kg.toFixed(
+                          3
+                        )} </span></td>
+          `;
+          tbody3.appendChild(row);
+        });
+      }
+
+      // Fonction de calcul de boîtes estimées
+      function calculate_estimated_boxes() {
+        console.log("tabletWeight" + tabletWeight);
+        const quantite = document.getElementById("quantite").value;
+        if (quantite) {
+          const estimated = Math.round((quantite * 1000) / tabletWeight);
+          const estimated_boxes = Math.round(
+            estimated / tablet_per_blister / blisterPerBox
+          );
+          estimated_nombre_de_blister = estimated / tablet_per_blister;
+          const estimated_span = document.getElementById("estimated");
+          const estimated_span2 = document.getElementById("estimated2");
+          estimated_span.textContent = `${estimated}`;
+          estimated_span2.textContent = ` ${dosage_form} / ${estimated_nombre_de_blister} ${packaging_form} / ${estimated_boxes} box(s)`;
+
+          // Mettre à jour les quantités des ingrédients actifs en fonction de la quantité entrée
+          updateActiveIngredientsQuantities(quantite, estimated);
+          updateInActiveIngredientsQuantities(quantite, estimated);
+          updateCoatingIngredientsQuantities(quantite, estimated);
+        }
+      }
+
+      // Variable pour gérer la première mise à jour des quantités
+      let isFirstUpdate = true;
+
+      // Fonction pour mettre à jour les quantités des ingrédients actifs
+      function updateActiveIngredientsQuantities(quantite, estimated) {
+        const table = document.getElementById("activeIngredientsTable");
+        const tbody = table.querySelector("tbody");
+        const rows = tbody.querySelectorAll("tr");
+
+        rows.forEach((row) => {
+          const quantityCell = row.querySelector(".quantity");
+          const quantityCell1 = row.querySelector(".quantity1");
+          const quantityCell2 = row.querySelector(".quantity2");
+          const quantityCell3 = row.querySelector(".quantity3");
+
+          if (isFirstUpdate) {
+            const originalQuantity = parseFloat(quantityCell.textContent);
+            quantityCell.setAttribute(
+              "data-initial-quantity",
+              originalQuantity
+            );
+
+            const originalQuantity1 = parseFloat(quantityCell1.textContent);
+            quantityCell1.setAttribute(
+              "data-initial-quantity",
+              originalQuantity1 + "%"
+            );
+
+            const originalQuantity2 = parseFloat(quantityCell2.textContent);
+            quantityCell2.setAttribute(
+              "data-initial-quantity",
+              originalQuantity2
+            );
+
+            const originalQuantity3 = parseFloat(quantityCell3.textContent);
+            quantityCell3.setAttribute(
+              "data-initial-quantity",
+              originalQuantity3
+            );
+          }
+
+          const initialQuantity = parseFloat(
+            quantityCell.getAttribute("data-initial-quantity")
+          );
+          const newQuantity = (initialQuantity * estimated).toFixed(2);
+
+          quantityCell.textContent = newQuantity;
+
+          const initialQuantity1 = parseFloat(
+            quantityCell1.getAttribute("data-initial-quantity")
+          );
+          const newQuantity1 = (initialQuantity1 * estimated).toFixed(2);
+
+          quantityCell1.textContent = newQuantity1;
+
+          const initialQuantity2 = parseFloat(
+            quantityCell2.getAttribute("data-initial-quantity")
+          );
+          const newQuantity2 = (initialQuantity2 * estimated).toFixed(2);
+
+          quantityCell2.textContent = newQuantity2;
+
+          const initialQuantity3 = parseFloat(
+            quantityCell3.getAttribute("data-initial-quantity")
+          );
+          const newQuantity3 = (initialQuantity3 * estimated).toFixed(2);
+
+          quantityCell3.textContent = newQuantity3;
+        });
+
+        isFirstUpdate = false;
+      }
+
+      // Fonction pour mettre à jour les quantités des ingrédients inactifs
+      let isFirstUpdateInactive = true;
+      function updateInActiveIngredientsQuantities(quantite, estimated) {
+        const table = document.getElementById("InactiveIngredientsTable");
+        const tbody = table.querySelector("tbody");
+        const rows = tbody.querySelectorAll("tr");
+
+        rows.forEach((row) => {
+          const quantityCell = row.querySelector(".quantity");
+
+          if (isFirstUpdateInactive) {
+            const originalQuantity = parseFloat(quantityCell.textContent);
+            quantityCell.setAttribute(
+              "data-initial-quantity",
+              originalQuantity
+            );
+          }
+
+          const initialQuantity = parseFloat(
+            quantityCell.getAttribute("data-initial-quantity")
+          );
+          const newQuantity = (initialQuantity * estimated).toFixed(2);
+
+          quantityCell.textContent = newQuantity;
+        });
+
+        isFirstUpdateInactive = false;
+      }
+
+      // Fonction pour mettre à jour les quantités des ingrédients de revêtement
+      let isFirstUpdateCoating = true;
+      function updateCoatingIngredientsQuantities(quantite, estimated) {
+        const table = document.getElementById("CoatingIngredientsTable");
+        const tbody = table.querySelector("tbody");
+        const rows = tbody.querySelectorAll("tr");
+
+        rows.forEach((row) => {
+          const quantityCell = row.querySelector(".quantity");
+
+          if (isFirstUpdateCoating) {
+            const originalQuantity = parseFloat(quantityCell.textContent);
+            quantityCell.setAttribute(
+              "data-initial-quantity",
+              originalQuantity
+            );
+          }
+
+          const initialQuantity = parseFloat(
+            quantityCell.getAttribute("data-initial-quantity")
+          );
+          const newQuantity = (initialQuantity * estimated).toFixed(2);
+
+          quantityCell.textContent = newQuantity;
+        });
+
+        isFirstUpdateCoating = false;
+      }
+
+      // Lorsque l'utilisateur change la quantité, on fait aussi le calcul
+      document
+        .getElementById("quantite")
+        .addEventListener("input", calculate_estimated_boxes);
+    </script>
+
+    <script>
+      function fetchProductionData() {
+        const premixCheckbox = document.getElementById("premix");
+
+        if (premixCheckbox.checked) {
+          const produit = document.getElementById("produit").value;
+          const estimated = document.getElementById("estimated").textContent;
+          const quantite = document.getElementById("quantite").value;
+          const valider = document.getElementById("valider");
+
+          console.log(estimated);
+
+          // Construire l'URL de l'API avec les paramètres nécessaires
+          const apiUrl = `https://app.liliumpharma.com/production/entree/op/product_ingredients/?produit=${produit}&estimated_tablets=${estimated}&qtt=${quantite}`;
+
+          // Faire une requête API pour obtenir les données
+          fetch(apiUrl)
+            .then((response) => response.json())
+            .then((data) => {
+              // Log des données pour vérifier
+              console.log(data);
+
+              // Accéder à la table HTML pour y insérer les données
+              const tableBody = document
+                .getElementById("productionTable")
+                .getElementsByTagName("tbody")[0];
+              tableBody.innerHTML = "";
+
+              // Créer une nouvelle ligne dans le tableau
+              const row = document.createElement("tr");
+
+              // Créer les cellules pour chaque donnée retournée par l'API
+              const produitCell = document.createElement("td");
+              produitCell.textContent = data.produit;
+
+              const eTypeCell = document.createElement("td");
+              eTypeCell.textContent = data.e_type;
+
+              const subTypeCell = document.createElement("td");
+              subTypeCell.textContent = data.sub_type;
+
+              const requestquantityCell = document.createElement("td");
+              requestquantityCell.textContent = quantite + "Kg"; // Quantité demandée
+
+              const quantityCell = document.createElement("td");
+              quantityCell.textContent = data.Qtt_disponible;
+
+              const availableCell = document.createElement("td");
+              availableCell.textContent = data.disponible;
+
+              const tabletsCell = document.createElement("td");
+              tabletsCell.textContent =
+                "  الكميه الاحماليه الموحوذه تكغي لانتاح " +
+                Math.floor(data.tablets_disponibles) +
+                " Box";
+
+              // Ajouter les cellules à la ligne
+              row.appendChild(produitCell);
+              row.appendChild(eTypeCell);
+              row.appendChild(subTypeCell);
+              row.appendChild(requestquantityCell);
+              row.appendChild(quantityCell);
+              row.appendChild(availableCell);
+              row.appendChild(tabletsCell);
+
+              // Appliquer la couleur rouge si Qtt_disponible est "no"
+              if (data.disponible === "no") {
+                // Change text color of all cells in the row to red
+                row.querySelectorAll("td").forEach((cell) => {
+                  cell.style.color = "red";
+                });
+
+                // Change the border and background color of the 'valider' element to red
+                valider.style.borderColor = "red"; // Set border color to red
+                valider.style.backgroundColor = "red"; // Set background color to red
+              }
+
+              // Append the row to the table
+              tableBody.appendChild(row);
+
+              // Gestion des ingrédients inactifs
+              if (
+                data.inactive_ingredients &&
+                data.inactive_ingredients.length > 0
+              ) {
+                data.inactive_ingredients.forEach((ingredient) => {
+                  console.log(ingredient);
+                  const inactiveIngredientRow = document.createElement("tr");
+
+                  const produitInactiveCell = document.createElement("td");
+                  produitInactiveCell.textContent = ingredient.produit;
+
+                  const eTypeInactiveCell = document.createElement("td");
+                  eTypeInactiveCell.textContent = ingredient.e_type;
+
+                  const subTypeInactiveCell = document.createElement("td");
+                  subTypeInactiveCell.textContent = ingredient.sub_type;
+
+                  const requestquantityInactiveCell =
+                    document.createElement("td");
+                  requestquantityInactiveCell.textContent =
+                    Math.floor(ingredient.quantity_requested) + "g"; // Create new cell for inactive ingredient
+
+                  const quantityInactiveCell = document.createElement("td");
+                  quantityInactiveCell.textContent =
+                    Math.floor(ingredient.quantity) + "kg";
+
+                  const tablets_disponibleseCell = document.createElement("td");
+                  tablets_disponibleseCell.textContent =
+                    ingredient.tablets_disponibles + " Box";
+
+                  const availableInactiveCell = document.createElement("td");
+                  availableInactiveCell.textContent = ingredient.disponible;
+
+                  // Ajouter les cellules à la nouvelle ligne d'ingrédient inactif
+                  inactiveIngredientRow.appendChild(produitInactiveCell);
+                  inactiveIngredientRow.appendChild(eTypeInactiveCell);
+                  inactiveIngredientRow.appendChild(subTypeInactiveCell);
+                  inactiveIngredientRow.appendChild(
+                    requestquantityInactiveCell
+                  );
+                  inactiveIngredientRow.appendChild(quantityInactiveCell);
+                  inactiveIngredientRow.appendChild(availableInactiveCell);
+                  inactiveIngredientRow.appendChild(tablets_disponibleseCell);
+
+                  // Appliquer la couleur rouge si Qtt_disponible est "no"
+                  if (ingredient.disponible === "no") {
+                    inactiveIngredientRow
+                      .querySelectorAll("td")
+                      .forEach((cell) => {
+                        cell.style.color = "red";
+                      });
+                    valider.style.borderColor = "red"; // Set border color to red
+                    valider.style.backgroundColor = "red"; // Set background color to red
+                  }
+
+                  // Ajouter la nouvelle ligne d'ingrédient inactif au corps du tableau
+                  tableBody.appendChild(inactiveIngredientRow);
+                });
+              }
+            })
+            .catch((error) => {
+              console.error(
+                "Erreur lors de la récupération des données:",
+                error
+              );
+            });
+        }
+      }
+
+      function displayAllIngredients(
+        active_ingredients,
+        inactive_ingredients,
+        coating_ingredients,
+        tablet_weight
+      ) {
+        const table = document.getElementById("AllIngredientsTable");
+        const tbody = table.querySelector("tbody");
+        tbody.innerHTML = ""; // Réinitialiser le contenu du tableau
+        const quantite = document.getElementById("quantite").value;
+        const estimated = 89820;
+
+        let totalQuantityMg = 0; // Total quantity in mg
+        let totalQttInGr = 0; // Total quantity in grams
+        let totalQttInKg = 0; // Total quantity in kilograms
+        let totalConcentration = 0; // Total concentration in percentage
+        let totalPourcentagePerTablet = 0; // Total percentage per tablet
+
+        function createRow(ingredient, type) {
+          let qtt_mg = ingredient.quantity_mg * estimated;
+          let qtt_in_gr = qtt_mg / 1000;
+          let quantite_in_kg = quantite * 1000;
+          let qtt_in_kg = qtt_in_gr / 1000;
+          let pourcentage_per_tablet = (
+            ingredient.quantity_mg /
+            (tablet_weight * 1000)
+          ).toFixed(4);
+
+          q1 = (estimated * 1.67) / 1000;
+          concentration = (qtt_in_kg * 100) / q1;
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${type}</td>
+            <td>${ingredient.ingredient}</td>
+            <td><span class="quantity0">${ingredient.quantity_mg}</span></td>
+            <td><span class="quantity0">${pourcentage_per_tablet}%</span></td>
+            <td><span class="quantity">${qtt_in_gr.toFixed(8)}</span></td>
+            <td><span class="quantity">${qtt_in_kg.toFixed(4)}</span></td>
+            <td><span class="quantity">${concentration.toFixed(5)}%</span></td>
+            <td><span class="quantity">${ingredient.available}</span></td>
+          `;
+          tbody.appendChild(row);
+
+          // Accumulate totals for each column
+          totalQuantityMg += ingredient.quantity_mg;
+          totalPourcentagePerTablet += parseFloat(pourcentage_per_tablet);
+          totalQttInGr += qtt_in_gr;
+          totalQttInKg += qtt_in_kg;
+          totalConcentration += concentration;
+        }
+
+        // Merge all ingredients into one array with a type field
+        const allIngredients = [
+          ...active_ingredients.map((ingredient) => ({
+            ...ingredient,
+            type: "Active",
+          })),
+          ...inactive_ingredients.map((ingredient) => ({
+            ...ingredient,
+            type: "Inactive",
+          })),
+          ...coating_ingredients.map((ingredient) => ({
+            ...ingredient,
+            type: "Coating",
+          })),
+        ];
+
+        // Sort all ingredients by quantity_mg in descending order
+        allIngredients.sort((a, b) => b.quantity_mg - a.quantity_mg);
+
+        // Display all ingredients
+        allIngredients.forEach((ingredient) => {
+          createRow(ingredient, ingredient.type);
+        });
+
+        // Create a row for the totals
+        const totalRow = document.createElement("tr");
+        totalRow.innerHTML = `
+          <td colspan="2"><strong>Total</strong></td>
+          <td><span class="quantity0">${totalQuantityMg}</span></td>
+          <td><span class="quantity0">${totalPourcentagePerTablet.toFixed(
+            4
+          )}%</span></td>
+          <td><span class="quantity">${totalQttInGr.toFixed(8)}</span></td>
+          <td><span class="quantity">${totalQttInKg.toFixed(4)}</span></td>
+          <td><span class="quantity">${totalConcentration.toFixed(
+            5
+          )}%</span></td>
+        `;
+        tbody.appendChild(totalRow);
+      }
+    </script>
+
+    <script>
+      function collectTableData() {
+        const table = document.getElementById("productionTable");
+        const rows = table.getElementsByTagName("tr");
+        const items = [];
+
+        // Loop over the rows, starting from 1 to skip the header row
+        for (let i = 1; i < rows.length; i++) {
+          const cells = rows[i].getElementsByTagName("td");
+
+          // Collect data from each row's cells
+          const item = {
+            produit: cells[0].textContent.trim(),
+            e_type: cells[1].textContent.trim(),
+            sub_type: cells[2].textContent.trim(),
+            requested_quantity: cells[3].textContent.trim(),
+            available_quantity: cells[4].textContent.trim(),
+            available: cells[5].textContent.trim(),
+            note: cells[6] ? cells[6].textContent.trim() : "", // In case there is a 'note' cell
+          };
+
+          // Add the item to the items array
+          items.push(item);
+        }
+
+        return items;
+      }
+
+      function showToast(message) {
+        // Create toast element
+        const toast = document.createElement("div");
+        toast.classList.add("toast");
+        toast.textContent = message;
+
+        // Append the toast to the container
+        document.getElementById("toast-container").appendChild(toast);
+
+        // Make the toast visible by changing opacity
+        setTimeout(() => {
+          toast.style.opacity = "1";
+        }, 100);
+
+        // Hide the toast after 3 seconds
+        setTimeout(() => {
+          toast.style.opacity = "0";
+          setTimeout(() => {
+            toast.remove(); // Remove the toast after fade out
+          }, 500);
+        }, 3000);
+      }
+
+      function submitFormData() {
+        const produit = document.getElementById("produit").value;
+        const batchNo = document.getElementById("number").value;
+        const quantite = document.getElementById("quantite").value;
+
+        // Collect the table data
+        const items = collectTableData();
+
+        // Build the postData object
+        const postData = {
+          produit: produit,
+          batchNo: batchNo,
+          quantite: quantite,
+          items: items,
+        };
+
+        // Log to verify data before sending
+        console.log("Sending data:", postData);
+
+        // Perform the POST request
+        fetch(
+          "https://app.liliumpharma.com/production/create-order-production/",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(postData),
+          }
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Success:", data);
+
+            showToast("OF Created Successfully!"); // Show toast on success
+
+            // Reload the page after showing the toast
+            window.location.href =
+              "https://app.liliumpharma.com/production/op_front/"; // Remplacez par l'URL de destination
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      }
+    </script>
+  </body>
+</html>

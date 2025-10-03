@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+{% load static %}
+{% load custom_filters %}
+
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        
+    
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+        }
+        .page {
+            page-break-before: always;
+            page-break-after: always;
+            padding: 10mm;
+            height: 210mm;     /* A4 hauteur */
+            width: 297mm;      /* A4 largeur (paysage) */
+            box-sizing: border-box;
+            position: relative;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 3px;
+            text-align: left;
+            height: 23px;
+        }
+        th {
+            background-color: #d3d3d3;
+        }
+        .empty-cell {
+            width: 20px;
+            height: 10px;
+            background-color: white;
+        }
+        .header-center {
+            text-align: center;
+            font-size: 20px;
+        }
+        .product-cell { 
+            font-size: 7px;
+            font-weight: 600;
+            height: 14px;
+            width: 10px;
+        }
+        .pharmacy-cell {
+            height: 95px;
+            width: 180px;
+            vertical-align: top;
+            padding: 10px;
+            position: relative;
+        }
+        .qr-code {
+            width: 40px;
+            height: 40px;
+        }
+        .pharmacy-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 5px;
+            font-size: 13px;
+        }
+        .logo-placeholder {
+            width: 50px;
+            height: 50px;
+            background-color: black;
+            margin: 0 auto; /* Centre le div horizontalement */
+
+
+        }
+        @media print {
+                form {
+                    display: none; /* Hide the form when printing */
+                }
+                body {
+                    zoom: 92%; /* fonctionne dans la plupart des navigateurs */
+                }
+            
+                .page {
+                    page-break-after: always;
+                    transform: scale(0.92);
+                    transform-origin: top left;
+                }
+            }
+    </style>
+    <title>Générer des Feuilles</title>
+</head>
+<body>
+
+    <form method="POST" action="{% url 'generate_pages_commercial' %}">
+        <!--<h1>Générer des Feuilles</h1>-->
+        {% csrf_token %}
+        <label for="search_user">Délégué :</label>
+        <select name="user-select" id="search_user" required></select>
+
+        <label for="date_debut">Date Début :</label>
+        <input type="date" id="date_debut" name="date_debut" required>
+
+        <label for="date_fin">Date Fin :</label>
+        <input type="date" id="date_fin" name="date_fin" required>
+
+        <button type="submit">Générer</button>
+    </form>
+
+    {% if pages %}
+            <div class="pages">
+                {% for page in pages %}
+
+                <div class="header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h5>Nom : <span class="selected-user">{{ page.nom }}</span></h5>
+                        <h5>Région : </h5>
+                    </div>
+                    <div style="text-align: center;">
+                        <h4>Lilium Pharma Griffe de passage des pharmacies</h4>
+                        <img src="{{ page.qr_code_url }}" alt="QR Code" class="qr-code">
+                    </div>
+                    <div class="col-6" style="text-align: right;">
+                        <h4>Date : {{ page.date }}</h4>
+                    </div>
+                </div>
+            <table>
+    <!-- Boucle pour les pharmacies par paires -->
+     <!--
+    {% for i in range_list %}
+        {% if forloop.counter0|divisibleby:2 %}
+            <!-- Ajouter les en-têtes Pharmacie, Produits, Observation 
+            <tr>
+                <th style="font-size: 5px; text-align: center;">Pharmacie / Grossiste / SuperGrossiste</th>
+                <th colspan="6" style="font-size: 5px; text-align: center;">Disponibilité des produits</th>
+                <th style="font-size: 5px; text-align: center;">Observation</th>
+                {% if forloop.counter < range_list|length %}
+                    <th style="font-size: 5px; text-align: center;">Pharmacie / Grossiste / SuperGrossiste</th>
+                {% else %}
+                    <th colspan="8"></th> <!-- Si une pharmacie n'existe pas pour cette paire --
+                {% endif %}
+                <th colspan="6" style="font-size: 5px; text-align: center;">Disponibilité des produits</th>
+                <th style="font-size: 5px; text-align: center;">Observation</th>
+            </tr>
+            
+
+            <tr>
+                <!-- Première pharmacie de la ligne --
+                <td class="pharmacy-cell" rowspan="5">
+                    <div class="pharmacy-header">{{ page.date }} <span class="selected-user">{{ page.user_name }}</span></div>
+                </td>
+                <td class="product-cell">SOPK</td>
+                <td class="empty-cell"></td>
+                <td class="product-cell">HEPA</td>
+                <td class="empty-cell"></td>
+                <td class="product-cell">THYR</td>
+                <td class="empty-cell"></td>
+                <td rowspan="5"></td>
+
+                <!-- Deuxième pharmacie de la ligne, si elle existe --
+                {% if forloop.counter < range_list|length %}
+                    <td class="pharmacy-cell" rowspan="5">
+                        <div class="pharmacy-header">{{ page.date }}| <span class="selected-user">{{ page.user_name }}</span></div>
+                    </td>
+                    <td class="product-cell">SOPK</td>
+                    <td class="empty-cell"></td>
+                    <td class="product-cell">HEPA</td>
+                    <td class="empty-cell"></td>
+                    <td class="product-cell">THYR</td>
+                    <td class="empty-cell"></td>
+                    <td rowspan="5"></td>
+                {% else %}
+                    <td colspan="8"></td>
+                {% endif %}
+            </tr>
+
+            <!-- Produits pour chaque pharmacie --
+            <tr>
+                <td class="product-cell">MENO</td>
+                <td class="empty-cell"></td>
+                <td class="product-cell">SUB</td>
+                <td class="empty-cell"></td>
+                <td class="product-cell">DIG</td>
+                <td class="empty-cell"></td>
+
+                {% if forloop.counter < range_list|length %}
+                    <td class="product-cell">MENO</td>
+                    <td class="empty-cell"></td>
+                    <td class="product-cell">SUB</td>
+                    <td class="empty-cell"></td>
+                    <td class="product-cell">DIG</td>
+                    <td class="empty-cell"></td>
+                {% else %}
+                    <td colspan="6"></td>
+                {% endif %}
+            </tr>
+            <tr>
+                <td class="product-cell">DHEA</td>
+                <td class="empty-cell"></td>
+                <td class="product-cell">FF</td>
+                <td class="empty-cell"></td>
+                <td class="product-cell">VIT</td>
+                <td class="empty-cell"></td>
+
+                {% if forloop.counter < range_list|length %}
+                    <td class="product-cell">DHEA</td>
+                    <td class="empty-cell"></td>
+                    <td class="product-cell">FF</td>
+                    <td class="empty-cell"></td>
+                    <td class="product-cell">VIT</td>
+                    <td class="empty-cell"></td>
+                {% else %}
+                    <td colspan="6"></td>
+                {% endif %}
+            </tr>
+            <tr>
+                <td class="product-cell">CAL</td>
+                <td class="empty-cell"></td>
+                <td class="product-cell">FM</td>
+                <td class="empty-cell"></td>
+                <td class="product-cell">HAIR</td>
+                <td class="empty-cell"></td>
+
+                {% if forloop.counter < range_list|length %}
+                    <td class="product-cell">CAL</td>
+                    <td class="empty-cell"></td>
+                    <td class="product-cell">FM</td>
+                    <td class="empty-cell"></td>
+                    <td class="product-cell">HAIR</td>
+                    <td class="empty-cell"></td>
+                {% else %}
+                    <td colspan="6"></td>
+                {% endif %}
+            </tr>
+            <tr>
+                <td class="product-cell">ANAF</td>
+                <td class="empty-cell"></td>
+                <td class="product-cell">ADV</td>
+                <td class="empty-cell"></td>
+                <td class="product-cell"></td>
+                <td class="empty-cell"></td>
+
+                {% if forloop.counter < range_list|length %}
+                    <td class="product-cell">ANAF</td>
+                    <td class="empty-cell"></td>
+                    <td class="product-cell">ADV</td>
+                    <td class="empty-cell"></td>
+                    <td class="product-cell"></td>
+                    <td class="empty-cell"></td>
+                {% else %}
+                    <td colspan="6"></td>
+                {% endif %}
+            </tr>
+        {% endif %}
+    {% endfor %}-->
+    {% for pharmacy in range_list %}
+        
+    <tr>
+        <th style="font-size: 12px; text-align: center;">Pharmacie / Grossiste / SuperGrossiste</th>
+        <!--<th colspan="6" style="font-size: 10px; text-align: center;">Disponibilité des produits</th>-->
+        <th style="font-size: 12px; text-align: center;">Observation</th>
+    </tr>
+
+    <tr>
+        <td class="pharmacy-cell" rowspan="5">
+            <div class="pharmacy-header">{{ page.date }} <span class="selected-user">{{ page.nom }}</span></div>
+        </td>
+        <!--
+        <td class="product-cell">SOPK</td><td class="empty-cell"></td>
+        <td class="product-cell">HEPA</td><td class="empty-cell"></td>
+        <td class="product-cell">THYR</td><td class="empty-cell"></td>-->
+        <td class="pharmacy-cell" rowspan="5" style="width: 70%;">
+            <div class="pharmacy-header">{{ page.date }} <span class="selected-user">{{ page.nom }}</span></div>
+        </td>
+    </tr>
+    
+    <tr>
+        <!--
+        <td class="product-cell">MENO</td><td class="empty-cell"></td>
+        <td class="product-cell">SUB</td><td class="empty-cell"></td>
+        <td class="product-cell">DIG</td><td class="empty-cell"></td>-->
+    </tr>
+    <tr>
+        <!--
+        <td class="product-cell">DHEA</td><td class="empty-cell"></td>
+        <td class="product-cell">FF</td><td class="empty-cell"></td>
+        <td class="product-cell">VIT</td><td class="empty-cell"></td>-->
+    </tr>
+    <tr>
+        <!--
+        <td class="product-cell">CAL</td><td class="empty-cell"></td>
+        <td class="product-cell">FM</td><td class="empty-cell"></td>
+        <td class="product-cell">HAIR</td><td class="empty-cell"></td>-->
+    </tr>
+    <tr>
+        <!--
+        <td class="product-cell">ANAF</td><td class="empty-cell"></td>
+        <td class="product-cell">ADV</td><td class="empty-cell"></td>
+        <td class="product-cell"></td><td class="empty-cell"></td>-->
+    </tr>
+    
+    
+        
+{% endfor %}
+
+</table>
+
+    
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <script>
+        function users_under() {
+            fetch('https://app.liliumpharma.com/depenses/getting_users_under/')
+                .then((response) => response.json())
+                .then((data) => {
+                    const selectUser = document.getElementById("search_user");
+                    if (data.length === 1) {
+                        const userObject = data[0];
+                        const option = document.createElement("option");
+                        option.value = userObject.user;
+                        option.textContent = userObject.user;
+                        option.selected = true;
+                        selectUser.appendChild(option);
+                    } else {
+                        const option = document.createElement("option");
+                        option.value = "tous";
+                        option.textContent = "Tous";
+                        option.selected = true;
+                        selectUser.appendChild(option);
+                        data.forEach((userObject) => {
+                            const option = document.createElement("option");
+                            option.value = userObject.user;
+                            option.textContent = userObject.user;
+                            selectUser.appendChild(option);
+                        });
+                    }
+                    // Update the selected user on load
+                    updateSelectedUser();
+                });
+        }
+
+        function updateSelectedUser() {
+            const selectUser = document.getElementById("search_user");
+            if (selectUser.options.length > 0) {
+                //const selectedUserName = selectUser.options[selectUser.selectedIndex].text;
+
+                // Update all elements with class "selected-user"
+                //document.querySelectorAll(".selected-user").forEach((element) => {
+                    //element.textContent = selectedUserName;
+                //});
+
+                // Store the selected value in localStorage
+                //localStorage.setItem("selectedUser", selectUser.value);
+            }
+        }
+
+        // Apply saved selection on page load
+        window.onload = function() {
+            const selectUser = document.getElementById("search_user");
+            const savedUser = localStorage.getItem("selectedUser");
+            
+            if (savedUser) {
+                selectUser.value = savedUser;
+                updateSelectedUser(); // Call to update selected user display
+            }
+
+            // Call window.print() after loading the page
+            window.print();
+        }
+
+        const selectUser = document.getElementById("search_user");
+        //selectUser.addEventListener("change", updateSelectedUser);
+        
+        users_under();
+    </script>
+
+</body>
+</html>

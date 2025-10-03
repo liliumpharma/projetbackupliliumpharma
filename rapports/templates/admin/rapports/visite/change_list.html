@@ -1,0 +1,61 @@
+{% extends "admin/change_list.html" %}
+{% load i18n static %}
+
+{% block object-tools-items %}
+    {{ block.super }}
+    <a id="import" class="btn btn-primary mx-2" data-toggle="modal" data-target="#csv_modal"><span class="glyphicon glyphicon-user" aria-hidden="true"></span> Transfert</a>
+    <a id="import" class="btn btn-primary mx-2" data-toggle="modal" data-target="#csv_modal"><span class="glyphicon glyphicon-user" aria-hidden="true"></span> Transfert 2</a>
+    <a id="showButton" class="btn btn-dark mx-2" onclick="showContent()" ><span>&#9432;</span> Comment tranferer des visites ?</a> <!-- Bouton pour afficher le contenu -->
+    <a id="hideButton" class="btn btn-dark mx-2 d-none" onclick="hideContent()" ><span>&#9432;</span>Masquer</a> <!-- Bouton pour masquer le contenu -->
+    <div id="dis" class="d-none w-100" style="position: relative;">
+      <p>1. Rechercher les médecins/pharmacies par nom ou ID, ou directement par ID de la visite.</p>
+      <p>2. Cliquer sur "Search". Une fois les résultats affichés, sélectionner les visites que vous souhaitez transférer.</p>
+      <p>3. Cliquer sur le bouton "Transfert".</p>
+      <p>4. Rechercher par nom ou ID et choisir le médecin / pharmacie vers lequel vous souhaitez transférer les visites sélectionnées. Ensuite, cliquer sur "Changer". Les visites seront transférées.</p>
+      <p>الخطوة 1: البحث عن الأطباء / الصيدليات حسب الاسم أو الرقم المعرفي أو مباشرةً برقم الزيارة.</p>
+      <p>الخطوة 2: انقر فوق "البحث". بمجرد عرض النتائج، حدد الزيارات التي ترغب في نقلها.</p>
+      <p>الخطوة 4: البحث حسب الاسم أو الرقم المعرفي واختيار الطبيب / الصيدلية التي ترغب في نقل الزيارات المحددة إليها. ثم، انقر فوق "تغيير". ستتم نقل الزيارات.</p>
+      <p>الخطوة 3: انقر على زر "نقل".</p>
+  
+  
+  
+  </div>
+  
+
+    <script>
+        document.getElementById('import').parentElement.classList.remove("col-sm-4");
+        document.getElementById('import').parentElement.classList.add('col-sm-6');
+        document.getElementById('import').parentElement.previousSibling.previousSibling.classList.remove("col-sm-8");
+        document.getElementById('import').parentElement.previousSibling.previousSibling.classList.add('col-sm-6');
+        document.querySelectorAll("#changelist-search select").forEach((e,i)=>{
+            const label=document.createElement("label")
+            label.innerText = e.firstElementChild.text
+            e.firstElementChild.remove()  
+            e.parentElement.prepend(label)
+            e.parentElement.style.display = "block"
+        });
+
+        // Fonction pour afficher le contenu et masquer le bouton d'affichage
+        function showContent() {
+            var dis = document.getElementById("dis");
+            var showButton = document.getElementById("showButton");
+            var hideButton = document.getElementById("hideButton");
+
+            dis.classList.remove("d-none");
+            showButton.classList.add("d-none");
+            hideButton.classList.remove("d-none");
+        }
+
+        // Fonction pour masquer le contenu et masquer le bouton de masquage
+        function hideContent() {
+            var dis = document.getElementById("dis");
+            var showButton = document.getElementById("showButton");
+            var hideButton = document.getElementById("hideButton");
+
+            dis.classList.add("d-none");
+            showButton.classList.remove("d-none");
+            hideButton.classList.add("d-none");
+        }
+    </script>
+
+{% endblock %}

@@ -1,0 +1,150 @@
+{% load static %}
+<!-- Charge les fichiers statiques dans Django -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Liste des Anomalies - {{ today }}</title>
+    <style>
+      /* Font Styling */
+      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap");
+      body {
+        font-family: "Poppins", sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f4f7f6;
+        color: #333;
+      }
+
+      /* Header Styling */
+      .header {
+        text-align: center;
+        padding: 20px 0;
+        background-color: #ffffff;
+        border-bottom: 4px solid #218838; /* Green Line */
+      }
+
+      .header img {
+        max-width: 100px;
+        margin-bottom: 10px;
+      }
+
+      .header h1 {
+        color: #218838; /* Dark Green */
+        font-size: 28px;
+        margin: 0;
+      }
+
+      /* Table Styling */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        background-color: #ffffff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #218838; /* Dark Green */
+        color: #ffffff;
+        font-weight: 600;
+      }
+
+      td {
+        background-color: #f9f9f9;
+      }
+
+      tr:nth-child(even) td {
+        background-color: #f4f7f6;
+      }
+
+      /* Button Styling */
+      .no-print {
+        display: inline-block;
+        margin: 20px 0;
+        padding: 10px 20px;
+        font-size: 16px;
+        color: #ffffff;
+        background-color: #218838; /* Dark Green */
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+      }
+
+      .no-print:hover {
+        background-color: #1e7e34;
+      }
+
+      /* Print media query */
+      @media print {
+        body {
+          font-size: 7px; /* Smaller font size for print */
+        }
+        .no-print {
+          display: none;
+        }
+        .header {
+          text-align: center;
+          padding: 20px 0;
+          background-color: #ffffff;
+          border-bottom: 4px solid #218838; /* Green Line */
+          font-size: 17px; /* Smaller font size for print */
+        }
+
+        .header img {
+          max-width: 50px;
+          margin-bottom: 3px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header with Logo and Title -->
+    <div class="header">
+      <img src="{% static 'img/logo.png' %}" alt="LiliumPharma Logo" />
+      <h1>LILIUMPHARMA</h1>
+    </div>
+
+    <!-- Table for Anomalies -->
+    <h2 style="text-align: center">Liste des Anomalies - {{ today }}</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Rapport</th>
+          <th>Utilisateur</th>
+          <th>Anomalie</th>
+          <th>Date</th>
+          <th>Date Ajoutée</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for anomalie in anomalies %}
+        <tr>
+          <td>{{ anomalie.id }}</td>
+          <td>{{ anomalie.rapport }}</td>
+          <td>{{ anomalie.user }}</td>
+          <td>{{ anomalie.Anomalie }}</td>
+          <td>{{ anomalie.date }}</td>
+          <td>{{ anomalie.added }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Print Button -->
+    <div style="text-align: center">
+      <button class="no-print" onclick="window.print()">Imprimer</button>
+    </div>
+  </body>
+</html>

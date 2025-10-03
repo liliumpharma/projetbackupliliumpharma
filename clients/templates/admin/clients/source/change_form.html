@@ -1,0 +1,11 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block submit_buttons_bottom %}
+
+{{ block.super }}
+
+    <div class="submit-row">
+       <a style="display: block; border: 1px green solid; padding: 10px; margin-top: 10px; text-align: center; border-radius: 7px;" href="/clients/template-export-excel/">Telecharger le Modele</a>
+    </div>
+{% endblock %}

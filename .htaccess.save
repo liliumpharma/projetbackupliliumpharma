@@ -1,0 +1,5 @@
+RewriteEngine On
+RewriteRule ^.*$ http://localhost:8080 [P]
+
+
+

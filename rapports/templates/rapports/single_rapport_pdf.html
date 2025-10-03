@@ -1,0 +1,326 @@
+
+<!DOCTYPE html>
+{% load custom_filters %}
+
+<html lang="ar">
+<head>
+  <meta charset="UTF-16">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link href="https://fonts.googleapis.com/css2?family=Lalezar&display=swap" rel="stylesheet">
+  <title>PDF</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+</head>
+<body>
+{% load static %}
+
+  <style>
+       @font-face {
+    font-family: "Galano";
+    src: url("https://app.liliumpharma.com/static/css/medium.otf") format("opentype");
+    }
+    @font-face {
+        font-family: "Galano";
+        src: url("https://app.liliumpharma.com/static/css/bold.otf") format("opentype");
+        font-weight: bold;
+    }
+    @font-face {
+        font-family: "Galano";
+        src: url("https://app.liliumpharma.com/static/css/light.otf") format("opentype");
+        font-weight: 100;
+    }
+
+    body 
+    {
+        font-family: Galano , sans-serif !important;
+        color:#3a3a3a;
+    }
+
+    th 
+    {
+      text-transform: uppercase;
+      font-weight: bold;
+      
+    }
+    .table td, .table th 
+    {
+      border: 1px solid #000 !important;
+    }
+
+  </style>
+
+{% for rapport in rapports %}
+      <div class='container text-dark position-relative pt-5'>
+
+
+        <div class="row mb-4">
+          <div class="col-2">
+            <img src="https://app.liliumpharma.com/{% static 'img/logo.png' %}" style="height: 90px;">
+          </div>
+          <div class="col-10">
+            <h2 class="text-center">LILIUM PHARMA ALGERIE </h2>
+            <h2 class='text-center text-uppercase h4'> RAPPORT <b>N<sup>o</sup> {{rapport.id}} </b></h2>
+            <h5 class='text-center text-uppercase h4'> {{rapport.added}}</b> <small>{{rapport.rapport_commercial.nom}}</small>  </h5>
+          </div>
+        </div>
+
+        <div class="row">
+          
+          <div class="col-md-6">
+            <!-- <h5 class=''><small><b> Regions:</b><p style="font-size: 13px;">{{rapport.rapport_regions}}</p></small></h5> -->
+            <h5 class='pb-3'><small><br>{{details|safe}}</small></h5>
+
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="row">
+            <div class="col-md-12">
+                <h5><b>Bons de commandes:</b></h5>
+                <div class="container">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th scope="col">Produit</th>
+                                <th scope="col" style="color: green;">Pharmacie / Gros</th>
+                                <th scope="col" style="color: green;">Gros / Super Gros</th>
+                                <th scope="col" style="color: green;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in unique_products %}
+                                <tr>
+                                    <td>{{ product }}</td>
+                                    <td style="text-align: center;">
+                                        {% with pharmacie_qty=product_qty_pharmacy_and_gros|get_item:product %}
+                                            {{ pharmacie_qty|default:0 }}
+                                        {% endwith %}
+                                    </td>
+                                    <td style="text-align: center;">
+                                        {% with gros_qty=product_qty_gros_and_super_gros|get_item:product %}
+                                            {{ gros_qty|default:0 }}
+                                        {% endwith %}
+                                    </td>
+                                    <td style="text-align: center;">
+                                        {% with pharmacie_qty=product_qty_pharmacy_and_gros|get_item:product|default:0 %}
+                                            {% with gros_qty=product_qty_gros_and_super_gros|get_item:product|default:0 %}
+                                                {{ pharmacie_qty|add:gros_qty }}
+                                            {% endwith %}
+                                        {% endwith %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        
+      </div>
+
+      <script>
+        // Function to display data in the table
+        function displayDataInTable(data) {
+          const produitsDistinct = data.unique_products;  // Array of products
+          const pharmacieGros = data.product_qty_pharmacy_and_gros;  // Quantities for Pharmacie / Gros
+          const grosSuperGros = data.product_qty_gros_and_super_gros;  // Quantities for Gros / Super Gros
+          
+          // Add data to the HTML table
+          const table = document.querySelector('.table');
+          const tbody = table.querySelector('tbody');
+          tbody.innerHTML = '';  // Clear previous rows
+      
+          // Loop over each product
+          produitsDistinct.forEach(product => {
+              const pharmacieQty = pharmacieGros[product] || 0;
+              const grosQty = grosSuperGros[product] || 0;
+              const total = pharmacieQty + grosQty;
+      
+              // Create a new row for this product
+              const row = `
+                  <tr>
+                      <td>${product}</td>
+                      <td style="text-align: center;">${pharmacieQty}</td>
+                      <td style="text-align: center;">${grosQty}</td>
+                      <td style="text-align: center;">${total}</td>
+                  </tr>
+              `;
+              
+              tbody.innerHTML += row;  // Append the row to the table
+          });
+      }
+      
+    
+        // Function to fetch and display the report data
+        function fetchRapportData() {
+            const username = "{{ rapport.rapport_commercial.nom }}";
+            const orderDate = "{{ rapport.added|date:'Y-m-d' }}";
+    
+            fetch(`https://app.liliumpharma.com/orders/ordersRepport/${username}/${orderDate}/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error loading data');
+                }
+                return response.json();
+            })
+            .then(data => {
+              console.log(data)
+                displayDataInTable(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+    
+        // Call fetchRapportData on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', function () {
+            fetchRapportData();
+        });
+    </script>
+
+
+        <table class="table table-sm table-bordered">
+          <thead>
+            <tr>
+              <th class="text-left">medecin</th>
+              <!-- <th class="text-center">prior</th> -->
+              <th class="text-left">Produits</th>
+              <th class="text-center">observation</th>
+            </tr>
+          </thead>
+          <tbody>
+              {% for visite in rapport.visite_set.all %}
+                <tr>
+                  <td>
+                    <!-- NOM  -->
+                    <strong style="font-size:18px;"><strong style="font-size:18px;">{{visite.medecin.id}}</strong> - {{visite.medecin.nom}}</strong> <strong class="text-center" style="font-weight: bold; font-size:12px; color: green;" >   | {{visite.medecin.specialite}} <strong class="text-center" style="font-weight: bold; font-size:12px;color: green;"> | {{visite.medecin.classification}}</strong></strong>
+
+                    <br>
+                    <!-- ADR -->
+                    <strong class="text-center" style="font-weight: bold; font-size:12px;">Localisation: {{visite.medecin.adresse}} {% if visite.medecin.lat and visite.medecin.lon %}<img src="https://app.liliumpharma.com/{% static 'img/location.png' %}" style="height: 14px;"/>{%endif%}</strong><strong class="text-center" style="font-weight: bold; font-size:12px;">  | Tel: {{visite.medecin.telephone}}</strong>                    
+                    <br>
+                    <small>
+                      {% if visite.medecin.lat and visite.medecin.lon %}
+                        <span style="color: green;" >Le médecin est localisé</span>
+                      {% else %}
+                        <span style="color: red;">Le médecin n'est pas localisé</span>
+                      {% endif %}
+                    </small>
+                    <br>
+                    
+
+                    <!-- TELEPHONE -->
+
+                      {% for usr in visite.medecin.users.all %}
+                        <span style="font-size:12px; color: green; font-weight: bold;">-{{usr}}</span>
+                        {% endfor %}
+                        {% if rapport.user not in visite.medecin.users.all and visite.medecin.is_medical %}
+                        <b>
+                      {% endif %}
+                  </td>
+
+                  <!-- <td  class="text-center">{{visite.priority}}</td> -->
+                  <td style="font-size: 12px; width: 120px;" class="text-center">{{visite.products_to_pdf}}</td>
+                  <td  dir="rtl"  class="text-center" style=" width: 500px;">
+                    <div style="font-weight: bold;font-size: 15px;">
+                      Nombre de visite cette année :
+                      <a href="https://app.liliumpharma.com/medecins/visites/PDF/{{visite.medecin.id}}/?priority=&mindate={% now 'Y' %}-01-01&maxdate=&produit=&stock=" target="_blank" style="color: red; font-weight: bolder; text-decoration: underline;font-size: 20px;">{{visite.medecin.nbr_visites_year}}</a>
+                    </div>
+                    {{visite.observation}}
+
+                      <!-- NOTE  -->
+                      {% if visite.medecin.note == "-" %}
+                      <span style="color:crimson"><br></span>
+                    {% elif visite.medecin.note %}
+                      <b style="color:crimson"><br>Note: {{visite.medecin.note}}</b>
+                    {% endif %}
+                  </td>
+                </tr>
+            {%endfor%}
+          </tbody>
+        </table>
+      </div>
+      <div class="container my-4">
+
+
+        {% if rapport.related_plan.plantask_set.all %}
+
+        <table class="table table-sm table-bordered">
+          <thead>
+            <tr>
+              <th class="text-left">Tâches</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                {% for t in rapport.related_plan.plantask_set.all %}
+                  {% if t.task %}
+                    - {{ t.task }} <br/>
+                  {% endif %}
+                {% endfor %}
+              </td>
+            </tr>
+          {% endif %}
+          
+          </tbody>
+        </table>
+
+
+
+        <!-- <table class="table table-sm table-bordered">
+          <thead>
+            <tr>
+              <th class="text-left">Taches Completé</th>
+              <th class="text-center">Taches non completé </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                {% for t in rapport.related_plan.plantask_set.all %}
+                  {% if  t.completed %}
+                    - {{t.task}} <br/>
+                    {% endif %}
+                {% endfor %}
+              </td>
+              <td>
+                {% for t in rapport.related_plan.plantask_set.all %}
+                  {% if not  t.completed %}
+                    - {{t.task}} <br/>
+                    {% endif %}
+                {% endfor %}
+              </td>
+            </tr>
+          </tbody>
+        </table> -->
+      </div>
+      {% if rapport.comment_set.exists %}
+      <div class="container">
+          <h5><b>observations</b>:</h5>
+          {% for comment in rapport.comment_set.all %}
+              {% if comment.comment %}
+                  <div style="font-size:14px"><b>{{comment.added}} {{comment.user.username}}:</b> {{comment.comment}} </div>
+              {% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+  
+      <div class="pt-2 container text-right">
+        <b>Signature et cachet:</b>
+      </div>
+
+
+{% endfor%}
+</body>
+
+
+</html>
