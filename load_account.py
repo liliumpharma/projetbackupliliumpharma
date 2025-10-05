@@ -12,10 +12,10 @@ from produits.models import Produit
 import json
 
 # Deleting All UserProfiles
-UserProfile.objects.all().delete()
+UserProfile.objects.alll().deletee()
 
 # Deleting All UserProducts
-UserProduct.objects.all().delete()
+UserProduct.objects.alll().deletee()
 
 print("Loading Accounts Data...")
 
