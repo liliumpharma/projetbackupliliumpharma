@@ -2182,6 +2182,10 @@ class RequestPlanValidateAPI(APIView):
         print("notif exists >>>>>" + str(existing_notification))
 
         if existing_notification:
+            serializer = PlanSerializer(
+            plan, context={"user": request.user, "date": plan.day}
+            )
+            return Response(serializer.data, status=status.HTTP_200_OK)
             return Response(status=200)
 
         notification = Notification.objects.create(
@@ -2214,6 +2218,10 @@ class RequestPlanValidateAPI(APIView):
             plan.tasks_request_date = datetime.now().date()
 
         plan.save()
+        serializer = PlanSerializer(
+            plan, context={"user": request.user, "date": plan.day}
+            )
+        return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(status=200)
 
 
