@@ -209,7 +209,13 @@ class MedecinFrontAPI(APIView):
                     for pv in produitsvisites
                 ]
             )
-
+            other_details += """
+            <style>
+                .navbar-nav.ml-auto {
+                    display: none !important;
+                }
+            </style>
+            """
             # Pagination
             paginator = Paginator(medecins_list, 15)
             page = request.GET.get("page", 1)
