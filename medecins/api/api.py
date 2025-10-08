@@ -164,7 +164,8 @@ class MedecinFrontAPI(APIView):
         #if commercial_input or medecin:
         if 1:
             print("33333333")
-            medecins_list = get_medecins(request)  # Récupère le queryset de médecins
+            medecins_list = get_medecins(request)
+            print(request)# Récupère le queryset de médecins
             print("222222222")
             # Calculez le nombre de médecins qui ne sont pas des spécialités "Pharmacie", "Grossiste", "SuperGros"
             medecin_nbr = medecins_list.exclude(
@@ -237,6 +238,93 @@ class MedecinFrontAPI(APIView):
                 ),
                 status=200,
             )
+    def post(self, request, format=None):
+        print("kkkkkkkkkkk from post")
+        commercial_input = request.GET.get("commercial")
+        medecin = request.GET.get("medecin")
+        print("111111111111 from post")
+        print(medecin)
+        print("comcomcomcom from post")
+        print(f" Nous somme la {commercial_input} la fin from post")
+        #if commercial_input or (medecin and len(medecin) > 4):
+        #if commercial_input or medecin:
+        if 1:
+            print("33333333 from post")
+            medecins_list = get_medecins(request)
+            print(request)# Récupère le queryset de médecins
+            print("222222222 from post")
+            # Calculez le nombre de médecins qui ne sont pas des spécialités "Pharmacie", "Grossiste", "SuperGros"
+            medecin_nbr = medecins_list.exclude(
+                specialite__in=["Pharmacie", "Grossiste", "SuperGros"]
+            ).count()
+
+            # Récupérez les détails des spécialités
+            details = (
+                Medecin.objects.filter(id__in=medecins_list.values("id"))
+                .values("specialite")
+                .annotate(dcount=Count("specialite"))
+                .order_by("-dcount")
+            )
+
+            # Construction de la chaîne de caractères pour les détails
+            other_details = f" <b>({medecin_nbr})</b> Médecins "
+
+            other_details += " ".join(
+                [
+                    f'({detail["dcount"]}) {detail["specialite"]}'
+                    for detail in details
+                    if detail["specialite"]
+                    not in ["Pharmacie", "Grossiste", "SuperGros"]
+                ]
+            )
+
+            # Détails spécifiques à "Pharmacie", "Grossiste" et "SuperGros"
+            special_details = [
+                f'({detail["dcount"]}) {detail["specialite"]}'
+                for detail in details
+                if detail["specialite"] in ["Pharmacie", "Grossiste", "SuperGros"]
+            ]
+            other_details += " ".join(special_details)
+
+            other_details += "<br/><br/>"
+
+            # Récupérez les produits visités
+            produitsvisites = get_stock(request)
+            other_details += " ".join(
+                [
+                    f'<small><b style="color:#2da231">({pv["total"]})</b> {pv["produit__nom"]}</small>'
+                    for pv in produitsvisites
+                ]
+            )
+            other_details += """
+            <style>
+                .navbar-nav.ml-auto {
+                    display: none !important;
+                }
+            </style>
+            """
+            # Pagination
+            paginator = Paginator(medecins_list, 15)
+            page = request.GET.get("page", 1)
+            medecins = paginator.get_page(page)
+
+            serializer = MedecinSerializer(medecins, many=True)
+
+            return Response(
+                self.pagination_response(
+                    medecins, serializer, medecins_list.count(), other_details
+                ),
+                status=200,
+            )
+        serializer = MedecinSerializer(medecins, many=True)
+        medecins = Medecin.objects.all()
+        return Response(
+                self.pagination_response(
+                    medecins, serializer, medecins.count(), other_details
+                ),
+                status=200,
+            )
+   
     # def get(self, request, format=None):
     #     # Vérifiez si des filtres sont fournis et récupérez la liste de médecins
 

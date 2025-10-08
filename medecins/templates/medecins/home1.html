@@ -1,0 +1,106 @@
+<script>
+const ENDPOINT = document.getElementById('filtersForm').getAttribute('action');
+document.getElementById('today').textContent = new Date().toLocaleDateString('fr-FR');
+
+function formToQuery(form){
+  const fd = new FormData(form);
+  const params = new URLSearchParams();
+  for(const [k,v] of fd.entries()) if(v!=='' && v!=='0') params.append(k,v);
+  return params;
+}
+
+async function fetchMedecins(page=1){
+  const form = document.getElementById('filtersForm');
+  const params = formToQuery(form);
+  params.set('page', page);
+  const url = `${ENDPOINT}?${params.toString()}`;
+  
+  try {
+    const res = await fetch(url, { headers:{ 'Accept':'application/json' }, credentials:'same-origin' });
+    if(!res.ok){
+      document.getElementById('summary').innerHTML = `Erreur <b>${res.status}</b>`;
+      document.getElementById('resultsBody').innerHTML = '';
+      return;
+    }
+    const data = await res.json();
+    renderResults(data);
+  } catch(err){
+    document.getElementById('summary').textContent = `Erreur: ${err.message}`;
+  }
+}
+
+function bestArray(data){
+  if(Array.isArray(data?.result)) return data.result;
+  return data?.results || data?.items || data?.data || [];
+}
+
+function renderResults(data){
+  const list = bestArray(data);
+  const tbody = document.getElementById('resultsBody');
+  tbody.innerHTML = '';
+  
+  for(const m of list){
+    const tr = document.createElement('tr');
+    const region = m.region || m.wilaya || '';
+    const delegue = (m.users?.[0]?.username) || m.delegue || '';
+    const nom = m.nom || m.name || '';
+    const specialite = m.specialite || '';
+    const tel = m.telephone || m.phone || '';
+    const adresse = m.adresse || m.address || '';
+    const visites = m.visites || m.visits || '';
+    
+    tr.innerHTML = `
+      <td><span class="pill">${region}</span></td>
+      <td>${delegue}</td>
+      <td><a href="#">${m.id??''}</a> <span class="muted">${nom}</span></td>
+      <td><span class="badge">${specialite}</span></td>
+      <td class="muted">${tel}</td>
+      <td class="addr">${adresse}</td>
+      <td><span class="muted">${visites}</span></td>`;
+    
+    tbody.appendChild(tr);
+  }
+
+  const summaryEl = document.getElementById('summary');
+  summaryEl.innerHTML = typeof data?.other === 'string' ? data.other : `Total: ${data?.length ?? list.length}`;
+
+  const page = Number(new URLSearchParams(location.search).get('page')||1);
+  const totalPages = data?.pages ?? 1;
+  document.getElementById('pageInfo').textContent = `Page ${page} / ${totalPages}`;
+
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const prev = data?.previous ?? (page>1? page-1 : null);
+  const next = data?.next ?? (page<totalPages? page+1 : null);
+  
+  prevBtn.disabled = !prev;
+  nextBtn.disabled = !next;
+  prevBtn.onclick = ()=> prev && goPage(prev);
+  nextBtn.onclick = ()=> next && goPage(next);
+}
+
+function goPage(p){
+  const url = new URL(location.href);
+  url.searchParams.set('page', p);
+  history.replaceState(null,'',url.toString());
+  fetchMedecins(p);
+}
+
+document.getElementById('filtersForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  goPage(1);
+});
+
+// Initialiser le formulaire depuis les paramètres URL
+(function initFromUrl(){
+  const usp = new URLSearchParams(location.search);
+  const form = document.getElementById('filtersForm');
+  for(const [k,v] of usp.entries()){
+    const el = form.elements[k];
+    if(el) el.value = v;
+  }
+})();
+
+// Chargement initial
+fetchMedecins(Number(new URLSearchParams(location.search).get('page')||1));
+</script>

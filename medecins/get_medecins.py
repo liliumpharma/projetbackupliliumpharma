@@ -78,10 +78,10 @@ def get_medecins(request):
         filters["classification__in"] = request.GET.get("classification").split(",")
 
     if request.GET.get("deal") == "1":
-        filters["deal__isnull"] = False
+        filters["medecin__isnull"] = False
 
     if request.GET.get("deal") == "0":
-        filters["deal__isnull"] = True
+        filters["medecin__isnull"] = True
 
     if request.GET.get("note") == "2":
         q |= Q(note="")
