@@ -11,6 +11,8 @@ from django.contrib.auth.models import User
 def get_medecins(request):
     filters = {}
     visites_filters = {}
+    params = request.GET
+    print(params)  # Affiche un QueryDict
 
     q = Q()
     specialite = request.GET.get("specialite")
@@ -170,7 +172,8 @@ def get_medecins(request):
             v["medecin__id"] for v in visites_count_medcin if v["dcount"] > 1
         ]
         medecins_list = medecins_list.filter(id__in=visited_more_one)
-
+    if request.GET.get("visites") == "3":
+        pass
     if request.GET.get("stock") != "":
         product = request.GET.get("stock")
         filter_by_period = False
