@@ -173,6 +173,7 @@ def get_medecins(request):
         ]
         medecins_list = medecins_list.filter(id__in=visited_more_one)
     if request.GET.get("visites") == "3":
+        print("visites egal a 3")
         pass
     if request.GET.get("stock") != "":
         product = request.GET.get("stock")
