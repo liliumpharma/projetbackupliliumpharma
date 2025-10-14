@@ -6,6 +6,7 @@ from produits.models import ProduitVisite
 from django.db.models import Q, F, Max, Count, ExpressionWrapper
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.functions import TruncDate
 
 
 def get_medecins(request):
@@ -169,12 +170,29 @@ def get_medecins(request):
             .annotate(dcount=Count("medecin__id"))
         )
         visited_more_one = [
-            v["medecin__id"] for v in visites_count_medcin if v["dcount"] > 1
+            v["medecin__id"] for v in visites_count_medcin if v["dcount"] > 2
         ]
         medecins_list = medecins_list.filter(id__in=visited_more_one)
     if request.GET.get("visites") == "3":
         print("visites egal a 3")
-        pass
+        visites_count_medcin = (
+            Visite.objects.filter(**visites_filters)
+            .annotate(jour=TruncDate("rapport__added"))  # 👈 regroupe par jour
+            .values("medecin__id", "jour")               # 👈 groupement par médecin et par jour
+            .annotate(
+                total_visites=Count("id", distinct=True),
+                total_users=Count("rapport__user", distinct=True),
+            )
+            )
+
+        # On garde les médecins avec 2 visites et 2 utilisateurs différents le même jour
+        visited_more_one = [
+            v["medecin__id"]
+            for v in visites_count_medcin
+            if v["total_visites"] == 2 and v["total_users"] == 2
+        ]
+
+        medecins_list = medecins_list.filter(id__in=visited_more_one)
     if request.GET.get("stock") != "":
         product = request.GET.get("stock")
         filter_by_period = False
