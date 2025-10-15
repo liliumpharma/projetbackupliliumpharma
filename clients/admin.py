@@ -359,6 +359,8 @@ class YearListFilter(admin.SimpleListFilter):
 
     def queryset(self, request, queryset):
         print("fatahfatahfatah")
+        params = request.GET.dict()
+        print(params)
         print(queryset)
         #if self.value() == "2024" or self.value() is None:
         if self.value() == "2024":

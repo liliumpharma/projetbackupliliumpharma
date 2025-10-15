@@ -270,7 +270,7 @@ class RapportAppAPI(APIView):
         print(str(request.user) + " is putting a report")
         user_profile = UserProfile.objects.get(user=request.user)
         # GETTING PLANNING
-        user_planning = Plan.objects.get(day=datetime.today(), user=request.user)
+        user_planning = Plan.objects.get(day=datetime.today().date(), user=request.user)
         print(str(self))
 
         if id:
@@ -278,7 +278,7 @@ class RapportAppAPI(APIView):
             report_added_date = rapport.added
 
         else:
-            report_added_date = datetime.today()
+            report_added_date = datetime.today().date()
 
         absences_on_date = Absence.objects.filter(
             date=report_added_date, user=request.user
@@ -359,9 +359,9 @@ class RapportAppAPI(APIView):
 
         if id == "":  # CREATING NEW RAPPORT
             try:
-                rapport = Rapport.objects.get(added=datetime.today(), user=request.user)
+                rapport = Rapport.objects.get(added=datetime.today().date(), user=request.user)
                 rapport_exists = Rapport.objects.get(
-                    added=datetime.today(), user=request.user
+                    added=datetime.today().date(), user=request.user
                 )
                 if rapport_exists:
                     print("Repport exists !")
@@ -400,13 +400,13 @@ class RapportAppAPI(APIView):
             except Rapport.DoesNotExist:
                 serializer = RapportAppSerializer(
                     data=request.data,
-                    instance=Rapport(user=request.user, added=date.today()),
+                    instance=Rapport(user=request.user, added=date.today().date()),
                     partial=True,
                 )
                 if serializer.is_valid():
                     serializer = RapportAppSerializer(
                         data=request.data,
-                        instance=Rapport(user=request.user, added=date.today()),
+                        instance=Rapport(user=request.user, added=date.today().date()),
                         partial=True,
                     )
                     if serializer.is_valid() and user_profile.rolee in [

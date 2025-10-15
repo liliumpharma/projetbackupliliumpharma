@@ -16,8 +16,9 @@
 
 
     let url = new URL(window.location.href);
+    let date__month = url.searchParams.get("date__month");
     let date__year = url.searchParams.get("date__year");
-    element.addEventListener('click', ()=>open(`https://app.liliumpharma.com/clients/sales/export-excel/?year=${date__year}`, '_blank'))
+    element.addEventListener('click', ()=>open(`https://app.liliumpharma.com/clients/sales/export-excel/?year=${date__year}&month=${date__month}`, '_blank'))
 
 </script>
 

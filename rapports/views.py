@@ -100,14 +100,17 @@ class aaa(LoginRequiredMixin, TemplateView):
     def post(self, request):
         form = RapportForm(request.POST, request.FILES)
         try:
-            aujourdhui = now().date()
+            aujourdhui = now() + timedelta(hours=1)
+            aujourdhui = aujourdhui.date()
             visite = Rapport.objects.get(added=aujourdhui) 
             m="Vous ne pouvez pas ajouter un autre rapport, car un seul rapport par jour"
             return render(request, "rapports/aaa.html", {"m":m})
         except Rapport.DoesNotExist:
             if form.is_valid():
+                instance = form.save(commit=False)
                 form.set_the_user(request.user)  # ✅ Assigne l'utilisateur avant de sauvegarder
-                form.save()
+                instance.added = aujourdhui
+                instance.save()
                 m = "Rapport bien ajouter"
                 return render(request, "rapports/aaa.html", {"m":m})
         return render(request, "rapports/aaa.html")

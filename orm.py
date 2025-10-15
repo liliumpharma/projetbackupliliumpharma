@@ -31,5 +31,43 @@ all = (
 
 for item in all:
     if item['total'] == 2:
-        print(item)
+        pass
+        #print(item)
         #print(item['rapport'].user)
+
+
+from django.utils.timezone import now
+from datetime import datetime, date, timedelta
+
+aujourdhui = now()
+plus_une_heure = now() + timedelta(hours=1)
+
+aujourdhui = now() + timedelta(hours=1)
+aujourdhui = aujourdhui.date()
+
+print("Avant :", aujourdhui)
+print("Après :", plus_une_heure.date())
+
+print(datetime.today().date())
+
+from django.utils import timezone
+import calendar
+
+today = timezone.now()
+first_day_last_month = (today.replace(day=1) - timedelta(days=1)).replace(day=1)
+last_day_last_month = today.replace(day=1) - timedelta(days=1)
+
+print(first_day_last_month)
+print(last_day_last_month)
+
+y=2025
+m=9
+
+first_day_last_month = datetime(y, m, 1)
+last_day_last_month = last_day = datetime(y, m, calendar.monthrange(y, m)[1])
+
+print(first_day_last_month)
+print(last_day_last_month)
+
+print(first_day_last_month.month)
+

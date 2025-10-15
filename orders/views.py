@@ -119,6 +119,8 @@ class addorder(TemplateView):
                 return render(request, "orders/addorder.html", {'pha':pha, 'gro':gro, 'sugro':sugro, 'pro':pro, "m":m})
         if not pharmacy_id and not gros_id and super_gros_id:
             pass
+        elif pharmacy_id and gros_id and not super_gros_id:
+            pass
         elif pharmacy_id and not gros_id and not super_gros_id:
             m = "Veuillez Choisir que deux parmi Pharmacie, Grossiste et SuperGros ou Bien que SuperGros Seul"
             if u.speciality_rolee == "Office" or u.speciality_rolee == "Admin" or u.speciality_rolee == "CountryManager":
@@ -164,7 +166,26 @@ class addorder(TemplateView):
                 #m = "Bon de Commande ajouter avec succes"
                 return render(request, "orders/addorder.html", {'pha':pha, 'gro':gro, 'sugro':sugro, 'pro':pro, "m":m})
         else:
-            pass
+            m = "Veuillez Choisir que deux parmi Pharmacie, Grossiste et SuperGros ou Bien que SuperGros Seul, parceque vous avec rien choisir"
+            if u.speciality_rolee == "Office" or u.speciality_rolee == "Admin" or u.speciality_rolee == "CountryManager":
+                print("yes is super user")
+                
+                pha = Medecin.objects.filter(specialite="Pharmacie")
+                gro = Medecin.objects.filter(specialite="Grossiste")
+                sugro = Client.objects.filter(supergro=True)
+                pro = Produit.objects.all()
+                #pro = UserProduct.objects.filter(user=request.user)
+                #m = "Bon de Commande ajouter avec succes"
+                return render(request, "orders/addorder.html", {'pha':pha, 'gro':gro, 'sugro':sugro, 'pro':pro, "m":m})
+            else:
+                pha = Medecin.objects.filter(users=user_id, specialite="Pharmacie")
+                usr = User.objects.get(id=user_id)
+                userpro = UserProfile.objects.get(user=usr)
+                gro = Medecin.objects.filter(specialite="Grossiste",wilaya__in=userpro.sectors.all())
+                sugro = Client.objects.filter(supergro=True)
+                pro = Produit.objects.all()
+                #m = "Bon de Commande ajouter avec succes"
+                return render(request, "orders/addorder.html", {'pha':pha, 'gro':gro, 'sugro':sugro, 'pro':pro, "m":m})
         observations = request.POST.get("observations")
         image = request.FILES.get('image')
         us = User.objects.get(id=user_id)
@@ -173,7 +194,9 @@ class addorder(TemplateView):
         #pro = UserProduct.objects.filter(user=request.user)
         for itempro in pro:
             check_value = request.POST.get(f"check_{itempro.nom}")
+            h=0
             if check_value == "on":
+                h=h+1
                 qtt_value = request.POST.get(f"qtt_{itempro.nom}")
                 if not qtt_value:
                     m = f"Veuillez Ajoutez un veleur a le produit cocher {itempro.nom}"
@@ -194,7 +217,25 @@ class addorder(TemplateView):
                         pro = Produit.objects.all()
                         #m = "Bon de Commande ajouter avec succes"
                         return render(request, "orders/addorder.html", {'pha':pha, 'gro':gro, 'sugro':sugro, 'pro':pro, "m":m})
-                createorderitem = OrderItem.objects.create(order=createorder, produit=itempro, qtt=qtt_value)
+        if h==0:
+            m="Veuillez ajouter en moin un produit"
+            if u.speciality_rolee == "Office" or u.speciality_rolee == "Admin" or u.speciality_rolee == "CountryManager":
+                print("yes is super user")
+                        
+                pha = Medecin.objects.filter(specialite="Pharmacie")
+                gro = Medecin.objects.filter(specialite="Grossiste")
+                sugro = Client.objects.filter(supergro=True)
+                pro = Produit.objects.all()
+                #pro = UserProduct.objects.filter(user=request.user)
+                #m = "Bon de Commande ajouter avec succes"
+                return render(request, "orders/addorder.html", {'pha':pha, 'gro':gro, 'sugro':sugro, 'pro':pro, "m":m})
+            else:
+                pha = Medecin.objects.filter(users=request.user, specialite="Pharmacie")
+                gro = Medecin.objects.filter(users=request.user, specialite="Grossiste")
+                sugro = Client.objects.filter(supergro=True)
+                pro = Produit.objects.all()
+                #m = "Bon de Commande ajouter avec succes"
+                return render(request, "orders/addorder.html", {'pha':pha, 'gro':gro, 'sugro':sugro, 'pro':pro, "m":m})
         if u.speciality_rolee == "Office" or u.speciality_rolee == "Admin" or u.speciality_rolee == "CountryManager":
             print("yes is super user")
             
@@ -309,6 +350,7 @@ class OrderAPI(APIView):
 
             return Response(OrderSerializer(order).data, status=200)
 
+import json
 
 class OrderAppAPI(APIView):
     authentication_classes = [TokenAuthentication]
@@ -413,6 +455,16 @@ class OrderAppAPI(APIView):
 
     def put(self, request, id="", format=None):
         if id == "":
+            print(request.data)
+            items_raw = request.data.get("items")
+            if not items_raw:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+            # Convertir la chaîne JSON en liste Python
+            items = json.loads(items_raw) if items_raw else []
+            # Vérifier s’il existe un item avec qtt == "0"
+            has_zero_qtt = any(str(item.get("qtt")) == "0" for item in items)
+            if has_zero_qtt:
+                return Response(status=status.HTTP_400_BAD_REQUEST)
             serializer = OrderSerializer(
                 data=request.data, instance=Order(user=request.user), partial=True
             )

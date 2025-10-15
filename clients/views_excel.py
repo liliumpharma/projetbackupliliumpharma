@@ -182,6 +182,7 @@ class TemplateExportExcel(APIView):
 from django.utils import timezone
 from django.db.models import Sum
 from datetime import datetime, timedelta
+import calendar
 
 
 class SalesExportExcel(APIView):
@@ -189,10 +190,20 @@ class SalesExportExcel(APIView):
     #permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, format=None):
+        params = request.GET.dict()
+        m = int(request.GET.get("month"))
+        y = int(request.GET.get("year"))
+        #print(m)
+        #print(y)
+        print(params)
         # Get current date and calculate last month
+        
         today = timezone.now()
         first_day_last_month = (today.replace(day=1) - timedelta(days=1)).replace(day=1)
         last_day_last_month = today.replace(day=1) - timedelta(days=1)
+        
+        first_day_last_month = datetime(y, m, 1)
+        last_day_last_month = last_day = datetime(y, m, calendar.monthrange(y, m)[1])
 
         # Creating a Response
         response = HttpResponse(
@@ -204,60 +215,82 @@ class SalesExportExcel(APIView):
 
         # Create a workbook.
         workbook = xlsxwriter.Workbook(response, {"in_memory": True})
+        # 🎨 Format du titre global
+        title_format = workbook.add_format({
+            'bold': True,
+            'font_size': 30,
+            'align': 'center',
+            'valign': 'vcenter',
+            'bg_color': '#DCE6F1',  # bleu clair
+            'border': 1
+        })
 
+        # 🧾 Crée le titre global
+        titre_global = f"VENTES,STOCK ET ESTIMATION DU  {m} - {y}"
+
+        
+
+        # 📦 Ajoute un peu d’espace en sautant une ligne
+        start_row = 2
         # Worksheet 1
         worksheet = workbook.add_worksheet("Ventes")
-        worksheet.write(0, 0, "Super Grossite")
-        worksheet.write(0, 1, "Wilaya")
-        worksheet.write(0, 2, "Month")
-        worksheet.write(0, 3, "Type")
+        # ✅ Fusionne les cellules de la première ligne pour le titre
+        # Ajuste 'A1:Z1' selon ton nombre de colonnes (Z = 26 colonnes)
+        worksheet.merge_range('A1:W1', titre_global, title_format)
+        worksheet.write(1, 0, "Super Grossite")
+        worksheet.write(1, 1, "Wilaya")
+        worksheet.write(1, 2, "Month")
+        worksheet.write(1, 3, "Type")
 
-        col = 3
+        col = 4
         produits = Produit.objects.all()
 
         for product in produits:
-            worksheet.write(0, col, product.nom)
+            worksheet.write(1, col, product.nom)
             col += 1
 
-        worksheet.write(0, col, "Totaux")
+        worksheet.write(1, col, "Totaux")
 
         # Init Row Index
-        row = 1
+        row = 2
         order_sources = OrderSource.objects.filter(
             date__range=[first_day_last_month, last_day_last_month]
         )
+        print(f"ordersources {order_sources}")
         for order_source in order_sources:
             # Writing Sales
-            worksheet.write(row, 0, order_source.source.name)
-            worksheet.write(row, 1, order_source.source.wilaya.nom)
+            green_format = workbook.add_format({'bg_color': "#9BEC82"})
+            worksheet.write(row, 0, order_source.source.name, green_format)
+            worksheet.write(row, 1, order_source.source.wilaya.nom, green_format)
             worksheet.write(
-                row, 2, f"{order_source.date.month}-{order_source.date.year}"
+                row, 2, f"{order_source.date.month}-{order_source.date.year}", green_format
             )
-            worksheet.write(row, 3, "Vente")
+            worksheet.write(row, 3, "Vente", green_format)
 
-            col = 3
+            col = 4
             total_quantities = 0
             for product in produits:
                 total = OrderProduct.objects.filter(
                     order__source=order_source, produit=product
                 ).aggregate(total=Sum("qtt"))["total"]
-                worksheet.write(row, col, total if total else 0)
+                worksheet.write(row, col, total if total else 0, green_format)
                 col += 1
                 total_quantities += total if total else 0
 
-            worksheet.write(row, col, total_quantities)
+            worksheet.write(row, col, total_quantities, green_format)
 
             # Writing Remaining Stock
+            bleu_format = workbook.add_format({'bg_color': "#57D9F0"})
             row += 1
 
-            worksheet.write(row, 0, order_source.source.name)
-            worksheet.write(row, 1, order_source.source.wilaya.nom)
+            worksheet.write(row, 0, order_source.source.name, bleu_format)
+            worksheet.write(row, 1, order_source.source.wilaya.nom, bleu_format)
             worksheet.write(
-                row, 2, f"{order_source.date.month}-{order_source.date.year}"
+                row, 2, f"{order_source.date.month}-{order_source.date.year}", bleu_format
             )
-            worksheet.write(row, 3, "Stock Restant")
+            worksheet.write(row, 3, "Stock Restant", bleu_format)
 
-            col = 3
+            col = 4
             total_quantities = 0
             for product in produits:
                 total = OrderSourceProduct.objects.filter(
@@ -266,13 +299,43 @@ class SalesExportExcel(APIView):
 
                 quantity = total.first().qtt if total.exists() else -1
 
-                worksheet.write(row, col, quantity if quantity != -1 else "-")
+                worksheet.write(row, col, quantity if quantity != -1 else "-", bleu_format)
                 col += 1
 
                 total_quantities += quantity if quantity != -1 else 0
 
-            worksheet.write(row, col, total_quantities)
+            worksheet.write(row, col, total_quantities, bleu_format)
+            
+            # 🎨 Définition du format jaune (à faire avant la boucle)
+            yellow_format = workbook.add_format({'bg_color': '#FFFF00'})  # jaune clair
+            
+            row += 1
+            worksheet.write(row, 0, order_source.source.name, yellow_format)
+            worksheet.write(row, 1, order_source.source.wilaya.nom, yellow_format)
+            worksheet.write(
+                row, 2, f"{order_source.date.month}-{order_source.date.year}", yellow_format
+            )
+            worksheet.write(row, 3, "Estimation prochaine commande", yellow_format)
+            
+            col = 4
+            total_quantities = 0
+            for product in produits:
+                total = OrderSourceProduct.objects.filter(
+                    produit=product, source=order_source
+                )
 
+                quantity = total.first().qtt if total.exists() else -1
+
+                worksheet.write(row, col, quantity if quantity != -1 else "-", yellow_format)
+                col += 1
+
+                total_quantities += quantity if quantity != -1 else 0
+            
+            worksheet.write(row, col, total_quantities , yellow_format)
+            
+            
+            
+            
             row += 1
 
         workbook.close()
