@@ -400,13 +400,13 @@ class RapportAppAPI(APIView):
             except Rapport.DoesNotExist:
                 serializer = RapportAppSerializer(
                     data=request.data,
-                    instance=Rapport(user=request.user, added=date.today().date()),
+                    instance=Rapport(user=request.user, added=date.today()),
                     partial=True,
                 )
                 if serializer.is_valid():
                     serializer = RapportAppSerializer(
                         data=request.data,
-                        instance=Rapport(user=request.user, added=date.today().date()),
+                        instance=Rapport(user=request.user, added=date.today()),
                         partial=True,
                     )
                     if serializer.is_valid() and user_profile.rolee in [

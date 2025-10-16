@@ -192,9 +192,9 @@ class addorder(TemplateView):
         createorder = Order.objects.create(pharmacy=pharmacyy, gros=groo, super_gros=su_gro, user=us, observation=observations, image=image, status="initial")
         pro = Produit.objects.all()
         #pro = UserProduct.objects.filter(user=request.user)
+        h=0
         for itempro in pro:
             check_value = request.POST.get(f"check_{itempro.nom}")
-            h=0
             if check_value == "on":
                 h=h+1
                 qtt_value = request.POST.get(f"qtt_{itempro.nom}")
