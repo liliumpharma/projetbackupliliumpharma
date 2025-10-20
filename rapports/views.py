@@ -425,7 +425,33 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                 commercial_input = User.objects.get(username=username)
             except User.DoesNotExist:
                 commercial_input = None  # Gérer le cas où l'utilisateur n'existe pas    
+        date_start =""
+        date_end=""
+        if request.GET.get("mindate"):
+            date_start = datetime.strptime(
+                request.GET.get("mindate"), "%Y-%m-%d"
+            ).date()
+        else:
+            date_start = datetime.strptime("2020-06-01", "%Y-%m-%d").date()
 
+        if request.GET.get("maxdate"):
+            date_end = datetime.strptime(
+                request.GET.get("maxdate"), "%Y-%m-%d"
+            ).date()
+
+        else:
+            today = datetime.now()
+            date_end = datetime.strptime(
+                f"{today.year}-{today.month}-{today.day}", "%Y-%m-%d"
+            ).date()
+        usern = ""
+        visited_commune_medecin_count= {}
+        min_date=date_start
+        max_date=date_end
+        from_to = f"{min_date} Au {max_date}"
+        non_visite_communes = {}
+        all_plans = []
+        delta_day = timedelta(days=1)
         print(str(commercial_input))   
 
         if id == 0:
@@ -504,6 +530,81 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                 
                 commercial = User.objects.get(id=commercial_input)
                 commerciale_name = f"{commercial.first_name} {commercial.last_name}"
+                
+
+                # Filtrer l'utilisateur par son nom d'utilisateur
+                user = User.objects.filter(id=commercial_input).first()
+                usern = str(user)
+
+                
+
+                # Récupérer les plans de l'utilisateur
+                if (
+                    request.user.is_superuser
+                    or request.user.userprofile.rolee == "Superviseur"
+                    or request.user.userprofile.rolee == "CountryManager"
+                ):
+                    plans = Plan.objects.filter(
+                    user__username=usern, day__gte=min_date, day__lte=max_date
+                    )
+                else:
+                    plans = Plan.objects.filter(
+                    user=request.user, day__gte=min_date, day__lte=max_date
+                    )
+
+                # Filtrer les jours de travail (non free_day)
+                plans = [p for p in plans if not p.free_day]
+
+                # Obtenir les communes des plans visités
+                visited_communes = set()
+                for plan in plans:
+                    visited_communes.update(
+                        plan.communes.all()
+                    )               # Récupérer toutes les communes liées au plan
+
+                # Récupérer les médecins associés à l'utilisateur
+                medecins = Medecin.objects.filter(
+                    users=user
+                )  # Filtrer les médecins associés à l'utilisateur
+
+                # Extraire toutes les communes associées aux médecins
+                all_communes = set(medecin.commune for medecin in medecins)
+
+                # Dictionnaire pour stocker le nombre de médecins par commune visitée
+                excluded_specialities = ["Pharmacie", "Grossiste", "SuperGros"]
+
+                visited_commune_medecin_count = {
+                    commune: Medecin.objects.filter(commune=commune, users=user)
+                    .exclude(specialite__in=excluded_specialities)
+                    .count()
+                for commune in visited_communes
+                }
+
+                # Dictionnaire pour stocker le nombre de médecins et de pharmacies par commune non visitée
+                non_visite_communes = {}
+
+                # Identifier les communes non visitées pour le secteur médical et commercial
+                for commune in all_communes:
+                    if commune not in visited_communes:
+                        medecin_count = (
+                            Medecin.objects.filter(commune=commune, users=user)
+                            .exclude(specialite__in=["Pharmacie", "Grossiste", "SuperGros"])
+                            .count()
+                        )
+                        pharmacie_count = Medecin.objects.filter(
+                            commune=commune, users=user, specialite="Pharmacie"
+                        ).count()
+
+                        # Ajouter au dictionnaire uniquement si on a des médecins ou des pharmacies
+                        if medecin_count > 0 or pharmacie_count > 0:
+                            non_visite_communes[commune] = {
+                                "medecins": medecin_count,
+                                "pharmacies": pharmacie_count,
+                            }
+
+                # Regrouper les plans par tranche de 5
+                plans = [plans[i : i + 5] for i in range(0, len(plans), 5)]
+                all_plans.append(plans)
             else:
                 commercial = "TOUS"
                 commerciale_name = "TOUS"
@@ -541,26 +642,7 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                     orders_transferred_from = Order.objects.filter(user__in=profile.usersunder.all())
                 else:
                     orders_transferred_from = Order.objects.all()
-
-            if request.GET.get("mindate"):
-                date_start = datetime.strptime(
-                    request.GET.get("mindate"), "%Y-%m-%d"
-                ).date()
-            else:
-                date_start = datetime.strptime("2020-06-01", "%Y-%m-%d").date()
-
-            if request.GET.get("maxdate"):
-                date_end = datetime.strptime(
-                    request.GET.get("maxdate"), "%Y-%m-%d"
-                ).date()
-
-            else:
-                today = datetime.now()
-                date_end = datetime.strptime(
-                    f"{today.year}-{today.month}-{today.day}", "%Y-%m-%d"
-                ).date()
-
-            delta_day = timedelta(days=1)
+            
 
             days = {
                 "mon": 0,
@@ -671,6 +753,7 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                 planss = Plan.objects.filter(
                 day__month=date_start.month, day__year=date_start.year, user=commercial
                 )
+    
             for plan in planss:
                 clients_list = plan.clients.exclude(
                     specialite__in=specialites_a_exclure
@@ -1195,6 +1278,14 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                 "other_details": other_details,
                 "leaves": leaves_data,
                 # "all_products": all_products,
+                "all_plans": all_plans,
+                "user": usern,
+                "from_to": from_to,
+                "periode": today,
+                "non_visite_communes": non_visite_communes,  # Retourne uniquement les communes non visitées avec les comptes
+                "visited_commune_medecin_count": dict(
+                    visited_commune_medecin_count
+                ),
             }
 
             if "IMAGE" in request.path:
@@ -1352,6 +1443,14 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                 "absence": absence,
                 "absence_dates": absence_dates,
                 "other_details": other_details,
+                "all_plans": all_plans,
+                "user": usern,
+                "from_to": from_to,
+                "periode": today,
+                "non_visite_communes": non_visite_communes,  # Retourne uniquement les communes non visitées avec les comptes
+                "visited_commune_medecin_count": dict(
+                    visited_commune_medecin_count
+                ),
             }
 
         if "IMAGE" in request.path:

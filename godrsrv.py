@@ -36,12 +36,6 @@ gauth.LoadClientConfigFile("/var/www/server/client_secrets.json")
 gauth.LoadCredentialsFile("/var/www/server/credentials.json")
 # Au lieu de "client_secrets.json"
 
-if not gauth.credentials:
-    gauth.LocalWebserverAuth()
-elif gauth.access_token_expired:
-    gauth.Refresh()
-else:
-    gauth.Authorize()
 
 gauth.SaveCredentialsFile("credentials.json")
 
