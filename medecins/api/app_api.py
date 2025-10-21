@@ -527,6 +527,7 @@ class NewMedecinList(APIView):
             data = redis.get_key(
                 f"{request.user.username}_{a.lower()}"
             )
+            unique_data = {}
             if request.GET.get('spec') =="Grossiste":
                 print("oui sont des grossistes")
                 print("////////////")
@@ -544,8 +545,10 @@ class NewMedecinList(APIView):
                         "specialite":item_in_all_grossiste.specialite,
                         "last_visite": None
                     }
+                    unique_data[item_in_all_grossiste.id] = dt
                     print(dt)
-                    data.append(dt)
+                    #data.append(dt)
+                data = list(unique_data.values())
                 data = json.dumps(data, ensure_ascii=False)
                 print(len(data))
 

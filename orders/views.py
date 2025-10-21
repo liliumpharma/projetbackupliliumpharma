@@ -351,6 +351,7 @@ class OrderAPI(APIView):
             return Response(OrderSerializer(order).data, status=200)
 
 import json
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 
 class OrderAppAPI(APIView):
     authentication_classes = [TokenAuthentication]
@@ -457,6 +458,27 @@ class OrderAppAPI(APIView):
         if id == "":
             print(request.data)
             items_raw = request.data.get("items")
+            ph = request.data.get("pharmacy")
+            gro = request.data.get("gros")
+            supgro = request.data.get("super_gros")
+            print(items_raw)
+            #print(date())
+            print(date.today())
+            try:
+                ord = Order.objects.get(added__date=date.today(),user=request.user, pharmacy=ph,gros=gro,super_gros=supgro)
+                print("exist deja un bon de commande avec les meme ph, supgro, gro")
+                message = {"error": "Un bon de commande existe déjà pour cette pharmacie, ce grossiste et ce super grossiste aujourd’hui."}
+                return Response(
+                    message["error"],
+                    status=status.HTTP_400_BAD_REQUEST)
+            except ObjectDoesNotExist:
+                print("pas de bon de commande ")
+            except MultipleObjectsReturned:
+                # Plusieurs bons trouvés → renvoyer un message clair
+                message = {"error": "Un bon de commande existe déjà pour cette pharmacie, ce grossiste et ce super grossiste aujourd’hui."}
+                return Response(
+                    message["error"],
+                    status=status.HTTP_400_BAD_REQUEST)
             if not items_raw:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
             # Convertir la chaîne JSON en liste Python

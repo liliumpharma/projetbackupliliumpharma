@@ -162,7 +162,10 @@ class AllExportExcel(APIView):
 
         year = request.GET.get("added__year")
         month = request.GET.get("added__month")
+        print(year)
+        print(month)
         from_office = request.GET.get("from_company__exact")
+        print(from_office)
         print(str(from_office))
 
         if (month):
