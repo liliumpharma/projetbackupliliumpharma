@@ -339,6 +339,10 @@ class OrderAdmin(admin.ModelAdmin):
     def ANAFLAM(self, obj):
         query_set = OrderProduct.objects.filter(order=obj, produit__nom="ANAFLAM")
         return query_set.first().qtt if query_set.exists() else 0
+    
+    def New_B(self, obj):
+        query_set = OrderProduct.objects.filter(order=obj, produit__nom="New B")
+        return query_set.first().qtt if query_set.exists() else 0
 
 
 class OrderSourceProductInLine(admin.TabularInline):
@@ -523,35 +527,41 @@ class OrderSourceAdmin(admin.ModelAdmin):
         product = obj.ordersourceproduct_set.filter(produit__nom="URISOFT")
         quantity = product.first().qtt if product.exists() else 0
         return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("SOPK FREE", obj)} | </span> <span style="color: orange">{quantity}</span>'
+            f'<span>{OrderSourceAdmin.get_product_quantity("URISOFT", obj)} | </span> <span style="color: orange">{quantity}</span>'
         )
 
     def URICITRIL(self, obj):
         product = obj.ordersourceproduct_set.filter(produit__nom="URICITRIL")
         quantity = product.first().qtt if product.exists() else 0
         return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("SOPK FREE", obj)} | </span> <span style="color: orange">{quantity}</span>'
+            f'<span>{OrderSourceAdmin.get_product_quantity("URICITRIL", obj)} | </span> <span style="color: orange">{quantity}</span>'
         )
 
     def BESTFER(self, obj):
         product = obj.ordersourceproduct_set.filter(produit__nom="BESTFER")
         quantity = product.first().qtt if product.exists() else 0
         return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("SOPK FREE", obj)} | </span> <span style="color: orange">{quantity}</span>'
+            f'<span>{OrderSourceAdmin.get_product_quantity("BESTFER", obj)} | </span> <span style="color: orange">{quantity}</span>'
         )
 
     def DIGEST_PLUS(self, obj):
         product = obj.ordersourceproduct_set.filter(produit__nom="DIGEST PLUS")
         quantity = product.first().qtt if product.exists() else 0
         return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("SOPK FREE", obj)} | </span> <span style="color: orange">{quantity}</span>'
+            f'<span>{OrderSourceAdmin.get_product_quantity("DIGEST PLUS", obj)} | </span> <span style="color: orange">{quantity}</span>'
         )
 
     def ANAFLAM(self, obj):
         product = obj.ordersourceproduct_set.filter(produit__nom="ANAFLAM")
         quantity = product.first().qtt if product.exists() else 0
         return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("SOPK FREE", obj)} | </span> <span style="color: orange">{quantity}</span>'
+            f'<span>{OrderSourceAdmin.get_product_quantity("ANAFLAM", obj)} | </span> <span style="color: orange">{quantity}</span>'
+        )
+    def New_B(self, obj):
+        product = obj.ordersourceproduct_set.filter(produit__nom="New B")
+        quantity = product.first().qtt if product.exists() else 0
+        return mark_safe(
+            f'<span>{OrderSourceAdmin.get_product_quantity("New B", obj)} | </span> <span style="color: orange">{quantity}</span>'
         )
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -819,6 +829,9 @@ class UserTargetMonthAdmin(admin.ModelAdmin):
 
     def ANAFLAM(self, obj):
         return self.get_quantity(obj, "ANAFLAM")
+    
+    def New_B(self, obj):
+        return self.get_quantity(obj, "New B")
 
     def get_quantity(self, obj, product_name):
         query_set = UserTargetMonthProduct.objects.filter(

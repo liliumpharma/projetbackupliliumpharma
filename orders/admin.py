@@ -36,7 +36,7 @@ class ExitOrderItemAInline(admin.StackedInline):
 
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('id','added','pharmacy',"gros","super_gros",'user',"observation",'items',"_pdf","from_company")
-    list_filter = ('added','user','from_company')
+    list_filter = ('added','user','from_company', 'gros', 'super_gros')
     date_hierarchy = 'added'
     # fields = ('created_at','etat','wilaya','email','telephone','borderau')
     inlines = [ModelAInline]

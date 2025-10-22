@@ -76,7 +76,12 @@ class SpecialityRolee(models.TextChoices):
     gestionnaire_de_stock = "gestionnaire_de_stock"
     Finance_et_comptabilité = "Finance_et_comptabilité"
 
-
+class Region(models.TextChoices):
+    ouest = "Ouest"
+    est = "Est"
+    centre = "Centre"
+    sud = "Sud"
+    Vide = "-"
 class Rolee(models.TextChoices):
     commercial = "Commercial"
     superviseur = "Superviseur"
@@ -164,7 +169,11 @@ class UserProfile(models.Model):
     gender = models.CharField(
         max_length=15, choices=Gender.choices, default=Gender.homme
     )
-
+    region = models.CharField(
+        max_length=35,
+        choices=Region.choices,
+        default=Region.Vide,
+    )
     # Target Fields
     sectors = models.ManyToManyField(to=Wilaya, null=True, blank=True)
 

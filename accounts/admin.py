@@ -98,6 +98,7 @@ class CustomUserAdmin(UserAdmin):
         "userprofile__family",
         "userprofile__speciality_rolee",
         "is_superuser",
+        "userprofile__region",
     ]
     actions = [recive_mail, not_recive_mail, generate_plan, updateredis]
     list_display = [

@@ -172,10 +172,10 @@
                         .then(response => response.json())
                         .then(data => {
                           data.families.forEach(family => {
-                            //const option = document.createElement('option');
-                            //option.value = family;
-                            //option.textContent = family;
-                            //familySelect.appendChild(option);
+                            const option = document.createElement('option');
+                            option.value = family;
+                            option.textContent = family;
+                            familySelect.appendChild(option);
                           });
                           // ➕ Déclenchement immédiat avec la valeur actuelle (par ex. "all")
                           familySelect.dispatchEvent(new Event('change'));

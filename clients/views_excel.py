@@ -10,6 +10,7 @@ from django.db.models import Q, Sum
 from accounts.models import UserProxy as User
 from produits.models import Produit
 from django.contrib.auth.models import User
+from orders.models import Order, OrderItem
 
 
 class TemplateExportExcel(APIView):
@@ -236,7 +237,7 @@ class SalesExportExcel(APIView):
         worksheet = workbook.add_worksheet("Ventes")
         # ✅ Fusionne les cellules de la première ligne pour le titre
         # Ajuste 'A1:Z1' selon ton nombre de colonnes (Z = 26 colonnes)
-        worksheet.merge_range('A1:W1', titre_global, title_format)
+        worksheet.merge_range('A1:X1', titre_global, title_format)
         worksheet.write(1, 0, "Super Grossite")
         worksheet.write(1, 1, "Wilaya")
         worksheet.write(1, 2, "Month")
@@ -258,6 +259,45 @@ class SalesExportExcel(APIView):
         )
         print(f"ordersources {order_sources}")
         for order_source in order_sources:
+            # 🎨 Définition du format jaune (à faire avant la boucle)
+            yellow_format = workbook.add_format({'bg_color': "#EE9828"})  # jaune clair
+            
+            
+            worksheet.write(row, 0, order_source.source.name, yellow_format)
+            worksheet.write(row, 1, order_source.source.wilaya.nom, yellow_format)
+            worksheet.write(
+                row, 2, f"{order_source.date.month}-{order_source.date.year}", yellow_format
+            )
+            worksheet.write(row, 3, "Bon de Commande", yellow_format)
+            
+            col = 4
+            total_quantities = 0
+            for product in produits:
+                #order_sources_avec_sugro = order_sources.filter(source__name=order_source.source.name)
+                orders = Order.objects.filter(
+                    added__date__range=[first_day_last_month, last_day_last_month], super_gros__name=order_source.source.name, from_company=False
+                )
+
+                total = OrderItem.objects.filter(
+                    order__in=orders, produit=product
+                )
+                print("affichage de total")
+                print(total)
+                s=0
+                for t in total:
+                    s = s +t.qtt
+
+                quantity = s if total.exists() else -1
+
+                worksheet.write(row, col, quantity if quantity != -1 else "-", yellow_format)
+                col += 1
+
+                total_quantities += quantity if quantity != -1 else 0
+            
+            worksheet.write(row, col, total_quantities , yellow_format)
+            
+            row += 1
+            col = 4
             # Writing Sales
             green_format = workbook.add_format({'bg_color': "#9BEC82"})
             worksheet.write(row, 0, order_source.source.name, green_format)
@@ -332,6 +372,9 @@ class SalesExportExcel(APIView):
                 total_quantities += quantity if quantity != -1 else 0
             
             worksheet.write(row, col, total_quantities , yellow_format)
+            
+            
+            
             
             
             

@@ -139,6 +139,9 @@ class AllExportExcel(APIView):
         worksheet.write(row, 20, 'SOPK FREE')
         worksheet.write(row, 21, 'DIGEST PLUS')
         worksheet.write(row, 22, 'ANAFLAM')
+        worksheet.write(row, 23, 'URICITRIL')
+        worksheet.write(row, 24, 'URISOFT')
+        worksheet.write(row, 25, 'BESTFER')
 
 
         # Define product columns and headers
@@ -158,6 +161,9 @@ class AllExportExcel(APIView):
             'SOPK FREE': 20,
             'DIGEST PLUS': 21,
             'ANAFLAM': 22,
+            'URICITRIL':23,
+            'URISOFT':24,
+            'BESTFER':25,
         }
 
         year = request.GET.get("added__year")

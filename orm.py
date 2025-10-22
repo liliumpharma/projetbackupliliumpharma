@@ -62,7 +62,10 @@ print(last_day_last_month)
 
 y=2025
 m=9
-
+from accounts.models import *
+a= User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial", "Commercial"], userprofile__region="Sud")
+print(a)
+exit()
 first_day_last_month = datetime(y, m, 1)
 last_day_last_month = last_day = datetime(y, m, calendar.monthrange(y, m)[1])
 

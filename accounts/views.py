@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import *
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
-from .models import family
+from .models import family, Region
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -251,7 +251,8 @@ def get_monthly_report_details(request):
 
 
 def get_families(request):
-    families = [family.value for family in family]
+    #families = [family.value for family in family]
+    families = [Region.value for Region in Region]
     print("#####")
     print(str(families))
     return JsonResponse({"families": families})
@@ -263,7 +264,7 @@ class UsersByFamilyAPIView(APIView):
         # Getting the 'family' parameter from the request
         family = request.GET.get("family")
         profile = UserProfile.objects.get(user=request.user.id)
-        if family:
+        if family=="1":
             # Fetch users associated with the family
             if request.user.is_superuser:
                 users = User.objects.filter(userprofile__family__in=["lilium Pharma", "Lilium1", "Lilium2", "orient Bio", "Aniya_Pharm", "production", "Administration"])
@@ -339,5 +340,79 @@ class UsersByFamilyAPIView(APIView):
 
             return Response(user_data, status=200)
         else:
+            if request.user.is_superuser:
+                users = User.objects.filter(userprofile__region=family, userprofile__family__in=["lilium Pharma", "Lilium1", "Lilium2", "orient Bio", "Aniya_Pharm", "production", "Administration"])
+                user_data = [
+                {
+                    "id": user.id,
+                    "username": user.username,
+                    # Add other fields as necessary
+                }
+                for user in users
+                ]
+                t={
+                    "id": request.user.id,
+                    "username": request.user.username,
+                }
+                user_data.insert(0,t)
+                t={
+                    "id": 1000000,
+                    "username": "TOUS",
+                }
+                user_data.insert(0,t)
+            elif profile.speciality_rolee == "Superviseur_regional":
+                users = profile.usersunder.all()
+                users = users.filter(userprofile__region=family)
+                user_data = [
+                {
+                    "id": user.id,
+                    "username": user.username,
+                    # Add other fields as necessary
+                }
+                for user in users
+                ]
+                t={
+                    "id": request.user.id,
+                    "username": request.user.username,
+                }
+                user_data.insert(0,t)
+                t={
+                    "id": 1000000,
+                    "username": "TOUS",
+                }
+                user_data.insert(0,t)
+            elif profile.speciality_rolee == "Superviseur_national" or profile.speciality_rolee == "CountryManager":
+                users = User.objects.filter(
+                    userprofile__family=family
+                )  # Adjust this if necessary based on your models
+                users = User.objects.filter(userprofile__region=family, userprofile__family__in=["lilium Pharma", "Lilium1", "Lilium2", "orient Bio", "Aniya_Pharm", "production", "Administration"])
+                user_data = [
+                {
+                    "id": user.id,
+                    "username": user.username,
+                    # Add other fields as necessary
+                }
+                for user in users
+                ]
+                t={
+                    "id": request.user.id,
+                    "username": request.user.username,
+                }
+                user_data.insert(0,t)
+            else:
+                users = request.user
+
+                # Serialize the users - replace 'UserSerializer' with your actual serializer
+                user_data = [
+                    {
+                        "id": user.id,
+                        "username": user.username,
+                        # Add other fields as necessary
+                    }
+                    for user in users
+                ]
+            print(str(user_data))
+
+            return Response(user_data, status=200)
             return Response({"error": "Family parameter is required."}, status=400)
 

@@ -120,6 +120,7 @@ class RapportAPI(APIView):
     def get(self, request, format=None):
         print(str(request))
         commercial_input = request.GET.get("commercial", "").strip()
+        family = request.GET.get("family", "").strip()
 
         if commercial_input:
             print("1")
@@ -136,7 +137,7 @@ class RapportAPI(APIView):
                 .values("specialite")
                 .annotate(dcount=Count("id"))
             )
-
+            print("je suis dans api/api/py RapportAPI")
             # Separate medical and commercial counts
             medecin_nbr = sum(
                 count["dcount"]
