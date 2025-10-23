@@ -438,7 +438,7 @@ def rapport_list(request, imp=0):
     print(f"la famille est {family}")
     print(str(request))
     #if imp==1 and int(commercial_input) == 1000000:
-    if int(commercial_input) == 1000000:
+    if commercial_input == "1000000":
         if user_profile.speciality_rolee == "Superviseur_regional":
             if family == "1":
                 print("tous user under")
