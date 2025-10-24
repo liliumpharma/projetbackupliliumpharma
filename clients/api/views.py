@@ -9,7 +9,7 @@ from datetime import date
 
 from produits.models import Produit
 from clients.models import OrderSource
-from .functions import get_order_source_details, get_target_per_user, get_target_details_per_user, get_target_all_users, get_target_for_supervisor
+from .functions import get_order_source_details, get_target_per_user, get_target_details_per_user, get_target_all_users, get_target_for_supervisor, get_target_per_user_commercial
 from accounts.models import UserProfile, UserProduct
 
 from liliumpharm.utils import month_number_to_french_name
@@ -229,6 +229,10 @@ class UserDataAPIView(APIView):
             u = request.user
         if u.is_superuser or u.userprofile.rolee in ["CountryManager", "Superviseur_national"]:
             targets_per_user = get_target_for_supervisor(**params)
+        #elif u.userprofile.rolee =="Commercial":
+            #targets_per_user = get_target_per_user_commecrial(**params)
+            #print("je suis dans get_target_per_user(**params)")
+            #print(targets_per_user)
         else:
             targets_per_user = get_target_per_user(**params)
             print("je suis dans get_target_per_user(**params)")

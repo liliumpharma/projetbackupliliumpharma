@@ -76,6 +76,7 @@ class MedecinFrontAPI(APIView):
 
     def pagination_response(self, medecins, serializer, medecins_length, other):
         print(str(self))
+        print(other)
         response = {
             "pages": medecins.paginator.num_pages,
             "result": serializer.data,

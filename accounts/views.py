@@ -324,6 +324,11 @@ class UsersByFamilyAPIView(APIView):
                     "username": request.user.username,
                 }
                 user_data.insert(0,t)
+                t={
+                    "id": 1000000,
+                    "username": "TOUS",
+                }
+                user_data.insert(0,t)
             else:
                 users = request.user
 
@@ -399,6 +404,11 @@ class UsersByFamilyAPIView(APIView):
                     "username": request.user.username,
                 }
                 user_data.insert(0,t)
+                t={
+                    "id": 1000000,
+                    "username": "TOUS",
+                }
+                user_data.insert(0,t)
             else:
                 users = request.user
 
@@ -411,6 +421,11 @@ class UsersByFamilyAPIView(APIView):
                     }
                     for user in users
                 ]
+                t={
+                    "id": 1000000,
+                    "username": "TOUS",
+                }
+                user_data.insert(0,t)
             print(str(user_data))
 
             return Response(user_data, status=200)

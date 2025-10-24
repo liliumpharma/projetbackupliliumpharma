@@ -453,7 +453,7 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
         all_plans = []
         delta_day = timedelta(days=1)
         print(str(commercial_input))   
-
+        rapports=0
         if id == 0:
             rapports = rapport_list(request, 1)
             template_name = "rapports/rapports_pdf.html"
@@ -1251,6 +1251,9 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                 set(product_qty_gros_and_super_gros.keys())
             )
             print("je suis dans la ligne 969")
+            print(len(visites))
+            print(len(medecins))
+            print(other_details)
             context = {
                 "visites": len(visites),
                 "clients": len(medecins),
@@ -1432,7 +1435,7 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                 )
                 + "<br>"
             )
-
+            print("je suis a la ligne 1435")
             # Final context
             context = {
                 "visites": visites.count(),

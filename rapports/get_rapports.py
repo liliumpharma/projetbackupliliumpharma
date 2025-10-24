@@ -366,7 +366,11 @@ def add_commercial_filter(request, filters):
     profile = UserProfile.objects.get(user=request.user.id)
     if commercial_input!= '' and commercial_input.isdigit() and int(commercial_input) == 1000000:
         print("il veux tous les rapports de users")
-        if request.user.is_superuser or profile.speciality_rolee == "Superviseur_national" or profile.speciality_rolee == "CountryManager":
+        if request.user.is_superuser:
+            authorized_users = User.objects.filter(userprofile__family__in=["lilium Pharma", "Lilium1", "Lilium2", "orient Bio", "Aniya_Pharm", "production", "Administration"])
+            filters["user__id__in"] = [u.id for u in authorized_users]
+        elif profile.speciality_rolee == "Superviseur_national" or profile.speciality_rolee == "CountryManager":
+            print("oui il est country manager ou nationale")
             authorized_users = User.objects.filter(userprofile__family__in=["lilium Pharma", "Lilium1", "Lilium2", "orient Bio", "Aniya_Pharm", "production", "Administration"])
             filters["user__id__in"] = [u.id for u in authorized_users]
             return filters
@@ -417,11 +421,12 @@ def apply_user_specific_filters(user, user_profile, rapports_list):
             rapports_list = rapports_list.filter(
                 Q(user=user) | Q(user__in=user_profile.usersunder.all())
             )
+        elif user_profile.rolee == "CountryManager":
+            return rapports_list
         else:
             rapports_list = rapports_list.filter(
                 user__userprofile__company=user_profile.company
             )
-
     return rapports_list
 
 
@@ -439,19 +444,21 @@ def rapport_list(request, imp=0):
     print(str(request))
     #if imp==1 and int(commercial_input) == 1000000:
     if commercial_input == "1000000":
-        if user_profile.speciality_rolee == "Superviseur_regional":
-            if family == "1":
+        if request.user.is_superuser:
+            filters["user__in"] = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial", "Commercial","Superviseur_regional"])
+        elif user_profile.speciality_rolee == "Superviseur_regional":
+            if 1:
                 print("tous user under")
                 filters["user__in"] = user_profile.usersunder.all()
             else:
                 print("tous user under")
                 usr = user_profile.usersunder.all()
                 filters["user__in"] = usr.filter(userprofile__region=family)
-        if user.is_superuser or user_profile.speciality_rolee == "CountryManager" or user_profile.speciality_rolee == "Superviseur_national":
+        if user_profile.speciality_rolee == "CountryManager" or user_profile.speciality_rolee == "Superviseur_national":
             print("oui est superuser")
-            if family == "1":
+            if 1:
                 print(" tous user medico commercial")
-                filters["user__in"] = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial", "Commercial"])
+                filters["user__in"] = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial", "Commercial","Superviseur_regional"])
             else:
                 print("oui c'est correct il va dans le else")
                 filters["user__in"] = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial", "Commercial"], userprofile__region=family)
@@ -477,6 +484,7 @@ def rapport_list(request, imp=0):
     # Retrieve the filtered rapports
     rapports_list = Rapport.objects.filter(**filters).order_by("-added").distinct()
     print("je suis la 1111111111111111")
+    print(rapports_list)
     # Apply user-specific filtering
     rapports_list = apply_user_specific_filters(user, user_profile, rapports_list)
     print(str(rapports_list.count()))

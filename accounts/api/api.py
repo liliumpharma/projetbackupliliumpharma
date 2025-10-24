@@ -88,7 +88,7 @@ class UserProfileApi(APIView):
             users = User.objects.filter(
                 userprofile__commune__wilaya__pays=user.userprofile.commune.wilaya.pays,
                 userprofile__is_human=True,
-                userprofile__company=user_company,
+                #userprofile__company=user_company,
             ).exclude(userprofile__speciality_rolee__in=poste_a_exlure)
         elif user.userprofile.speciality_rolee == "Superviseur_national" or user.userprofile.speciality_rolee == "Superviseur_regional":
             users = user.userprofile.usersunder.all()

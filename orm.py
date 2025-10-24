@@ -64,6 +64,19 @@ y=2025
 m=9
 from accounts.models import *
 a= User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial", "Commercial"], userprofile__region="Sud")
+users_under = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial","Commercial"], userprofile__commune__wilaya__pays=1)
+target_months = UserTargetMonth.objects.filter(user__in=users_under, date__month='8',date__year='2025')
+productss = UserTargetMonthProduct.objects.filter(usermonth__in=target_months).values('product').distinct()
+products = Produit.objects.filter(id__in=[p['product'] for p in productss])
+r = UserTargetMonthProduct.objects.filter(usermonth__in=target_months,product__id=29)
+s=0
+for t in r:
+    s=s+t.quantity
+print(s)
+print(len(users_under))
+print(target_months)
+print(productss)
+print(products)
 print(a)
 exit()
 first_day_last_month = datetime(y, m, 1)

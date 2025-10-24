@@ -673,7 +673,7 @@ def get_target_for_supervisor(user_id=None, include_user=False, month=None, year
             print("je suis laaaaaaaaaaaaa")
             #users_under = User.objects.filter(userprofile__commune__wilaya__pays=user_profile.commune.wilaya.pays)
             #users_under = User.objects.all()
-            users_under = User.objects.filter(userprofile__speciality_rolee="Medico_commercial")
+            users_under = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial","Commercial"],commune__wilaya__pays=user.userprofile.commune__wilaya__pays)
 
         elif user.userprofile.rolee == "Superviseur":
             users_under = user_profile.usersunder.all()
@@ -686,9 +686,10 @@ def get_target_for_supervisor(user_id=None, include_user=False, month=None, year
                 return get_target_per_userrrr(user_id, month, year)
 
         print(month)
-        target_months = UserTargetMonth.objects.filter(user__in=users_under)
+        print("hiiiii je suis dans functions.py dans clients")
+        target_months = UserTargetMonth.objects.filter(user__in=users_under,date__year=year[0], date__month=month[0])
         if user.userprofile.rolee == "CountryManager":
-            target_months = UserTargetMonth.objects.filter(user=user_id)
+            target_months = UserTargetMonth.objects.filter(user__in=users_under, date__year=year[0], date__month=month[0])
         
         productss = UserTargetMonthProduct.objects.filter(usermonth__user=user_id).values('product').distinct()
         productss = UserTargetMonthProduct.objects.filter(usermonth__in=target_months).values('product').distinct()

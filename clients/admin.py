@@ -778,6 +778,12 @@ class UserTargetMonthAdmin(admin.ModelAdmin):
     # Méthodes pour afficher les quantités des produits
     def FF(self, obj):
         return self.get_quantity(obj, "FF")
+    
+    def SLEEP_ALAISE(self, obj):
+        return self.get_quantity(obj, "SLEEP_ALAISE")
+    
+    def GOLD_MAG(self, obj):
+        return self.get_quantity(obj, "GOLD_MAG")
 
     def FM(self, obj):
         return self.get_quantity(obj, "FM")
