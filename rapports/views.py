@@ -725,13 +725,15 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
             if int(commercial_input) == 1000000:
                 profile = UserProfile.objects.get(user=request.user)
                 if profile.speciality_rolee == "Superviseur_regional":
-                    rapports = Rapport.objects.filter(
-                    added__range=(date_start, date_end), user__in=profile.usersunder.all()
-                    )
+                    pass
+                    #rapports = Rapport.objects.filter(
+                    #added__range=(date_start, date_end), user__in=profile.usersunder.all()
+                    #)
                 else:
-                    rapports = Rapport.objects.filter(
-                    added__range=(date_start, date_end)
-                    )
+                    pass
+                    #rapports = Rapport.objects.filter(
+                    #added__range=(date_start, date_end)
+                    #)
             else:
                 rapports = Rapport.objects.filter(
                 added__range=(date_start, date_end), user=commercial
