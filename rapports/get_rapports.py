@@ -484,9 +484,10 @@ def rapport_list(request, imp=0):
                     else:
                         print("oui c'est correct il va dans le else")
                         filters["user__in"] = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial", "Commercial"], userprofile__region=family)
-    if commercial_input != "1000000":
+    if commercial_input != "1000000" and commercial_input != '':
         print("oui un user specifique")
-        filters["user__in"] = User.objects.filter(id=int(commercial_input))
+        o =int(commercial_input)
+        filters["user__in"] = User.objects.filter(id=o)
         print(int(commercial_input))
         print(filters['user__in'])
     # Add date filters

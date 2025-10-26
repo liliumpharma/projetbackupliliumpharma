@@ -69,6 +69,9 @@ target_months = UserTargetMonth.objects.filter(user__in=users_under, date__month
 productss = UserTargetMonthProduct.objects.filter(usermonth__in=target_months).values('product').distinct()
 products = Produit.objects.filter(id__in=[p['product'] for p in productss])
 r = UserTargetMonthProduct.objects.filter(usermonth__in=target_months,product__id=29)
+d = User.objects.filter(id='29')
+print(f"dddddddddd {d}")
+exit()
 s=0
 for t in r:
     s=s+t.quantity
