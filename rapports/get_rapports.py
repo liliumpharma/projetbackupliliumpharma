@@ -463,7 +463,7 @@ def rapport_list(request, imp=0):
             else:
                 print("oui c'est correct il va dans le else")
                 filters["user__in"] = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial", "Commercial"], userprofile__region=family)
-    if family:
+    if family != '1':
             if commercial_input == "1000000":
                 if request.user.is_superuser:
                     filters["user__in"] = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial", "Commercial","Superviseur_regional", "CountryManager", "Superviseur_national"],userprofile__region=family)
@@ -486,9 +486,12 @@ def rapport_list(request, imp=0):
                         filters["user__in"] = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial", "Commercial"], userprofile__region=family)
     if commercial_input != "1000000" and commercial_input != '':
         print("oui un user specifique")
-        o =int(commercial_input)
-        filters["user__in"] = User.objects.filter(id=o)
-        print(int(commercial_input))
+        o =commercial_input
+        try:
+            filters["user__in"] = User.objects.filter(id=commercial_input)
+        except:
+            filters["user__in"] = User.objects.filter(username=commercial_input)
+        #print(int(commercial_input))
         print(filters['user__in'])
     # Add date filters
     filters, dates = add_date_filters(request, filters)

@@ -71,6 +71,10 @@ products = Produit.objects.filter(id__in=[p['product'] for p in productss])
 r = UserTargetMonthProduct.objects.filter(usermonth__in=target_months,product__id=29)
 d = User.objects.filter(id='29')
 print(f"dddddddddd {d}")
+from datetime import datetime, date, timedelta
+
+user_planning = Plan.objects.get(day=datetime.today().date(), user=d)
+print(user_planning)
 exit()
 s=0
 for t in r:

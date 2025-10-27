@@ -38,6 +38,7 @@ from deals.models import Deal
 from notifications.utils import send_to_user
 
 
+
 class RapportAppAPI(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -271,6 +272,8 @@ class RapportAppAPI(APIView):
         user_profile = UserProfile.objects.get(user=request.user)
         # GETTING PLANNING
         user_planning = Plan.objects.get(day=datetime.today().date(), user=request.user)
+        print(user_planning)
+        print("hiiiiii")
         print(str(self))
 
         if id:
