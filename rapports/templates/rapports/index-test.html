@@ -728,12 +728,15 @@ rapportsWithLessThanFourVisites.forEach(rapport => {
           const commercial = document.getElementById("search_user").value;
           const mindate = document.getElementById("date_debut").value;
           const maxdate = document.getElementById("date_fin").value;
+          const family= document.getElementById("family_filter").value;
+          const familySelect = document.getElementById('family_filter');
       
           // Créer un objet contenant les filtres, avec des valeurs par défaut ou vides si non sélectionnées
           const params = new URLSearchParams({
             commercial: commercial !== '-1' ? commercial : '',   // Ignorer les valeurs par défaut
             mindate: mindate || '',  // Si la date de début est vide, mettre une chaîne vide
-            maxdate: maxdate || ''   // Si la date de fin est vide, mettre une chaîne vide
+            maxdate: maxdate || '',
+            family: family   // Si la date de fin est vide, mettre une chaîne vide
           });
       
           // Construire l'URL pour l'export PDF en utilisant les paramètres sélectionnés

@@ -404,7 +404,7 @@ class RapportCSV(LoginRequiredMixin, TemplateView):
 from django.db.models import Count
 class RapportPDF(LoginRequiredMixin, TemplateView):
     def get(self, request, id=0):
-
+        print(request)
         print("##### here baby ")
         commercial_input = request.GET.get("commercial", "").strip()
         # Vérification si commercial_input est un identifiant numérique
