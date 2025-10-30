@@ -1179,7 +1179,7 @@ class ordersPerUserPerMonth(APIView):
     def get(self, request):
         user_param = request.GET.get("user")
         if user_param:
-            user = user_param
+            user = User.objects.filter(username=user_param)
         else:
             user = request.user
         # user=request.user

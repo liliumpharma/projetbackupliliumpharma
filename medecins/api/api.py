@@ -761,7 +761,11 @@ class CurrentMonthMedecinVisiteDuoPerUserWithQttProducts(APIView):
 
     def get(self, request):
         year = datetime.today().year
-        user = request.user
+        u = request.GET.get("user")
+        if u:
+            user = User.objects.filter(username=u).first()
+        else:
+            user = request.user
 
         month_param = request.GET.get("month")
         try:
@@ -899,8 +903,11 @@ class VisitsPerUser(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-
-        user = request.user
+        u = request.GET.get("user")
+        if u:
+            user = User.objects.filter(username=u)
+        else:
+            user = request.user
         current_year = datetime.now().year
 
         # Récupérer le paramètre 'month' de l'URL
@@ -1004,8 +1011,11 @@ class VisitsMoreThanOneTimeForMedecinPerUser(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-
-        user = request.user
+        u = request.GET.get("user")
+        if u:
+            user = User.objects.filter(username=u)
+        else:
+            user = request.user
         year = date.today().year
 
         # Récupérer le paramètre 'month' de l'URL
@@ -1225,7 +1235,11 @@ class MedecinsNonVisites(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-        user = request.user
+        u = request.GET.get("user")
+        if u:
+            user = User.objects.filter(username=u)
+        else:
+            user = request.user
         month_param = request.GET.get("month")
         current_year = datetime.now().year
 
@@ -1356,7 +1370,7 @@ class PharmaciesGrossitesVisitsPerUser(APIView):
         current_year = datetime.now().year
 
         if user_param:
-            user = user_param
+            user = User.objects.filter(username=user_param)
         else:
             user = request.user
         # user=user_param
@@ -1472,7 +1486,11 @@ class SuperGrossitesVisitsPerUser(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-        user = request.user
+        u = request.GET.get("user")
+        if u:
+            user = User.objects.filter(username=u)
+        else:
+            user = request.user
         current_year = datetime.now().year
         month_param = request.GET.get("month")
 

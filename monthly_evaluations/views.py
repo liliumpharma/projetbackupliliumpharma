@@ -69,11 +69,20 @@ class MonthlyEvaluationFront(APIView):
 
     def get(self, request):
         if request.user.userprofile.speciality_rolee in ["Superviseur_national"]:
-            return render(request, "monthly_evaluations/index_supervisor.html")
+            print(request.GET.get("eve"))
+            if request.GET.get("eve") is not None:
+                usr = User.objects.filter(username=request.GET.get("user")).first()
+                if usr.userprofile.speciality_rolee == "Medico_commercial":
+                    return render(request, "monthly_evaluations/index copy.html")
+                elif usr.userprofile.speciality_rolee == "Commercial":
+                    return render(request, "monthly_evaluations/index_commercial.html")
+            else:
+                return render(request, "monthly_evaluations/index_supervisor.html")
         else:
             if request.user.userprofile.speciality_rolee in [
                 "CountryManager",
                 "Office",
+                "Admin",
             ]:
                 return render(request, "monthly_evaluations/index_direction.html")
             else:
@@ -87,8 +96,10 @@ class MonthlyEvaluationFront(APIView):
 
     def post(self, request):
         data = request.data.copy()
+        us = request.GET.get("user")
+        a = User.objects.filter(username=us)
         ME = Monthly_Evaluation.objects.filter(
-            user=request.user, added__month=date.today().month
+            user=a, added__month=date.today().month
         )
         return render(request, "monthly_evaluations/index copy.html")
 
@@ -306,6 +317,7 @@ from django.core.serializers import serialize
 class MonthlyEvaluationView(APIView):
     def get(self, request):
         user = request.GET.get("user")
+        print(f"le user est {user}")
         id_username = User.objects.get(username=user)
         month = request.GET.get("month")
         current_year = datetime.now().year
@@ -405,7 +417,11 @@ class print_evaluation(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-        user = request.user
+        u = request.GET.get("user")
+        if u:
+            user = User.objects.filter(username=u)
+        else:
+            user = request.user
         default_month = str(int(datetime.now().month) - 1)
         current_year = datetime.now().year
         month_from_request = request.GET.get("month")

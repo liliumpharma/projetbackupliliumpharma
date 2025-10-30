@@ -433,7 +433,7 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
             ).date()
         else:
             date_start = datetime.strptime("2020-06-01", "%Y-%m-%d").date()
-
+        family = request.GET.get("family")
         if request.GET.get("maxdate"):
             date_end = datetime.strptime(
                 request.GET.get("maxdate"), "%Y-%m-%d"
@@ -516,7 +516,8 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                 id__in=prd_visites.values("medecin__id")
             )
             other_details = f" dont ({len(prd_visites)} visites et {len(prd_medecins)} medecins) contenant le produit"
-
+        if family != '1':
+            user_by_reg = User.objects.filter(userprofile__region=family)
  
         print("je suis avant le travail")
         commercial_input = request.GET.get("commercial", "").strip()
@@ -617,7 +618,11 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                 if profile.speciality_rolee == "Superviseur_regional":
                     orders_commercial = Order.objects.filter(user__in=profile.usersunder.all())
                 else:
-                    orders_commercial = Order.objects.all()
+                    if family =='1':
+                        orders_commercial = Order.objects.all()
+                    else:
+                        #user_by_reg = User.objects.filter(userprofile__region=family)
+                        orders_commercial = Order.objects.filter(user__in=user_by_reg)
             
                 
             orders_transferred_to = ""
@@ -629,7 +634,10 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                 if profile.speciality_rolee == "Superviseur_regional":
                     orders_transferred_to = Order.objects.filter(user__in=profile.usersunder.all())
                 else:
-                    orders_commercial = Order.objects.all()
+                    if family =="1":
+                        orders_commercial = Order.objects.all()
+                    else:
+                        orders_transferred_to = Order.objects.filter(user__in=user_by_reg)
 
             # Orders transferred from the commercial
             if int(commercial_input) != 1000000:
@@ -641,7 +649,10 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                 if profile.speciality_rolee == "Superviseur_regional":
                     orders_transferred_from = Order.objects.filter(user__in=profile.usersunder.all())
                 else:
-                    orders_transferred_from = Order.objects.all()
+                    if family == '1':
+                        orders_transferred_from = Order.objects.all()
+                    else:
+                        orders_transferred_from = Order.objects.filter(user__in=user_by_reg)
             
 
             days = {
@@ -675,9 +686,12 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                     Q(date__range=[date_start, date_end]), user__in=profile.usersunder.all()
                     )
                 else:
-                    absences = Absence.objects.filter(
-                        Q(date__range=[date_start, date_end])
-                        )
+                    if family == '1':
+                        absences = Absence.objects.filter(
+                            Q(date__range=[date_start, date_end])
+                            )
+                    else:
+                        absences = Absence.objects.filter(Q(date__range=[date_start, date_end]), user__in=user_by_reg)
 
             #absence_dates = absences.values_list("date", flat=True)
             absence_dates = absences.values_list("user__first_name", "user__last_name", "date")
@@ -748,9 +762,12 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                     day__month=date_start.month, day__year=date_start.year, user__in=profile.usersunder.all()
                     )
                 else:
-                    planss = Plan.objects.filter(
-                    day__month=date_start.month, day__year=date_start.year
-                    )
+                    if family == '1':
+                        planss = Plan.objects.filter(
+                        day__month=date_start.month, day__year=date_start.year
+                        )
+                    else:
+                        planss= Plan.objects.filter(day__month=date_start.month, day__year=date_start.year, user__in=user_by_reg)
             else:
                 planss = Plan.objects.filter(
                 day__month=date_start.month, day__year=date_start.year, user=commercial
@@ -1022,12 +1039,21 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                         end_date=date_end  # Exclure ceux dont la date de fin est exactement date_end
                     ).order_by(F("start_date").asc(nulls_last=True))
                 else:
-                    leaves = Leave.objects.filter(
-                    start_date__lte=date_end - timedelta(days=1),  # Leave starts before or on the end date of the filter
-                    end_date__gte=date_start,
-                    ).exclude(
-                        end_date=date_end  # Exclure ceux dont la date de fin est exactement date_end
-                    ).order_by(F("start_date").asc(nulls_last=True))
+                    if family =='1':
+                        leaves = Leave.objects.filter(
+                        start_date__lte=date_end - timedelta(days=1),  # Leave starts before or on the end date of the filter
+                        end_date__gte=date_start,
+                        ).exclude(
+                            end_date=date_end  # Exclure ceux dont la date de fin est exactement date_end
+                        ).order_by(F("start_date").asc(nulls_last=True))
+                    else:
+                        leaves = Leave.objects.filter(
+                            user__in=user_by_reg,
+                            start_date__lte=date_end - timedelta(days=1),  # Leave starts before or on the end date of the filter
+                            end_date__gte=date_start,
+                            ).exclude(
+                            end_date=date_end  # Exclure ceux dont la date de fin est exactement date_end
+                            ).order_by(F("start_date").asc(nulls_last=True))
             else:
                 leaves = Leave.objects.filter(
                 user=commercial,
@@ -1060,7 +1086,10 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                 if profile.speciality_rolee == "Superviseur_regional":
                     total_rapp = profile.usersunder.all().count()
                 else:
-                    total_rapp = UserProfile.objects.filter(speciality_rolee__in=["Medico_commercial", "Commercial", "Superviseur_regional"], hidden=False, user__is_active=True).count()
+                    if family == '1':
+                        total_rapp = UserProfile.objects.filter(speciality_rolee__in=["Medico_commercial", "Commercial", "Superviseur_regional"], hidden=False, user__is_active=True).count()
+                    else:
+                        total_rapp = UserProfile.objects.filter(speciality_rolee__in=["Medico_commercial", "Commercial", "Superviseur_regional"], hidden=False, user__is_active=True, region=family).count()
                 day_count = day_count * total_rapp
 
             # Prepare leaves data for the context
@@ -1135,17 +1164,30 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                         else:
                             a.append(details)
                 else:
-                    orders = Order.objects.filter(
-                    added__range=(date_start, date_end)
-                    )
-                    
-                    usrs = User.objects.filter(
+                    if family == '1':
+                        orders = Order.objects.filter(
+                        added__range=(date_start, date_end)
+                        )
+                        usrs = User.objects.filter(
                         userprofile__speciality_rolee__in=["Commercial", "Medico_commercial"]
-                    ).exclude(id__in=leaves) \
+                        ).exclude(id__in=leaves) \
                          .exclude(userprofile__hidden=True) \
                          .exclude(userprofile__is_human=False) \
                          .exclude(userprofile__speciality_rolee__in=["Office","chargé_de_communication","gestionnaire_de_stock","Finance_et_comptabilité","Admin"]) \
                          .exclude(userprofile__family__in=["production"])
+                    else:
+                        orders = Order.objects.filter(
+                        added__range=(date_start, date_end), user__in=user_by_reg
+                        )
+                        usrs = User.objects.filter(
+                        userprofile__speciality_rolee__in=["Commercial", "Medico_commercial"],
+                        userprofile__region=family
+                        ).exclude(id__in=leaves) \
+                         .exclude(userprofile__hidden=True) \
+                         .exclude(userprofile__is_human=False) \
+                         .exclude(userprofile__speciality_rolee__in=["Office","chargé_de_communication","gestionnaire_de_stock","Finance_et_comptabilité","Admin"]) \
+                         .exclude(userprofile__family__in=["production"])
+                    
                     for usr in usrs:
                         ords = Order.objects.filter(
                             user=usr, added__range=(date_start, date_end)
@@ -2794,8 +2836,12 @@ class RapportSummaryAPIView(APIView):
     )
 
     def get(self, request):
-        user = request.GET.get("user")
-        if user is None:
+        u = request.GET.get('user')
+        print(f"uuuuuuuu {u}")
+        if u:
+            user = User.objects.filter(username=u).first()
+            print(f"userrrrrrrrr {user}")
+        else:
             user = request.user
 
         year = request.GET.get("year", datetime.now().year)

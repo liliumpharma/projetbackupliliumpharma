@@ -978,6 +978,10 @@ class UsersWithTargetMonth(APIView):
 
         current_year = datetime.now().year
         print("yeaaar " + str(current_year))
+        print(request.GET.get("user"))
+        u = request.GET.get("user")
+        if u is not None:
+            user = User.objects.filter(username=u).first()
         month = request.GET.get("month")
         if month == "null":
             month = datetime.now().month - 1

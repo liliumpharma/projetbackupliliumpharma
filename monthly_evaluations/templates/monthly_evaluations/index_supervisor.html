@@ -1505,9 +1505,43 @@ input[type="radio"]:checked::before {
 
           if (!user.has_eval) {
             // Créez un lien de vue alternative "View"
-            var viewLink = document.createElement('a');
-            viewLink.textContent = '-';
-            actionCell.appendChild(viewLink);
+            //var viewLink = document.createElement('a');
+            //viewLink.textContent = '-';
+            //actionCell.appendChild(viewLink);
+
+            // --- Bouton 2 : Détails (exemple) ---
+    var detailsButton = document.createElement('a');
+    detailsButton.classList.add('vbutton');
+    detailsButton.textContent = 'Rep';
+    detailsButton.onclick = function() {
+        const baseUrl = window.location.href.split('?')[0];
+                const urlParams = new URLSearchParams(window.location.search);
+            
+                if (urlParams.has('user')) {
+                    urlParams.set('user', user.user);
+                } else {
+                    urlParams.append('user', user.user);
+                }
+                urlParams.append('eve', 1);
+                
+              
+                const newUrl = baseUrl + '?' + urlParams.toString();
+                history.replaceState({}, document.title, newUrl);
+                document.getElementById("myEvalsTable").classList.add("d-none");
+                document.getElementById("myEvalsTable").classList.remove("d-block");
+                window.location.reload();
+
+                //window.open(baseUrl+ '?' + urlParams.toString(), '_blank');
+                //chargerContenuPDF();class="table table-bordered d-block"
+                //myEvalsTable
+                
+                //document.getElementById("header").classList.add("d-none");
+              //document.getElementById("main-container").classList.remove("d-none");
+    };
+
+    // --- Ajout des deux boutons dans la cellule ---
+ 
+    actionCell.appendChild(detailsButton);
 
         }else{
 
@@ -1524,6 +1558,8 @@ input[type="radio"]:checked::before {
                 } else {
                     urlParams.append('user', user.user);
                 }
+
+                
               
                 const newUrl = baseUrl + '?' + urlParams.toString();
                 history.replaceState({}, document.title, newUrl);
@@ -1531,8 +1567,43 @@ input[type="radio"]:checked::before {
                 document.getElementById("header").classList.add("d-none");
                 document.getElementById("main-container").classList.remove("d-none");
             };
-            actionCell.appendChild(evaluateButton);
+            // --- Bouton 2 : Détails (exemple) ---
+    var detailsButton = document.createElement('a');
+    detailsButton.classList.add('vbutton');
+    detailsButton.textContent = 'Rep';
+    detailsButton.onclick = function() {
+        const baseUrl = window.location.href.split('?')[0];
+                const urlParams = new URLSearchParams(window.location.search);
+            
+                if (urlParams.has('user')) {
+                    urlParams.set('user', user.user);
+                } else {
+                    urlParams.append('user', user.user);
+                }
+                urlParams.append('eve', 1);
+                
+              
+                const newUrl = baseUrl + '?' + urlParams.toString();
+                history.replaceState({}, document.title, newUrl);
+                document.getElementById("myEvalsTable").classList.add("d-none");
+                document.getElementById("myEvalsTable").classList.remove("d-block");
+                window.location.reload();
+
+                //window.open(baseUrl+ '?' + urlParams.toString(), '_blank');
+                //chargerContenuPDF();class="table table-bordered d-block"
+                //myEvalsTable
+                
+                //document.getElementById("header").classList.add("d-none");
+              //document.getElementById("main-container").classList.remove("d-none");
+    };
+
+    // --- Ajout des deux boutons dans la cellule ---
+    actionCell.appendChild(evaluateButton);
+    actionCell.appendChild(detailsButton);
         }
+        
+        
+        
       }
     row.appendChild(actionCell);
 
