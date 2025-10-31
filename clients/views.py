@@ -979,13 +979,16 @@ class UsersWithTargetMonth(APIView):
         current_year = datetime.now().year
         print("yeaaar " + str(current_year))
         print(request.GET.get("user"))
-        u = request.GET.get("user")
-        if u is not None:
-            user = User.objects.filter(username=u).first()
+        uu = request.GET.get("user")
+        if uu is not None:
+            user = User.objects.filter(username=uu).first()
+            print(user)
+        else:
+            user = request.user
         month = request.GET.get("month")
         if month == "null":
             month = datetime.now().month - 1
-        user = request.user
+        #user = request.user
         response = []
 
         if (
@@ -1087,7 +1090,7 @@ class UsersWithTargetMonth(APIView):
                             }
                         )
             else:
-                user = request.user
+                #user = request.user
                 has_eval = False
                 has_sup_eval = False
                 has_direction_eval = False
@@ -1103,7 +1106,7 @@ class UsersWithTargetMonth(APIView):
                     has_direction_eval = me.user_direction_evaluation
                     own_perc = me.own_perc
                 if SupEvaluation.objects.filter(
-                    user__username=request.user,
+                    user__username=user,
                     added__month=month,
                     added__year=current_year,
                 ).exists():

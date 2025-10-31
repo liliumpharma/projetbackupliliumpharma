@@ -48,7 +48,7 @@
   <div class="alert alert-success" role="alert" style="display: flex; flex-wrap: wrap;">
     <div class="col-md-6" style="box-sizing: border-box; padding: 5px;">
       <h4 class="alert-heading">Important!</h4>
-      <p class="card-text">Avant de commencer Vous devez vérifier le mois séléctionné</p>
+      <p class="card-text">Avant de commencer Vous devez vérifier le mois séléctionné  fffff</p>
       <p class="card-text">Vous devez remplir tous les champs pour pouvoir valider votre évaluation</p>
       <p class="card-text">L'action de validation est irréversible, vérifiez vos réponses avant de valider, vous serez responsables de vos reponses</p>
     </div>
@@ -212,11 +212,12 @@ function isChecked() {
 
     // Get the value of the 'month' parameter
     const month = urlParamss.get('month');
+    const usser = urlParamss.get('user');
 
 
 
     function fetchData(){
-    fetch('https://app.liliumpharma.com/rapports/RapportSummaryAPIView?month='+month)
+    fetch('https://app.liliumpharma.com/rapports/RapportSummaryAPIView?month='+month+'&user='+usser)
       .then((response) => response.json())
       .then((data) => {
         nombre_rapport.textContent = data.num_reports+'/'+data.days_in_month
@@ -1371,15 +1372,16 @@ textarea.addEventListener("input", function() {
     function fetchData() {
       const urlParams = new URLSearchParams(window.location.search);
       const monthUrl = urlParams.get('month');
+      const ussssssser = urlParams.get('user');
 
-      fetch('https://app.liliumpharma.com/medecins/api/VisitsPerUser?month='+monthUrl)
+      fetch('https://app.liliumpharma.com/medecins/api/VisitsPerUser?month='+monthUrl+'&user='+ussssssser)
         .then((response) => response.json())
         .then((data) => {
         document.getElementById("response_1").innerHTML = data.nombre_visites
         document.getElementById("doctors_1").innerHTML = data.noms_medecins_visites
       })
-
-      fetch('https://app.liliumpharma.com/medecins/api/VisitsMoreThanOneTimeForMedecinPerUser?month='+monthUrl)
+      var usssssser = urlParams.get('user');
+      fetch('https://app.liliumpharma.com/medecins/api/VisitsMoreThanOneTimeForMedecinPerUser?month='+monthUrl+'&user='+usssssser)
         .then((response) => response.json())
         .then((data) => {
         document.getElementById("response_2_medecins").innerHTML = data.nombre_medecins_visites
@@ -1459,8 +1461,8 @@ textarea.addEventListener("input", function() {
         })        
 
       })
-
-      fetch('https://app.liliumpharma.com/medecins/api/MedecinsNonVisites?month='+monthUrl)
+      const ussssser = urlParams.get('user');
+      fetch('https://app.liliumpharma.com/medecins/api/MedecinsNonVisites?month='+monthUrl+'&user='+ussssser)
       .then((response) => response.json())
       .then((data) => {
       nombre_medecins_non_visites = data.nombre_medecins_non_visites
@@ -1537,8 +1539,8 @@ textarea.addEventListener("input", function() {
       
       
     });
-
-      fetch('https://app.liliumpharma.com/medecins/api/v2/current_month_medecin_visite_duo_per_user_with_qtt_products?month='+monthUrl)
+      const usssser = urlParams.get('user');
+      fetch('https://app.liliumpharma.com/medecins/api/v2/current_month_medecin_visite_duo_per_user_with_qtt_products?month='+monthUrl+'&user='+usssser)
       .then((response) => response.json())
       .then((data) => {
       document.getElementById("response_4_medecins").innerHTML = data.nombre_medecins_visites_en_duo
@@ -1637,8 +1639,9 @@ fetchData();
   doctor_input_6_1.addEventListener("input", (e)=>{
     const value = e.target.value.toLowerCase();
     const value_text = e.target.textContent
+    const ussser = urlParams.get('user');
     if(value.length >= 3)
-      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value+'&user='+ussser)
         .then((response) => {
           return response.json();
         })
@@ -1682,8 +1685,9 @@ fetchData();
   doctor_input_6_2.addEventListener("input", (e)=>{
     const value = e.target.value.toLowerCase();
     const value_text = e.target.textContent
+    const ussser = urlParams.get('user');
     if(value.length >= 3)
-      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value+'&user='+ussser)
         .then((response) => {
           return response.json();
         })
@@ -1727,8 +1731,9 @@ fetchData();
   doctor_input_6_3.addEventListener("input", (e)=>{
     const value = e.target.value.toLowerCase();
     const value_text = e.target.textContent
+    const ussser = urlParams.get('user');
     if(value.length >= 3)
-      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value+'&user='+ussser)
         .then((response) => {
           return response.json();
         })
@@ -1772,8 +1777,9 @@ fetchData();
   doctor_input_6_4.addEventListener("input", (e)=>{
     const value = e.target.value.toLowerCase();
     const value_text = e.target.textContent
+    const ussser = urlParams.get('user');
     if(value.length >= 3)
-      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value+'&user='+ussser)
         .then((response) => {
           return response.json();
         })
@@ -1817,8 +1823,9 @@ fetchData();
   doctor_input_6_5.addEventListener("input", (e)=>{
     const value = e.target.value.toLowerCase();
     const value_text = e.target.textContent
+    const ussser = urlParams.get('user');
     if(value.length >= 3)
-      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value+'&user='+ussser)
         .then((response) => {
           return response.json();
         })
@@ -1862,8 +1869,9 @@ fetchData();
   doctor_input_6_6.addEventListener("input", (e)=>{
     const value = e.target.value.toLowerCase();
     const value_text = e.target.textContent
+    const ussser = urlParams.get('user');
     if(value.length >= 3)
-      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value+'&user='+ussser)
         .then((response) => {
           return response.json();
         })
@@ -1907,8 +1915,9 @@ fetchData();
   doctor_input_6_7.addEventListener("input", (e)=>{
     const value = e.target.value.toLowerCase();
     const value_text = e.target.textContent
+    const ussser = urlParams.get('user');
     if(value.length >= 3)
-      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value+'&user='+ussser)
         .then((response) => {
           return response.json();
         })
@@ -1953,8 +1962,9 @@ fetchData();
   doctor_input_6_8.addEventListener("input", (e)=>{
     const value = e.target.value.toLowerCase();
     const value_text = e.target.textContent
+    const ussser = urlParams.get('user');
     if(value.length >= 3)
-      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value+'&user='+ussser)
         .then((response) => {
           return response.json();
         })
@@ -1999,8 +2009,9 @@ fetchData();
   doctor_input_6_9.addEventListener("input", (e)=>{
     const value = e.target.value.toLowerCase();
     const value_text = e.target.textContent
+    const ussser = urlParams.get('user');
     if(value.length >= 3)
-      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value+'&user='+ussser)
         .then((response) => {
           return response.json();
         })
@@ -2045,8 +2056,9 @@ fetchData();
   doctor_input_6_10.addEventListener("input", (e)=>{
     const value = e.target.value.toLowerCase();
     const value_text = e.target.textContent
+    const ussser = urlParams.get('user');
     if(value.length >= 3)
-      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value+'&user='+ussser)
         .then((response) => {
           return response.json();
         })
@@ -2165,8 +2177,9 @@ fetchData();
   document.getElementById("doctor_input_7").addEventListener("input", (e)=>{
     const value = e.target.value.toLowerCase();
     const value_text = e.target.textContent
+    const ussser = urlParams.get('user');
     if(value.length >= 3)
-      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value)
+      fetch("https://app.liliumpharma.com/medecins/api/v2/search?name="+value+'&user='+ussser)
         .then((response) => {
           return response.json();
         })
@@ -2289,8 +2302,9 @@ const addMedecin_8 = (name) => {
 // FETCH DOCTORS USING INPUT for doctor_input_8
 document.getElementById("doctor_input_8").addEventListener("input", (e) => {
     const value = e.target.value.toLowerCase();
+    const ussser = urlParams.get('user');
     if (value.length >= 3) {
-        fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value)
+        fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value+'&user='+ussser)
             .then((response) => {
                 return response.json();
             })
@@ -2413,8 +2427,9 @@ const addMedecin_9 = (name) => {
 // FETCH DOCTORS USING INPUT for doctor_input_9
 document.getElementById("doctor_input_9").addEventListener("input", (e) => {
     const value = e.target.value.toLowerCase();
+    const ussser = urlParams.get('user');
     if (value.length >= 3) {
-        fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value)
+        fetch("https://app.liliumpharma.com/medecins/api/v2/search?name=" + value+'&user='+ussser)
             .then((response) => {
                 return response.json();
             })
@@ -3055,9 +3070,11 @@ document.getElementById('submit_2').addEventListener('click', makePostRequest);
 <script>
   const printButton = document.getElementById('imprimer-bouton');
   const monthUrl_2 = urlParams.get('month');
+  const usssser = urlParams.get('user');
+  //const ussser = urlParams.get('user');
 
   printButton.addEventListener('click', function() {
-    const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/print_evaluation/?month=' + monthUrl_2;
+    const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/print_evaluation/?month=' + monthUrl_2+'&user='+usssser;
     console.log(apiUrl);
 
     fetch(apiUrl)
@@ -3094,8 +3111,9 @@ document.getElementById('submit_2').addEventListener('click', makePostRequest);
   function fetchSuperGro() {
     const urlParams = new URLSearchParams(window.location.search);
     const monthUrl = urlParams.get('month');
+    const ussser = urlParams.get('user');
 
-    fetch('https://app.liliumpharma.com/medecins/api/SuperGrossitesVisitsPerUser?month=' + monthUrl)
+    fetch('https://app.liliumpharma.com/medecins/api/SuperGrossitesVisitsPerUser?month=' + monthUrl+'&user='+ussser)
     .then((response) => response.json())
     .then((data) => {
       console.log(data)
@@ -3195,8 +3213,9 @@ fetchSuperGro();
   function fetchPharmacies(){
     const urlParams = new URLSearchParams(window.location.search);
     const monthUrl = urlParams.get('month');
+    const ussser = urlParams.get('user');
 
-    fetch('https://app.liliumpharma.com/medecins/api/PharmaciesGrossitesVisitsPerUser?month='+monthUrl)
+    fetch('https://app.liliumpharma.com/medecins/api/PharmaciesGrossitesVisitsPerUser?month='+monthUrl+'&user='+ussser)
       .then((response) => response.json())
       .then((data) => {
         document.getElementById("response_11").innerHTML = data.nombre_visites
@@ -3214,8 +3233,9 @@ const response_13=''
 function fetchOrders() {
   const urlParams = new URLSearchParams(window.location.search);
   const monthUrl = urlParams.get('month');
+  const ussser = urlParams.get('user');
   
-  fetch('https://app.liliumpharma.com/orders/ordersPerUserPerMonth?month=' + monthUrl)
+  fetch('https://app.liliumpharma.com/orders/ordersPerUserPerMonth?month=' + monthUrl+'&user='+ussser)
     .then((response) => response.json())
     .then((data) => {
       console.log(data)
@@ -3406,8 +3426,9 @@ fetchOrders();
     function fetchProduits() {
         const urlParams = new URLSearchParams(window.location.search);
         const monthUrl = urlParams.get('month');
+        const usssssssser = urlParams.get('user');
 
-        fetch('https://app.liliumpharma.com/produits/api/get_user_products/')
+        fetch('https://app.liliumpharma.com/produits/api/get_user_products'+'?user='+usssssssser)
             .then((response) => response.json())
             .then((data) => {
                 generateProductCards(data);
@@ -3449,9 +3470,10 @@ fetchOrders();
 
         inputElement.addEventListener("input", (e) => {
           const value = e.target.value.toLowerCase();
+          const ussser = urlParams.get('user');
           if (value.length >= 3) {
             // SEARCH DOCTORS
-            fetch(`https://app.liliumpharma.com/medecins/api/v2/search?name=${value}`)
+            fetch(`https://app.liliumpharma.com/medecins/api/v2/search?name=${value}&user=${ussser}`)
               .then((response) => response.json())
               .then((data) => {
                 if (data.length > 0) {
@@ -3512,8 +3534,8 @@ function fetchProduits_q10() {
     const urlParams = new URLSearchParams(window.location.search);
     const monthUrl = urlParams.get('month');
     note_q10=0
-
-    fetch('https://app.liliumpharma.com/produits/api/get_user_products/')
+    const ussser = urlParams.get('user');
+    fetch('https://app.liliumpharma.com/produits/api/get_user_products'+'?user='+ussser)
         .then((response) => response.json())
         .then((data) => {
             generateProductCards10(data);
@@ -3557,8 +3579,9 @@ function generateProductCards10(products) {
 
         inputElement.addEventListener("input", (e) => {
             const value = e.target.value.toLowerCase();
+            const ussser = urlParams.get('user');
             if (value.length >= 3) {
-                fetch(`https://app.liliumpharma.com/medecins/api/v2/search?name=${value}`)
+                fetch(`https://app.liliumpharma.com/medecins/api/v2/search?name=${value}&user=${ussser}`)
                     .then((response) => response.json())
                     .then((data) => {
                         if (data.length > 0) {
@@ -3778,8 +3801,9 @@ fetchProduits_q10();
             var evaluateButton = document.createElement('a');
             evaluateButton.classList.add('vbutton');
             evaluateButton.textContent = 'View';
+            const ussser = urlParams.get('user');
             evaluateButton.onclick = function() {
-              const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/print_evaluation/?month=' + monthUrl_2;
+              const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/print_evaluation/?month=' + monthUrl_2+'&user='+ussser;
               console.log(apiUrl);
 
               fetch(apiUrl)
@@ -3816,7 +3840,8 @@ fetchProduits_q10();
   }
   
   const monthUrll = urlParams.get('month');
-  fetch('https://app.liliumpharma.com/clients/users-with-target-month/?month='+monthUrll)
+  const ussser = urlParams.get('user');
+  fetch('https://app.liliumpharma.com/clients/users-with-target-month/?month='+monthUrll+'&user='+ussser)
       .then(response => response.json())
       .then(data => {
         // console.log(data)
@@ -3840,7 +3865,7 @@ fetchProduits_q10();
   
   
   
-      const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/get-monthly-evaluation/?month=' + monthUrl+ '&user='+userUrl;
+      const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/get-monthly-evaluation/?month=' + monthUrl+'&user='+ussser;
       // ECRIRE LES ERRORS EN ARABE
       fetch(apiUrl)
         .then(response => {

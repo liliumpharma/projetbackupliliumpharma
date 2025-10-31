@@ -84,9 +84,10 @@ class GetUserProducts(APIView):
 
     def get(self, request):
         # user_products = UserProduct.objects.filter(user=request.user)
-        u = request.GET.get("user")
-        if u:
-            user = User.objects.filter(username=u)
+        uu = request.GET.get("user")
+        if uu:
+            user = User.objects.filter(username=uu).first()
+            print(f"user est {user} je suis dans GetUserProducts")
         else:
             user = request.user
         products_data = []
@@ -105,6 +106,7 @@ class GetUserProducts(APIView):
             #user = request.user
             previous_month = current_month - 1 if current_month > 1 else 12
             user_target_month = UserTargetMonthProduct.objects.filter(usermonth__user = user, usermonth__date__month=previous_month, usermonth__date__year = current_year)
+            print(f"user_target_month {user_target_month}")
             target_products = user_target_month.values_list('product__nom', flat=True).distinct()
             # target_products = Produit.objects.all()
 
@@ -116,7 +118,7 @@ class GetUserProducts(APIView):
                     # "quantity": user_product.quantity,
                 }
                 products_data.append(product_data)
-
+        print(product_data)
         return Response(products_data) 
 
 

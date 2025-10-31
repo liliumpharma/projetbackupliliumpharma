@@ -403,9 +403,13 @@ class MedecinAPIV2(APIView):
 
     def get(self, request):
         medecins_list = []
-        user = request.user
+        u = request.GET.get("user")
+        if u:
+            user = User.objects.filter(username=u).first()
+        else:
+            user = request.user
         start = request.GET.get("name")
-        if request.user.userprofile.speciality_rolee == "Commercial":
+        if user.userprofile.speciality_rolee == "Commercial":
             medecins = Medecin.objects.filter(
                 Q(nom__icontains=start) | Q(id__startswith=start), users=user
             )
@@ -761,9 +765,9 @@ class CurrentMonthMedecinVisiteDuoPerUserWithQttProducts(APIView):
 
     def get(self, request):
         year = datetime.today().year
-        u = request.GET.get("user")
-        if u:
-            user = User.objects.filter(username=u).first()
+        uu = request.GET.get("user")
+        if uu:
+            user = User.objects.filter(username=uu).first()
         else:
             user = request.user
 
@@ -905,7 +909,7 @@ class VisitsPerUser(APIView):
     def get(self, request):
         u = request.GET.get("user")
         if u:
-            user = User.objects.filter(username=u)
+            user = User.objects.filter(username=u).first()
         else:
             user = request.user
         current_year = datetime.now().year
@@ -1013,7 +1017,7 @@ class VisitsMoreThanOneTimeForMedecinPerUser(APIView):
     def get(self, request):
         u = request.GET.get("user")
         if u:
-            user = User.objects.filter(username=u)
+            user = User.objects.filter(username=u).first()
         else:
             user = request.user
         year = date.today().year
@@ -1237,7 +1241,7 @@ class MedecinsNonVisites(APIView):
     def get(self, request):
         u = request.GET.get("user")
         if u:
-            user = User.objects.filter(username=u)
+            user = User.objects.filter(username=u).first()
         else:
             user = request.user
         month_param = request.GET.get("month")
@@ -1370,7 +1374,7 @@ class PharmaciesGrossitesVisitsPerUser(APIView):
         current_year = datetime.now().year
 
         if user_param:
-            user = User.objects.filter(username=user_param)
+            user = User.objects.filter(username=user_param).first()
         else:
             user = request.user
         # user=user_param
@@ -1488,7 +1492,7 @@ class SuperGrossitesVisitsPerUser(APIView):
     def get(self, request):
         u = request.GET.get("user")
         if u:
-            user = User.objects.filter(username=u)
+            user = User.objects.filter(username=u).first()
         else:
             user = request.user
         current_year = datetime.now().year

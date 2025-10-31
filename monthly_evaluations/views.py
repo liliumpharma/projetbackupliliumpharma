@@ -419,7 +419,7 @@ class print_evaluation(APIView):
     def get(self, request):
         u = request.GET.get("user")
         if u:
-            user = User.objects.filter(username=u)
+            user = User.objects.filter(username=u).first()
         else:
             user = request.user
         default_month = str(int(datetime.now().month) - 1)
