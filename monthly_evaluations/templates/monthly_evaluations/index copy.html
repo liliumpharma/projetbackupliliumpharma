@@ -2951,6 +2951,7 @@ const radioButtons = document.querySelectorAll('input[name="qualite"]');
   console.log(postData)
   const urlParams = new URLSearchParams(window.location.search);
   const monthUrl = urlParams.get('month');
+  const qqqqq = urlParams.get('user');
 
   const textAreas = document.querySelectorAll(
   '[id^="RaisonsMedecinsNonVisites_"], ' +
@@ -2993,12 +2994,14 @@ if (hasEmptyField && firstEmptyField !== null) {
     behavior: "smooth"
   });
 }
-
+const urlParamss = new URLSearchParams(window.location.search);
+  const e = urlParamss.get('month');
+  const l = urlParamss.get('user');
 if (hasEmptyField) {
   vanillaToast.error("ATTENTION: Remplissez tous les champs avant de soumettre le formulaire.");   
 }else{
   $.ajax({
-      url: '/monthly_evaluation/AddMonthlyEvaluation/?month=' + monthUrl,
+      url: '/monthly_evaluation/AddMonthlyEvaluation/?month=' + e +'&user='+l,
       type: 'POST',
       data: postData,
       success: function (response) {
@@ -3426,9 +3429,9 @@ fetchOrders();
     function fetchProduits() {
         const urlParams = new URLSearchParams(window.location.search);
         const monthUrl = urlParams.get('month');
-        const usssssssser = urlParams.get('user');
+        const ttt = urlParams.get('user');
 
-        fetch('https://app.liliumpharma.com/produits/api/get_user_products'+'?user='+usssssssser)
+        fetch('https://app.liliumpharma.com/produits/api/get_user_products/'+'?month='+monthUrl+'&user='+ttt)
             .then((response) => response.json())
             .then((data) => {
                 generateProductCards(data);
@@ -3534,8 +3537,8 @@ function fetchProduits_q10() {
     const urlParams = new URLSearchParams(window.location.search);
     const monthUrl = urlParams.get('month');
     note_q10=0
-    const ussser = urlParams.get('user');
-    fetch('https://app.liliumpharma.com/produits/api/get_user_products'+'?user='+ussser)
+    const ccc = urlParams.get('user');
+    fetch('https://app.liliumpharma.com/produits/api/get_user_products/'+'?month='+monthUrl+'&user='+ccc)
         .then((response) => response.json())
         .then((data) => {
             generateProductCards10(data);

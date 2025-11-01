@@ -10,6 +10,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'liliumpharm.settings')
 django.setup()
 
 from rapports.models import Visite
+from monthly_evaluations.models import Monthly_Evaluation
 
 
 from django.utils.timezone import now
@@ -24,5 +25,12 @@ aujourdhui = aujourdhui.date()
 
 from accounts.models import *
 
-user = User.objects.filter(username="MESLIOUIDZ").first()
+user = User.objects.filter(username='itedaldz').first()
 print(user)
+
+ME = Monthly_Evaluation.objects.filter(
+            user=user, added__year=date.today().year, added__month=int('9')
+        )
+
+
+print(ME)

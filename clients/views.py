@@ -1049,7 +1049,7 @@ class UsersWithTargetMonth(APIView):
             if user.userprofile.speciality_rolee == "Superviseur_national":
                 users_under_supervisor = user.userprofile.usersunder.all()
                 users_under_supervisor = users_under_supervisor.exclude(
-                    username=request.user.username
+                    username=user.username
                 )
                 for u in users_under_supervisor:
                     has_eval = False
@@ -1057,9 +1057,10 @@ class UsersWithTargetMonth(APIView):
                     has_direction_eval = False
                     pourcentage = 0
                     own_perc = 0
-                    if UserTargetMonth.objects.filter(
-                        user=u, date__month=month, date__year=current_year
-                    ).exists():
+                    #if UserTargetMonth.objects.filter(
+                    #    user=u, date__month=month, date__year=current_year
+                    #).exists():
+                    if 1:
                         me = Monthly_Evaluation.objects.filter(
                             user=u, added__month=month, added__year=current_year
                         ).first()

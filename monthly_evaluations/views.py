@@ -244,10 +244,16 @@ class AddMonthlyEvaluation(APIView):
 
     def post(self, request):
         data = request.data.copy()
-        month_url = int(request.GET.get("month", date.today().month))
-
+        #month_url = int(request.GET.get("month", date.today().month))
+        month_url = int(request.GET.get("month"))
+        uu = request.GET.get("user")
+        if uu:
+            user = User.objects.filter(username=uu).first()
+        else:
+            user = request.user
+        print(f"month {month_url}  user  {user}")
         ME = Monthly_Evaluation.objects.filter(
-            user=request.user, added__year=date.today().year, added__month=month_url
+            user=user, added__year=date.today().year, added__month=month_url
         )
 
         if ME.exists():
@@ -257,7 +263,7 @@ class AddMonthlyEvaluation(APIView):
             return Response({"message": message}, status=403)
         else:
             data.pop("csrfmiddlewaretoken")
-            data["user"] = request.user
+            data["user"] = user
             if month_url in [1, 3, 5, 7, 8, 10, 12]:  # Mois avec 31 jours
                 day_of_month = 31
             elif month_url in [4, 6, 9, 11]:  # Mois avec 30 jours

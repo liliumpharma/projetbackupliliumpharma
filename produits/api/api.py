@@ -90,6 +90,10 @@ class GetUserProducts(APIView):
             print(f"user est {user} je suis dans GetUserProducts")
         else:
             user = request.user
+            print("request.user")
+        print("noooooooooooooo")
+        if not user or not hasattr(user, "userprofile"):
+            return Response({"error": "Utilisateur non valide ou non authentifié"}, status=400)
         products_data = []
         if user.userprofile.speciality_rolee == "Commercial":
             produits = Produit.objects.all()
