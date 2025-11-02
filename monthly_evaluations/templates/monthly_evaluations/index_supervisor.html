@@ -1865,7 +1865,7 @@ for (var i = 21; i <= 23; i++) { // Update the loop range to cover all 22 questi
           var userUrll = getUserFromUrl();
           console.log("finished postData: " + JSON.stringify(postData));
           $.ajax({
-              url: '/monthly_evaluation/AddMonthlyEvaluationSup/?month=' + monthUrll + '&user=' + userUrll,
+              url: 'https://app.liliumpharma.com/monthly_evaluation/AddMonthlyEvaluationSup/?month=' + monthUrll + '&user=' + userUrll,
               type: 'POST',
               data: postData,
               success: function(response) {

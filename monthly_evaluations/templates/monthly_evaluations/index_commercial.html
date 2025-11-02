@@ -1125,6 +1125,7 @@ const radioButtons = document.querySelectorAll('input[name="qualite"]');
 
   const urlParams = new URLSearchParams(window.location.search);
   const monthUrl = urlParams.get('month');
+  const usr = urlParams.get('user');
 
   const textAreas = document.querySelectorAll(
   '[id^="RaisonsMedecinsNonVisites_"], ' +
@@ -1169,7 +1170,7 @@ if (hasEmptyField && firstEmptyField !== null) {
 //   vanillaToast.error("ATTENTION: Remplissez tous les champs avant de soumettre le formulaire.");   
 // }else{
   $.ajax({
-      url: '/monthly_evaluation/AddCommercialeMonthlyEvaluation/?month=' + monthUrl,
+      url: '/monthly_evaluation/AddCommercialeMonthlyEvaluation/?month=' + monthUrl + '&user='+usr,
       type: 'POST',
       data: postData,
       success: function (response) {
