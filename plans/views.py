@@ -1817,12 +1817,18 @@ def PlanPDF(request):
         or request.user.userprofile.rolee == "CountryManager"
     ):
         plans = Plan.objects.filter(
-            user__username=usern, day__gte=min_date, day__lte=max_date,plantask__isnull=False
+            user=user, day__gte=min_date, day__lte=max_date
         ).distinct()
+        #plans = Plan.objects.filter(
+        #    user=user, day__gte=min_date, day__lte=max_date,plantask__isnull=False
+        #).distinct()
     else:
         plans = Plan.objects.filter(
-            user=request.user, day__gte=min_date, day__lte=max_date,plantask__isnull=False
+            user=request.user, day__gte=min_date, day__lte=max_date
         ).distinct()
+        #plans = Plan.objects.filter(
+        #    user=request.user, day__gte=min_date, day__lte=max_date,plantask__isnull=False
+        #).distinct()
 
     # Filtrer les jours de travail (non free_day)
     plans = [p for p in plans if not p.free_day]

@@ -120,9 +120,24 @@
               <tr>
                   {% for single in plan %}
                       <td>
-                          <small><b>Médecins:</b></small><br/>
+                          <small><b>Clients:</b></small><br/>
                           {% for medecin in single.clients.all %}
-                              <small>- {{ medecin.nom }}</small><br/>
+                              <span style="font-weight: bold;">{{ forloop.counter }}</span><small>- <span style="font-weight: bold;">{{ medecin.nom }} {{ medecin.id }}</span> ({{ medecin.specialite }}) : </small>
+                              {% with last_visite=medecin.visite_set.last %}
+  {% if last_visite %}
+    <small style="color:gray;">
+      Dernière visite : 
+      
+      <span style="font-style:italic;">
+        <span style="color: green;">Par : {{ last_visite.rapport.user.get_full_name|default:last_visite.rapport.user.username }}</span>
+        <span style="color: red;">le : {{ last_visite.rapport.added }}</span>
+      </span>
+    </small><br/>
+  {% else %}
+    <small style="color:gray;">Aucune visite</small><br/>
+  {% endif %}
+{% endwith %}
+
                           {% endfor %}
                       </td>
                   {% endfor %}
