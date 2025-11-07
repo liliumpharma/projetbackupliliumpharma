@@ -374,6 +374,15 @@ document.getElementById('mini-loader').style.display = 'none';
                       // Exclure les éléments ayant tasks.length > 0
                       const filteredItems = itemsToDisplay2.filter(item => item.tasks.length === 0);
 
+                      //  Vérifier si aucun rapport
+    if (filteredItems.length === 0) {
+      document.getElementById('id_empty_recap').innerHTML = `
+        <p style="color: gray; font-style: italic; text-align: center; margin-top: 10px;">
+          Aucun rapport trouvé.
+        </p>`;
+      return; // on arrête ici
+    }
+
                       filteredItems.forEach((item) => {
                       
                         // Filtrer les rapports avec moins de 4 visites
