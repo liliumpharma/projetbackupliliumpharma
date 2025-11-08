@@ -65,7 +65,8 @@ from leaves.models import*
 import datetime
 
 # Récupérer la date d'hier
-previous_day = datetime.datetime.today() - datetime.timedelta(days=1)
+#previous_day = datetime.datetime.today() - datetime.timedelta(days=1)
+previous_day = date.today() -timedelta(days=1)
 
 # Filtrer les plans d'hier
 for p in Plan.objects.filter(day=previous_day):
@@ -151,7 +152,8 @@ if calendar.day_name[yesturday.weekday()] not in ["Friday", "Saturday"]:
     excluded_profiles = ["Office", "Finance_et_comptabilité", "gestionnaire_de_stock", "Admin"]
 
     # for usr in User.objects.filter(query, userprofile__hidden=False, userprofile__is_human=True).exclude(userprofile__speciality_rolee__in=excluded_profiles):
-    for usr in User.objects.filter(query, is_active=True, userprofile__hidden=False, userprofile__is_human=True).exclude(userprofile__speciality_rolee__in=excluded_profiles):
+    #for usr in User.objects.filter(query, is_active=True, userprofile__hidden=False, userprofile__is_human=True).exclude(userprofile__speciality_rolee__in=excluded_profiles):
+    for usr in User.objects.filter(is_active=True, userprofile__hidden=False, userprofile__is_human=True).exclude(userprofile__speciality_rolee__in=excluded_profiles):
         try:
             r=Rapport.objects.get(user=usr,added=yesturday)
             print("user : "+str(usr))
@@ -168,8 +170,8 @@ if calendar.day_name[yesturday.weekday()] not in ["Friday", "Saturday"]:
 
         except Exception as e:
             # Create Absences
-            leaves_on_date = Leave.objects.filter(start_date__lte=yesturday, end_date__gte=yesturday, user=p.user)
-            if leaves_on_date is None:
+            leaves_on_date = Leave.objects.filter(start_date__lte=yesturday, end_date__gte=yesturday, user=usr)
+            if not leaves_on_date.exists():
                 print("created absence for "+str(usr))
                 Absence.objects.create(user=usr, reason=f'Rapport du {yesturday} Manquant', date=yesturday)
 

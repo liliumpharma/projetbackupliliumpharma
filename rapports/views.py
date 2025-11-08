@@ -546,7 +546,7 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                     or request.user.userprofile.rolee == "CountryManager"
                 ):
                     plans = Plan.objects.filter(
-                    user__username=usern, day__gte=min_date, day__lte=max_date,plantask__isnull=False
+                    user=user, day__gte=min_date, day__lte=max_date,plantask__isnull=False
                     ).distinct()
                 else:
                     plans = Plan.objects.filter(
@@ -758,46 +758,83 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
             if int(commercial_input) == 1000000:
                 profile = UserProfile.objects.get(user=request.user)
                 if profile.speciality_rolee == "Superviseur_regional":
+                    #planss = Plan.objects.filter(
+                    #day__month=date_start.month, day__year=date_start.year, user__in=profile.usersunder.all()
+                    #)
                     planss = Plan.objects.filter(
-                    day__month=date_start.month, day__year=date_start.year, user__in=profile.usersunder.all()
+                        day__range=[date_start, date_end],
+                        user__in=profile.usersunder.all()
                     )
                 else:
                     if family == '1':
                         planss = Plan.objects.filter(
                         day__month=date_start.month, day__year=date_start.year
                         )
+                        planss = Plan.objects.filter(
+                            day__range=[date_start, date_end],
+                            #user=commercial
+                        )
                     else:
-                        planss= Plan.objects.filter(day__month=date_start.month, day__year=date_start.year, user__in=user_by_reg)
+                        #planss= Plan.objects.filter(day__month=date_start.month, day__year=date_start.year, user__in=user_by_reg)
+                        planss = Plan.objects.filter(
+                            day__range=[date_start, date_end],
+                            user__in=user_by_reg
+                        )
+
             else:
+                #planss = Plan.objects.filter(
+                #day__month=date_start.month, day__year=date_start.year, user=commercial
+                #)
                 planss = Plan.objects.filter(
-                day__month=date_start.month, day__year=date_start.year, user=commercial
+                    day__range=[date_start, date_end],
+                    user=commercial
                 )
+
     
             for plan in planss:
-                clients_list = plan.clients.exclude(
-                    specialite__in=specialites_a_exclure
-                )
+                clients_list = plan.clients.all()
+                #clients_list = plan.clients.exclude(
+                #    specialite__in=specialites_a_exclure
+                #)
+                
+                print(f"clients_list  {clients_list.count()}")
+                o = Rapport.objects.filter(added=plan.day, user=plan.user)
                 matching_doctors = (
                     Visite.objects.filter(
-                        rapport__in=rapports, medecin__in=clients_list
+                        rapport__in=o, medecin__in=clients_list
                     )
-                    .exclude(medecin__specialite__in=specialites_a_exclure)
                     .distinct()
                     .count()
                 )
-                client_list_count = clients_list.count() or 1
-                similarity_percentage = (matching_doctors * 100) / client_list_count
-                total_similarity_percentage += similarity_percentage
+                print(f"matching_doctors  {matching_doctors}")
+                #matching_doctors = (
+                #    Visite.objects.filter(
+                #        rapport__in=rapports, medecin__in=clients_list
+                #    )
+                #    #.exclude(medecin__specialite__in=specialites_a_exclure)
+                #    .distinct()
+                #    .count()
+                #)
+                #client_list_count = clients_list.count() or 1
+                #similarity_percentage = (matching_doctors * 100) / client_list_count
+                #total_similarity_percentage += similarity_percentage
+                if plan.plantask_set.exists():
+                    total_similarity_percentage += 100
+                else:
+                    client_list_count = clients_list.count() or 1
+                    #similarity_percentage = (matching_doctors / client_list_count) * 100
+                    similarity_percentage = round((matching_doctors / client_list_count) * 100, 2)
+                    total_similarity_percentage += similarity_percentage
                 # Calculate average similarity percentage
-                average_similarity_percentage = (
-                    total_similarity_percentage / plan_count if plan_count else 0
-                )
+            average_similarity_percentage = (
+                total_similarity_percentage / plan_count if plan_count else 0
+            )
 
-                if not average_similarity_percentage:
-                    average_similarity_percentage = 0
+            if not average_similarity_percentage:
+                average_similarity_percentage = 0
 
-                if average_similarity_percentage > 100:
-                    average_similarity_percentage = 100
+            if average_similarity_percentage > 100:
+                average_similarity_percentage = 100
 
             # GETTING DISTINCT MEDICAL COUNT
             medecin_nbr = len(medecins) - len(
@@ -1033,34 +1070,26 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                 if profile.speciality_rolee == "Superviseur_regional":
                     leaves = Leave.objects.filter(
                         user__in=profile.usersunder.all(),
-                    start_date__lte=date_end - timedelta(days=1),  # Leave starts before or on the end date of the filter
+                    start_date__lte=date_end,  # Leave starts before or on the end date of the filter
                     end_date__gte=date_start,
-                    ).exclude(
-                        end_date=date_end  # Exclure ceux dont la date de fin est exactement date_end
                     ).order_by(F("start_date").asc(nulls_last=True))
                 else:
                     if family =='1':
                         leaves = Leave.objects.filter(
-                        start_date__lte=date_end - timedelta(days=1),  # Leave starts before or on the end date of the filter
+                        start_date__lte=date_end,  # Leave starts before or on the end date of the filter
                         end_date__gte=date_start,
-                        ).exclude(
-                            end_date=date_end  # Exclure ceux dont la date de fin est exactement date_end
                         ).order_by(F("start_date").asc(nulls_last=True))
                     else:
                         leaves = Leave.objects.filter(
                             user__in=user_by_reg,
-                            start_date__lte=date_end - timedelta(days=1),  # Leave starts before or on the end date of the filter
+                            start_date__lte=date_end,  # Leave starts before or on the end date of the filter
                             end_date__gte=date_start,
-                            ).exclude(
-                            end_date=date_end  # Exclure ceux dont la date de fin est exactement date_end
                             ).order_by(F("start_date").asc(nulls_last=True))
             else:
                 leaves = Leave.objects.filter(
                 user=commercial,
-                start_date__lte=date_end - timedelta(days=1),  # Leave starts before or on the end date of the filter
+                start_date__lte=date_end,  # Leave starts before or on the end date of the filter
                 end_date__gte=date_start,
-                ).exclude(
-                end_date=date_end  # Exclure ceux dont la date de fin est exactement date_end
                 ).order_by(F("start_date").asc(nulls_last=True))
 
             print("leaves : " + str(leaves))
@@ -1087,9 +1116,9 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                     total_rapp = profile.usersunder.all().count()
                 else:
                     if family == '1':
-                        total_rapp = UserProfile.objects.filter(speciality_rolee__in=["Medico_commercial", "Commercial", "Superviseur_regional"], hidden=False, user__is_active=True).count()
+                        total_rapp = UserProfile.objects.filter(speciality_rolee__in=["Medico_commercial", "Commercial", "Superviseur_regional","Superviseur_national","CountryManager"], hidden=False, user__is_active=True).count()
                     else:
-                        total_rapp = UserProfile.objects.filter(speciality_rolee__in=["Medico_commercial", "Commercial", "Superviseur_regional"], hidden=False, user__is_active=True, region=family).count()
+                        total_rapp = UserProfile.objects.filter(speciality_rolee__in=["Medico_commercial", "Commercial", "Superviseur_regional","Superviseur_national","CountryManager"], hidden=False, user__is_active=True, region=family).count()
                 day_count = day_count * total_rapp
 
             # Prepare leaves data for the context

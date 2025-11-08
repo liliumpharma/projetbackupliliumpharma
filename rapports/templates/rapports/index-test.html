@@ -366,7 +366,16 @@
                 })
                 .then(data => {
                   console.log("Cacher le loader");
-document.getElementById('mini-loader').style.display = 'none';
+                  document.getElementById('mini-loader').style.display = 'none';
+                  // Vérifier si data ou data.result est vide
+  if (!data || !data.result || data.result.length === 0) {
+    document.getElementById('id_empty_recap').innerHTML = `
+      <p style="color: gray; font-style: italic; text-align: center; margin-top: 10px;">
+        Aucun rapport trouvé.
+      </p>`;
+    document.getElementById('total2').textContent = '';
+    return; // on arrête ici
+  }
                   const itemsToDisplay2 = data.result || [];
                   document.getElementById('id_empty_recap').innerHTML = '';  // Vider les liens
                   document.getElementById('total2').textContent = ''; 
@@ -375,13 +384,7 @@ document.getElementById('mini-loader').style.display = 'none';
                       const filteredItems = itemsToDisplay2.filter(item => item.tasks.length === 0);
 
                       //  Vérifier si aucun rapport
-    if (filteredItems.length === 0) {
-      document.getElementById('id_empty_recap').innerHTML = `
-        <p style="color: gray; font-style: italic; text-align: center; margin-top: 10px;">
-          Aucun rapport trouvé.
-        </p>`;
-      return; // on arrête ici
-    }
+    
 
                       filteredItems.forEach((item) => {
                       
@@ -549,10 +552,10 @@ rapportsWithLessThanFourVisites.forEach(rapport => {
                             <div>
                               ${item.tasks && item.tasks.length > 0 ? `
                                 <div>
-                                  <h6 class="text-left"><strong>Tâches :</strong></h6>
-                                  <ul>
+                                  <h6 class="text-left" style="color:blue"><strong>Tâches :</strong></h6>
+                                  <ul style="color:blue">
                                     ${item.tasks.map(task => `
-                                      <li>
+                                      <li style="color:blue">
                                         <strong>${task.task}</strong> (ID: ${task.id}) - ${task.completed ? 'Complété' : 'Non complété'}
                                       </li>
                                     `).join('')}

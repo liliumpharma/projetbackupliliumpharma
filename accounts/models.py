@@ -340,18 +340,20 @@ class UserProfile(models.Model):
             day__month=datetime.datetime.now().month,
             day__year=datetime.datetime.now().year,
         ):
-            clients_list = plan.clients.exclude(specialite__in=specialites_a_exclure)
-
+            clients_list = plan.clients.all()
+            o = Rapport.objects.filter(added=plan.day, user=plan.user)
             matching_doctors = (
-                Visite.objects.filter(rapport__in=rapports, medecin__in=clients_list)
-                .exclude(medecin__specialite__in=specialites_a_exclure)
+                Visite.objects.filter(rapport__in=o, medecin__in=clients_list)
                 .distinct()
                 .count()
             )
-
-            client_list_count = clients_list.count() or 1
-            similarity_percentage = (matching_doctors * 100) / client_list_count
-            total_similarity_percentage += similarity_percentage
+            if plan.plantask_set.exists():
+                total_similarity_percentage += 100
+            else:
+                client_list_count = clients_list.count() or 1
+                #similarity_percentage = (matching_doctors / client_list_count) * 100
+                similarity_percentage = round((matching_doctors / client_list_count) * 100, 2)
+                total_similarity_percentage += similarity_percentage
 
         # Calculate average similarity percentage
         average_similarity_percentage = (
