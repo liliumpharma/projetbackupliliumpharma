@@ -267,7 +267,7 @@ class UsersByFamilyAPIView(APIView):
         if family=="1":
             # Fetch users associated with the family
             if request.user.is_superuser:
-                users = User.objects.filter(userprofile__family__in=["lilium Pharma", "Lilium1", "Lilium2", "orient Bio", "Aniya_Pharm", "production", "Administration"])
+                users = User.objects.filter(is_active=True, userprofile__hidden=False, userprofile__is_human=True, userprofile__speciality_rolee__in=["Medico_commercial","Commercial","Superviseur_regional","Superviseur_national","CountryManager"])
                 user_data = [
                 {
                     "id": user.id,

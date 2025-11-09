@@ -170,7 +170,7 @@ if calendar.day_name[yesturday.weekday()] not in ["Friday", "Saturday"]:
 
         except Exception as e:
             # Create Absences
-            leaves_on_date = Leave.objects.filter(start_date__lte=yesturday, end_date__gte=yesturday, user=usr)
+            leaves_on_date = Leave.objects.filter(start_date__lte=yesturday, end_date__gte=yesturday, user=usr).exclude(end_date=yesturday)
             if not leaves_on_date.exists():
                 print("created absence for "+str(usr))
                 Absence.objects.create(user=usr, reason=f'Rapport du {yesturday} Manquant', date=yesturday)

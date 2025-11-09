@@ -223,6 +223,7 @@ class UserDataAPIView(APIView):
             params["years"] = years
 
         # ✅ Récupération des targets
+        #u = 0
         if selected_users:
             u = User.objects.get(id=selected_users[0])
         else:

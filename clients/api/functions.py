@@ -361,25 +361,27 @@ def get_target_per_user(user_id=None, months=None, years=None):
                 users_in_same_wilaya_count = users_in_same_wilaya.count() if users_in_same_wilaya.count() > 0 else 1
 
 
-                if(user_profile.rolee in ["Superviseur","Medico_commercial","Commercial"] and not isUserUnderItSelf):
+                if user_profile.speciality_rolee == "Commercial":
                     # users_in_same_wilaya_count -= 1
 
                     us = UserTargetMonthProduct.objects.filter(
                         usermonth__date__year__in=years,
                         usermonth__date__month__in=months,
-                        usermonth__user__userprofile__sectors=wilaya,
+                        usermonth__user__userprofile__sectors__in=[wilaya],
+                        usermonth__user__userprofile__speciality_rolee="Commercial",
                         product=product
                     ).exclude(
                         usermonth__user__userprofile__speciality_rolee="Superviseur_national"
                     ).values("usermonth__user").distinct()
 
-                    users_in_same_wilaya_count = us.count() - 1
+                    users_in_same_wilaya_count = us.count()
                 
-                if(user_profile.rolee in ["Superviseur","Medico_commercial","Commercial"] and isUserUnderItSelf):
+                if(user_profile.speciality_rolee in ["Medico_commercial"]):
                     us = UserTargetMonthProduct.objects.filter(
                         usermonth__date__year__in=years,
                         usermonth__date__month__in=months,
-                        usermonth__user__userprofile__sectors=wilaya,
+                        usermonth__user__userprofile__sectors__in=[wilaya],
+                        usermonth__user__userprofile__speciality_rolee="Medico_commercial",
                         product=product
                     ).exclude(
                         usermonth__user__userprofile__speciality_rolee="Superviseur_national"
@@ -387,7 +389,7 @@ def get_target_per_user(user_id=None, months=None, years=None):
                     users_in_same_wilaya_count = us.count()
                 
 
-                if(user_profile.rolee in ["Commercial"] and not isUserUnderItSelf):
+                if(user_profile.rolee in ["Commmmercial"] and not isUserUnderItSelf):
                     print ("im commercial")
                     us = UserTargetMonthProduct.objects.filter(
                         usermonth__date__year__in=years,
@@ -430,8 +432,10 @@ def get_target_per_user(user_id=None, months=None, years=None):
                 #     print(months)
                 #     print(wilaya)
                 #     print(users_in_same_wilaya)
-                
-                total_product_quantity_sold += round(total / users_in_same_wilaya_count, 2)
+                if users_in_same_wilaya_count:
+                    total_product_quantity_sold += round(total / users_in_same_wilaya_count, 2)
+                else:
+                    total_product_quantity_sold = total_product_quantity_sold + total
 
                 # Preparing Query String
                 query_string = f'user={user_id}&product={product.id}'

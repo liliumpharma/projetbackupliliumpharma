@@ -1133,8 +1133,19 @@ def get_working_days(start_date, end_date):
         current_day += timedelta(days=1)
     return working_days
 
+def get_working_days_with_wend(start_date, end_date):
+    total_days = (end_date - start_date).days + 1
+    working_days = 0
+    current_day = start_date
+    while current_day < end_date:
+        # Exclure vendredi (weekday() == 4) et samedi (weekday() == 5)
+        working_days += 1
+        current_day += timedelta(days=1)
+    return working_days
+
 from django.db.models import Prefetch
 from django.utils.timezone import make_aware
+from rapports.models import *
 
 from django.utils.timezone import make_aware
 from datetime import datetime, timedelta
@@ -1184,6 +1195,7 @@ class ReportView(APIView):
             leaves_by_type = {leave_type: 0 for leave_type in leave_types}
             absence_days = 0
             total_days = 0
+            total_days_with_wend = 0
 
             for leave in leaves:
                 # Convertir les dates des congés en `datetime` si elles sont stockées comme `date`
@@ -1202,6 +1214,7 @@ class ReportView(APIView):
 
                 # Calculer les jours pris en excluant les vendredis et samedis
                 days_taken = get_working_days(actual_start_date, actual_end_date)
+                total_days_with_wend_a = get_working_days_with_wend(leave_start, leave_end)
 
                 # Grouper par type de congé
                 if leave.leave_type.description in leaves_by_type:
@@ -1210,6 +1223,7 @@ class ReportView(APIView):
                     total_by_leave_type[leave.leave_type.description] += days_taken
 
                 total_days += days_taken
+                total_days_with_wend = total_days_with_wend + total_days_with_wend_a
 
             # Récupérer les absences de l'utilisateur
             absences = Absence.objects.filter(user=user)
@@ -1217,7 +1231,30 @@ class ReportView(APIView):
             if starting_date and ending_date:
                 # Filtrer les absences en fonction des dates fournies
                 absences = absences.filter(date__lte=ending_date, date__gte=starting_date)
+            if starting_date and ending_date:
+                rapports = Rapport.objects.filter(
+                    user=user, added__range=[starting_date, ending_date]
+                )
+            elif starting_date:
+                rapports = Rapport.objects.filter(user=user, added__gte=starting_date)
+            elif ending_date:
+                rapports = Rapport.objects.filter(user=user, added__lte=ending_date)
+            else:
+                rapports = Rapport.objects.filter(user=user)
+            # Étape 2 : Annoter le nombre de visites
+            rapports = rapports.annotate(nb_visites=Count('visite', distinct=True))
 
+            # Étape 3 : Garder seulement ceux ayant moins de 6 visites
+            rapports = rapports.filter(nb_visites__lt=6).order_by('added')
+            
+            rapport_vide_count = rapports.count()
+            
+            if user.userprofile.speciality_rolee in ["Superviseur_regional", "Superviseur_national", "CountryManager"]:
+                for t in rapports:
+                    if Plan.objects.get(user=user, day=t.added).plantask_set.exists():
+                        rapport_vide_count = rapport_vide_count - 1
+            
+            
             for absence in absences:
                 # Calculer les jours d'absence pris (1 jour par absence)
                 absence_days += 1
@@ -1228,11 +1265,13 @@ class ReportView(APIView):
             user_data.append({
                 'num_id': num_id,
                 'username': user.username,
-                'company': user.userprofile.company,
+                'company': user.userprofile.speciality_rolee,
                 'pc_paie_id': user.userprofile.pc_paie_id,
                 'absence_days': absence_days,
                 'leaves_by_type': leaves_by_type,
-                'total_days': total_days
+                'total_days': total_days,
+                'rapport_vide': rapport_vide_count,
+                'total_days_with_wend':total_days_with_wend
             })
             num_id += 1
             globale_total_days += total_days
@@ -1246,7 +1285,9 @@ class ReportView(APIView):
 
 
         # Trier les utilisateurs d'abord par entreprise (company) puis par total de jours (total_days)
-        user_data = sorted(user_data, key=lambda x: (x['company'], x['total_days']), reverse=True)
+        #user_data = sorted(user_data, key=lambda x: (x['company'], x['total_days']), reverse=True)
+        user_data = sorted(user_data, key=lambda x: x['total_days_with_wend'], reverse=True)
+
 
         # Créer l'objet date_infos
         date_infos = {

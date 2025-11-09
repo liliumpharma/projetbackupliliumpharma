@@ -205,12 +205,14 @@
             <th>N°</th>
             <th>Utilisateur</th>
             <th>Pc Paie ID</th>
-            <th>Company</th>
+            <th>Fonction</th>
             <th>Absences</th>
             {% for leave_type in leave_types %}
             <th>{{ leave_type }}</th>
             {% endfor %}
-            <th>Total</th>
+            <th>Rapports Vides</th>
+            <th style="background-color: yellow;">Total. Pc Paie</th>
+            <th>Total 2</th>
           </tr>
         </thead>
         <tbody>
@@ -229,9 +231,18 @@
               Jours
             </td>
             {% endfor %}
-            <td>{{ user.total_days }} Jours</td>
+            
+            {% if user.rapport_vide > 0 %}
+              <td style="background-color: red;">{{ user.rapport_vide }} rapports</td>
+            {% else %}
+              <td>{{ user.rapport_vide }} rapports</td>
+            {% endif %}
+              
+            <td style="background-color: yellow;">{{ user.total_days }} Jours</td>
+            <td>{{ user.total_days_with_wend }} Jours</td>
           </tr>
           {% endfor %}
+          
             <!-- Ligne pour afficher les totaux -->
             <tr>
               <td colspan="4" style="text-align:right; font-weight:bold;">Total</td>

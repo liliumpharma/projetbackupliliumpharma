@@ -1072,24 +1072,32 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                         user__in=profile.usersunder.all(),
                     start_date__lte=date_end,  # Leave starts before or on the end date of the filter
                     end_date__gte=date_start,
+                    ).exclude(
+                        end_date=date_end
                     ).order_by(F("start_date").asc(nulls_last=True))
                 else:
                     if family =='1':
                         leaves = Leave.objects.filter(
                         start_date__lte=date_end,  # Leave starts before or on the end date of the filter
                         end_date__gte=date_start,
+                        ).exclude(
+                            end_date=date_end
                         ).order_by(F("start_date").asc(nulls_last=True))
                     else:
                         leaves = Leave.objects.filter(
                             user__in=user_by_reg,
                             start_date__lte=date_end,  # Leave starts before or on the end date of the filter
                             end_date__gte=date_start,
+                            ).exclude(
+                                end_date=date_end
                             ).order_by(F("start_date").asc(nulls_last=True))
             else:
                 leaves = Leave.objects.filter(
                 user=commercial,
                 start_date__lte=date_end,  # Leave starts before or on the end date of the filter
                 end_date__gte=date_start,
+                ).exclude(
+                    end_date=date_end
                 ).order_by(F("start_date").asc(nulls_last=True))
 
             print("leaves : " + str(leaves))

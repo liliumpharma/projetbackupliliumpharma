@@ -367,7 +367,8 @@ class UserProfile(models.Model):
             color = "orange"
         else:
             color = "green"
-
+        if average_similarity_percentage > 100:
+            average_similarity_percentage = 100
         # Display details
         other_details += f"<p style='font-weight: bold; margin: 0;font-size:16px; color:black'>Moyenne Similarité Planning / Rapport: <span style='font-weight:bold; color:{color}'>{int(average_similarity_percentage)}%</span></p>"
 
