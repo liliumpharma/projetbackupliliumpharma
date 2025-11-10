@@ -491,7 +491,8 @@ def get_target_per_user(user_id=None, months=None, years=None):
                 "total_achievements": [thousand_separator(total_achievement) for total_achievement in total_achievements],
                 "total_target": thousand_separator(total_target),
                 "total_reached": thousand_separator(total_reached),
-                "percentage_reached": percentage_reached
+                "percentage_reached": percentage_reached,
+                "test":0
                 }
 
         return data
@@ -530,6 +531,7 @@ def get_target_for_supervisor(user_id=None, include_user=False, months=None, yea
         if user.userprofile.rolee in ["CountryManager"]:
             print("je suis dans functions.py dans clients/api >> oui c'est country manager")
             users_under = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial","Commercial"],userprofile__commune__wilaya__pays=user_profile.commune.wilaya.pays)
+            users_under_cm = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial"],userprofile__commune__wilaya__pays=user_profile.commune.wilaya.pays)
         elif user.userprofile.rolee in ["Superviseur"]:
             print("je suis dans functions.py dans clients/api >> oui c'est rolee superviseur")
             users_under = user_profile.usersunder.all()
@@ -551,14 +553,18 @@ def get_target_for_supervisor(user_id=None, include_user=False, months=None, yea
             years = OrderSource.objects.all().values_list('date__year').distinct()
         
         wilayas = Wilaya.objects.all()
-
-        user_target_month_products = UserTargetMonthProduct.objects.filter(usermonth__date__year__in=years, usermonth__date__month__in=months, usermonth__user__in=users_under).values('product__id','product', 'product__price', 'product__nom').distinct()
+        if user.userprofile.rolee in ["CountryManager"]:
+            user_target_month_products = UserTargetMonthProduct.objects.filter(usermonth__date__year__in=years, usermonth__date__month__in=months, usermonth__user__in=users_under_cm).values('product__id','product', 'product__price', 'product__nom').distinct()
+        else:
+            user_target_month_products = UserTargetMonthProduct.objects.filter(usermonth__date__year__in=years, usermonth__date__month__in=months, usermonth__user__in=users_under).values('product__id','product', 'product__price', 'product__nom').distinct()
 
         orders = OrderProduct.objects.filter(order__source__date__month__in=months, order__source__date__year__in=years, produit__id__in=user_target_month_products.values_list('product__id', flat=True)).values('produit__nom').annotate(total=Sum('qtt'))
 
         for user_target_month_product in user_target_month_products:
-
-            target_quantity = UserTargetMonthProduct.objects.filter(usermonth__date__year__in=years, usermonth__date__month__in=months, usermonth__user__in=users_under, product__id=user_target_month_product['product__id']).aggregate(total=Sum('quantity'))['total']
+            if user.userprofile.rolee in ["CountryManager"]:
+                target_quantity = UserTargetMonthProduct.objects.filter(usermonth__date__year__in=years, usermonth__date__month__in=months, usermonth__user__in=users_under_cm, product__id=user_target_month_product['product__id']).aggregate(total=Sum('quantity'))['total']
+            else:
+                target_quantity = UserTargetMonthProduct.objects.filter(usermonth__date__year__in=years, usermonth__date__month__in=months, usermonth__user__in=users_under, product__id=user_target_month_product['product__id']).aggregate(total=Sum('quantity'))['total']
             targets.append(round(target_quantity, 2))
             total_targets.append(round(target_quantity * user_target_month_product['product__price'], 2))
 

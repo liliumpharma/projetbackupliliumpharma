@@ -116,7 +116,7 @@
         <div>
             <div class="region">Région(s):</div>
             {% for wilaya in data.wilayas %}
-            {{ wilaya.nom }} |
+            {{ wilaya }} |
             {% endfor %}
         </div>
 
@@ -127,7 +127,7 @@
             <thead>
                 <th class="main_column">Products</th>
                 {% for product in data.products %}
-                <th>{{ product.nom }}</th>
+                <th>{{ product }}</th>
                 {% endfor %}
             </thead>
 
@@ -137,6 +137,13 @@
                     <td class="main_column">Objectif</td>
                     {% for t in data.targets %}
                     <td>{{ t|thousand_separator }}</td>
+                    {% endfor %}
+                </tr>
+
+                <tr style="background-color: #84c2f5">
+                    <td class="main_column">Bon_Com</td>
+                    {% for t in data.targets %}
+                        <td>vide</td>
                     {% endfor %}
                 </tr>
 
@@ -171,11 +178,11 @@
                     {% endfor %}
 
                 </tr>
--->
+
                 <tr >
                     <td class="main_column">Percentage Achevé</td>
                     {% for ta in data.percentage_achievements %}
-                    <!--<td><p>{{ ta|thousand_separator }} %</p></td>-->
+                    ####<td><p>{{ ta|thousand_separator }} %</p></td>
                     {% if ta < 50 %}
                         <td style="background-color: red"><p>{{ ta|floatformat:2 }} %</p></td>
                     {% elif ta >= 50 and ta < 70 %}
@@ -187,7 +194,7 @@
                     {% endfor %}
 
                 </tr>
-
+-->
             </tbody>
         </table>
 

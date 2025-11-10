@@ -1,17 +1,17 @@
 # from django.shortcuts import render, redirect, reverse, get_object_or_404
 # from django.contrib.auth.models import User
-# from django.db.models import Exists, OuterRef
+from django.db.models import Exists, OuterRef
 # from produits.models import Produit
 # from clients.models import *
-# from clients.functions import (
-#     get_order_source_details,
-#     get_target_per_user,
-#     get_target_per_user_id,
-#     get_target_details_per_user,
-#     get_target_all_users,
-#     get_target_for_supervisor,
-#     get_target_per_user_per_month,
-# )
+from clients.functions import (
+    get_order_source_details,
+    get_target_per_user,
+    get_target_per_user_id,
+    get_target_details_per_user,
+    get_target_all_users,
+    get_target_for_supervisor,
+    get_target_per_user_per_month,
+)
 # from accounts.models import UserProfile, UserProduct
 # from django.utils import timezone
 # from .models import UserTargetMonth, UserTargetMonthProduct
@@ -356,185 +356,190 @@
 # )
 # from django.db.models import Q
 # from rest_framework.permissions import IsAuthenticated
-
-# class target_front(APIView):
-#     #authentication_classes = [SessionAuthentication]
-#     #permission_classes = [IsAuthenticated]
-#     def get(selt, request):
-#         print(str(request))
-#         print("sesssionnnnnnnnnnnn")
-#         print(request.session.items())
-#         print("user_id dans sessionnnnnnnnn")
-#         user_id = request.session.get('user_id')
-#         print(user_id)
-#         # Afficher tous les en-têtes
+from rest_framework.views import APIView
+class taruser(APIView):
+    #authentication_classes = [SessionAuthentication]
+    #permission_classes = [IsAuthenticated]
+    def get(selt, request):
+        print(str(request))
+        print("sesssionnnnnnnnnnnn")
+        print(request.session.items())
+        print("user_id dans sessionnnnnnnnn")
+        user_id = request.session.get('user_id')
+        print(user_id)
+        # Afficher tous les en-têtes
         
-#         if request.user.is_authenticated:
-#             user_id = request.user.id
-#             print("dans request web")
-#             print(user_id)
-#         else:
-#             user_id = request.session.get('user_id')
-#             print("dans la session")
-#             print(user_id)
-#         if UserProfile.objects.get(user=user_id).speciality_rolee == "Medico_commercial":
-#             return render(request, "clients/taruser.html")
-#         elif UserProfile.objects.get(user=user_id).speciality_rolee == "CountryManager" or UserProfile.objects.get(user=user_id).speciality_rolee == "Admin" or UserProfile.objects.get(user=user_id).speciality_rolee == "Office":
-#             user_profiles = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial", "Superviseur_national", "Superviseur_regional", "CountryManager"], userprofile__hidden=False).filter(Exists(UserTargetMonth.objects.filter(user=OuterRef('pk'))))
-#             return render(request, "clients/taruser.html", {"users":user_profiles, "num_id":1})
-#         elif UserProfile.objects.get(user=user_id).speciality_rolee == "Superviseur_regional" or UserProfile.objects.get(user=user_id).speciality_rolee == "Superviseur_national":
-#             user_profiles = UserProfile.objects.get(user=user_id)
-#             user_profiles = user_profiles.usersunder.all()
-#             ur = User.objects.get(id=user_id)
-#             nam = ur.first_name + " " + ur.last_name
-#             return render(request, "clients/taruser.html", {"users":user_profiles, "num_id":2, "name":nam})
-#             #return render(request, "clients/taruser.html")
-#         else:
-#             pass
-#         return render(request, "clients/taruser.html")
-#     def post(self, request):
-#         if request.user.is_authenticated:
-#             user_id = request.user.id
-#             print("dans request web")
-#         else:
-#             user_id = request.session.get('user_id')
-#             print("dans la session")
-#         request_params = request.GET
-#         e = request.POST.get('users')
-#         if e:
-#             selected_user = int(request.POST.get('users'))
-#         else:
-#             selected_user = "passssssss"
-#         if selected_user == 0 and UserProfile.objects.get(user=user_id).speciality_rolee == "Superviseur_regional":
-#             print("SuperViseur Regional")
-#             year = int(request.POST.get('years'))
-#             month = int(request.POST.get('months'))
-#             mo = month_number_to_french_name(month)
-#             params = {}
-#             if year:
-#                 params["year"] = year
-#             if month:
-#                 params["month"] = month
-#             params["user_id"] = user_id
-#             context = {"month": mo, "year": year}
-#             data = get_target_for_supervisor(**params)
-#             #data = get_target_per_user_id(**params)
-#             context["data"] = data
-#             return render(
-#                 request,
-#                 template_name="clients/reports/target_report_per_user.html",
-#                 context=context,
-#             )
-#         elif selected_user != 0 and selected_user != "passssssss" and UserProfile.objects.get(user=selected_user).speciality_rolee in ["Superviseur_regional","CountryManager"]:
-#             t = UserProfile.objects.get(user=selected_user)
+        if request.user.is_authenticated:
+            user_id = request.user.id
+            print("dans request web")
+            print(user_id)
+        else:
+            user_id = request.session.get('user_id')
+            print("dans la session")
+            print(user_id)
+        if UserProfile.objects.get(user=user_id).speciality_rolee in ["Medico_commercial", "Commercial"]:
+            return render(request, "clients/taruser.html")
+        elif UserProfile.objects.get(user=user_id).speciality_rolee == "CountryManager" or UserProfile.objects.get(user=user_id).speciality_rolee == "Admin" or UserProfile.objects.get(user=user_id).speciality_rolee == "Office":
+            user_profiles = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial", "Superviseur_national", "Superviseur_regional", "CountryManager", "Commercial"], userprofile__hidden=False).filter(Exists(UserTargetMonth.objects.filter(user=OuterRef('pk'))))
+            return render(request, "clients/taruser.html", {"users":user_profiles, "num_id":1})
+        elif UserProfile.objects.get(user=user_id).speciality_rolee == "Superviseur_regional" or UserProfile.objects.get(user=user_id).speciality_rolee == "Superviseur_national":
+            user_profiles = UserProfile.objects.get(user=user_id)
+            user_profiles = user_profiles.usersunder.all()
+            ur = User.objects.get(id=user_id)
+            nam = ur.first_name + " " + ur.last_name
+            return render(request, "clients/taruser.html", {"users":user_profiles, "num_id":2, "name":nam})
+            #return render(request, "clients/taruser.html")
+        else:
+            pass
+        return render(request, "clients/taruser.html")
+    def post(self, request):
+        if request.user.is_authenticated:
+            user_id = request.user.id
+            print("dans request web")
+        else:
+            user_id = request.session.get('user_id')
+            print("dans la session")
+        request_params = request.GET
+        e = request.POST.get('users')
+        if e:
+            selected_user = int(request.POST.get('users'))
+        else:
+            selected_user = "passssssss"
+        if selected_user == 0 and UserProfile.objects.get(user=user_id).speciality_rolee in  ["Superviseur_regional"]:
+            print("SuperViseur Regional")
+            year = int(request.POST.get('years'))
+            month = int(request.POST.get('months'))
+            mo = month_number_to_french_name(month)
+            params = {}
+            if year:
+                params["year"] = year
+            if month:
+                params["month"] = month
+            params["user_id"] = user_id
+            context = {"month": mo, "year": year}
+            data = get_target_for_supervisor(**params)
+            #data = get_target_per_user_id(**params)
+            context["data"] = data
+            return render(
+                request,
+                template_name="clients/reports/target_report_per_user.html",
+                context=context,
+            )
+        elif selected_user != 0 and selected_user != "passssssss" and UserProfile.objects.get(user=selected_user).speciality_rolee in ["Superviseur_regional","CountryManager"]:
+            t = UserProfile.objects.get(user=selected_user)
             
-#             print("SuperViseur Regional or CountryManager")
-#             year = int(request.POST.get('years'))
-#             month = int(request.POST.get('months'))
-#             mo = month_number_to_french_name(month)
-#             params = {}
-#             if year:
-#                 params["year"] = year
-#             if month:
-#                 params["month"] = month
-#             params["user_id"] = selected_user
-#             context = {"month": mo, "year": year}
-#             data = get_target_for_supervisor(**params)
-#             #data = get_target_per_user_id(**params)
-#             context["data"] = data
-#             return render(
-#                 request,
-#                 template_name="clients/reports/target_report_per_user.html",
-#                 context=context,
-#             )
+            print("SuperViseur Regional or CountryManager")
+            year = int(request.POST.get('years'))
+            month = int(request.POST.get('months'))
+            mo = month_number_to_french_name(month)
+            year = [int(request.POST.get('years'))]
+            month = [int(request.POST.get('months'))]
+
+            params = {}
+            if year:
+                params["years"] = year
+            if month:
+                params["months"] = month
+            params["user_id"] = selected_user
+            context = {"month": mo, "year": year}
+            data = get_target_for_supervisor(**params)
+            #data = get_target_per_user_id(**params)
+            context["data"] = data
+            return render(
+                request,
+                template_name="clients/reports/target_report_per_user.html",
+                context=context,
+            )
         
         
        
         
         
-#         year = int(request.POST.get('years'))
-#         months = request.POST.getlist('months')
-#         month=0000000
-#         q = []
-#         m =[]
-#         if len(months) == 1:
-#             month = int(months[0])
-#         else:
+        year = int(request.POST.get('years'))
+        months = request.POST.getlist('months')
+        year = request.POST.getlist('years')
+        #month=0000000
+        q = []
+        m =[]
+        if len(months) == 1:
+            month = int(months[0])
+        else:
             
-#             for i in months:
-#                 mo = month_number_to_french_name(int(i))
-#                 q.append(int(i))
-#                 m.append(mo)
-#             month = q
-#         print(month)
-#         user = request.POST.get('users')
-#         if user:
-#             user = int(user)
-#         print(request_params)
-#         print(year)
-#         print(month)
+            for i in months:
+                mo = month_number_to_french_name(int(i))
+                q.append(int(i))
+                m.append(mo)
+            month = q
+        print(month)
+        user = request.POST.get('users')
+        if user:
+            user = int(user)
+        print(request_params)
+        print(year)
+        print(month)
 
-#         params = {}
+        params = {}
+        year = [int(request.POST.get('years'))]
+        month = [int(request.POST.get('months'))]
+        if year:
+            params["years"] = year
 
-#         if year:
-#             params["year"] = year
-
-#         if month:
-#             params["month"] = month
-#         french_month = ()
-#         if "client_wilaya_id" in request_params:
-#             params["wilaya"] = request_params.get("client_wilaya_id")
-#         if len(months) == 1:
-#             french_month = (
-#                 month_number_to_french_name(int(params["month"]))
-#                 if "month" in params
-#                 else "Tous les Mois"
-#             )
+        if month:
+            params["months"] = month
+        french_month = ()
+        if "client_wilaya_id" in request_params:
+            params["wilaya"] = request_params.get("client_wilaya_id")
+        if len(months) == 1:
+            french_month = (
+                month_number_to_french_name(params["months"][0])
+                if "months" in params
+                else "Tous les Mois"
+            )
         
-#         year = params["year"] if "year" in params else "Toutes les Années"
+        year = params["years"] if "years" in params else "Toutes les Années"
 
-#         context = {"month": french_month, "year": year}
+        context = {"month": french_month, "year": year}
         
-#         if user==0:
-#             data = get_target_all_users(**params)
-#             #data = get_target_per_user_id(**params)
-#             context["data"] = data
-#             return render(
-#                 request,
-#                 template_name="clients/reports/target_report_all_users.html",
-#                 context=context,
-#             )
-#         if user:
-#             params["user_id"] = user
-#         else:
-#             params["user_id"] = user_id
-#         if len(months) == 1:
-#             data = get_target_per_user(**params)
-#             context["data"] = data
-#             return render(
-#                 request,
-#                 template_name="clients/reports/target_report_per_user.html",
-#                 context=context,
-#                 )
-#         else:
-#             french_month = q
-#             context = {"month": m, "year": year}
-#             data = get_target_per_user_per_month(**params)
-#             context["data"] = data
-#             return render(
-#                 request,
-#                 template_name="clients/reports/target_report_user_multiple_month.html",
-#                 context=context,
-#                 )
+        if user==0:
+            data = get_target_all_users(**params)
+            #data = get_target_per_user_id(**params)
+            context["data"] = data
+            return render(
+                request,
+                template_name="clients/reports/target_report_all_users.html",
+                context=context,
+            )
+        if user:
+            params["user_id"] = user
+        else:
+            params["user_id"] = user_id
+        if len(months) == 1:
+            data = get_target_per_user(**params)
+            context["data"] = data
+            return render(
+                request,
+                template_name="clients/reports/target_report_per_user.html",
+                context=context,
+                )
+        else:
+            french_month = q
+            context = {"month": m, "year": year}
+            data = get_target_per_user_per_month(**params)
+            context["data"] = data
+            return render(
+                request,
+                template_name="clients/reports/target_report_user_multiple_month.html",
+                context=context,
+                )
         
-#         data = get_target_all_users(**params)
-#         context["data"] = data
-#         return render(
-#             request,
-#             template_name="clients/reports/target_report_all_users.html",
-#             context=context,
-#         )
-#         return render(request, "clients/taruser.html")
+        data = get_target_all_users(**params)
+        context["data"] = data
+        return render(
+            request,
+            template_name="clients/reports/target_report_all_users.html",
+            context=context,
+        )
+        return render(request, "clients/taruser.html")
         
 
 
@@ -717,7 +722,7 @@ from django.contrib.auth.models import User
 
 from produits.models import Produit
 from clients.models import OrderSource
-from clients.functions import (
+from clients.api.functions import (
     get_order_source_details,
     get_target_per_user,
     get_target_details_per_user,
@@ -958,6 +963,10 @@ def target_report_details(request):
 def target_front(request):
     print(str(request))
     return render(request, "micro_frontends/target/index.html")
+
+#def target_front_2(request):
+#    print(str(request))
+#    return render(request, "micro_frontends/target/index.html")
 
 
 from rest_framework.authentication import (

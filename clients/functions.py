@@ -673,7 +673,7 @@ def get_target_for_supervisor(user_id=None, include_user=False, month=None, year
             print("je suis laaaaaaaaaaaaa")
             #users_under = User.objects.filter(userprofile__commune__wilaya__pays=user_profile.commune.wilaya.pays)
             #users_under = User.objects.all()
-            users_under = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial","Commercial"],commune__wilaya__pays=user.userprofile.commune__wilaya__pays)
+            users_under = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial","Commercial"],userprofile__commune__wilaya__pays=user.userprofile.commune.wilaya.pays)
 
         elif user.userprofile.rolee == "Superviseur":
             users_under = user_profile.usersunder.all()
@@ -687,9 +687,9 @@ def get_target_for_supervisor(user_id=None, include_user=False, month=None, year
 
         print(month)
         print("hiiiii je suis dans functions.py dans clients")
-        target_months = UserTargetMonth.objects.filter(user__in=users_under,date__year=year[0], date__month=month[0])
+        target_months = UserTargetMonth.objects.filter(user__in=users_under,date__year=year, date__month=month)
         if user.userprofile.rolee == "CountryManager":
-            target_months = UserTargetMonth.objects.filter(user__in=users_under, date__year=year[0], date__month=month[0])
+            target_months = UserTargetMonth.objects.filter(user__in=users_under, date__year=year, date__month=month)
         
         productss = UserTargetMonthProduct.objects.filter(usermonth__user=user_id).values('product').distinct()
         productss = UserTargetMonthProduct.objects.filter(usermonth__in=target_months).values('product').distinct()
@@ -735,7 +735,7 @@ def get_target_for_supervisor(user_id=None, include_user=False, month=None, year
                     
                     total_targets[index] += user_under_target["total_targets"][user_under_product_index]
                     total_achievements[index] += user_under_target["total_achievements"][user_under_product_index]
-                    if total_achievements[index] != 0:
+                    if total_achievements[index] != 0 and total_targets[index] != 0:
                         percentage_achievements[index] = (total_achievements[index] * 100)/total_targets[index]
 
         products = list(products)
