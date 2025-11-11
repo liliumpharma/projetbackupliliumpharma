@@ -142,8 +142,8 @@
 
                 <tr style="background-color: #84c2f5">
                     <td class="main_column">Bon_Com</td>
-                    {% for t in data.targets %}
-                        <td>vide</td>
+                    {% for t in data.total_unite_product %}
+                        <td>{{ t }}</td>
                     {% endfor %}
                 </tr>
 
@@ -162,7 +162,7 @@
                     {% endfor %}
 
                 </tr>
-<!--
+
                 <tr style="background-color: #90EE90">
                     <td class="main_column">Total Objectif</td>
                     {% for tt in data.total_targets %}
@@ -178,7 +178,7 @@
                     {% endfor %}
 
                 </tr>
-
+<!--
                 <tr >
                     <td class="main_column">Percentage Achevé</td>
                     {% for ta in data.percentage_achievements %}

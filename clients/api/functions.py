@@ -11,6 +11,9 @@ from regions.models import Wilaya
 from clients.models import *
 from produits.models import Produit
 from liliumpharm.utils import thousand_separator, date_format
+from orders.models import Order as Orders
+from orders.models import OrderItem
+
 
 
 def get_order_source_details(ordersource):
@@ -303,6 +306,7 @@ def get_target_per_user(user_id=None, months=None, years=None):
     quantities = []
     total_targets = []
     total_achievements = []
+    total_unite_product = []
 
     if user_id:
 
@@ -317,6 +321,10 @@ def get_target_per_user(user_id=None, months=None, years=None):
         if not years:
             years = OrderSource.objects.all().values_list('date__year').distinct()
 
+        if user_profile.speciality_rolee == "Medico_commercial":
+            order_product_query_by_user = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
+        elif user_profile.speciality_rolee == "Commercial":
+            order_product_query_by_user = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
 
         products = Produit.objects.all()
         user_target_month_products = UserTargetMonthProduct.objects.filter(usermonth__date__year__in=years, usermonth__date__month__in=months, usermonth__user=user_profile.user).values('product', 'product__nom').distinct()
@@ -324,11 +332,21 @@ def get_target_per_user(user_id=None, months=None, years=None):
         for month_product in user_target_month_products:
             
             product = products.get(id=month_product['product'])
+            s = 0
+            if order_product_query_by_user:
+                for ord in order_product_query_by_user:
+                    order_item = OrderItem.objects.filter(order=ord, produit=month_product['product'])
+                    for o in order_item:
+                        s = s + o.qtt
+            
+            total_unite_product.append(s)
             
             # Appending Price
             prices.append(product.price)
             
             total_product_quantity_sold = 0
+            
+            total_product_quantity_sold_by_user = 0
 
             query_string=""
 
@@ -492,7 +510,8 @@ def get_target_per_user(user_id=None, months=None, years=None):
                 "total_target": thousand_separator(total_target),
                 "total_reached": thousand_separator(total_reached),
                 "percentage_reached": percentage_reached,
-                "test":0
+                "test":0,
+                "total_unite_product":total_unite_product
                 }
 
         return data
