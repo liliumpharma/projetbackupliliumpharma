@@ -1,147 +1,183 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <!-- Ajouter le CSS de Select2 -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
-    <!-- Ajoutez jQuery (nécessaire pour Select2) avant Select2 -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Ajouter le JS de Select2 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Target User</title>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f6f9;
-            margin: 0;
-            padding: 20px;
-        }
-    
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-        }
-    
-        form {
-            max-width: 500px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-    
-        .form-group {
-            margin-bottom: 20px;
-        }
-    
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: bold;
-        }
-    
-        select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-    
-        button {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            background-color: #4CAF50;
-            color: white;
-            font-size: 16px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-    
-        button:hover {
-            background-color: #45a049;
-        }
-    </style>
-    
+  <!-- CSS Select2 -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- JS Select2 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #111;
+      color: #fff;
+      margin: 0;
+      padding: 30px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #fff;
+      margin-bottom: 40px;
+    }
+
+    form {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-end;
+      background-color: #1a1a1a;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+    }
+
+    .form-group {
+      flex: 1 1 250px;
+      min-width: 200px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #aaa;
+      font-weight: bold;
+    }
+
+    select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #333;
+      background-color: #222;
+      color: #fff;
+      font-size: 15px;
+    }
+
+    button {
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 25px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #218838;
+    }
+
+    /* ----- STYLE SELECT2 SOMBRE ----- */
+    .select2-container--default .select2-selection--multiple {
+      background-color: #222 !important;
+      border: 1px solid #444 !important;
+      color: #fff !important;
+      min-height: 42px !important;
+      border-radius: 8px !important;
+      padding: 4px !important;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+      background-color: #007bff !important;
+      color: #fff !important;
+      border: none !important;
+      border-radius: 15px !important;
+      padding: 3px 10px !important;
+      margin-top: 4px !important;
+      font-size: 14px !important;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-search__field {
+      color: #fff !important;
+    }
+
+    .select2-container--default .select2-results__option {
+      background-color: #222 !important;
+      color: #fff !important;
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+      background-color: #007bff !important;
+      color: #fff !important;
+    }
+  </style>
 </head>
-<body>
-    <h1>Target User</h1>
-    <form action="" method="post">
-        {% csrf_token %}
-        
-        {% if num_id == 1 %}
-        {% if users %}
-        <div class="form-group">
-            <label for="users">Utilisateur</label>
-            <select name="users" id="users" class="select2">
-                <option value="00">Tous les Utilisateurs</option>
-                {% for user in users %}
-                    <option value="{{user.id}}">{{user.last_name}} - {{user.first_name}}</option>
-                {% endfor %}
-            </select>
-        </div>
-        {% endif %}
-        {% endif %}
 
-        {% if num_id == 2 %}
-        {% if users %}
-        <div class="form-group">
-            <label for="users">Utilisateur</label>
-            <select name="users" id="users">
-                <option value="00">{{ name }}</option>
-                {% for user in users %}
-                    <option value="{{user.id}}">{{user.last_name}} - {{user.first_name}}</option>
-                {% endfor %}
-            </select>
-        </div>
-        {% endif %}
-        {% endif %}
-            
-        
+<body>
+  <h1>Target User</h1>
+
+  <form action="" method="post" target="_blank">
+    {% csrf_token %}
     
-        <div class="form-group">
-            <label for="months">Mois</label>
-            <select name="months" id="months" multiple>
-                <option value="01">Janvier</option>
-                <option value="02">Février</option>
-                <option value="03">Mars</option>
-                <option value="04">Avril</option>
-                <option value="05">Mai</option>
-                <option value="06">Juin</option>
-                <option value="07">Juillet</option>
-                <option value="08">Août</option>
-                <option value="09">Septembre</option>
-                <option value="10">Octobre</option>
-                <option value="11">Novembre</option>
-                <option value="12">Décembre</option>
-                <option value="0">Tous les Mois</option>
-            </select>
-        </div>
-    
-        <div class="form-group">
-            <label for="years">Année</label>
-            <select name="years" id="years">
-                
-                <option value="2025">2025</option>
-            </select>
-        </div>
-    
-        <button type="submit">Afficher</button>
-    </form>
-    <!--<a href="{% url 'addorder'%}">LINK</a>-->
-    <script>
-        $(document).ready(function() {
-            // Appliquer Select2 sur le select avec l'id #users
-            $('#users').select2();
-        });
-    </script>
+    <!-- USERS -->
+    <div class="form-group">
+      <label for="users">Users</label>
+      <select name="users" id="users" multiple>
+        <option value="00">Tous les utilisateurs</option>
+        {% for user in users %}
+          <option value="{{ user.id }}">{{ user.last_name }} {{ user.first_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- MONTHS -->
+    <div class="form-group">
+      <label for="months">Months</label>
+      <select name="months" id="months" multiple>
+        <option value="01">Janvier</option>
+        <option value="02">Février</option>
+        <option value="03">Mars</option>
+        <option value="04">Avril</option>
+        <option value="05">Mai</option>
+        <option value="06">Juin</option>
+        <option value="07">Juillet</option>
+        <option value="08">Août</option>
+        <option value="09">Septembre</option>
+        <option value="10">Octobre</option>
+        <option value="11">Novembre</option>
+        <option value="12">Décembre</option>
+      </select>
+    </div>
+
+    <!-- YEARS -->
+    <div class="form-group">
+      <label for="years">Years</label>
+      <select name="years" id="years" multiple>
+        <option value="2025" selected>2025</option>
+      </select>
+    </div>
+
+    <button type="submit">Rechercher</button>
+  </form>
+
+  <script>
+    $(document).ready(function() {
+      $('#users').select2({
+        placeholder: 'Choisissez le Délégué',
+        allowClear: true
+      });
+
+      $('#months').select2({
+        placeholder: 'Choisissez le Mois',
+        allowClear: true
+      });
+
+      $('#years').select2({
+        placeholder: 'Choisissez l\'Année',
+        allowClear: true
+      });
+    });
+  </script>
 </body>
 </html>

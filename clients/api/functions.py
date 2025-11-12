@@ -320,7 +320,7 @@ def get_target_per_user(user_id=None, months=None, years=None):
             months = OrderSource.objects.all().values_list('date__month').distinct()
         if not years:
             years = OrderSource.objects.all().values_list('date__year').distinct()
-
+        order_product_query_by_user = []
         if user_profile.speciality_rolee == "Medico_commercial":
             order_product_query_by_user = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
         elif user_profile.speciality_rolee == "Commercial":
