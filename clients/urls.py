@@ -67,13 +67,15 @@ urlpatterns = [
     ),
     # HTML Pages
     path("target", target, name="target"),
-    path("target/front/", target_front, name="target_front"),
+    path("target/front/", taruser.as_view(), name="target_front"),
+    #path("target/front/", target_front, name="target_front"),
     #path("target/front/deux", target_front_2, name="target_front_2"),
     path("target_user/", taruser.as_view(), name="taruser"),
     # HTML Reports
     path("print-sales/<int:id>", sales_report, name="client_print_target"),
     path("print-target/", target_report, name="target_report"),
     path("print-target-details/", target_report_details, name="target_report_details"),
+    path("print-target-details_use/", target_report_details_use, name="target_report_details_use"),
     # Excel Files
     path("sales/export-excel/", SalesExportExcel.as_view(), name="sales_export_excel"),
     path(

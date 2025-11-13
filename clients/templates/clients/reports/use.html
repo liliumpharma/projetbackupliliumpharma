@@ -1,0 +1,182 @@
+{% load static %}
+{% load clients_extra %}
+
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Détails du Rapport de Vente</title>
+
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        * {
+            font-family: 'Times New Roman', Times, serif;
+            padding: 5px;
+        }
+
+        .header {
+            text-align: center;
+            font-size: xx-large;
+            font-style: bold;
+            margin-bottom: 10px;
+        }
+
+        .logo {
+            width: 70px;
+            height: 70px;
+        }
+
+        .title {
+            text-align: center;
+            font-size: x-large;
+            margin-bottom: 10px;
+        }
+
+        .region {
+            display: inline-block;
+            font-size: large;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            outline: thin solid;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            background-color: #2ca030;
+            color: white;
+        }
+
+        td {
+            padding-top: 5px;
+            padding-bottom: 5px;
+            outline: thin solid;
+            text-align: center;
+        }
+
+        .no-border {
+            outline: none;
+        }
+
+        .highlight {
+            background-color: #90EE90;
+            font-weight: bold;
+        }
+
+        .total-row {
+            background-color: yellow;
+            font-weight: bold;
+        }
+
+        .achieve_percentage {
+            display: flex;
+            justify-content: space-between;
+            width: 200px;
+            margin-top: 10px;
+        }
+
+        .note {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <img class="logo" src="{% static 'img/logo.png' %}" alt="">
+        <div>LILIUM PHARMA</div>
+    </div>
+
+    <div class="title">
+        <div>Détails du Rapport de Vente du <b>Produit {{ data.product }}</b></div>
+        <b>{{ month }}, {{ year }}</b>
+    </div>
+
+    <div class="region_frame">
+
+        <div class="region">
+            <div>Délégué: {{ data.user }}</div>
+        </div>
+
+        <div>
+            <div class="region">Région(s):</div>
+            {% for wilaya in data.wilayas %}
+                {{ wilaya }}{% if not forloop.last %} | {% endif %}
+            {% endfor %}
+        </div>
+
+        <div class="note">Remarque : Tapez sur le nom du Super Grossiste pour consulter le fichier joint.</div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Pharmacie</th>
+                    <th>Grossiste</th>
+                    <th>Super Grossiste</th>
+                    <th>User</th>
+                    <th>Quantité</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for i in data.order_client %}
+                <tr>
+                    <td>
+                        {% if i.order.pharmacy %}
+                            {{ i.order.pharmacy.nom }}
+                        {% else %}
+                            /
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if i.order.gros %}
+                            {{ i.order.gros }}
+                        {% else %}
+                            /
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if i.order.super_gros %}
+                            {{ i.order.super_gros }}
+                        {% else %}
+                            /
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if i.order.user %}
+                            {{ i.order.user }}
+                        {% else %}
+                            /
+                        {% endif %}
+                    </td>
+                    <td class="highlight">{{ i.qtt }}</td>
+                </tr>
+                {% endfor %}
+
+                <tr class="total-row">
+                    <td class="no-border"></td>
+                    <td class="no-border"></td>
+                    <td class="no-border"></td>
+                    <td>Total</td>
+                    <td>{{ data.total_quantity }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+</body>
+</html>

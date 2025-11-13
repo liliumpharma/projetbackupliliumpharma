@@ -99,6 +99,76 @@ def get_target_details_per_user(user_id=None, product_id=None, month=None, year=
         # print("***********yeaaah")    
         return data
 
+from django.shortcuts import render, redirect, reverse, get_object_or_404
+
+def get_target_details_per_user_use(user_id=None, product_id=None, months=None, years=None):
+    
+    data = {}
+
+    if user_id and product_id:
+
+        user_profile = UserProfile.objects.get(user__id=user_id)
+        data["user"] = f"{user_profile.user.last_name} {user_profile.user.first_name}"
+
+        product = Produit.objects.get(id=product_id)
+        data["product"] = product
+
+        
+        
+        order_product_query_by_user = []
+        if user_profile.speciality_rolee == "Medico_commercial":
+            order_product_query_by_user = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
+        elif user_profile.speciality_rolee == "Commercial":
+            order_product_query_by_user = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
+        elif user_profile.speciality_rolee == "Superviseur_national" and user_profile.work_as_commercial == False:
+            order_product_query_by_user = Orders.objects.filter(user__in=user_profile.usersunder.all(), added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
+        elif user_profile.speciality_rolee == "Superviseur_national" and user_profile.work_as_commercial == True:
+            order_product_query_by_user = Orders.objects.filter(user__in=user_profile.usersunder.all(), added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
+        elif user_profile.speciality_rolee == "CountryManager":
+            us = User.objects.filter(userprofile__commune__wilaya__pays=user_profile.commune.wilaya.pays, userprofile__speciality_rolee__in = ["Commercial", "Medico_commercial"])
+            order_product_query_by_user = Orders.objects.filter(user__in=us, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
+        
+        
+        
+        user_product = UserTargetMonthProduct.objects.get(usermonth__user=user_profile.user, product=product, usermonth__date__month__in=months, usermonth__date__year__in=years)
+        data["product_target"] = user_product.quantity * product.price
+        data["product_target_quantity"] = user_product.quantity
+
+        wilayas = user_profile.sectors.all()
+        data["wilayas"] = wilayas
+
+        # Preparing Query for Order Product
+        order_client_query = Q()
+        if months:
+            order_client_query &= Q(order__source__date__month=months)
+        if years:
+            order_client_query &= Q(order__source__date__year=years)
+        order_client_query &= Q(order__client__wilaya__in=wilayas)
+        order_client_query &= Q(produit=product)
+        
+        #order_client = OrderProduct.objects.filter(order_client_query).values("order__source__source__name", "order__source__date", "order__source__attachement_file", "order__client__name", "order__client__wilaya__nom").order_by('-order__source__date').annotate(total=Sum("qtt"))
+        for a in order_product_query_by_user:
+            pass
+        order_client = OrderItem.objects.filter(order__in=order_product_query_by_user, produit=product)
+        #order_item = OrderItem.objects.filter(order=ord, produit=month_product['product'])
+        data["order_client"] = order_client
+
+        total_quantity = sum(oc.qtt for oc in order_client)
+        data["total_quantity"] = total_quantity
+
+        # data["order_client"]=[*order_client, 
+        # *[{
+        #     "total":0,
+        #     "order__client__name":c.name,
+        #     "order__client__wilaya__nom":c.wilaya.nom,
+        # } for c in Client.objects.filter(wilaya__in=wilayas)]
+        # ]
+        # for c in Client.objects.filter(wilaya__in=wilayas):
+        #     print("**************",c)
+        # print("***********yeaaah")    
+        return data
+
+
 def get_target_per_user_commercial(user_id=None, months=None, years=None):
     
     targets = []
@@ -325,6 +395,13 @@ def get_target_per_user(user_id=None, months=None, years=None):
             order_product_query_by_user = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
         elif user_profile.speciality_rolee == "Commercial":
             order_product_query_by_user = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
+        elif user_profile.speciality_rolee == "Superviseur_national" and user_profile.work_as_commercial == False:
+            order_product_query_by_user = Orders.objects.filter(user__in=user_profile.usersunder.all(), added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
+        elif user_profile.speciality_rolee == "Superviseur_national" and user_profile.work_as_commercial == True:
+            order_product_query_by_user = Orders.objects.filter(user__in=user_profile.usersunder.all(), added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
+        elif user_profile.speciality_rolee == "CountryManager":
+            us = User.objects.filter(userprofile__commune__wilaya__pays=user_profile.commune.wilaya.pays)
+            order_product_query_by_user = Orders.objects.filter(user__in=us, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
 
         products = Produit.objects.all()
         user_target_month_products = UserTargetMonthProduct.objects.filter(usermonth__date__year__in=years, usermonth__date__month__in=months, usermonth__user=user_profile.user).values('product', 'product__nom').distinct()
@@ -338,8 +415,14 @@ def get_target_per_user(user_id=None, months=None, years=None):
                     order_item = OrderItem.objects.filter(order=ord, produit=month_product['product'])
                     for o in order_item:
                         s = s + o.qtt
-            
-            total_unite_product.append(s)
+            query_string = ""
+            for month in months:
+                query_string += f'&months={month}'
+            for year in years:    
+                query_string += f'&years={year}'
+            query_string += f'&product={product.id}'
+            query_string += f'&user={user_id}'
+            total_unite_product.append({"total": s, "target_report_details_link": f"{reverse('target_report_details_use')}?{query_string}"})
             
             # Appending Price
             prices.append(product.price)
@@ -565,7 +648,12 @@ def get_target_for_supervisor(user_id=None, include_user=False, months=None, yea
         quantities = []
         total_targets = []
         total_achievements = []
+        total_unite_product = []
 
+        if user_profile.speciality_rolee == "CountryManager":
+            us = User.objects.filter(userprofile__commune__wilaya__pays=user_profile.commune.wilaya.pays,userprofile__speciality_rolee__in=["Commercial", "Medico_commercial"])
+            order_product_query_by_user = Orders.objects.filter(user__in=us, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
+        
         if not months:
             months = OrderSource.objects.all().values_list('date__month').distinct()
         if not years:
@@ -586,7 +674,22 @@ def get_target_for_supervisor(user_id=None, include_user=False, months=None, yea
                 target_quantity = UserTargetMonthProduct.objects.filter(usermonth__date__year__in=years, usermonth__date__month__in=months, usermonth__user__in=users_under, product__id=user_target_month_product['product__id']).aggregate(total=Sum('quantity'))['total']
             targets.append(round(target_quantity, 2))
             total_targets.append(round(target_quantity * user_target_month_product['product__price'], 2))
-
+            product = Produit.objects.get(id=user_target_month_product['product'])
+            s = 0
+            if order_product_query_by_user:
+                for ord in order_product_query_by_user:
+                    order_item = OrderItem.objects.filter(order=ord, produit=user_target_month_product['product'])
+                    for o in order_item:
+                        s = s + o.qtt
+            query_string = ""
+            for month in months:
+                query_string += f'&months={month}'
+            for year in years:    
+                query_string += f'&years={year}'
+            query_string += f'&product={product.id}'
+            query_string += f'&user={user_id}'
+            total_unite_product.append({"total": s, "target_report_details_link": f"{reverse('target_report_details_use')}?{query_string}"})
+            
             query_string = f'user={user_id}&product={user_target_month_product["product__id"]}'
             for month in months:
                 query_string += f'&months={month}'
@@ -630,7 +733,8 @@ def get_target_for_supervisor(user_id=None, include_user=False, months=None, yea
                 "total_achievements": [thousand_separator(total_achievement) for total_achievement in total_achievements],
                 "total_target": thousand_separator(total_target),
                 "total_reached": thousand_separator(total_reached),
-                "percentage_reached": percentage_reached
+                "percentage_reached": percentage_reached,
+                "total_unite_product":total_unite_product
                 }
 
         return data

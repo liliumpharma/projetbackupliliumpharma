@@ -8,8 +8,9 @@ from clients.functions import (
     get_target_per_user,
     get_target_per_user_id,
     get_target_details_per_user,
+    #get_target_details_per_user_use,
     get_target_all_users,
-    get_target_for_supervisor,
+    #get_target_for_supervisor,
     get_target_per_user_per_month,
 )
 # from accounts.models import UserProfile, UserProduct
@@ -366,6 +367,7 @@ class taruser(APIView):
         print(request.session.items())
         print("user_id dans sessionnnnnnnnn")
         user_id = request.session.get('user_id')
+        is_mobile = request.session.get('is_mobile')
         print(user_id)
         # Afficher tous les en-têtes
         
@@ -725,7 +727,8 @@ from clients.models import OrderSource
 from clients.api.functions import (
     get_order_source_details,
     get_target_per_user,
-    get_target_details_per_user,
+    #get_target_details_per_user,
+    get_target_details_per_user_use,
     get_target_all_users,
     get_target_for_supervisor,
 )
@@ -956,6 +959,49 @@ def target_report_details(request):
     return render(
         request,
         "clients/reports/target_report_details_per_user_details.html",
+        {"data": data, "month": french_month, "year": year},
+    )
+
+
+def target_report_details_use(request):
+    request_params = request.GET
+    params = {}
+
+    # Mois
+    if "months" in request_params:
+        params["months"] = [int(m) for m in request_params.getlist("months")]
+
+    # Années
+    if "years" in request_params:
+        params["years"] = [int(y) for y in request_params.getlist("years")]
+
+    # User
+    if "user" in request_params:
+        params["user_id"] = int(request_params.get("user"))
+        #print(f"le user esttttttttt {params["user_id"]}")
+
+    # Product
+    if "product" in request_params:
+        params["product_id"] = int(request_params.get("product"))
+
+    # Récupération données
+    data = get_target_details_per_user_use(**params)
+
+    # Mois en français
+    french_month = (
+        ", ".join(month_number_to_french_name(m) for m in params.get("months", []))
+        if "months" in params else "Tous les Mois"
+    )
+
+    # Années
+    year = (
+        ", ".join(str(y) for y in params.get("years", []))
+        if "years" in params else "Toutes les Années"
+    )
+
+    return render(
+        request,
+        "clients/reports/use.html",
         {"data": data, "month": french_month, "year": year},
     )
 

@@ -143,7 +143,7 @@
                 <tr style="background-color: #84c2f5">
                     <td class="main_column">Bon_Com</td>
                     {% for t in data.total_unite_product %}
-                        <td style="text-decoration: underline; font-weight: bold;">{{ t }}</td>
+                        <td><a href="{{ t.target_report_details_link }}" style="font-weight: bold" target="_blank">{{ t.total }}</a></td>
                     {% endfor %}
                 </tr>
 
