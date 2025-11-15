@@ -5,7 +5,7 @@ from django.db.models import Exists, OuterRef
 # from clients.models import *
 from clients.functions import (
     get_order_source_details,
-    get_target_per_user,
+    #get_target_per_user,
     get_target_per_user_id,
     get_target_details_per_user,
     #get_target_details_per_user_use,
@@ -412,11 +412,15 @@ class taruser(APIView):
             year = int(request.POST.get('years'))
             month = int(request.POST.get('months'))
             mo = month_number_to_french_name(month)
+            year = int(request.POST.get('years'))
+            months = request.POST.getlist('months')
+            for i in months:
+                mo = month_number_to_french_name(int(i))
             params = {}
             if year:
-                params["year"] = year
+                params["years"] = year
             if month:
-                params["month"] = month
+                params["months"] = months
             params["user_id"] = user_id
             context = {"month": mo, "year": year}
             data = get_target_for_supervisor(**params)
@@ -432,18 +436,23 @@ class taruser(APIView):
             
             print("SuperViseur Regional or CountryManager")
             year = int(request.POST.get('years'))
-            month = int(request.POST.get('months'))
-            mo = month_number_to_french_name(month)
+            months = request.POST.getlist('months')
+            m = []
+            for i in months:
+                mo = month_number_to_french_name(int(i))
+                #q.append(int(i))
+                m.append(mo)
+            #month = q
             year = [int(request.POST.get('years'))]
-            month = [int(request.POST.get('months'))]
+            month = months = request.POST.getlist('months')
 
             params = {}
             if year:
                 params["years"] = year
             if month:
-                params["months"] = month
+                params["months"] = months
             params["user_id"] = selected_user
-            context = {"month": mo, "year": year}
+            context = {"month": m, "year": year}
             data = get_target_for_supervisor(**params)
             #data = get_target_per_user_id(**params)
             context["data"] = data
@@ -525,14 +534,22 @@ class taruser(APIView):
                 )
         else:
             french_month = q
+            months = request.POST.getlist('months')
+            params["months"] = months
             context = {"month": m, "year": year}
             data = get_target_per_user_per_month(**params)
+            #data = get_target_per_user_per_month(**params)
             context["data"] = data
+            #return render(
+            #    request,
+            #    template_name="clients/reports/target_report_user_multiple_month.html",
+            #    context=context,
+            #    )
             return render(
-                request,
-                template_name="clients/reports/target_report_user_multiple_month.html",
-                context=context,
-                )
+            request,
+            template_name="clients/reports/target_report_per_user.html",
+            context=context,
+        )
         
         data = get_target_all_users(**params)
         context["data"] = data

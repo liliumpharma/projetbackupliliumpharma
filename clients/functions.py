@@ -331,7 +331,7 @@ def get_target_per_userrrr(user_id=None, month=None, year=None):
         return data
 
 
-def get_target_per_user(user_id=None, months=None, years=None):
+def get_target_per_user_none(user_id=None, months=None, years=None):
     
     targets = []
     prices = []
@@ -456,8 +456,8 @@ def get_target_per_user(user_id=None, months=None, years=None):
 
         return data
 
-
-def get_target_per_user_per_month(user_id=None, month=None, year=None):
+from clients.api.functions import get_target_per_user
+def get_target_per_user_per_month(user_id=None, months=None, years=None):
     
     targets = []
     prices = []
@@ -471,11 +471,12 @@ def get_target_per_user_per_month(user_id=None, month=None, year=None):
         user_profile = UserProfile.objects.get(user__id=user_id)
 
         #products = Produit.objects.filter(userproduct__user=user_profile.user)
-        for i in month:
-            mo = month_number_to_french_name(i)
-            dt = get_target_per_userrrr(user_id=user_id, month=i, year=year)
-            print(dt)
-            data.append(dt)
+        for i in months:
+            mo = month_number_to_french_name(int(i))
+        dt = get_target_per_user(user_id=user_id, months=months, years=years)
+        return dt
+        print(dt)
+        data.append(dt)
         print(data)
         data2 = []
         products = []
@@ -486,7 +487,7 @@ def get_target_per_user_per_month(user_id=None, month=None, year=None):
         prices = []
         perc_ach = []
         for dat in data:
-            on = dat['month']
+            on = dat['months']
             for pro_dat in dat['products']:
                 tar = 0
                 q = 0
@@ -498,11 +499,14 @@ def get_target_per_user_per_month(user_id=None, month=None, year=None):
                         for p in dat1['products']:
                             if p == pro_dat:
                                 ind = list(dat1['products']).index(p)
-                                tar = tar + dat1['targets'][ind]
+                                tar = tar + int(dat1['targets'][ind])
                                 q = q + dat1['quantities'][ind]['total']
                                 pri = dat1['prices'][ind]
-                                tt = tt + dat1['total_targets'][ind]
-                                ta = ta + dat1["total_achievements"][ind]
+                                tt = tt + float(dat1['total_targets'][ind].replace(",", "."))
+                                value = dat1["total_achievements"][ind]
+                                value = str(value).replace(",", "")  # Supprime toutes les virgules
+                                ta = ta + float(value)
+
                         if tar != 0:
                             pa = (q * 100) / tar
                         elif tar ==0:
@@ -521,16 +525,24 @@ def get_target_per_user_per_month(user_id=None, month=None, year=None):
         sta = 0
         spo = 0
         for d in data:
-            stt = stt + sum(d['total_targets'])
-            sta = sta + sum(d['total_achievements'])
+            #stt = stt + sum(d['total_targets'])
+            for x in d['total_targets']:
+                # Supprimer les virgules utilisées pour les milliers
+                x_clean = str(x).replace(",", "")
+                stt += float(x_clean)
+            #sta = sta + sum(d['total_achievements'])
+            for x in d['total_achievements']:
+                # Supprime les virgules de milliers et convertit en float
+                x_clean = str(x).replace(",", "")
+                sta += float(x_clean)
             spo = spo + d['percentage_reached']
         spo = round(spo / len(data), 2)
         m = []
-        for i in month:
+        for i in months:
                 mo = month_number_to_french_name(int(i))
                 
                 m.append(mo)
-        t = {"year": year,
+        t = {"year": years,
                 "month": m,
                 "user_id": user_id,
                 "user": f"{user_profile.user.last_name} {user_profile.user.first_name}",
