@@ -1249,10 +1249,12 @@ class ReportView(APIView):
             
             rapport_vide_count = rapports.count()
             
-            if user.userprofile.speciality_rolee in ["Superviseur_regional", "Superviseur_national", "CountryManager"]:
+            #if user.userprofile.speciality_rolee in ["Superviseur_regional", "Superviseur_national", "CountryManager", "Commercial", "Medico_commercial"]:
+            if 1:
                 for t in rapports:
-                    if Plan.objects.get(user=user, day=t.added).plantask_set.exists():
-                        rapport_vide_count = rapport_vide_count - 1
+                    plan = Plan.objects.filter(user=user, day=t.added).first()
+                    if plan and plan.plantask_set.exists():
+                        rapport_vide_count -= 1
             
             
             for absence in absences:

@@ -124,7 +124,11 @@
     <div class="form-group">
       <label for="users">Users</label>
       <select name="users" id="users" multiple>
-        <option value="00">Tous les utilisateurs</option>
+        
+        {% if num_id != 33 %}
+          <option value="00">Tous les utilisateurs</option>
+        {% endif %}
+    
         {% for user in users %}
           <option value="{{ user.id }}">{{ user.last_name }} {{ user.first_name }}</option>
         {% endfor %}

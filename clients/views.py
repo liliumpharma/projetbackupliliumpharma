@@ -380,7 +380,8 @@ class taruser(APIView):
             print("dans la session")
             print(user_id)
         if UserProfile.objects.get(user=user_id).speciality_rolee in ["Medico_commercial", "Commercial"]:
-            return render(request, "clients/taruser.html")
+            user_profiles = User.objects.filter(id=user_id)
+            return render(request, "clients/taruser.html", {"users":user_profiles, "num_id":33})
         elif UserProfile.objects.get(user=user_id).speciality_rolee == "CountryManager" or UserProfile.objects.get(user=user_id).speciality_rolee == "Admin" or UserProfile.objects.get(user=user_id).speciality_rolee == "Office":
             user_profiles = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial", "Superviseur_national", "Superviseur_regional", "CountryManager", "Commercial"], userprofile__hidden=False).filter(Exists(UserTargetMonth.objects.filter(user=OuterRef('pk'))))
             return render(request, "clients/taruser.html", {"users":user_profiles, "num_id":1})
