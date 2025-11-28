@@ -531,12 +531,14 @@ class NewMedecinList(APIView):
             if request.GET.get('spec') =="Grossiste":
                 print("oui sont des grossistes")
                 print("////////////")
-                print(len(data))
+                #print(len(data))
                 zone_user = sectors = request.user.userprofile.sectors.all()
                 print(zone_user)
-                all_grossiste_in_same_zone = Medecin.objects.filter(specialite="Grossiste", wilaya__in=zone_user)
+                #all_grossiste_in_same_zone = Medecin.objects.filter(specialite="Grossiste", wilaya__in=zone_user)
+                all_grossiste_in_same_zone = Medecin.objects.filter(specialite="Grossiste", users=request.user)
                 print(all_grossiste_in_same_zone)
-                data = json.loads(data.decode("utf-8"))
+                if data is not None:
+                    data = json.loads(data.decode("utf-8"))
                 for item_in_all_grossiste in all_grossiste_in_same_zone:
                     s1 = f"{item_in_all_grossiste.id} | {item_in_all_grossiste.nom} | {item_in_all_grossiste.commune}"
                     dt = {
