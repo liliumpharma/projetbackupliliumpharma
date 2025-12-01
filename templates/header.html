@@ -1282,7 +1282,7 @@ document.head.appendChild(styleSheet);
 </div>
     {% endif %}
 
-    {% if request.user.userprofile.speciality_rolee == "Medico_commercial" %}
+    {% if request.user.userprofile.speciality_rolee == "Medico_commercial" or request.user.userprofile.speciality_rolee == "Commercial" %}
 
 
     <div class="cardd b-green mt-3" style="margin-left: 20px; margin-right: 20px;">

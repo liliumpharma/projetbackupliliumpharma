@@ -534,8 +534,8 @@ class NewMedecinList(APIView):
                 #print(len(data))
                 zone_user = sectors = request.user.userprofile.sectors.all()
                 print(zone_user)
-                #all_grossiste_in_same_zone = Medecin.objects.filter(specialite="Grossiste", wilaya__in=zone_user)
-                all_grossiste_in_same_zone = Medecin.objects.filter(specialite="Grossiste", users=request.user)
+                all_grossiste_in_same_zone = Medecin.objects.filter(specialite="Grossiste", wilaya__in=zone_user)
+                #all_grossiste_in_same_zone = Medecin.objects.filter(specialite="Grossiste", users=request.user)
                 print(all_grossiste_in_same_zone)
                 if data is not None:
                     data = json.loads(data.decode("utf-8"))

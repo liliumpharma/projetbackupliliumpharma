@@ -122,7 +122,7 @@ class GetUserProducts(APIView):
                     # "quantity": user_product.quantity,
                 }
                 products_data.append(product_data)
-        print(product_data)
+        print(products_data)
         return Response(products_data) 
 
 

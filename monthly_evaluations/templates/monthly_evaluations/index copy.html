@@ -2995,13 +2995,13 @@ if (hasEmptyField && firstEmptyField !== null) {
   });
 }
 const urlParamss = new URLSearchParams(window.location.search);
-  const e = urlParamss.get('month');
-  const l = urlParamss.get('user');
-if (hasEmptyField) {
+  const uiuiui = urlParamss.get('month');
+  const mmm = urlParamss.get('user');
+if (null) {
   vanillaToast.error("ATTENTION: Remplissez tous les champs avant de soumettre le formulaire.");   
 }else{
   $.ajax({
-      url: '/monthly_evaluation/AddMonthlyEvaluation/?month=' + e +'&user='+l,
+      url: '/monthly_evaluation/AddMonthlyEvaluation/?month=' + uiuiui +'&user='+ mmm,
       type: 'POST',
       data: postData,
       success: function (response) {
