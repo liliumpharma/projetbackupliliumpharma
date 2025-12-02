@@ -219,7 +219,7 @@ class getting_users_under(APIView):
             user.userprofile.speciality_rolee in ["admin", "CountryManager","Office"]
             or user.is_superuser
         ):
-            users = users = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial", "Commercial", "Superviseur_regional"])
+            users = users = User.objects.filter(userprofile__speciality_rolee__in=["Medico_commercial", "Commercial", "Superviseur_regional", "Superviseur_national"])
             for u in users:
                 response.append({"user": f"{u.first_name} {u.last_name}"})
         else:

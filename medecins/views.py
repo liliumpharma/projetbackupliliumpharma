@@ -630,7 +630,7 @@ class HomeMedecin(LoginRequiredMixin, TemplateView):
         medecins = paginator.get_page(page)
         return render(
             request,
-            "medecins/home1.html",
+            "medecins/home.html",
             {
                 "medecins": medecins,
                 "page_title": "liste des medecins",
