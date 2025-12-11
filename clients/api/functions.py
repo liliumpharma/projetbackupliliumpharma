@@ -133,9 +133,13 @@ def get_target_details_per_user_use(user_id=None, product_id=None, months=None, 
             user_product = UserTargetMonthProduct.objects.get(usermonth__user=user_profile.user, product=product, usermonth__date__month__in=months, usermonth__date__year__in=years)
         else:
             user_product = UserTargetMonthProduct.objects.filter(usermonth__user=user_profile.user, product=product, usermonth__date__month__in=months, usermonth__date__year__in=years)
-        total_quantity = sum(up.quantity for up in user_product)
+        #total_quantity = 0
+        if len(months) == 1:
+            total_quantity = user_product.quantity
+        else:
+            total_quantity = sum(up.quantity for up in user_product)
         data["product_target"] = total_quantity * product.price
-        total_quantity = sum(up.quantity for up in user_product)
+        #total_quantity = sum(up.quantity for up in user_product)
         data["product_target_quantity"] = total_quantity
 
         wilayas = user_profile.sectors.all()

@@ -10,7 +10,7 @@ from django.db.models import Q, Sum
 from accounts.models import UserProxy as User
 from produits.models import Produit
 from django.contrib.auth.models import User
-from orders.models import Order, OrderItem
+from orders.models import Order as O, OrderItem
 
 
 class TemplateExportExcel(APIView):
@@ -274,7 +274,7 @@ class SalesExportExcel(APIView):
             total_quantities = 0
             for product in produits:
                 #order_sources_avec_sugro = order_sources.filter(source__name=order_source.source.name)
-                orders = Order.objects.filter(
+                orders = O.objects.filter(
                     added__date__range=[first_day_last_month, last_day_last_month], super_gros__name=order_source.source.name, from_company=False
                 )
 
