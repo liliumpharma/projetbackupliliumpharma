@@ -84,7 +84,17 @@ class MonthlyEvaluationFront(APIView):
                 "Office",
                 "Admin",
             ]:
-                return render(request, "monthly_evaluations/index_direction.html")
+                print(request.GET.get("eve"))
+                if request.GET.get("eve") is not None:
+                    usr = User.objects.filter(username=request.GET.get("user")).first()
+                    if usr.userprofile.speciality_rolee == "Medico_commercial":
+                        return render(request, "monthly_evaluations/index copy.html")
+                    elif usr.userprofile.speciality_rolee == "Commercial":
+                        return render(request, "monthly_evaluations/index_commercial.html")
+                else:
+                    return render(request, "monthly_evaluations/index_supervisor.html")
+                    #return render(request, "monthly_evaluations/index_supervisor.html")
+                    #return render(request, "monthly_evaluations/index_direction.html")
             else:
                 if request.user.userprofile.speciality_rolee in [
                     "Medico_commercial",
@@ -97,7 +107,7 @@ class MonthlyEvaluationFront(APIView):
     def post(self, request):
         data = request.data.copy()
         us = request.GET.get("user")
-        a = User.objects.filter(username=us)
+        a = User.objects.filter(username=us).first()
         ME = Monthly_Evaluation.objects.filter(
             user=a, added__month=date.today().month
         )

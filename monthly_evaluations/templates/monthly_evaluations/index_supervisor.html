@@ -275,13 +275,21 @@ input[type="radio"]:checked::before {
   <form method="post">
     <div class="d-flex col-12">
 
+
+      <div class="col-md-4 d-block mt-5">
+        <label for="userselect" style="font-weight: bold; margin-right:10px" >User</label>
+        <select class="form-control " id="userselect" onchange="updateUSERR()">
+        </select>
+      </div>
+
+
       <div class="col-md-4 d-block mt-5">
         <label for="monthSelect" style="font-weight: bold; margin-right:10px" >Mois</label>
         <select class="form-control " id="monthSelect" onchange="updateURLL()">
         </select>
       </div>
   
-
+<!--
       <div class="col-md-4 d-block mt-5">
         <label for="typeSelect" style="font-weight: bold; margin-right:10px" >Type</label>
         <select class="form-control " id="typeSelect">
@@ -289,11 +297,15 @@ input[type="radio"]:checked::before {
           <option value="2">Direction</option>
         </select>
       </div>
-
+-->
       <div class="col-md-4 d-block mt-5">
-        <label for="monthSelect" style="font-weight: bold; margin-right:10px" >Family</label>
-        <select class="form-control " id="monthSelect" >
-          <option value="">Lilium1</option>
+        <label for="monthSelect" style="font-weight: bold; margin-right:10px" >Speciality role</label>
+        <select class="form-control " id="familyselect" onchange="updateUSER()">
+          <option value="Medico_commercial">Medico commercial</option>
+          <option value="Commercial">Commercial</option>
+          <option value="Superviseur_regional">Superviseur regional</option>
+          <option value="Superviseur_national">Superviseur national</option>
+          <option value="CountryManager">CountryManager</option>
         </select>
       </div>
 
@@ -1742,10 +1754,16 @@ document.addEventListener("DOMContentLoaded", function() {
     // Obtenez une référence aux éléments select
     const monthSelect = document.getElementById('monthSelect');
     const userSelect = document.getElementById('userSelect');
+    const familyselect= document.getElementById('familyselect');
+    const userselect= document.getElementById('userelect');
 
     // Ajoutez un gestionnaire d'événements pour le changement de sélection
     monthSelect.addEventListener('change', updateURL);
     userSelect.addEventListener('change', updateURL);
+    familyselect.addEventListener('change', updateUSER);
+    userselect.addEventListener('change', updateUSERR);
+    updateUSERR();
+    
 });
 
 </script>
@@ -1928,6 +1946,16 @@ for (var i = 21; i <= 23; i++) { // Update the loop range to cover all 22 questi
     updateURLL(); // Mettre à jour l'URL avec le mois sélectionné
     window.location.reload(); // Rafraîchir la page pour effectuer le fetch avec le mois sélectionné
   });
+  familyselect.addEventListener("change", function() {
+    console.log("changed")
+    updateUSER(); // Mettre à jour l'URL avec le mois sélectionné
+     // Rafraîchir la page pour effectuer le fetch avec le mois sélectionné
+  });
+  userselect.addEventListener("change", function() {
+    console.log("changed")
+    updateUSERR(); // Mettre à jour l'URL avec le mois sélectionné
+     // Rafraîchir la page pour effectuer le fetch avec le mois sélectionné
+  });
 
   // Mettre à jour l'URL avec le mois sélectionné sans rafraîchir la page
   function updateURLL() {
@@ -1935,6 +1963,42 @@ for (var i = 21; i <= 23; i++) { // Update the loop range to cover all 22 questi
     const baseUrl = window.location.href.split('?')[0]; // Récupérer l'URL de base sans les paramètres
     const newUrl = `${baseUrl}?month=${selectedMonth}`; // Construire la nouvelle URL avec le mois sélectionné
     history.replaceState({}, document.title, newUrl); // Mettre à jour l'URL sans recharger la page
+  }
+
+  function updateUSER() {
+    const select = document.getElementById("familyselect");
+
+    // valeur sélectionnée
+    const selectedValue = select.value;
+    fetch('https://app.liliumpharma.com/clients/users-with-target-month/?month='+monthUrl+"&family="+selectedValue)
+      .then(response => response.json())
+      .then(data => {
+        console.log(data)
+          updateUserTable(data);
+      })
+      .catch(error => console.error('Erreur lors de la récupération des utilisateurs:', error)); // Mettre à jour l'URL sans recharger la page
+  }
+
+  function updateUSERR() {
+    const select = document.getElementById("familyselect");
+    const userselect = document.getElementById("userselect");
+
+    // valeur sélectionnée
+    const selectedValue = select.value;
+    fetch('https://app.liliumpharma.com/clients/users-with-target-month/?month='+monthUrl)
+      .then(response => response.json())
+      .then(data => {
+        console.log(data)
+        // supposons que data = [{id:1, name:"Ali"}, ...]
+        data.forEach(user => {
+            const option = document.createElement("option");
+            option.value = user.id;      // value
+            option.textContent = user.username; // texte affiché
+            userselect.appendChild(option);
+        });
+          updateUserTable(data);
+      })
+      .catch(error => console.error('Erreur lors de la récupération des utilisateurs:', error)); // Mettre à jour l'URL sans recharger la page
   }
 </script>
 

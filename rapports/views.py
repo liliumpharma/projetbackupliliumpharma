@@ -3029,6 +3029,12 @@ class NonVisitedCommunesAPIView(APIView):
     def get(self, request):
         # Récupérer le mois depuis les paramètres GET
         mois = request.GET.get("mois")
+        uu = request.GET.get("user")
+        
+        if uu:
+            usr = User.objects.get(username=uu)
+        else:
+            usr = request.user
 
         # Valider le paramètre du mois
         if not mois:
@@ -3055,7 +3061,7 @@ class NonVisitedCommunesAPIView(APIView):
             end_of_month = datetime(annee, mois + 1, 1)
 
         # Récupérer les communes des médecins associés à l'utilisateur actuel
-        medecins_associes = Medecin.objects.filter(users=request.user)
+        medecins_associes = Medecin.objects.filter(users=usr)
         communes_associees = Commune.objects.filter(
             medecin__in=medecins_associes
         ).distinct()
@@ -3064,7 +3070,7 @@ class NonVisitedCommunesAPIView(APIView):
         visites_specified_mois = Visite.objects.filter(
             rapport__added__gte=start_of_month,
             rapport__added__lt=end_of_month,
-            rapport__user=request.user,
+            rapport__user=usr,
             medecin__in=medecins_associes,
         )
 
@@ -3096,6 +3102,12 @@ class MultipleVisitedCommunesAPIView(APIView):
     def get(self, request):
         # Récupérer le mois depuis les paramètres GET
         mois = request.GET.get("mois")
+        uu = request.GET.get("user")
+        
+        if uu:
+            usr = User.objects.get(username=uu)
+        else:
+            usr = request.user
         print("------------------------------------- TEST CALLING ")
 
         # Valider le paramètre du mois
@@ -3123,13 +3135,13 @@ class MultipleVisitedCommunesAPIView(APIView):
             end_of_month = datetime(annee, mois + 1, 1)
 
         # Récupérer les médecins associés à l'utilisateur actuel
-        medecins_associes = Medecin.objects.filter(users=request.user)
+        medecins_associes = Medecin.objects.filter(users=usr)
 
         # Filtrer les visites effectuées durant le mois spécifié par les médecins associés à l'utilisateur actuel
         visites_specified_mois = Visite.objects.filter(
             rapport__added__gte=start_of_month,
             rapport__added__lt=end_of_month,
-            rapport__user=request.user,
+            rapport__user=usr,
             medecin__in=medecins_associes,
         )
 
@@ -3150,7 +3162,7 @@ class MultipleVisitedCommunesAPIView(APIView):
                 filter=Q(
                     medecin__visite__rapport__added__gte=start_of_month,
                     medecin__visite__rapport__added__lt=end_of_month,
-                    medecin__visite__rapport__user=request.user,
+                    medecin__visite__rapport__user=usr,
                 ),
             )
         )
@@ -3185,6 +3197,7 @@ class MultipleVisitedMedecinsAPIView(APIView):
     def get(self, request):
         # Récupérer le mois depuis les paramètres GET
         mois = request.GET.get("mois")
+        uu = request.GET.get("user")
 
         # Valider le paramètre du mois
         if not mois:
@@ -3199,7 +3212,10 @@ class MultipleVisitedMedecinsAPIView(APIView):
             return Response(
                 {"error": "Format de mois invalide"}, status=status.HTTP_400_BAD_REQUEST
             )
-
+        if uu:
+            usr = User.objects.get(username=uu)
+        else:
+            usr = request.user
         # Utiliser l'année actuelle
         annee = timezone.now().year
 
@@ -3211,13 +3227,13 @@ class MultipleVisitedMedecinsAPIView(APIView):
             end_of_month = datetime(annee, mois + 1, 1)
 
         # Récupérer les médecins associés à l'utilisateur actuel
-        medecins_associes = Medecin.objects.filter(users=request.user)
+        medecins_associes = Medecin.objects.filter(users=usr)
 
         # Filtrer les visites effectuées durant le mois spécifié par les médecins associés à l'utilisateur actuel
         visites_specified_mois = Visite.objects.filter(
             rapport__added__gte=start_of_month,
             rapport__added__lt=end_of_month,
-            rapport__user=request.user,
+            rapport__user=usr,
             medecin__in=medecins_associes,
         )
 
@@ -3238,7 +3254,7 @@ class MultipleVisitedMedecinsAPIView(APIView):
                 filter=Q(
                     visite__rapport__added__gte=start_of_month,
                     visite__rapport__added__lt=end_of_month,
-                    visite__rapport__user=request.user,
+                    visite__rapport__user=usr,
                 ),
             )
         )
@@ -3274,6 +3290,11 @@ class MedecinsNonVisitesAPIView(APIView):
         # Récupérer le mois depuis les paramètres GET
         print("CALLED BABY OH YEAH")
         mois = request.GET.get("mois")
+        uu = request.GET.get("user")
+        if uu:
+            usr = User.objects.get(username=uu)
+        else:
+            usr = request.user
         grossistes_non_visites_table = []
 
         # Valider le paramètre du mois
@@ -3302,14 +3323,14 @@ class MedecinsNonVisitesAPIView(APIView):
 
         # Récupérer les médecins avec spécialité 'grossiste'
         medecins_grossistes = Medecin.objects.filter(
-            users=request.user, specialite="Grossiste"
+            users=usr, specialite="Grossiste"
         )
 
         # Filtrer les visites effectuées durant le mois spécifié
         visites_specified_mois = Visite.objects.filter(
             rapport__added__gte=start_of_month,
             rapport__added__lt=end_of_month,
-            rapport__user=request.user,
+            rapport__user=usr,
         )
 
         # Extraire les IDs des médecins visités durant le mois spécifié

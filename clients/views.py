@@ -1052,6 +1052,7 @@ class UsersWithTargetMonth(APIView):
         current_year = datetime.now().year
         print("yeaaar " + str(current_year))
         print(request.GET.get("user"))
+        fml = request.GET.get("family")
         uu = request.GET.get("user")
         if uu is not None:
             user = User.objects.filter(username=uu).first()
@@ -1065,14 +1066,18 @@ class UsersWithTargetMonth(APIView):
         response = []
 
         if (
-            user.userprofile.speciality_rolee in ["admin", "CountryManager"]
+            user.userprofile.speciality_rolee in ["Admin", "CountryManager"]
             or user.is_superuser
         ):
-            users = User.objects.all()
-            users = users.exclude(
-                userprofile__speciality_rolee__in=["Superviseur_national"]
-            )
-            excluded_families = ["lilium Pharma", "orient Bio", "Aniya_Pharm"]
+            if fml:
+                users = User.objects.filter(userprofile__speciality_rolee=fml)
+            else:
+                users = User.objects.all()
+                users = users.exclude(
+                    userprofile__speciality_rolee__in=["Superviseur_national"]
+                )
+            #excluded_families = ["lilium Pharma", "orient Bio", "Aniya_Pharm"]
+            excluded_families = ["orient Bio"]
             users = users.exclude(userprofile__family__in=excluded_families)
 
             for u in users:
@@ -1120,7 +1125,12 @@ class UsersWithTargetMonth(APIView):
                     )
         else:
             if user.userprofile.speciality_rolee == "Superviseur_national":
-                users_under_supervisor = user.userprofile.usersunder.all()
+                if fml:
+                    users_under_supervisor = user.userprofile.usersunder.filter(
+                        userprofile__speciality_rolee=fml
+                        )
+                else:
+                    users_under_supervisor = user.userprofile.usersunder.all()
                 users_under_supervisor = users_under_supervisor.exclude(
                     username=user.username
                 )
