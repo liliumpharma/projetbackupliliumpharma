@@ -2876,7 +2876,7 @@ class RapportSummaryAPIView(APIView):
         u = request.GET.get('user')
         print(f"uuuuuuuu {u}")
         if u:
-            user = User.objects.filter(username=u).first()
+            user = User.objects.get(username=u)
             print(f"userrrrrrrrr {user}")
         else:
             user = request.user
@@ -2905,9 +2905,10 @@ class RapportSummaryAPIView(APIView):
         rapports = Rapport.objects.filter(
             user=user, added__year=year, added__month=month
         )
-
         # Counting the number of reports
         num_reports = rapports.count()
+        
+        print(f"nombre de rapport {num_reports} de user {user}")
 
         num_workdays = 0
         absence_dates = []

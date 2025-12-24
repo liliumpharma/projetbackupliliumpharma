@@ -212,12 +212,12 @@ function isChecked() {
 
     // Get the value of the 'month' parameter
     const month = urlParamss.get('month');
-    const usr = urlParams.get('user');
+    const usr = urlParamss.get('user');
 
 
 
     function fetchData(){
-    fetch('https://app.liliumpharma.com/rapports/RapportSummaryAPIView?month='+month+"&user="+usr)
+    fetch('https://app.liliumpharma.com/rapports/RapportSummaryAPIView?month='+month+'&user='+usr)
       .then((response) => response.json())
       .then((data) => {
         nombre_rapport.textContent = data.num_reports+'/'+data.days_in_month

@@ -1053,6 +1053,7 @@ class UsersWithTargetMonth(APIView):
         print("yeaaar " + str(current_year))
         print(request.GET.get("user"))
         fml = request.GET.get("family")
+        uuuu = request.GET.get("usr")
         uu = request.GET.get("user")
         if uu is not None:
             user = User.objects.filter(username=uu).first()
@@ -1071,6 +1072,8 @@ class UsersWithTargetMonth(APIView):
         ):
             if fml:
                 users = User.objects.filter(userprofile__speciality_rolee=fml)
+            elif uuuu:
+                users = User.objects.filter(username=uuuu)
             else:
                 users = User.objects.all()
                 users = users.exclude(
@@ -1129,6 +1132,8 @@ class UsersWithTargetMonth(APIView):
                     users_under_supervisor = user.userprofile.usersunder.filter(
                         userprofile__speciality_rolee=fml
                         )
+                elif uuuu:
+                    users_under_supervisor = User.objects.filter(username=uuuu)
                 else:
                     users_under_supervisor = user.userprofile.usersunder.all()
                 users_under_supervisor = users_under_supervisor.exclude(

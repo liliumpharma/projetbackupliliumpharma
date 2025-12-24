@@ -1418,6 +1418,227 @@ input[type="radio"]:checked::before {
         var usernameCell = document.createElement('td');
         usernameCell.textContent = user.user;
         row.appendChild(usernameCell);
+        const option = document.createElement("option");
+        option.value = user.user;      // value
+        option.textContent = user.user; // texte affiché
+        userselect.appendChild(option);
+        // Colonne 2 : Evaluation du délégué
+        var delegateEvalCell = document.createElement('td');
+        var delegateEvalIcon = document.createElement('i');
+        delegateEvalIcon.className = user.has_eval ? 'fas fa-check text-success' : 'fas fa-times text-danger';
+        delegateEvalCell.appendChild(delegateEvalIcon);
+        row.appendChild(delegateEvalCell);
+
+        // Colonne combinée : Evaluation du délégué + Pourcentage
+        var combinedEvalAndPercentageCell = document.createElement('td');
+
+        // Création de l'icône pour l'évaluation du délégué
+        var delegateEvalIcon = document.createElement('i');
+        delegateEvalIcon.className = user.has_eval ? 'fas fa-check text-success' : 'fas fa-times text-danger';
+        combinedEvalAndPercentageCell.appendChild(delegateEvalIcon);
+
+        // Ajout du pourcentage de l'utilisateur s'il existe
+        console.log(user.user +" -- >"+user.own_perc)
+        if (typeof user.own_perc === 'string') {
+            var percentageValue = user.own_perc.replace('%', ''); // Retirer le signe de pourcentage (%)
+            var ownPercentageText = document.createElement('span'); // Créer un élément <span>
+            ownPercentageText.textContent = ' ' + percentageValue + '/100'; // Ajout de "/100"
+            ownPercentageText.style.fontSize = 'larger'; // Définir une taille de texte plus grande
+            ownPercentageText.style.marginLeft = '5px'; // Ajouter une marge à gauche
+            ownPercentageText.style.fontWeight = 'bold'; // Définir la police en gras
+            
+            combinedEvalAndPercentageCell.appendChild(ownPercentageText);
+        } else {
+            // Si own_perc est null ou n'est pas une chaîne, affichez un message par défaut
+            var placeholderText = document.createTextNode(" ");
+            combinedEvalAndPercentageCell.appendChild(placeholderText);
+        }
+
+        // Ajout de la cellule combinée à la ligne
+        row.appendChild(combinedEvalAndPercentageCell);
+
+
+
+
+
+
+
+        // Création d'une seule cellule pour les deux colonnes combinées
+        var combinedCell = document.createElement('td');
+        combinedCell.classList.add('d-flex'); // Ajout de la classe flexbox
+
+        // Contenu de la colonne 5 : Direction a consulté l'eval;
+        var pourcentageEvalIcon = document.createElement('p');
+        pourcentageEvalIcon.textContent = user.pourcentage+"/15";
+        pourcentageEvalIcon.style.fontSize = '18px';
+        pourcentageEvalIcon.style.fontWeight = 'bold'; // Définir la police en gras
+
+
+        // Contenu de la colonne 3 : Evaluation du superviseur
+        var supervisorEvalIcon = document.createElement('i');
+        supervisorEvalIcon.className = user.has_sup_eval ? 'fas fa-check text-success' : 'fas fa-times text-danger';
+
+        // Ajout du contenu des deux colonnes à la cellule combinée
+        // Ajout d'une marge pour séparer les deux éléments
+        combinedCell.appendChild(supervisorEvalIcon);
+        combinedCell.innerHTML += '<div style="margin-left: 5px;"></div>';
+        combinedCell.appendChild(pourcentageEvalIcon);
+
+        // Ajout de la cellule combinée à la ligne
+        row.appendChild(combinedCell);
+
+
+
+        // Colonne 4 : Direction a consulté l'eval;
+        var directionEvalCell = document.createElement('td');
+        var directionEvalIcon = document.createElement('i');
+        directionEvalIcon.className = user.has_direction_eval ? 'fas fa-check text-success' : 'fas fa-times text-danger';
+        directionEvalCell.appendChild(directionEvalIcon);
+        row.appendChild(directionEvalCell);
+
+        // Colonne 5 : Direction a consulté l'eval;
+        // var pourcentageEvalCell = document.createElement('td');
+        // var pourcentageEvalIcon = document.createElement('p');
+        // pourcentageEvalIcon.textContent = user.pourcentage+" %";
+        // pourcentageEvalCell.appendChild(pourcentageEvalIcon);
+        // row.appendChild(pourcentageEvalCell);
+
+        // Colonne 6 : Bouton "Evaluer" ou lien vers une autre vue
+        var actionCell = document.createElement('td');
+
+        if (user.has_eval && user.has_sup_eval) {
+            // Créez un lien de vue alternative "View"
+            var viewLink = document.createElement('a');
+            viewLink.textContent = 'View';
+            actionCell.appendChild(viewLink);
+            viewLink.onclick = function() {
+              user=user.user
+              viewEvaluation(user)
+            }
+        } else {
+
+
+          if (!user.has_eval) {
+            // Créez un lien de vue alternative "View"
+            //var viewLink = document.createElement('a');
+            //viewLink.textContent = '-';
+            //actionCell.appendChild(viewLink);
+
+            // --- Bouton 2 : Détails (exemple) ---
+    var detailsButton = document.createElement('a');
+    detailsButton.classList.add('vbutton');
+    detailsButton.textContent = 'Rep Évaluer';
+    detailsButton.onclick = function() {
+        const baseUrl = window.location.href.split('?')[0];
+                const urlParams = new URLSearchParams(window.location.search);
+            
+                if (urlParams.has('user')) {
+                    urlParams.set('user', user.user);
+                } else {
+                    urlParams.append('user', user.user);
+                }
+                urlParams.append('eve', 1);
+                
+              
+                const newUrl = baseUrl + '?' + urlParams.toString();
+                history.replaceState({}, document.title, newUrl);
+                document.getElementById("myEvalsTable").classList.add("d-none");
+                document.getElementById("myEvalsTable").classList.remove("d-block");
+                window.location.reload();
+
+                //window.open(baseUrl+ '?' + urlParams.toString(), '_blank');
+                //chargerContenuPDF();class="table table-bordered d-block"
+                //myEvalsTable
+                
+                //document.getElementById("header").classList.add("d-none");
+              //document.getElementById("main-container").classList.remove("d-none");
+    };
+
+    // --- Ajout des deux boutons dans la cellule ---
+ 
+    actionCell.appendChild(detailsButton);
+
+        }else{
+
+            // Créez le bouton "Evaluer"
+            var evaluateButton = document.createElement('a');
+            evaluateButton.classList.add('vbutton');
+            evaluateButton.textContent = ' S.P Évaluer';
+            evaluateButton.onclick = function() {
+                const baseUrl = window.location.href.split('?')[0];
+                const urlParams = new URLSearchParams(window.location.search);
+            
+                if (urlParams.has('user')) {
+                    urlParams.set('user', user.user);
+                } else {
+                    urlParams.append('user', user.user);
+                }
+
+                
+              
+                const newUrl = baseUrl + '?' + urlParams.toString();
+                history.replaceState({}, document.title, newUrl);
+                chargerContenuPDF();
+                document.getElementById("header").classList.add("d-none");
+                document.getElementById("main-container").classList.remove("d-none");
+            };
+            // --- Bouton 2 : Détails (exemple) ---
+    var detailsButton = document.createElement('a');
+    detailsButton.classList.add('vbutton');
+    detailsButton.textContent = 'Rep Évaluer';
+    detailsButton.onclick = function() {
+        const baseUrl = window.location.href.split('?')[0];
+                const urlParams = new URLSearchParams(window.location.search);
+            
+                if (urlParams.has('user')) {
+                    urlParams.set('user', user.user);
+                } else {
+                    urlParams.append('user', user.user);
+                }
+                urlParams.append('eve', 1);
+                
+              
+                const newUrl = baseUrl + '?' + urlParams.toString();
+                history.replaceState({}, document.title, newUrl);
+                document.getElementById("myEvalsTable").classList.add("d-none");
+                document.getElementById("myEvalsTable").classList.remove("d-block");
+                window.location.reload();
+
+                //window.open(baseUrl+ '?' + urlParams.toString(), '_blank');
+                //chargerContenuPDF();class="table table-bordered d-block"
+                //myEvalsTable
+                
+                //document.getElementById("header").classList.add("d-none");
+              //document.getElementById("main-container").classList.remove("d-none");
+    };
+
+    // --- Ajout des deux boutons dans la cellule ---
+    actionCell.appendChild(evaluateButton);
+    actionCell.appendChild(detailsButton);
+        }
+        
+        
+        
+      }
+    row.appendChild(actionCell);
+
+    tableBody.appendChild(row);
+});
+
+  }
+
+  function updateUserTablee(users) {
+      var tableBody = document.querySelector('#userTable tbody');
+      // Efface le contenu existant de la table
+      tableBody.innerHTML = '';
+      // Parcours la liste des utilisateurs et les ajoute au tableau
+      users.forEach(function(user) {
+        var row = document.createElement('tr');
+        console.log(user.own_perc)
+
+        var usernameCell = document.createElement('td');
+        usernameCell.textContent = user.user;
+        row.appendChild(usernameCell);
 
         // Colonne 2 : Evaluation du délégué
         var delegateEvalCell = document.createElement('td');
@@ -1982,21 +2203,22 @@ for (var i = 21; i <= 23; i++) { // Update the loop range to cover all 22 questi
   function updateUSERR() {
     const select = document.getElementById("familyselect");
     const userselect = document.getElementById("userselect");
+    const selectedusr = userselect.value;
 
     // valeur sélectionnée
     const selectedValue = select.value;
-    fetch('https://app.liliumpharma.com/clients/users-with-target-month/?month='+monthUrl)
+    fetch('https://app.liliumpharma.com/clients/users-with-target-month/?month='+monthUrl+'&usr='+selectedusr)
       .then(response => response.json())
       .then(data => {
         console.log(data)
         // supposons que data = [{id:1, name:"Ali"}, ...]
-        data.forEach(user => {
-            const option = document.createElement("option");
-            option.value = user.id;      // value
-            option.textContent = user.username; // texte affiché
-            userselect.appendChild(option);
-        });
-          updateUserTable(data);
+        //data.forEach(user => {
+        //    const option = document.createElement("option");
+        //    option.value = user.id;      // value
+        //    option.textContent = user.username; // texte affiché
+        //    userselect.appendChild(option);
+        //});
+          updateUserTablee(data);
       })
       .catch(error => console.error('Erreur lors de la récupération des utilisateurs:', error)); // Mettre à jour l'URL sans recharger la page
   }
