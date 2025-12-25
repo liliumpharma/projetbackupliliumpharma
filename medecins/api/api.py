@@ -17,7 +17,7 @@ from django.db.models import Count
 from django.core.exceptions import ObjectDoesNotExist
 
 import datetime
-from medecins.get_medecins import get_medecins
+from medecins.get_medecins import get_medecins, get_medecinsss
 from produits.get_produits_stock import get_stock
 
 import json
@@ -165,7 +165,7 @@ class MedecinFrontAPI(APIView):
         #if commercial_input or medecin:
         if 1:
             print("33333333")
-            medecins_list = get_medecins(request)
+            medecins_list = get_medecinsss(request)
             print(request)# Récupère le queryset de médecins
             print("222222222")
             # Calculez le nombre de médecins qui ne sont pas des spécialités "Pharmacie", "Grossiste", "SuperGros"
@@ -251,7 +251,7 @@ class MedecinFrontAPI(APIView):
         #if commercial_input or medecin:
         if 1:
             print("33333333 from post")
-            medecins_list = get_medecins(request)
+            medecins_list = get_medecinsss(request)
             print(request)# Récupère le queryset de médecins
             print("222222222 from post")
             # Calculez le nombre de médecins qui ne sont pas des spécialités "Pharmacie", "Grossiste", "SuperGros"
