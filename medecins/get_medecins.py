@@ -8,6 +8,9 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.functions import TruncDate
 
+from itertools import chain
+from collections import defaultdict
+
 def get_medecinsss(request):
     filters = {}
     visites_filters = {}
@@ -97,6 +100,9 @@ def get_medecinsss(request):
 
     if request.GET.get("produit"):
         visites_filters["produits__id"] = request.GET.get("produit")
+    
+    if request.GET.get("commercial"):
+        visites_filters["rapport__user__username__icontains"] = request.GET.get("commercial").split(" - ")[0]
 
     # medecins_list = Medecin.objects.filter(**filters).order_by("nom")
     # Assuming you have references to the Medecin_recycle_bin and pharmacie_recycle_bin users
@@ -123,7 +129,7 @@ def get_medecinsss(request):
         )
 
     medecins_list = medecins_list.distinct()
-    uu = request.GET.get("commercial")
+    uu = request.GET.get("commercial").split(" - ")[0]
     if uu:
         try:
             usr = User.objects.filter(username=uu).first()
@@ -138,6 +144,7 @@ def get_medecinsss(request):
         medecins_list = medecins_list.filter(
             users__userprofile__commune__wilaya__pays=usr.userprofile.commune.wilaya.pays
         )
+        print(f"medecins list dans 147 est : {medecins_list}")
         if usr.userprofile.rolee in [
             "Superviseur",
             "Superviseur_regional",
@@ -146,9 +153,11 @@ def get_medecinsss(request):
             "Superviseur_national",
         ]:
             query = Q()
-            query = Q(users__in=usr.userprofile.usersunder.all())
-            query |= Q(users=usr)
+            users_qs = usr.userprofile.usersunder.all() | User.objects.filter(id=usr.id)
+            query = Q(users__in=users_qs)
+            #query |= Q(users=usr)
             medecins_list = medecins_list.filter(query)
+            print(f"medecins list dans 160 est : {medecins_list}")
             # medecins_list=medecins_list.filter(users__in=request.user.userprofile.usersunder.all())
 
         elif usr.userprofile.rolee != "CountryManager":
@@ -184,24 +193,77 @@ def get_medecinsss(request):
         medecins_list = medecins_list.filter(id__in=visited_more_one)
     if request.GET.get("visites") == "3":
         print("visites egal a 3")
-        visites_count_medcin = (
-            Visite.objects.filter(**visites_filters)
-            .annotate(jour=TruncDate("rapport__added"))  # 👈 regroupe par jour
-            .values("medecin__id", "jour")               # 👈 groupement par médecin et par jour
-            .annotate(
-                total_visites=Count("id", distinct=True),
-                total_users=Count("rapport__user", distinct=True),
-            )
-            )
+        ff = request.GET.get("commercial")
+        fff = ff.split(" - ")[0]
+        us = User.objects.filter(username=fff).first()
+        print(f"le user selectionne est {us}")
+        user_under = User.objects.none()
+        sup_user = User.objects.none()
+        if us.userprofile.speciality_rolee in ["Superviseur_regional","Superviseur_national"]:
+            print("le user selection est superviseur")
+            user_under = us.userprofile.usersunder.exclude(id=us.id)
+            print(f"les users under sont {user_under}")
+        elif us.userprofile.speciality_rolee in ["Medico_commercial","Commercial"]:
+            print("le user selection est delegue")
+            sup_user = User.objects.filter(userprofile_usersunder=us)
+        all_visites = Visite.objects.filter(**visites_filters)
+        print(f"all visites apres les filtres {all_visites}")
+        visites_commun = Visite.objects.none()
+        visites_commun_list = []
+        for v in all_visites:
+            if us.userprofile.speciality_rolee in ["Superviseur_regional","Superviseur_national"]:
+                visites_under = Visite.objects.filter(rapport__added=v.rapport.added, rapport__user__in=user_under,medecin=v.medecin)
+                if all_visites.exists():
+                    print("ouiiii une vistes commun")
+                    visites_commun_list.extend(chain([v], visites_under))
+                    v_qs = Visite.objects.filter(id=v.id).annotate(jour=TruncDate("rapport__added"))
+                    visites_under = visites_under.annotate(jour=TruncDate("rapport__added"))
+                    visites_commun = visites_commun.union(v_qs, visites_under)
+                    #visites_commun = visites_commun.union(visites_under)
+            elif us.userprofile.speciality_rolee in ["Medico_commercial","Commercial"]:
+                visites_super = Visite.objects.filter(rapport__added=v.rapport.added, rapport__user__in=sup_user,medecin=v.medecin)
+                if visites_super.exists():
+                    visites_commun_list.extend(chain([v], visites_super ))
+                    v_qs = Visite.objects.filter(id=v.id).annotate(jour=TruncDate("rapport__added"))
+                    visites_super = visites_super.annotate(jour=TruncDate("rapport__added"))
+                    visites_commun = visites_commun.union(v_qs, visites_super)
+                    #visites_commun = visites_commun.union(visites_super)
+        grouped = defaultdict(lambda: {"total_visites": 0, "total_users": set()})
+        for visite in visites_commun_list:
+            jour = visite.rapport.added
+            medecin_id = visite.medecin.id
+            key = (medecin_id, jour)
+            grouped[key]["total_visites"] += 1
+            grouped[key]["total_users"].add(visite.rapport.user.id)
+        print(f"visites commun est {visites_commun}")
+        print(f"visites commun list est {visites_commun_list}")
+        #visites_count_medcin = visites_commun
+        #(
+         #   visites_commun
+         #   .annotate(jour=TruncDate("rapport__added"))  # 👈 regroupe par jour
+         #   #.values("medecin__id", "jour")               # 👈 groupement par médecin et par jour
+         #   .annotate(
+         #       total_visites=Count("id", distinct=True),
+         #       total_users=Count("rapport__user", distinct=True),
+         #   )
+         #   )
 
         # On garde les médecins avec 2 visites et 2 utilisateurs différents le même jour
+        #visited_more_one = [
+        #    v["medecin__id"]
+        #    for v in visites_count_medcin
+        #    if v["total_visites"] == 2 and v["total_users"] == 2
+        #]
+        
         visited_more_one = [
-            v["medecin__id"]
-            for v in visites_count_medcin
-            if v["total_visites"] == 2 and v["total_users"] == 2
+            medecin_id
+            for (medecin_id, jour), data in grouped.items()
+            if data["total_visites"] == 2 and len(data["total_users"]) == 2
         ]
-
-        medecins_list = medecins_list.filter(id__in=visited_more_one)
+        print(f"visites more than one {visited_more_one}")
+        #medecins_list = medecins_list.filter(id__in=visited_more_one)
+        medecins_list = Medecin.objects.filter(id__in=visited_more_one)
+        print(f"medecins_list est ::: {medecins_list}")
     if request.GET.get("stock") != "":
         product = request.GET.get("stock")
         filter_by_period = False
