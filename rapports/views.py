@@ -3453,8 +3453,8 @@ import string
 
 def generate_pages_task(user_id):
     eeee = 98
-    date_debut = "2025-12-01"
-    date_fin = "2025-12-31"
+    date_debut = "2026-01-01"
+    date_fin = "2026-01-31"
     user_id = int(user_id)
     eee = User.objects.get(id=user_id)
     Downloadable.objects.filter(link_name = f"{eee.username}_02.pdf").delete()
@@ -3643,8 +3643,8 @@ def generate_pages_pharmacie_task(user_id):
 
 
     #eeee = user_id
-    date_debut = "2025-12-01"
-    date_fin = "2025-12-31"
+    date_debut = "2026-01-01"
+    date_fin = "2026-01-31"
     user_id = int(user_id)
     eee = User.objects.get(id=user_id)
     Downloadable.objects.filter(link_name = f"Griffe de passage pharmacie_{eee.username}_2").delete()

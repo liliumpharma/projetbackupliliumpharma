@@ -17,8 +17,8 @@ from django.shortcuts import render
 today = date.today()
 
 # month = today.month
-month = 12
-year = 2025
+month = 1
+year = 2026
 
 for u in User.objects.all():
     for day in range(1, monthrange(year, month)[1] + 1):
