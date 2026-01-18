@@ -35,8 +35,9 @@ function chargerContenuPDF() {
 
     var monthUrll = getMonthFromUrl();
     var userUrll = getUserFromUrl();
+    var yyyear = getYearFromUrl();
 
-    const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/get-monthly-evaluation/?month=' + monthUrll+ '&user='+userUrll;
+    const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/get-monthly-evaluation/?month=' + monthUrll+ '&user='+userUrll+'&year='+yyyear;
     // ECRIRE LES ERRORS EN ARABE
     fetch(apiUrl)
       .then(response => {
@@ -101,7 +102,7 @@ function viewEvaluation(userId) {
 
 
 
-    const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/get-monthly-evaluation/?month=' + monthUrl+ '&user='+userUrl;
+    const apiUrl = 'https://app.liliumpharma.com/monthly_evaluation/get-monthly-evaluation/?month=' + monthUrl+ '&user='+userUrl+'&year='+yyyear;
     // ECRIRE LES ERRORS EN ARABE
     fetch(apiUrl)
       .then(response => {
@@ -1299,19 +1300,36 @@ input[type="radio"]:checked::before {
 </script>
 
 <script>
+  const params = new URLSearchParams(window.location.search);
+
+if (!params.has('year') || !params.has('month')) {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 1);
+
+  const year = d.getFullYear();
+  const month = d.getMonth() + 1;
+
+  window.location.href = `?year=${year}&month=${month}`;
+}
   const monthSelect = document.getElementById("monthSelect");
   const userSelect = document.getElementById("userSelect");
 
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth() + 1;
   const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1; // Calculer le mois précédent
+  //const currentDate = new Date();
+currentDate.setMonth(currentDate.getMonth() - 1);
+
+const month = currentDate.getMonth() + 1; // 1–12
+const year = currentDate.getFullYear();
+  //window.location.href = `?year=${year}&month=${month}`;
 
   const urlParams = new URLSearchParams(window.location.search);
   const monthUrl = urlParams.get('month');
 
   if (!monthUrl) {
     const baseUrl = window.location.href.split('?')[0]; 
-    // const newUrl = `${baseUrl}?month=${previousMonth}`; // Utiliser le mois précédent par défaut
+    const newUrl = `${baseUrl}?month=${previousMonth}`; // Utiliser le mois précédent par défaut
     history.replaceState({}, document.title, newUrl);
   }
 
@@ -1909,7 +1927,7 @@ input[type="radio"]:checked::before {
 }
 
 console.log(monthUrl)
-  fetch('https://app.liliumpharma.com/monthly_evaluation/MonthlyEvaluationSupToDirectionView/?month='+monthUrl)
+  fetch('https://app.liliumpharma.com/monthly_evaluation/MonthlyEvaluationSupToDirectionView/?month='+monthUrl+'&year='+yyyear)
   .then(response => response.json())
   .then(data => {
     console.log(data[0].exists)
@@ -1956,6 +1974,20 @@ console.log(monthUrl)
 function getUserFromUrl() {
     var url = window.location.href; // Obtenez l'URL actuelle
     var userIndex = url.indexOf("user="); // Trouvez l'index du paramètre "user"
+
+    if (userIndex !== -1) {
+        // Si le paramètre "user" est trouvé dans l'URL
+        var user = url.substring(userIndex + 5); // Récupérez l'utilisateur à partir de l'URL
+        return user; // Retourne l'utilisateur
+    } else {
+        // Si le paramètre "user" n'est pas trouvé dans l'URL
+        return null;
+    }
+}
+
+function getYearFromUrl() {
+    var url = window.location.href; // Obtenez l'URL actuelle
+    var userIndex = url.indexOf("year="); // Trouvez l'index du paramètre "user"
 
     if (userIndex !== -1) {
         // Si le paramètre "user" est trouvé dans l'URL
@@ -2102,9 +2134,10 @@ for (var i = 21; i <= 23; i++) { // Update the loop range to cover all 22 questi
           }
           var monthUrll = getMonthFromUrl();
           var userUrll = getUserFromUrl();
+          var yyyear = getYearFromUrl();
           console.log("finished postData: " + JSON.stringify(postData));
           $.ajax({
-              url: 'https://app.liliumpharma.com/monthly_evaluation/AddMonthlyEvaluationSup/?month=' + monthUrll + '&user=' + userUrll,
+              url: 'https://app.liliumpharma.com/monthly_evaluation/AddMonthlyEvaluationSup/?month=' + monthUrll + '&user=' + userUrll +'&year='+yyyear,
               type: 'POST',
               data: postData,
               success: function(response) {

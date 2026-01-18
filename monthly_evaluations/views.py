@@ -342,7 +342,8 @@ class MonthlyEvaluationView(APIView):
         print(f"le user est {user}")
         id_username = User.objects.get(username=user)
         month = request.GET.get("month")
-        current_year = datetime.now().year
+        current_year = int(request.GET.get("year"))
+        #current_year = datetime.now().year
 
         monthly_evaluations = Monthly_Evaluation.objects.filter(
             user=id_username,
@@ -445,7 +446,8 @@ class print_evaluation(APIView):
         else:
             user = request.user
         default_month = str(int(datetime.now().month) - 1)
-        current_year = datetime.now().year
+        current_year = int(request.GET.get("year"))
+        #current_year = datetime.now().year
         month_from_request = request.GET.get("month")
 
         if month_from_request == "null":

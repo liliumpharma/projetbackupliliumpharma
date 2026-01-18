@@ -1184,7 +1184,8 @@ class ordersPerUserPerMonth(APIView):
             user = request.user
         # user=request.user
 
-        year = date.today().year
+        #year = date.today().year
+        year = int(request.GET.get("year"))
         month_param = request.GET.get("month")
         try:
             month = int(month_param)
@@ -1192,15 +1193,15 @@ class ordersPerUserPerMonth(APIView):
 
             if 1 <= month <= 12:
                 date_debut_mois = datetime(
-                    date.today().year, month, 1, 0, 0, 0, 0, tzinfo=tz
+                    year, month, 1, 0, 0, 0, 0, tzinfo=tz
                 )
                 if month == 12:
                     date_fin_mois = datetime(
-                        date.today().year + 1, 1, 1, 0, 0, 0, 0, tzinfo=tz
+                        year + 1, 1, 1, 0, 0, 0, 0, tzinfo=tz
                     )
                 else:
                     date_fin_mois = datetime(
-                        date.today().year, month + 1, 1, 0, 0, 0, 0, tzinfo=tz
+                        year, month + 1, 1, 0, 0, 0, 0, tzinfo=tz
                     )
             else:
                 return Response(

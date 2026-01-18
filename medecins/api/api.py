@@ -765,6 +765,7 @@ class CurrentMonthMedecinVisiteDuoPerUserWithQttProducts(APIView):
 
     def get(self, request):
         year = datetime.today().year
+        year = int(request.GET.get("year"))
         uu = request.GET.get("user")
         if uu:
             user = User.objects.filter(username=uu).first()
@@ -912,7 +913,8 @@ class VisitsPerUser(APIView):
             user = User.objects.filter(username=u).first()
         else:
             user = request.user
-        current_year = datetime.now().year
+        current_year = int(request.GET.get("year"))
+        #current_year = datetime.now().year
 
         # Récupérer le paramètre 'month' de l'URL
         month_param = request.GET.get("month")
@@ -923,7 +925,7 @@ class VisitsPerUser(APIView):
             if 1 <= month <= 12:
                 # Définir la date de début du mois spécifié dans l'URL
                 date_debut_mois = datetime(
-                    datetime.now().year,
+                    int(request.GET.get("year")),
                     month,
                     1,
                     0,
@@ -935,7 +937,7 @@ class VisitsPerUser(APIView):
                 # Définir la date de fin du mois spécifié dans l'URL
                 if month == 12:
                     date_fin_mois = datetime(
-                        datetime.now().year + 1,
+                        int(request.GET.get("year")) + 1,
                         1,
                         1,
                         0,
@@ -946,7 +948,7 @@ class VisitsPerUser(APIView):
                     )
                 else:
                     date_fin_mois = datetime(
-                        datetime.now().year,
+                        int(request.GET.get("year")),
                         month + 1,
                         1,
                         0,
@@ -1021,6 +1023,7 @@ class VisitsMoreThanOneTimeForMedecinPerUser(APIView):
         else:
             user = request.user
         year = date.today().year
+        year = int(request.GET.get("year"))
 
         # Récupérer le paramètre 'month' de l'URL
         month_param = request.GET.get("month")
@@ -1031,7 +1034,7 @@ class VisitsMoreThanOneTimeForMedecinPerUser(APIView):
             if 1 <= month <= 12:
                 # Définir la date de début du mois spécifié dans l'URL
                 date_debut_mois = datetime(
-                    datetime.now().year,
+                    int(request.GET.get("year")),
                     month,
                     1,
                     0,
@@ -1043,7 +1046,7 @@ class VisitsMoreThanOneTimeForMedecinPerUser(APIView):
                 # Définir la date de fin du mois spécifié dans l'URL en excluant le 1er jour du mois suivant
                 if month == 12:
                     date_fin_mois = datetime(
-                        datetime.now().year + 1,
+                        int(request.GET.get("year")) + 1,
                         1,
                         1,
                         0,
@@ -1054,7 +1057,7 @@ class VisitsMoreThanOneTimeForMedecinPerUser(APIView):
                     )
                 else:
                     date_fin_mois = datetime(
-                        datetime.now().year,
+                        int(request.GET.get("year")),
                         month + 1,
                         1,
                         0,
@@ -1246,12 +1249,13 @@ class MedecinsNonVisites(APIView):
             user = request.user
         month_param = request.GET.get("month")
         current_year = datetime.now().year
+        current_year = int(request.GET.get("year"))
 
         try:
             month = int(month_param)
             if 1 <= month <= 12:
                 date_debut_mois = datetime(
-                    datetime.now().year,
+                    int(request.GET.get("year")),
                     month,
                     1,
                     0,
@@ -1262,7 +1266,7 @@ class MedecinsNonVisites(APIView):
                 )
                 if month == 12:
                     date_fin_mois = datetime(
-                        datetime.now().year + 1,
+                        int(request.GET.get("year")) + 1,
                         1,
                         1,
                         0,
@@ -1273,7 +1277,7 @@ class MedecinsNonVisites(APIView):
                     )
                 else:
                     date_fin_mois = datetime(
-                        datetime.now().year,
+                        int(request.GET.get("year")),
                         month + 1,
                         1,
                         0,
@@ -1371,7 +1375,8 @@ class PharmaciesGrossitesVisitsPerUser(APIView):
     def get(self, request):
         print(str(request))
         user_param = request.GET.get("user")
-        current_year = datetime.now().year
+        current_year = int(request.GET.get("year"))
+        #current_year = datetime.now().year
 
         if user_param:
             user = User.objects.filter(username=user_param).first()
@@ -1388,7 +1393,7 @@ class PharmaciesGrossitesVisitsPerUser(APIView):
             if 1 <= month <= 12:
                 # Définir la date de début du mois spécifié dans l'URL
                 date_debut_mois = datetime(
-                    datetime.now().year,
+                    int(request.GET.get("year")),
                     month,
                     1,
                     0,
@@ -1400,7 +1405,7 @@ class PharmaciesGrossitesVisitsPerUser(APIView):
                 # Définir la date de fin du mois spécifié dans l'URL
                 if month == 12:
                     date_fin_mois = datetime(
-                        datetime.now().year + 1,
+                        int(request.GET.get("year")) + 1,
                         1,
                         1,
                         0,
@@ -1411,7 +1416,7 @@ class PharmaciesGrossitesVisitsPerUser(APIView):
                     )
                 else:
                     date_fin_mois = datetime(
-                        datetime.now().year,
+                        int(request.GET.get("year")),
                         month + 1,
                         1,
                         0,
@@ -1495,14 +1500,14 @@ class SuperGrossitesVisitsPerUser(APIView):
             user = User.objects.filter(username=u).first()
         else:
             user = request.user
-        current_year = datetime.now().year
+        current_year = int(request.GET.get("year"))
         month_param = request.GET.get("month")
 
         try:
             month = int(month_param)
             if 1 <= month <= 12:
                 date_debut_mois = datetime(
-                    datetime.now().year,
+                    int(request.GET.get("year")),
                     month,
                     1,
                     0,
@@ -1513,7 +1518,7 @@ class SuperGrossitesVisitsPerUser(APIView):
                 )
                 if month == 12:
                     date_fin_mois = datetime(
-                        datetime.now().year + 1,
+                        int(request.GET.get("year")) + 1,
                         1,
                         1,
                         0,
@@ -1524,7 +1529,7 @@ class SuperGrossitesVisitsPerUser(APIView):
                     )
                 else:
                     date_fin_mois = datetime(
-                        datetime.now().year,
+                        int(request.GET.get("year")),
                         month + 1,
                         1,
                         0,

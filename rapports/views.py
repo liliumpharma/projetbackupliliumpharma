@@ -3052,7 +3052,8 @@ class NonVisitedCommunesAPIView(APIView):
             )
 
         # Utiliser l'année actuelle
-        annee = timezone.now().year
+        annee = int(request.GET.get("year"))
+        #annee = timezone.now().year
 
         # Définir les dates de début et de fin du mois spécifié
         start_of_month = datetime(annee, mois, 1)
@@ -3126,7 +3127,8 @@ class MultipleVisitedCommunesAPIView(APIView):
             )
 
         # Utiliser l'année actuelle
-        annee = timezone.now().year
+        annee = int(request.GET.get("year"))
+        #annee = timezone.now().year
 
         # Définir les dates de début et de fin du mois spécifié
         start_of_month = datetime(annee, mois, 1)
@@ -3218,7 +3220,8 @@ class MultipleVisitedMedecinsAPIView(APIView):
         else:
             usr = request.user
         # Utiliser l'année actuelle
-        annee = timezone.now().year
+        annee = int(request.GET.get("year"))
+        #annee = timezone.now().year
 
         # Définir les dates de début et de fin du mois spécifié
         start_of_month = datetime(annee, mois, 1)
@@ -3313,7 +3316,8 @@ class MedecinsNonVisitesAPIView(APIView):
             )
 
         # Utiliser l'année actuelle
-        annee = timezone.now().year
+        annee = int(request.GET.get("user"))
+        #annee = timezone.now().year
 
         # Définir les dates de début et de fin du mois spécifié
         start_of_month = datetime(annee, mois, 1)
@@ -3323,8 +3327,11 @@ class MedecinsNonVisitesAPIView(APIView):
             end_of_month = datetime(annee, mois + 1, 1)
 
         # Récupérer les médecins avec spécialité 'grossiste'
+        #medecins_grossistes = Medecin.objects.filter(
+        #    users=usr, specialite="Grossiste"
+        #)
         medecins_grossistes = Medecin.objects.filter(
-            users=usr, specialite="Grossiste"
+            users=usr
         )
 
         # Filtrer les visites effectuées durant le mois spécifié

@@ -1049,7 +1049,12 @@ class UsersWithTargetMonth(APIView):
 
     def get(self, request):
 
-        current_year = datetime.now().year
+        #current_year = datetime.now().year
+        a = request.GET.get("year")
+        if a:
+            current_year = int(a)
+        else:
+            current_year = datetime.now().year
         print("yeaaar " + str(current_year))
         print(request.GET.get("user"))
         fml = request.GET.get("family")
@@ -1072,6 +1077,8 @@ class UsersWithTargetMonth(APIView):
         ):
             if fml:
                 users = User.objects.filter(userprofile__speciality_rolee=fml)
+                print(f"oui avec family {fml}")
+                print(f"les users {users}")
             elif uuuu:
                 users = User.objects.filter(username=uuuu)
             else:
@@ -1080,8 +1087,9 @@ class UsersWithTargetMonth(APIView):
                     userprofile__speciality_rolee__in=["Superviseur_national"]
                 )
             #excluded_families = ["lilium Pharma", "orient Bio", "Aniya_Pharm"]
-            excluded_families = ["orient Bio"]
+            excluded_families = ["orient Bio", "production"]
             users = users.exclude(userprofile__family__in=excluded_families)
+            print(f"les users apres exclude {users}")
 
             for u in users:
                 has_eval = False
@@ -1090,14 +1098,17 @@ class UsersWithTargetMonth(APIView):
                 pourcentage = 0
                 own_perc = 0
 
-                if UserTargetMonth.objects.filter(user=u, date__month=month).exists():
+                #if UserTargetMonth.objects.filter(user=u, date__month=month).exists():
+                if 1:
                     print("added year " + str(current_year))
                     print("added month " + str(month))
                     print("user " + str(u))
-
-                    me = Monthly_Evaluation.objects.filter(
+                    try:
+                        me = Monthly_Evaluation.objects.filter(
                         Q(added__year=current_year) & Q(added__month=month) & Q(user=u)
-                    ).first()
+                        ).first()
+                    except:
+                        print("pas de monthly target month")
 
                     if Monthly_Evaluation.objects.filter(
                         user=u, added__month=month, added__year=current_year
@@ -1217,7 +1228,7 @@ class UsersWithTargetMonth(APIView):
                         "own_perc": own_perc,
                     }
                 )
-
+        print(f"les reponse sont {response}")
         return Response(response)
 
 
