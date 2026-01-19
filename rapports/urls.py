@@ -4,6 +4,7 @@ from .api.api import RapportAPI
 from .api.app_api import RapportAppAPI, CommentAppAPI, VisiteAppApi, SingleRapportAPI, CommentAPI
 
 urlpatterns = [
+    path("listvisits", Listvisit.as_view(), name="ListVisit"),
     path("/home", HomeRapport.as_view(), name="HomeRapport"),
     path("addrapport", aaa.as_view(), name="addrapport"),
     path("showvisit/<int:id>/", vis.as_view(), name="showvisit"),

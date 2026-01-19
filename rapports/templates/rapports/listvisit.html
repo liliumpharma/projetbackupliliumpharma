@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-16">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link href="https://fonts.googleapis.com/css2?family=Lalezar&display=swap" rel="stylesheet">
+  <title>Visites Commune</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+
+  <style>
+    @font-face {
+      font-family: "Galano";
+      src: url("https://app.liliumpharma.com/static/css/medium.otf") format("opentype");
+    }
+    @font-face {
+      font-family: "Galano";
+      src: url("https://app.liliumpharma.com/static/css/bold.otf") format("opentype");
+      font-weight: bold;
+    }
+    @font-face {
+      font-family: "Galano";
+      src: url("https://app.liliumpharma.com/static/css/light.otf") format("opentype");
+      font-weight: 100;
+    }
+
+    body {
+      font-family: Galano, sans-serif !important;
+      color: #3a3a3a;
+      background-color: #f9f9f9;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 30px;
+      text-transform: uppercase;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 40px;
+    }
+
+    .header img {
+      height: 90px;
+    }
+
+    .header-info {
+      text-align: center;
+      flex-grow: 1;
+    }
+
+    .header-info h2, .header-info h4 {
+      margin: 0;
+    }
+
+    ul.visites-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    ul.visites-list li {
+      background-color: #fff;
+      margin-bottom: 10px;
+      padding: 10px 15px;
+      border-left: 4px solid #007bff;
+      box-shadow: 0px 1px 3px rgba(0,0,0,0.1);
+      font-size: 1rem;
+    }
+
+    ul.visites-list li span.day {
+      font-weight: bold;
+      color: #007bff;
+    }
+
+    ul.visites-list li span.medecin {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .no-visits {
+      text-align: center;
+      font-style: italic;
+      color: gray;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+{% load static %}
+
+<!-- En-tête -->
+<div class="header">
+  <div class="logo">
+    <img src="https://app.liliumpharma.com/{% static 'img/logo.png' %}" alt="Logo Lilium Pharma">
+  </div>
+  <div class="header-info">
+    <h2>LILIUM PHARMA ALGERIE</h2>
+    <h4>Commune : {{ commune.nom }}</h4>
+    <h4>Utilisateur : {{ user.username }}</h4>
+    <h4>Mois / Année : {{ month }}/{{ year }}</h4>
+    <h4>Nombre de visites : {{ total }}</h4>
+  </div>
+</div>
+
+<!-- Liste des visites -->
+{% if visites %}
+<ul class="visites-list">
+  {% for visite in visites %}
+  <li>
+    <span class="day">Jour : {{ visite.rapport.added|date:"d/m/Y" }}</span> — 
+    <span class="medecin">Client : {{ visite.medecin.nom }}</span>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<div class="no-visits">Aucune visite pour ce mois.</div>
+{% endif %}
+
+</body>
+</html>

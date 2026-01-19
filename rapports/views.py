@@ -121,6 +121,41 @@ class vis(LoginRequiredMixin, TemplateView):
         vis = Visite.objects.filter(rapport=id)
         return render(request, "rapports/vis.html", {"id":id, "visites":vis})
 
+class Listvisit(LoginRequiredMixin, TemplateView):
+    def get(self, request):
+        year = int(request.GET.get("year", timezone.now().year))
+        month = int(request.GET.get("month", timezone.now().month))
+        commune_id = request.GET.get("commune")
+        username = request.GET.get("user")
+        total = request.GET.get("total")
+        user = get_object_or_404(User, username=username)
+        commune = get_object_or_404(Commune, id=commune_id)
+        # Définir l'intervalle du mois
+        start_of_month = datetime(year, month, 1)
+        print(f"start of mont {start_of_month}")
+        if month == 12:
+            end_of_month = datetime(year + 1, 1, 1)
+        else:
+            end_of_month = datetime(year, month + 1, 1)
+        start_of_month = timezone.make_aware(start_of_month)
+        end_of_month = timezone.make_aware(end_of_month)
+        visites = Visite.objects.filter(
+            rapport__user=user,
+            medecin__commune=commune,
+            rapport__added__gte=start_of_month,
+            rapport__added__lt=end_of_month
+        ).order_by('rapport__added')
+        context = {
+            "visites": visites,
+            "commune": commune,
+            "year": year,
+            "month": month,
+            "user": user,
+            "total":total
+        }
+        return render(request, "rapports/listvisit.html", context)
+
+
 class HomeRapport(LoginRequiredMixin, TemplateView):
     def get(self, request):
         print(request.user.username)
@@ -3104,6 +3139,11 @@ class MultipleVisitedCommunesAPIView(APIView):
     def get(self, request):
         # Récupérer le mois depuis les paramètres GET
         mois = request.GET.get("mois")
+        if mois:
+            print(f"oui ya de mois {mois}")
+        else:
+            print("oui pas de mois")
+            mois = request.GET.get("month")
         uu = request.GET.get("user")
         
         if uu:
@@ -3129,14 +3169,16 @@ class MultipleVisitedCommunesAPIView(APIView):
         # Utiliser l'année actuelle
         annee = int(request.GET.get("year"))
         #annee = timezone.now().year
+        print(f"year est {annee}")
 
         # Définir les dates de début et de fin du mois spécifié
         start_of_month = datetime(annee, mois, 1)
+        print(f"start of mont {start_of_month}")
         if mois == 12:
             end_of_month = datetime(annee + 1, 1, 1)
         else:
             end_of_month = datetime(annee, mois + 1, 1)
-
+        print(f"end of month {end_of_month}")
         # Récupérer les médecins associés à l'utilisateur actuel
         medecins_associes = Medecin.objects.filter(users=usr)
 
@@ -3169,7 +3211,7 @@ class MultipleVisitedCommunesAPIView(APIView):
                 ),
             )
         )
-
+        print(f"communes_visitees {communes_visitees}")
         # Préparer la liste des communes visités plus d'une fois
         medecins_multiple_visites_table = []
 
@@ -3316,7 +3358,7 @@ class MedecinsNonVisitesAPIView(APIView):
             )
 
         # Utiliser l'année actuelle
-        annee = int(request.GET.get("user"))
+        annee = int(request.GET.get("year"))
         #annee = timezone.now().year
 
         # Définir les dates de début et de fin du mois spécifié

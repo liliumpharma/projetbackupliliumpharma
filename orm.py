@@ -2,6 +2,8 @@ import os
 import django
 from django.db.models import Count
 from django.db.models.functions import TruncDate
+from django.db.models import Q
+
 
 
 
@@ -14,13 +16,9 @@ from monthly_evaluations.models import Monthly_Evaluation
 
 
 from django.utils.timezone import now
-from datetime import datetime, date, timedelta
+import datetime
+from django.utils import timezone
 
-aujourdhui = now()
-plus_une_heure = now() + timedelta(hours=1)
-
-aujourdhui = now() + timedelta(hours=1)
-aujourdhui = aujourdhui.date()
 
 
 from accounts.models import *
@@ -28,29 +26,74 @@ from leaves.models import *
 from django.db.models import F
 from rapports.models import *
 
-uu = "HANIADZ"
-user_by_reg = User.objects.filter(username=uu).first()
-print(user_by_reg)
-date_start = "2025-11-01"
-date_end = "2025-11-30"
-yesturday = "2025-11-06"
-if user_by_reg.userprofile.speciality_rolee in ["Superviseur_regional","Superviseur_national"]:
-    user_under = user_by_reg.userprofile.usersunder.exclude(id=user_by_reg.id)
-elif user_by_reg.userprofile.speciality_rolee in ["Medico_commercial","Commercial"]:
-    sup_user = User.objects.filter(userprofile_usersunder=user_by_reg)
+uu = "itedaldz"
+usr = User.objects.filter(username=uu).first()
+print(usr)
+annee = 2025
+mois = 12
+start_of_month = datetime.datetime(annee, mois, 1)
+print(f" start_of_month {start_of_month}")
+if mois == 12:
+    end_of_month = datetime.datetime(annee + 1, 1, 1)
+else:
+    end_of_month = datetime.datetime(annee, mois + 1, 1)
+
+print(f"end_of_month {end_of_month}")
+
+medecins_associes = Medecin.objects.filter(users=usr)
+visites_specified_mois = Visite.objects.filter(
+            rapport__added__gte=start_of_month,
+            rapport__added__lt=end_of_month,
+            rapport__user=usr,
+            medecin__in=medecins_associes,
+        )
+print(f"visites_specified_mois {visites_specified_mois}")
+visites_communes_counts = (
+            visites_specified_mois.values("medecin__commune")
+            .annotate(num_visites=Count("id"))
+            .filter(num_visites__gt=1)
+        )
+print(f"visites_communes_counts {visites_communes_counts}")
 
 
-visites = (Visite.objects.filter(
-    rapport__added__gte=date_start, rapport__added__lte= date_end, rapport__user=user_by_reg
-)#.annotate(jour=TruncDate("rapport__added"))  # 👈 regroupe par jour
-  #          .values("medecin__id", "jour")               # 👈 groupement par médecin et par jour
-   #         .annotate(
-    #            total_visites=Count("id", distinct=True),
-     #           total_users=Count("rapport__user", distinct=True),
-      #      )
-      )
+communes_ids = [item["medecin__commune"] for item in visites_communes_counts]
 
-print(f"les visites de {user_by_reg} sont {visites}")
+print(f"communes_ids {communes_ids}")
+
+communes_visitees = Commune.objects.filter(id__in=communes_ids).annotate(
+    nombre_de_visites=Count(
+        "medecin__visite",
+        filter=Q(
+            medecin__visite__rapport__added__gte=start_of_month,
+            medecin__visite__rapport__added__lt=end_of_month,
+            medecin__visite__rapport__user=usr,
+        ),
+    )
+)
+print(f"communes_visitees {communes_visitees}")
+medecins_multiple_visites_table = []
+
+for commune in communes_visitees:
+    medecins_multiple_visites_table.append(
+                {
+                    "id": commune.id,
+                    "nom": commune.nom,
+                    "nombre_de_visites": commune.nombre_de_visites,
+                }
+            )
+
+print(f"medecins_multiple_visites_table {medecins_multiple_visites_table}")
+
+total_communes_visitees = len(medecins_multiple_visites_table)
+
+        # Préparer les données de réponse
+response_data = {
+            "total_communes_visitees": total_communes_visitees,
+            "communes": medecins_multiple_visites_table,
+        }
+
+
+print(f"response_data {response_data}")
 #exit()
 #visited_more_one = [
 #            v["medecin__id"]
@@ -59,35 +102,3 @@ print(f"les visites de {user_by_reg} sont {visites}")
 #        ]
 #print(visited_more_one)
 
-
-for v in visites:
-    if user_by_reg.userprofile.speciality_rolee in ["Superviseur_regional","Superviseur_national"]:
-        visites_under = Visite.objects.filter(rapport__added=v.rapport.added, rapport__user__in=user_under,medecin=v.medecin)
-        print(f"le superviseur a un visite dou le {v.rapport.added} est {visites_under}")
-    elif user_by_reg.userprofile.speciality_rolee in ["Medico_commercial","Commercial"]:
-        visites_super = Visite.objects.filter(rapport__added=v.rapport.added, rapport__user__in=sup_user,medecin=v.medecin)
-        print(f"le delegue a un visite dou le {v.rapport.added} est {visites_under}")
-
-exit()
-
-leaves = Leave.objects.filter(
-                            user__in=user_by_reg,
-                            start_date__lte=date_end,  # Leave starts before or on the end date of the filter
-                            end_date__gte=date_start,
-                            ).order_by(F("start_date").asc(nulls_last=True))
-
-#leaves_on_date = Leave.objects.filter(start_date__lte=yesturday, end_date__gte=yesturday, user=user_by_reg)
-planss = Plan.objects.filter(
-                day__month=date_start.month, day__year=date_start.year, user="tawfikdz"
-                )
-
-print(planss)
-#print(leaves_on_date)
-
-exit()
-ME = Monthly_Evaluation.objects.filter(
-            user=user, added__year=date.today().year, added__month=int('9')
-        )
-
-
-print(ME)

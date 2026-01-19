@@ -642,7 +642,9 @@ document.getElementById("note_q0").innerText = note_q0 ;
           const nombreVisites = document.createElement("label");
           nombreVisites.id = "NomsMedecinsMultiplesVisites_"+elt;
           nombreVisites.style = "color:black; margin:0"
-          nombreVisites.textContent ="Total visites :" + data.communes[elt].nombre_de_visites;
+          //nombreVisites.textContent ="Total visites :" + data.communes[elt].nombre_de_visites;
+          nombreVisites.innerHTML =`<a href="https://app.liliumpharma.com/rapports/listvisits?year=${yyyear}&month=${monthUrl}&commune=${data.communes[elt].id}&user=${usr1}&total=${data.communes[elt].nombre_de_visites}" target="_blank">Total visites : ${data.communes[elt].nombre_de_visites}</a>`;
+
 
           blockDiv.appendChild(doctorNameElement); 
           // blockDiv.appendChild(specialite); 
