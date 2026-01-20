@@ -3199,7 +3199,20 @@ class MultipleVisitedCommunesAPIView(APIView):
 
         # Extraire les IDs des communes ayant plus d'une visite
         communes_ids = [item["medecin__commune"] for item in visites_communes_counts]
-
+        ttl = defaultdict(set)
+        dt = set()
+        for i in communes_ids:
+            visites_specified_mois_two = Visite.objects.filter(
+                rapport__added__gte=start_of_month,
+                rapport__added__lt=end_of_month,
+                rapport__user=usr,
+                medecin__in=medecins_associes,
+                medecin__commune=i,
+                )
+            for s in visites_specified_mois_two:
+                dt.add(s.rapport.added)
+            ttl[i].add(len(dt))
+            dt.clear()
         # Récupérer les objets Commune avec le nombre de visites
         communes_visitees = Commune.objects.filter(id__in=communes_ids).annotate(
             nombre_de_visites=Count(
@@ -3215,14 +3228,18 @@ class MultipleVisitedCommunesAPIView(APIView):
         # Préparer la liste des communes visités plus d'une fois
         medecins_multiple_visites_table = []
 
-        for commune in communes_visitees:
-            medecins_multiple_visites_table.append(
-                {
-                    "id": commune.id,
-                    "nom": commune.nom,
-                    "nombre_de_visites": commune.nombre_de_visites,
-                }
-            )
+        for index, commune in enumerate(communes_visitees):
+            for x in ttl[commune.id]:
+                t = x
+            if t > 1:
+                medecins_multiple_visites_table.append(
+                    {
+                        "id": commune.id,
+                        "nom": commune.nom,
+                        "nombre_de_visites": commune.nombre_de_visites,
+                        "nombre_de_jours":ttl[commune.id]
+                    }
+                )
 
         # Calculer le nombre total de communes visitées plus d'une fois
         total_communes_visitees = len(medecins_multiple_visites_table)
