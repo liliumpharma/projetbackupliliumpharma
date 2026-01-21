@@ -212,6 +212,7 @@ class AddCommercialeMonthlyEvaluation(APIView):
         data = request.data.copy()
         month_url = int(request.GET.get("month"))
         uu = request.GET.get("user")
+        year = int(request.GET.get("year"))
         
         if uu:
             user = User.objects.filter(username=uu).first()
@@ -219,7 +220,7 @@ class AddCommercialeMonthlyEvaluation(APIView):
             user = request.user
 
         ME = Commercial_Monthly_Evaluation.objects.filter(
-            user=user, added__year=date.today().year, added__month=month_url
+            user=user, added__year=year, added__month=month_url
         )
 
         if ME.exists():
@@ -236,11 +237,11 @@ class AddCommercialeMonthlyEvaluation(APIView):
                 day_of_month = 30
             else:
                 is_leap_year = (
-                    date.today().year % 4 == 0 and date.today().year % 100 != 0
-                ) or date.today().year % 400 == 0
+                    year % 4 == 0 and year % 100 != 0
+                ) or year % 400 == 0
                 day_of_month = 29 if is_leap_year else 28
 
-            data["added"] = date(date.today().year, month_url, day_of_month)
+            data["added"] = date(year, month_url, day_of_month)
             model_form = Commercial_Monthly_EvaluationModelForm(data)
 
             if model_form.is_valid():
