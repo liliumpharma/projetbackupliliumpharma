@@ -32,6 +32,10 @@ from accounts.models import UserProfile, Rolee
 from django.shortcuts import get_object_or_404
 
 
+from django.urls import reverse
+
+
+
 class MedecinAPI(APIView):
     authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAuthenticated]
@@ -193,6 +197,7 @@ class MedecinFrontAPI(APIView):
                 ]
             )
 
+
             # Détails spécifiques à "Pharmacie", "Grossiste" et "SuperGros"
             special_details = [
                 f'({detail["dcount"]}) {detail["specialite"]}'
@@ -201,6 +206,27 @@ class MedecinFrontAPI(APIView):
             ]
             other_details += " ".join(special_details)
 
+            qs = request.META.get("QUERY_STRING", "")
+            export_url = reverse("HomeMedecinExportExcel")
+            if qs:
+                export_url = f"{export_url}?{qs}"
+
+            excel_svg = """
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 3.5 19.5 9H14z"/>
+                <path fill="currentColor" d="M8.2 17.6 10 14.9l-1.8-2.7h1.7l1 1.6 1-1.6h1.7L11.8 15l1.8 2.6h-1.7l-1-1.5-1 1.5z"/>
+            </svg>
+            """
+
+            other_details += (
+                f' <a href="{export_url}" '
+                f'style="margin-left:12px; display:inline-flex; align-items:center; justify-content:center; '
+                f'width:34px; height:34px; border:1px solid #1D6F42; background:#1D6F42; color:#fff; '
+                f'border-radius:6px; text-decoration:none;" '
+                f'title="Exporter Excel" aria-label="Exporter Excel">'
+                f'{excel_svg}'
+                f'</a>'
+            )
             other_details += "<br/><br/>"
 
             # Récupérez les produits visités
@@ -288,6 +314,28 @@ class MedecinFrontAPI(APIView):
             other_details += " ".join(special_details)
 
             other_details += "<br/><br/>"
+
+            qs = request.META.get("QUERY_STRING", "")
+            export_url = reverse("HomeMedecinExportExcel")
+            if qs:
+                export_url = f"{export_url}?{qs}"
+
+            excel_svg = """
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 3.5 19.5 9H14z"/>
+                <path fill="currentColor" d="M8.2 17.6 10 14.9l-1.8-2.7h1.7l1 1.6 1-1.6h1.7L11.8 15l1.8 2.6h-1.7l-1-1.5-1 1.5z"/>
+            </svg>
+            """
+
+            other_details += (
+                f' <a href="{export_url}" '
+                f'style="margin-left:12px; display:inline-flex; align-items:center; justify-content:center; '
+                f'width:34px; height:34px; border:1px solid #1D6F42; background:#1D6F42; color:#fff; '
+                f'border-radius:6px; text-decoration:none;" '
+                f'title="Exporter Excel" aria-label="Exporter Excel">'
+                f'{excel_svg}'
+                f'</a>'
+            )
 
             # Récupérez les produits visités
             produitsvisites = get_stock(request)
@@ -1473,8 +1521,14 @@ class PharmaciesGrossitesVisitsPerUser(APIView):
         total_pharmacies_visitees = medecins_visites.filter(
             specialite="Pharmacie"
         ).count()
+        total_pharmacies = Medecin.objects.filter(
+            specialite="Pharmacie", users=user
+        ).count()
         total_grossistes_visites = medecins_visites.filter(
             specialite="Grossiste"
+        ).count()
+        total_grossistes = Medecin.objects.filter(
+            specialite="Grossiste", users=user
         ).count()
 
         data = {
@@ -1482,6 +1536,8 @@ class PharmaciesGrossitesVisitsPerUser(APIView):
             "noms_medecins_visites": noms_medecins_visites,
             "total_pharmacies_visitees": total_pharmacies_visitees,
             "total_grossistes_visites": total_grossistes_visites,
+            "total_pharmacies":total_pharmacies,
+            "total_grossistes":total_grossistes,
         }
 
         return Response(data)

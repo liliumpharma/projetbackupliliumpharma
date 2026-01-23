@@ -100,7 +100,7 @@
   </div>
   <div class="header-info">
     <h2>LILIUM PHARMA ALGERIE</h2>
-    <h4>Commune : {{ commune.nom }}</h4>
+    <h4>Client : {{ commune.id }} {{ commune.nom }}</h4>
     <h4>Utilisateur : {{ user.username }}</h4>
     <h4>Mois / Année : {{ month }}/{{ year }}</h4>
     <h4>Nombre de visites : {{ total }}</h4>
@@ -113,7 +113,8 @@
   {% for visite in visites %}
   <li>
     <span class="day">Jour : {{ visite.rapport.added|date:"d/m/Y" }}</span> — 
-    <span class="medecin">Client : {{ visite.medecin.nom }}</span>
+    <span class="medecin">Client : {{ visite.medecin.nom }} || <span style="font-size: 17px; font-weight:normal;">Observation : {{ visite.observation }}</span></span>
+    
   </li>
   {% endfor %}
 </ul>

@@ -174,9 +174,22 @@ function isChecked() {
 
 
 <div id="all" class="d-none">
+  <p id="iinfo" style="text-align: center;"></p>
   <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
     <h4>Partie Rapports</h4>
   </div>
+  
+  <script>
+    const params = new URLSearchParams(window.location.search);
+
+    const yyear  = params.get("year");
+    const moonth = params.get("month");
+    const uuser = params.get("user");
+
+    document.getElementById("iinfo").innerHTML =
+        `Utilisateur : <b>${uuser}</b> || Mois : <b>${moonth}</b> || Année : <b>${yyear}</b>`;
+</script>
+
     <div class="row mb-3 d-bleck" style="font-size: 22px;">
       <div class="d-flex justify-content-end col-12">
         <p class="align-self-center" style="font-size: 13px; margin-top: 2px; color: red;"></p>
@@ -720,7 +733,7 @@ document.getElementById("note_q0").innerText = note_q0 ;
         doctorNameElement.id = "NomsMedecinsNonVisites_" + elt;
         doctorNameElement.style = "color:green;font-weight: bold;width:400px; margin:0px";
         // doctorNameElement.innerHTML = data.medecins[elt].id +" "+data.medecins[elt].nom
-        doctorNameElement.innerHTML = elt.id +" "+elt.nom
+        doctorNameElement.innerHTML = `${elt.id} ${elt.nom} <span style="color:blue">(${elt.specialite})</span> :<span style="color:red">${elt.wilaya}</span> - <span style="color:black">${elt.commune}</span>`;
 
         div_doctor.appendChild(doctorNameElement);
 
@@ -731,7 +744,22 @@ document.getElementById("note_q0").innerText = note_q0 ;
         // if (elt.medecins_non_visites[elt].date_derniere_visite != null) {
         //   // derniere_visite.textContent ="Derniére visite: "+data.medecins[elt].nombre_de_visites; 
         // }
-        derniere_visite.textContent ="Nombre de visites: "+elt.nombre_de_visites; 
+        //derniere_visite.textContent ="Nombre de visites: "+elt.nombre_de_visites; 
+        derniere_visite.innerHTML =`<a href="https://app.liliumpharma.com/rapports/listvisits?year=${yyyear}&month=${monthUrl}&med_id=${elt.id}&med_nom=${elt.nom}&user=${usr1}&total=${elt.nombre_de_visites}" target="_blank">Nombre de visites : ${elt.nombre_de_visites}</a>`;
+        const dates_visite = document.createElement("label");
+        fetch(`https://app.liliumpharma.com/rapports/listvisits?year=${yyyear}&month=${monthUrl}&med_id=${elt.id}&med_nom=${elt.nom}&user=${usr1}&total=${elt.nombre_de_visites}&date=1`)
+        .then(response => response.json())
+        .then(data => {
+          dates_visite.innerHTML =``;
+          data.dates.forEach(item => {
+            dates_visite.innerHTML += `${item.date}<br>`;
+          })
+        })
+        .catch(error => {
+        console.error("Erreur fetch :", error);
+        dates_visite.textContent = "Erreur chargement visites";
+    });
+        div_doctor.appendChild(dates_visite);
         div_doctor.appendChild(derniere_visite);
 
 
@@ -803,9 +831,12 @@ document.getElementById("note_q0").innerText = note_q0 ;
           doctorNameElement.id = "NomsMedecinsNonVisites2_" + elt;
           doctorNameElement.style = "color:green;font-weight: bold;width:400px; margin:0px";
           // doctorNameElement.innerHTML = data.medecins[elt].id +" "+data.medecins[elt].nom
-          doctorNameElement.innerHTML = elt.id +" "+elt.nom
+          doctorNameElement.innerHTML = `${elt.id} ${elt.nom} <span style="color:blue">(${elt.specialite})</span> : <span style="color:red">${elt.wilaya}</span> - <span style="color:black">${elt.commune}</span>`
+          const doctorNameElementlast = document.createElement("p");
+          doctorNameElementlast.innerHTML = "derniere visite : " + elt.last_visit ;
         
           div_doctor.appendChild(doctorNameElement);
+          div_doctor.appendChild(doctorNameElementlast);
         
           const derniere_visite = document.createElement("label");
           derniere_visite.id = "derniere_visite2_"+elt;
@@ -1404,8 +1435,8 @@ fetchSuperGro();
       .then((data) => {
         document.getElementById("response_11").innerHTML = data.nombre_visites
         document.getElementById("doctors_11").innerHTML = data.noms_medecins_visites
-        document.getElementById("total_pharma").innerHTML = data.total_pharmacies_visitees
-        document.getElementById("total_gro").innerHTML = data.total_grossistes_visites
+        document.getElementById("total_pharma").innerHTML = `<span style="color: green;">${data.total_pharmacies_visitees}</span> / <span style="color: red;">${data.total_pharmacies}</span>`
+        document.getElementById("total_gro").innerHTML = `<span style="color: green;">${data.total_grossistes_visites} </span>/ <span style="color: red;">${data.total_grossistes}</span>`
          
          
       })

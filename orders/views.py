@@ -121,6 +121,10 @@ class addorder(TemplateView):
             pass
         elif pharmacy_id and gros_id and not super_gros_id:
             pass
+        elif pharmacy_id and not gros_id and super_gros_id:
+            pass
+        elif not pharmacy_id and gros_id and super_gros_id:
+            pass
         elif pharmacy_id and not gros_id and not super_gros_id:
             m = "Veuillez Choisir que deux parmi Pharmacie, Grossiste et SuperGros ou Bien que SuperGros Seul"
             if u.speciality_rolee == "Office" or u.speciality_rolee == "Admin" or u.speciality_rolee == "CountryManager":
@@ -189,7 +193,7 @@ class addorder(TemplateView):
         observations = request.POST.get("observations")
         image = request.FILES.get('image')
         us = User.objects.get(id=user_id)
-        createorder = Order.objects.create(pharmacy=pharmacyy, gros=groo, super_gros=su_gro, user=us, observation=observations, image=image, status="initial")
+        
         pro = Produit.objects.all()
         #pro = UserProduct.objects.filter(user=request.user)
         h=0
@@ -236,6 +240,13 @@ class addorder(TemplateView):
                 pro = Produit.objects.all()
                 #m = "Bon de Commande ajouter avec succes"
                 return render(request, "orders/addorder.html", {'pha':pha, 'gro':gro, 'sugro':sugro, 'pro':pro, "m":m})
+        else:
+            createorder = Order.objects.create(pharmacy=pharmacyy, gros=groo, super_gros=su_gro, user=us, observation=observations, image=image, status="initial")
+            for itempro in pro:
+                check_value = request.POST.get(f"check_{itempro.nom}")
+                if check_value == "on":
+                    qtt_value = request.POST.get(f"qtt_{itempro.nom}")
+                    createitemorder = OrderItem.objects.create(order=createorder,produit=itempro, qtt=qtt_value)
         if u.speciality_rolee == "Office" or u.speciality_rolee == "Admin" or u.speciality_rolee == "CountryManager":
             print("yes is super user")
             

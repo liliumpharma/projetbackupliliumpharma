@@ -110,6 +110,7 @@ urlpatterns = [
     path("app/plan/api/", MedecinAppAPI.as_view(), name="PlanMedecinAPI"),
     # Excel
     path("export/excel", AllExportExcel.as_view(), name="AllMedecinExportExcel"),
+    path("list/export-excel", HomeMedecinExportExcel.as_view(), name="HomeMedecinExportExcel"),
     path(
         "export/listeMedecin",
         ListMedecinPerUserExcel.as_view(),

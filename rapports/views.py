@@ -125,11 +125,13 @@ class Listvisit(LoginRequiredMixin, TemplateView):
     def get(self, request):
         year = int(request.GET.get("year", timezone.now().year))
         month = int(request.GET.get("month", timezone.now().month))
-        commune_id = request.GET.get("commune")
+        med_id = request.GET.get("med_id")
+        med_nom = request.GET.get("med_nom")
         username = request.GET.get("user")
         total = request.GET.get("total")
+        d = request.GET.get("date")
         user = get_object_or_404(User, username=username)
-        commune = get_object_or_404(Commune, id=commune_id)
+        med = get_object_or_404(Medecin, id=med_id)
         # Définir l'intervalle du mois
         start_of_month = datetime(year, month, 1)
         print(f"start of mont {start_of_month}")
@@ -141,18 +143,26 @@ class Listvisit(LoginRequiredMixin, TemplateView):
         end_of_month = timezone.make_aware(end_of_month)
         visites = Visite.objects.filter(
             rapport__user=user,
-            medecin__commune=commune,
+            medecin=med,
             rapport__added__gte=start_of_month,
             rapport__added__lt=end_of_month
         ).order_by('rapport__added')
         context = {
             "visites": visites,
-            "commune": commune,
+            "commune": med,
             "year": year,
             "month": month,
             "user": user,
             "total":total
         }
+        if d == "1":
+            context = {
+                "dates": [
+                    {"date": t.rapport.added.strftime("%Y-%m-%d")}
+                    for t in visites
+                ]
+            }
+            return JsonResponse(context)
         return render(request, "rapports/listvisit.html", context)
 
 
@@ -3331,10 +3341,16 @@ class MultipleVisitedMedecinsAPIView(APIView):
                 {
                     "id": medecin_user.pk,
                     "nom": medecin_user.nom,
+                    "specialite":medecin_user.specialite,
+                    "wilaya":medecin_user.wilaya.nom,
+                    "commune":medecin_user.commune.nom,
                     "nombre_de_visites": medecin_user.nombre_de_visites,
                 }
             )
-
+        medecins_non_visites_table.sort(
+            key=lambda x: x["nombre_de_visites"],
+            reverse=True
+        )
         # Calculer le nombre total de médecins non visités
         total_medecins_visites = len(medecins_non_visites_table)
 
@@ -3409,13 +3425,18 @@ class MedecinsNonVisitesAPIView(APIView):
         medecins_non_visites = medecins_grossistes.exclude(id__in=medecins_visites_ids)
 
         for medecin_user in medecins_non_visites:
+            a = Visite.objects.filter(rapport__user=usr, medecin_id=medecin_user.id).order_by('rapport__added').last()
             grossistes_non_visites_table.append(
                 {
                     "id": medecin_user.pk,
                     "nom": medecin_user.nom,
+                    "specialite":medecin_user.specialite,
+                    "last_visit": a.rapport.added.strftime("%Y-%m-%d") if a else "Jamais visite par cet user",
+                    "wilaya":medecin_user.wilaya.nom,
+                    "commune":medecin_user.commune.nom,
                 }
             )
-
+        print(f"grossistes_non_visites_table{grossistes_non_visites_table}")
         # Calculer le nombre total de médecins non visités
         total_medecins_non_visites = len(grossistes_non_visites_table)
 
