@@ -29,5 +29,6 @@ urlpatterns = [
     path("export_excel",AllExportExcel.as_view(), name="orderExportExcel" ),
     path("exit_orders_export_excel",AllExitOrdersExportExcel.as_view(), name="exitOrderExportExcel" ),
     path("EtatStockClientExcel",EtatStockClientExcel.as_view(), name="EtatStockClientExcel" ),
+    path("export-excel", OrdersExportExcel.as_view(), name="orders_export_excel"),
 ]
 
