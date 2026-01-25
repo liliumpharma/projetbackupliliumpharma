@@ -72,11 +72,7 @@
 
 
 <form method="post">
-  <div class="col-md-6 d-flex mt-5">
-    <label for="monthSelect" style="font-weight: bold;" >Sélectionnez un mois :</label>
-    <select class="form-control" id="monthSelect" onchange="updateURL()">
-    </select>
-  </div>
+
 
 
 <div class="col-md-12 d-flex mt-2  d-none">
@@ -96,7 +92,7 @@
   </table>
 </div>
   <div id="MAIN">
-
+<!--
     <div class="d-flex m-4" style="display: flex; justify-content: space-between; align-items: center; margin-right: 20px;">
       <button id="submit" class="btn btn-primary" type="submit">
         Valider l'evaluation
@@ -104,7 +100,7 @@
       <a id="imprimer-bouton">
         <img src="{% static 'img/printer.png' %}" alt="print" width="35px" height="35px">
       </a>
-    </div>
+    </div>-->
   <!-- Evaluation pour votre Superviseur -->
    <!--
 <div id="sup">
@@ -137,11 +133,11 @@
     </div>
 
     </div>
-  -->
+  
     <a id="next" class="btn btn-primary col-12" type="" style="margin-top: 5px; margin-bottom: 5px;color: white;">
       Passer à l'étape suivante
     </a>
-
+-->
     <script>
     const radioButtons = document.querySelectorAll('input[name="qualite"]');
     const next = document.getElementById('next');
@@ -156,7 +152,8 @@
 
             } else {
                 // Ajouter la classe "disabled" au bouton de validation
-                next.classList.add('disabled');
+                //next.classList.add('disabled');
+                next.classList.remove('disabled');
             }
         });
     });
@@ -173,7 +170,7 @@ function isChecked() {
 </div>
 
 
-<div id="all" class="d-none">
+<div id="all">
   <p id="iinfo" style="text-align: center;"></p>
   <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
     <h4>Partie Rapports</h4>
@@ -215,12 +212,19 @@ function isChecked() {
         <p class="font-weight-bold  text-center text-sm-right mb-2 mb-sm-0 col-4" style="flex: 1; font-size: 20px;">تواريخ التقارير الناقصة •</p>
       </div>
 
+      <div class="d-flex flex-column flex-sm-row justify-content-between col-12">
+        <p class="font-weight-bold  text-center text-sm-left mb-2 mb-sm-0 col-4" style="flex: 1; font-size: 20px;">• Dates des conge(s)</p>
+        <p class=" text-center text-sm-center col-4" style="flex: 1; font-size: 15px;"><span id="dates_conge">0</span></p>
+        <p class="font-weight-bold  text-center text-sm-right mb-2 mb-sm-0 col-4" style="flex: 1; font-size: 20px;">تواريخ الإجازات•</p>
+      </div>
+
   </div>
 
 <script>
     nombre_rapport = document.getElementById("nombre_rapport")
     nombre_absence = document.getElementById("nombre_absence") 
     dates_absence = document.getElementById("dates_absence") 
+    dates_conge = document.getElementById("dates_conge") 
     var note_q0;
 
     const urlParamss = new URLSearchParams(window.location.search);
@@ -242,6 +246,10 @@ function isChecked() {
         const absenceDatesText = data.absence_dates.join(" | ");
         if (data.absence_dates.length > 0) {
           dates_absence.textContent = absenceDatesText;
+        }
+        const congeDatesText = data.leaves_response.map(lv => `${lv.starting_date} → ${lv.ending_date} (${lv.type})`).join(" | ");
+        if (data.leaves_response.length > 0) {
+          dates_conge.textContent = congeDatesText;
         }
 note_q0 = 20- (data.days_in_month-data.num_reports)
 if (note_q0 < 0) {
@@ -276,7 +284,8 @@ document.getElementById("note_q0").innerText = note_q0 ;
         // Retirer la classe d-none du div #all
         allDiv.classList.remove('d-none');
         // Ajouter la classe d-none au div #sup
-        supDiv.classList.add('d-none');
+        //supDiv.classList.add('d-none');
+        supDiv.classList.remove('d-none');
     });
 </script>
 
@@ -377,6 +386,7 @@ document.getElementById("note_q0").innerText = note_q0 ;
   <!-- Q11 -->
   <div class="card bg-white m-4">
     <h6 class="text-center">Q1</h6>
+    <p><span id="note_1112" style="color: red; font-weight: bold;"></span> / 20 : NOTE</p>
     <div class="card-body d-flex" style="justify-content: space-between;">
       <h5 class="card-title font-weight-bold text-left">Combien de pharmacies et de grossistes avez vous visités au cours du mois</h5>
       <h5 id="response_11" class="card-title font-weight-bold text-left" style="margin-left: 10px;"></h5>
@@ -451,7 +461,7 @@ document.getElementById("note_q0").innerText = note_q0 ;
   <div class="card bg-white m-4">
     <div class="d-flex justify-content-end col-12">
       <p class="align-self-center" style="font-size: 13px; margin-top: 2px; color: red;"></p>
-      <h5 class="mb-sm-0" style="margin-left: auto;color: green; "><span style="font-size: 13px;color: red;">Note totale 6 points, plus un demi point pour chaque médecin ajouté |  من هم الزبائن الذين تمت زيارتهم  مع السوبر فايزر هذا الشهر ؟</span><strong> Bonus:</strong><span id="note_q4" style="color: green; font-weight: bold;"></span>/6</h5>
+      <h5 class="mb-sm-0" style="margin-left: auto;color: green; "><span style="font-size: 13px;color: red;">Note totale 6 points, plus un demi point pour chaque médecin ajouté |  من هم الزبائن الذين تمت زيارتهم  مع السوبر فايزر هذا الشهر ؟</span><strong> Bonus:</strong><span id="note_q4" style="color: green; font-weight: bold;"></span>/5</h5>
     </div>
     <h6 class="text-center">Q3</h6>
     <p style="margin-left:15px; color: red;">* Champ obligatoire</p>
@@ -469,8 +479,8 @@ document.getElementById("note_q0").innerText = note_q0 ;
         var note_q4 = document.getElementById("response_4_medecins").textContent;
 
         note_q4 = note_q4/2
-        if(note_q4>6){
-          note_q4=6
+        if(note_q4>5){
+          note_q4=5
         }
 
         document.getElementById("note_q4").innerText = note_q4;
@@ -479,7 +489,7 @@ document.getElementById("note_q0").innerText = note_q0 ;
   <!-- Q13 -->
   <div class="card bg-white m-4">
     <div class="d-block col-12">
-      <h5 class="text-right">Note:<span id="note_q13" style="font-size: 20px; margin-top: 2px; color: red; font-weight: bold;">0</span>/15</h5>
+      <h5 class="text-right">Note:<span id="note_q13" style="font-size: 20px; margin-top: 2px; color: red; font-weight: bold;">0</span>/55</h5>
       <div class="row">
         <div class="col-md-6">
             <p style="color: red; font-size: 13px;">Note totale 15 points, plus un demi point pour chaque bon de commande de : pharmacie à grossiste où de grossiste à supergrossite</p>
@@ -715,7 +725,8 @@ document.getElementById("note_q0").innerText = note_q0 ;
       document.getElementById("response_3_medecins").innerHTML = data.total_medecins_visites
 
       const field_3 = document.getElementById("raison_3");
-      const max_display = 5
+      //const max_display = 5
+      const max_display=data.medecins.length
       counter=0
       
       cpt=1
@@ -985,14 +996,30 @@ function calculerSomme() {
     var pourcentageElement = document.getElementById("pourcentage");
     var note_q0 = parseFloat(document.getElementById("note_q0").innerText);
     //var note_q1 = parseFloat(document.getElementById("note_q1").innerText);
-    var note_q3 = parseFloat(document.getElementById("note_q3").innerText);
+//    var note_q3 = parseFloat(document.getElementById("note_q3").innerText);
     var note_q13 = parseFloat(document.getElementById("note_q13").innerText);
     //var note_q5 = parseFloat(document.getElementById("note_q5").innerText);
     var note_q4 = parseFloat(document.getElementById("note_q4").innerText);
+    const total_pharmmm = parseFloat(document.getElementById("total_pharma").innerText);
+    const total_grosss = parseFloat(document.getElementById("total_gro").innerText);
+    var note_total_grospluspharma = parseFloat(document.getElementById("note_1112").innerText) || 0;
+    var note_total_gros = 0;
+    var note_total_gros = 0;
+    if (total_pharmmm < 180) {
+  note_total_pharma = 5;
+} else {
+  note_total_pharma = 10;
+}
 
+
+if (total_grosss < 20) {
+  note_total_gros = 5;
+} else {
+  note_total_gros = 10;
+}
     
     //var somme_note = note_q0 + note_q1 + note_q3 + note_q13+note_q5;
-    var somme_note = note_q0 + note_q3 + note_q13;
+    var somme_note = note_q0 + note_q13 + note_total_pharma + note_total_gros;
     var somme_bonus =  note_q4;
 
     somme_totale = somme_note + somme_bonus
@@ -1092,9 +1119,24 @@ const total_11 = document.getElementById("response_11").innerHTML;
 const total_pharm = document.getElementById("total_pharma").innerHTML;
 const total_gros = document.getElementById("total_gro").innerHTML;
 
+const spanNote = document.getElementById("note_1112").innerHTML;
+if (total_pharm < 180) {
+  note_total_pharma = 5;
+} else {
+  note_total_pharma = 10;
+}
+
+
+if (total_gros < 20) {
+  note_total_gros = 5;
+} else {
+  note_total_gros = 10;
+}
+document.getElementById("note_1112").innerText = note_total_gros + note_total_pharma;
 response_11.answers.push({ total: total_11 });
 response_11.answers.push({ total_pharma: total_pharm });
 response_11.answers.push({ total_gro: total_gros });
+response_11.answers.push({ note_1112: spanNote });
 
 
 const response_12 = {answers: []}
@@ -1209,11 +1251,9 @@ if (hasEmptyField && firstEmptyField !== null) {
     behavior: "smooth"
   });
 }
-
-
-// if (hasEmptyField) {
-//   vanillaToast.error("ATTENTION: Remplissez tous les champs avant de soumettre le formulaire.");   
-// }else{
+if (hasEmptyField) {
+  vanillaToast.error("ATTENTION: Remplissez tous les champs avant de soumettre le formulaire.");   
+ }else{
   $.ajax({
       url: '/monthly_evaluation/AddCommercialeMonthlyEvaluation/?month=' + monthUrl + '&user='+usr+'&year='+yyyear,
       type: 'POST',
@@ -1227,9 +1267,9 @@ if (hasEmptyField && firstEmptyField !== null) {
     });
 }
 
-// }
+ }
 
-document.getElementById('submit').addEventListener('click', makePostRequest);
+//document.getElementById('submit').addEventListener('click', makePostRequest);
 document.getElementById('submit_2').addEventListener('click', makePostRequest);
 </script>
 <script>
@@ -1606,7 +1646,11 @@ function fetchOrders() {
 
       const jsonString = JSON.stringify(jsonData, null, 2);
 
-      note_q13 = (pharmacyGrossisteCount + grossisteSuperGrossisteCount)*0.5
+      //note_q13 = (pharmacyGrossisteCount + grossisteSuperGrossisteCount)*0.5
+      var pharmacyGrossisteCountt = Math.min(pharmacyGrossisteCount, 30);
+      var grossisteSuperGrossisteCountt = Math.min(grossisteSuperGrossisteCount, 25);
+      
+      note_q13 = (pharmacyGrossisteCountt + grossisteSuperGrossisteCountt)
 
       const summaryText = `
         <strong>From pharmacies to grossistes: </strong>${pharmacyGrossisteCount}<br>
@@ -1733,7 +1777,7 @@ fetchOrders();
         //window[`addMedecin_${productId}`] = addMedecin;
       });
     //}
-    fetchProduits(); 
+    //fetchProduits(); 
 
 //}
 //)

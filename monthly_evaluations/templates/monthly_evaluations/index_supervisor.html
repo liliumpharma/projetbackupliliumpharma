@@ -274,6 +274,10 @@ input[type="radio"]:checked::before {
 </style>
 <div id="header">
   <form method="post">
+    <div class="col-md-4 mt-3">
+    <label style="font-weight:bold">Année</label>
+    <select class="form-control" id="yearSelect" onchange="updateURL()"></select>
+  </div>
     <div class="d-flex col-12">
 
 
@@ -289,7 +293,7 @@ input[type="radio"]:checked::before {
         <select class="form-control " id="monthSelect" onchange="updateURLL()">
         </select>
       </div>
-  
+      
 <!--
       <div class="col-md-4 d-block mt-5">
         <label for="typeSelect" style="font-weight: bold; margin-right:10px" >Type</label>
@@ -298,7 +302,7 @@ input[type="radio"]:checked::before {
           <option value="2">Direction</option>
         </select>
       </div>
--->
+--><br>
       <div class="col-md-4 d-block mt-5">
         <label for="monthSelect" style="font-weight: bold; margin-right:10px" >Speciality role</label>
         <select class="form-control " id="familyselect" onchange="updateUSER()">
@@ -329,6 +333,7 @@ input[type="radio"]:checked::before {
     
 
     <script>
+      
       function showmyevals() {
         document.getElementById("userTable").classList.add("d-none");
         document.getElementById("myEvalsTable").classList.remove("d-none");
@@ -1278,6 +1283,90 @@ input[type="radio"]:checked::before {
 }
 
 </style>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  const months = [
+    "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+  ];
+
+  const monthSelect = document.getElementById("monthSelect");
+  if (!monthSelect) return;
+
+  const params = new URLSearchParams(window.location.search);
+  let month = parseInt(params.get("month"));
+
+  // Valeur par défaut (mois courant)
+  if (!month || month < 1 || month > 12) {
+    month = new Date().getMonth() + 1;
+    params.set("month", month);
+    history.replaceState({}, "", "?" + params.toString());
+  }
+
+  // Remplir le select
+  monthSelect.innerHTML = "";
+  months.forEach((name, index) => {
+    const option = document.createElement("option");
+    option.value = index + 1;
+    option.textContent = name;
+    monthSelect.appendChild(option);
+  });
+
+  // 👉 GARDER la valeur choisie
+  monthSelect.value = month;
+
+  // Changer l'URL quand on change le mois
+  monthSelect.addEventListener("change", function () {
+    const url = new URL(window.location.href);
+    url.searchParams.set("month", this.value);
+    window.location.href = url.toString();
+  });
+
+});
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  const years = [2025, 2026];
+  const yearSelect = document.getElementById("yearSelect");
+
+  if (!yearSelect) return;
+
+  const params = new URLSearchParams(window.location.search);
+  let year = parseInt(params.get("year"));
+
+  // Valeur par défaut
+  if (!year || !years.includes(year)) {
+    year = 2025;
+    params.set("year", year);
+    history.replaceState({}, "", "?" + params.toString());
+  }
+
+  // Remplir le select
+  yearSelect.innerHTML = "";
+  years.forEach(y => {
+    const option = document.createElement("option");
+    option.value = y;
+    option.textContent = y;
+    yearSelect.appendChild(option);
+  });
+
+  // 👉 IMPORTANT : garder la valeur choisie
+  yearSelect.value = year;
+
+  // Changer l'URL quand on change l'année
+  yearSelect.addEventListener("change", function () {
+    const url = new URL(window.location.href);
+    url.searchParams.set("year", this.value);
+    window.location.href = url.toString();
+  });
+
+});
+</script>
+
+
 </body> 
 <div>{{ errors }}</div>
 <script>
@@ -1302,15 +1391,7 @@ input[type="radio"]:checked::before {
 <script>
   const params = new URLSearchParams(window.location.search);
 
-if (!params.has('year') || !params.has('month')) {
-  const d = new Date();
-  d.setMonth(d.getMonth() - 1);
 
-  const year = d.getFullYear();
-  const month = d.getMonth() + 1;
-
-  window.location.href = `?year=${year}&month=${month}`;
-}
   const monthSelect = document.getElementById("monthSelect");
   const userSelect = document.getElementById("userSelect");
 
@@ -1337,7 +1418,7 @@ const year = currentDate.getFullYear();
     const option = document.createElement("option");
     option.value = i + 1; 
     option.textContent = getMonthName(i); // Fonction pour obtenir le nom du mois
-    // monthSelect.appendChild(option);
+    monthSelect.appendChild(option);
   }
 
   function getMonthName(monthIndex) {
