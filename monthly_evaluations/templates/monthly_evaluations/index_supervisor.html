@@ -1509,6 +1509,8 @@ const year = currentDate.getFullYear();
       var tableBody = document.querySelector('#userTable tbody');
       // Efface le contenu existant de la table
       tableBody.innerHTML = '';
+      // 👉 VIDER le select AVANT d'ajouter
+      userselect.innerHTML = '';
       // Parcours la liste des utilisateurs et les ajoute au tableau
       users.forEach(function(user) {
         var row = document.createElement('tr');
@@ -1943,8 +1945,11 @@ const year = currentDate.getFullYear();
 });
 
   }
+  const paramss = new URLSearchParams(window.location.search);
 
-  fetch('https://app.liliumpharma.com/clients/users-with-target-month/?month='+monthUrl)
+  const yyyear  = paramss.get("year");
+
+  fetch('https://app.liliumpharma.com/clients/users-with-target-month/?month='+monthUrl+'&year='+yyyear)
       .then(response => response.json())
       .then(data => {
         console.log(data)
@@ -2073,7 +2078,7 @@ function getYearFromUrl() {
     if (userIndex !== -1) {
         // Si le paramètre "user" est trouvé dans l'URL
         var user = url.substring(userIndex + 5); // Récupérez l'utilisateur à partir de l'URL
-        return user; // Retourne l'utilisateur
+        return userIndex; // Retourne l'utilisateur
     } else {
         // Si le paramètre "user" n'est pas trouvé dans l'URL
         return null;
@@ -2302,10 +2307,13 @@ for (var i = 21; i <= 23; i++) { // Update the loop range to cover all 22 questi
 
   function updateUSER() {
     const select = document.getElementById("familyselect");
+    const params = new URLSearchParams(window.location.search);
+
+    const yyyear  = params.get("year");
 
     // valeur sélectionnée
     const selectedValue = select.value;
-    fetch('https://app.liliumpharma.com/clients/users-with-target-month/?month='+monthUrl+"&family="+selectedValue)
+    fetch('https://app.liliumpharma.com/clients/users-with-target-month/?month='+monthUrl+"&family="+selectedValue+"&year="+yyyear)
       .then(response => response.json())
       .then(data => {
         console.log(data)
@@ -2318,10 +2326,12 @@ for (var i = 21; i <= 23; i++) { // Update the loop range to cover all 22 questi
     const select = document.getElementById("familyselect");
     const userselect = document.getElementById("userselect");
     const selectedusr = userselect.value;
+    const params = new URLSearchParams(window.location.search);
 
+    const yyyear  = params.get("year");
     // valeur sélectionnée
     const selectedValue = select.value;
-    fetch('https://app.liliumpharma.com/clients/users-with-target-month/?month='+monthUrl+'&usr='+selectedusr)
+    fetch('https://app.liliumpharma.com/clients/users-with-target-month/?month='+monthUrl+'&usr='+selectedusr+'&year='+yyyear)
       .then(response => response.json())
       .then(data => {
         console.log(data)

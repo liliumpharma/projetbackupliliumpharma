@@ -5,6 +5,14 @@ from django.utils import timezone
 from django.utils.html import format_html
 from django.urls import reverse
 
+from django.contrib import messages
+from django.db import transaction
+from django.forms import inlineformset_factory
+from django.utils import timezone
+from plans.models import Plan, PlanTask
+
+from django import forms
+
 
 
 def make_updatable(modeladmin, request, queryset):
@@ -36,21 +44,31 @@ class VisiteInline(admin.TabularInline):  # Use TabularInline for better perform
     readonly_fields = ("medecin", "priority")
 
 
+
+
+class PlanTaskAdminForm(forms.ModelForm):
+    class Meta:
+        model = PlanTask
+        fields = ("task", "completed")
+        widgets = {
+            "task": forms.Textarea(attrs={"rows": 2, "style": "width:100%;"}),
+        }
+
 # class CommentInline(admin.StackedInline):
 #   model = Comment
 #   verbose_name_plural = 'comments'
 
-
 class RapportAdmin(admin.ModelAdmin):
-    # list_display = ('id', 'added','user','image','image2','can_update', 'display_visite_ids')
     list_display = ("id", "added", "user", "can_update")
     search_fields = ["user__userprofile__telephone", "user__username"]
     list_filter = ("can_update", "user")
     date_hierarchy = "added"
-    # autocomplete_fields = ["user"]
-    # inlines = [VisiteInline, CommentInline]
     inlines = [VisiteInline]
     actions = [make_updatable, make_non_updatable]
+
+    # Important: override the template for Rapport only
+    change_form_template = "admin/rapports/rapport/change_form.html"
+    add_form_template = "admin/rapports/rapport/change_form.html"
 
     def get_queryset(self, request):
         qs = super(RapportAdmin, self).get_queryset(request)
@@ -60,38 +78,93 @@ class RapportAdmin(admin.ModelAdmin):
 
         if request.user.is_superuser:
             return qs
+        qs = qs.filter(
+            user__userprofile__commune__wilaya__pays=request.user.userprofile.commune.wilaya.pays
+        )
+        if request.user.userprofile.rolee == "Superviseur":
+            qs = qs.filter(user__in=request.user.userprofile.usersunder.all())
+        return qs
+
+    # -------- Tasks integration (PlanTask inside Rapport admin) --------
+
+    def _plan_for_rapport(self, rapport):
+        """
+        Map Rapport(user, added) -> Plan(user, day).
+        Create Plan if missing (Plan only needs day+user in your model).
+        """
+        plan, _ = Plan.objects.get_or_create(day=rapport.added, user=rapport.user)
+        return plan
+
+    def _tasks_formset_class(self):
+        return inlineformset_factory(
+            parent_model=Plan,
+            model=PlanTask,
+            form=PlanTaskAdminForm,
+            extra=1,
+            can_delete=True,
+        )
+
+
+    def _build_tasks_formset_for_render(self, request, obj):
+        """
+        Build a tasks formset for rendering (GET/POST).
+        - On change view: uses the real Plan of that rapport day/user.
+        - On add view: uses a dummy Plan instance so user can type tasks before save.
+        """
+        PlanTaskFormSet = self._tasks_formset_class()
+
+        if obj is not None:
+            plan = self._plan_for_rapport(obj)
         else:
-            qs = qs.filter(
-                user__userprofile__commune__wilaya__pays=request.user.userprofile.commune.wilaya.pays
-            )
-            if request.user.userprofile.rolee == "Superviseur":
-                qs = qs.filter(user__in=request.user.userprofile.usersunder.all())
-            return qs
+            # Add form: allow typing tasks even before rapport exists.
+            # We'll attach them to the real Plan after the Rapport is saved.
+            day = None
+            user_id = None
+            if request.method == "POST":
+                day = request.POST.get("added") or None
+                user_id = request.POST.get("user") or None
 
-    # def get_queryset(self, request):
-    #     qs = super(RapportAdmin, self).get_queryset(request)
-    #     if request.user.is_superuser:
-    #         return qs
-    #     else:
-    #         qs=qs.filter(user__userprofile__commune__wilaya__pays= request.user.userprofile.commune.wilaya.pays)
-    #         if request.user.userprofile.rolee=="Superviseur":
-    #             qs=qs.filter(user__in=request.user.userprofile.usersunder.all())
-    #         return qs
+            dummy_day = day or timezone.localdate()
+            dummy_plan = Plan(day=dummy_day, user_id=user_id or request.user.id)  # unsaved is fine for rendering
+            plan = dummy_plan
 
-    # Définir une méthode pour afficher les IDs des visites associées à ce rapport
-    def display_visite_ids(self, obj):
-        visite_ids = Visite.objects.filter(rapport=obj).values_list("id", flat=True)
-        return ", ".join(map(str, visite_ids))
+        if request.method == "POST":
+            return PlanTaskFormSet(request.POST, instance=plan, prefix="tasks")
+        return PlanTaskFormSet(instance=plan, prefix="tasks")
 
-    display_visite_ids.short_description = "Visites associées"
+    def render_change_form(self, request, context, add=False, change=False, form_url="", obj=None):
+        context["tasks_formset"] = self._build_tasks_formset_for_render(request, obj)
+        return super().render_change_form(request, context, add=add, change=change, form_url=form_url, obj=obj)
 
-    # def has_change_permission(self, request, obj=None):
-    #     if not obj:
-    #         return False # So they can see the change list page
-    #     if request.user.is_superuser or obj.user.userprofile.commune.wilaya.pays == request.user.userprofile.commune.wilaya.pays:
-    #         return True
-    #     else:
-    #         return False
+    def _save_tasks_from_post(self, request, rapport_obj):
+        """
+        After saving a Rapport, persist tasks to the corresponding Plan(day/user).
+        """
+        # If the formset is not present in POST, do nothing (safety)
+        if "tasks-TOTAL_FORMS" not in request.POST:
+            return
+
+        plan = self._plan_for_rapport(rapport_obj)
+        PlanTaskFormSet = self._tasks_formset_class()
+        formset = PlanTaskFormSet(request.POST, instance=plan, prefix="tasks")
+
+        if not formset.is_valid():
+            # Don’t block the Rapport save (admin already saved it), but warn clearly.
+            messages.error(request, f"Tasks not saved: {formset.non_form_errors()}")
+            return
+
+        with transaction.atomic():
+            formset.save()
+
+    def response_add(self, request, obj, post_url_continue=None):
+        # Save tasks after the Rapport is created
+        self._save_tasks_from_post(request, obj)
+        return super().response_add(request, obj, post_url_continue=post_url_continue)
+
+    def response_change(self, request, obj):
+        # Save tasks after editing an existing Rapport
+        self._save_tasks_from_post(request, obj)
+        return super().response_change(request, obj)
 
 
 admin.site.register(Rapport, RapportAdmin)

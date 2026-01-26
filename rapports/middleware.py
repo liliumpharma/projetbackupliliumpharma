@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.urls import reverse
 from django.shortcuts import redirect
-from django.db import connection
+#from django.db import connection
 
 
 
@@ -10,20 +10,17 @@ class ProtectCommercial:
         self.get_response = get_response
 
     def __call__(self, request):
-        response = self.get_response(request)
-        return response
+        return self.get_response(request)
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        print(f" path {request.path}")
-        # connection.close()
-        # if "rapports" in request.path and not "api" in request.path and not "admin" in request.path and not "PDF" in request.path and not "IMAGE" in request.path:
-        #     if request.user.is_authenticated and request.user.userprofile.rolee != "Commercial":
-        #         return redirect("Home")
+        from django.shortcuts import redirect  # lazy import
 
-        if request.path=='/' or request.path=='/commerciaux' or request.path=='/medecins':
+        if request.path in ['/', '/commerciaux', '/medecins']:
             if request.user.is_authenticated:
-                if request.user.userprofile.rolee == "Commercial":
-                    return redirect("HomeRapport")
+                if hasattr(request.user, 'userprofile'):
+                    if request.user.userprofile.rolee == "Commercial":
+                        return redirect("HomeRapport")
+
 
 
 

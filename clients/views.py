@@ -754,7 +754,7 @@ from accounts.models import UserProfile, UserProduct
 from django.utils import timezone
 from .models import UserTargetMonth
 from datetime import datetime
-from monthly_evaluations.models import Monthly_Evaluation, SupEvaluation
+from monthly_evaluations.models import Monthly_Evaluation, SupEvaluation, Commercial_Monthly_Evaluation
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -1065,7 +1065,7 @@ class UsersWithTargetMonth(APIView):
             print(user)
         else:
             user = request.user
-        month = request.GET.get("month")
+        month = int(request.GET.get("month"))
         if month == "null":
             month = datetime.now().month - 1
         #user = request.user
@@ -1087,7 +1087,7 @@ class UsersWithTargetMonth(APIView):
                     userprofile__speciality_rolee__in=["Superviseur_national"]
                 )
             #excluded_families = ["lilium Pharma", "orient Bio", "Aniya_Pharm"]
-            excluded_families = ["orient Bio", "production"]
+            excluded_families = ["orient Bio", "production", "Administration"]
             users = users.exclude(userprofile__family__in=excluded_families)
             print(f"les users apres exclude {users}")
 
@@ -1104,15 +1104,26 @@ class UsersWithTargetMonth(APIView):
                     print("added month " + str(month))
                     print("user " + str(u))
                     try:
-                        me = Monthly_Evaluation.objects.filter(
-                        Q(added__year=current_year) & Q(added__month=month) & Q(user=u)
-                        ).first()
+                        if u.userprofile.speciality_rolee == "Commercial":
+                            me = Commercial_Monthly_Evaluation.objects.filter(
+                            user=u, added__month=month, added__year=current_year
+                            ).first()
+                        else:
+                            me = Monthly_Evaluation.objects.filter(
+                            Q(added__year=current_year) & Q(added__month=month) & Q(user=u)
+                            ).first()
                     except:
                         print("pas de monthly target month")
-
-                    if Monthly_Evaluation.objects.filter(
+                    d = 0
+                    if u.userprofile.speciality_rolee == "Commercial":
+                        d = Commercial_Monthly_Evaluation.objects.filter(
                         user=u, added__month=month, added__year=current_year
-                    ).exists():
+                    )
+                    else:
+                        d = Monthly_Evaluation.objects.filter(
+                        user=u, added__month=month, added__year=current_year
+                        )
+                    if d.exists():
                         has_eval = True
                         has_direction_eval = me.user_direction_evaluation
                         own_perc = me.own_perc

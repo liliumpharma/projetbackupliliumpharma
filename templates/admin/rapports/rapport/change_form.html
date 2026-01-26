@@ -1,0 +1,110 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block inline_field_sets %}
+  {{ block.super }}
+
+  {# Render Tasks normally (always works). We will move it into a 3rd tab via JS. #}
+  {% if tasks_formset %}
+    <div class="inline-group" id="tasks-inline-group" style="margin-top: 1rem;">
+      <div class="card card-outline card-primary">
+        <div class="card-header">
+          <h3 class="card-title">{% trans "Tasks" %}</h3>
+        </div>
+        <div class="card-body">
+
+          {% if tasks_formset.non_form_errors %}
+            <div class="alert alert-danger">
+              {{ tasks_formset.non_form_errors }}
+            </div>
+          {% endif %}
+
+          {{ tasks_formset.management_form }}
+
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered" style="margin-bottom: 0;">
+              <thead>
+                <tr>
+                  <th style="width: 70%;">{% trans "Task" %}</th>
+                  <th style="width: 15%;">{% trans "Completed" %}</th>
+                  <th style="width: 15%;">{% trans "Delete" %}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for f in tasks_formset.forms %}
+                  <tr>
+                    <td>
+                      {{ f.id }}
+                      {% if f.task.errors %}
+                        <div class="text-danger" style="margin-bottom: 6px;">{{ f.task.errors }}</div>
+                      {% endif %}
+                      {{ f.task }}
+                    </td>
+                    <td class="text-center align-middle">
+                      {{ f.completed }}
+                    </td>
+                    <td class="text-center align-middle">
+                      {% if tasks_formset.can_delete %}{{ f.DELETE }}{% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <style>
+            /* Keep the rows compact and aligned */
+            #tasks-inline-group textarea { min-height: 60px; }
+            #tasks-inline-group .table td { vertical-align: middle; }
+          </style>
+
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function() {
+        function initTasksTab() {
+          var tasksGroup = document.getElementById("tasks-inline-group");
+          if (!tasksGroup) return;
+
+          // Jazzmin uses bootstrap nav tabs; these selectors work in practice across versions
+          var nav = document.querySelector(".nav-tabs");
+          var content = document.querySelector(".tab-content");
+          if (!nav || !content) return; // if no tabs, keep tasks in-place (still usable)
+
+          // Avoid duplicates if page re-renders
+          if (document.getElementById("tasks-tab-link")) return;
+
+          // Create nav item
+          var li = document.createElement("li");
+          li.className = "nav-item";
+          li.innerHTML =
+            '<a id="tasks-tab-link" class="nav-link" data-toggle="tab" href="#tasks-tab-pane" role="tab" aria-controls="tasks-tab-pane" aria-selected="false">{% trans "Tasks" %}</a>';
+          nav.appendChild(li);
+
+          // Create tab pane and move tasks group into it
+          var pane = document.createElement("div");
+          pane.className = "tab-pane fade";
+          pane.id = "tasks-tab-pane";
+          pane.setAttribute("role", "tabpanel");
+
+          pane.appendChild(tasksGroup);
+          content.appendChild(pane);
+
+          // Ensure bootstrap activates it properly when clicked (extra safety)
+          var link = document.getElementById("tasks-tab-link");
+          if (link && window.jQuery && window.jQuery.fn && window.jQuery.fn.tab) {
+            window.jQuery(link).on("click", function(e){ e.preventDefault(); window.jQuery(this).tab("show"); });
+          }
+        }
+
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", initTasksTab);
+        } else {
+          initTasksTab();
+        }
+      })();
+    </script>
+  {% endif %}
+{% endblock %}
