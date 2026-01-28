@@ -595,17 +595,18 @@ from django.db.models.functions import TruncMonth
 from rapports.models import Visite
 from medecins.get_medecins import get_medecinsss
 
-
 class HomeMedecinExportExcel(APIView):
     authentication_classes = [authentication.SessionAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, format=None):
         from datetime import date as date_cls
+        from urllib.parse import urlencode
 
         today = date.today()
 
         # SAME queryset as the list page (same filters + same role scoping)
+        # FIX: was get_medecinss(request)
         base_qs = get_medecinsss(request)
 
         # Keep compatibility with your existing "cat" behavior (if used in UI)
@@ -704,12 +705,6 @@ class HomeMedecinExportExcel(APIView):
 
         # -------- Filters block at top (only active filters) --------
         def _is_default_for_key(key: str, v: str) -> bool:
-            """
-            Generic default detection:
-              - empty is default
-              - 'Tous'/'tous' are default
-              - '0' is often default, BUT for some keys (like 'visites') it's a valid value.
-            """
             v = (v or "").strip()
             if v in ["", "Tous", "tous", "all", "ALL"]:
                 return True
@@ -718,23 +713,17 @@ class HomeMedecinExportExcel(APIView):
             return False
 
         def _map_visites_value(raw: str) -> str:
-            """
-            Convert visits filter values:
-              0 -> Non visité
-              1 -> Visité
-              2 -> Visite multiple
-              3 -> Visite duo
-            """
             raw = (raw or "").strip()
             mapping = {
                 "0": "Non visité",
                 "1": "Visité",
                 "2": "Visite multiple",
                 "3": "Visite duo",
+                "4": "Visite suspect",
             }
             return mapping.get(raw, raw)
 
-        applied_filters_kv = []  # list of tuples (label, value)
+        applied_filters_kv = []
 
         for key, label in [
             ("pays", "Pays"),
@@ -795,7 +784,17 @@ class HomeMedecinExportExcel(APIView):
         filter_name_bold_fmt = workbook.add_format({"bold": True, "border": 1, "bg_color": "#F1F8E9"})
         filter_val_fmt = workbook.add_format({"border": 1, "text_wrap": True})
 
-        headers = ["délégué", "nom", "wilaya", "commune", "specialite", "telephone", "adresse", "visites"]
+        # Hyperlink format
+        link_fmt = workbook.add_format({
+            "font_color": "blue",
+            "underline": 1,
+            "border": 1,
+            "align": "center",
+            "valign": "vcenter",
+        })
+
+        # ✅ Added "pdf visites" column
+        headers = ["délégué", "nom", "wilaya", "commune", "specialite", "telephone", "adresse", "visites", "pdf visites"]
         last_col = len(headers) - 1
 
         ws.merge_range(0, 0, 0, last_col, f"Export Médecins — {today:%Y-%m-%d}", title_fmt)
@@ -858,6 +857,19 @@ class HomeMedecinExportExcel(APIView):
             ws.write(row, 6, adr, wrap_top_border)
             ws.write(row, 7, visites_val, wrap_top_border)
 
+            # ✅ Exact PDF link like your real example:
+            # https://app.liliumpharma.com/medecins/visites/PDF/<id>/?priority=&mindate=...&maxdate=&produit=&stock=
+            pdf_params = {
+                "priority": request.GET.get("priority", "") or "",
+                "mindate": request.GET.get("mindate", "") or "",
+                "maxdate": request.GET.get("maxdate", "") or "",
+                "produit": request.GET.get("produit", "") or "",
+                "stock": request.GET.get("stock", "") or "",
+            }
+            pdf_url = request.build_absolute_uri(f"/medecins/visites/PDF/{m.id}/") + "?" + urlencode(pdf_params)
+
+            ws.write_url(row, 8, pdf_url, link_fmt, string="Ouvrir")
+
             row += 1
 
         last_data_row = row - 1
@@ -886,6 +898,7 @@ class HomeMedecinExportExcel(APIView):
         ws.set_column(5, 5, 18)
         ws.set_column(6, 6, 40)
         ws.set_column(7, 7, 42)
+        ws.set_column(8, 8, 14)  # ✅ pdf visites
 
         ws.set_row(0, 28)
         ws.set_zoom(110)

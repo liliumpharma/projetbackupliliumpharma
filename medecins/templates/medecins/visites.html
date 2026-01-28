@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar">
 <head>
@@ -8,69 +7,142 @@
   <link href="https://fonts.googleapis.com/css2?family=Lalezar&display=swap" rel="stylesheet">
   <title>PDF</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-  <style>
-  @media print {
-    body{
-        width: 21cm;
 
-        /* change the margins as you want them to be. */
-   }
-}</style>
+  <style>
+    @media print {
+      body { width: 21cm; }
+    }
+
+    /* ---------- Day header row ---------- */
+    tr.day-header td{
+      font-weight: 700;
+      background: #f8f9fa;
+      border-top: 2px solid #dee2e6 !important;
+    }
+
+    /* ---------- Group “box” effect (continuous border) ---------- */
+    tr.grp td {
+      border-left-width: 3px !important;
+      border-right-width: 3px !important;
+      border-left-style: solid !important;
+      border-right-style: solid !important;
+    }
+    tr.grp-first td { border-top-width: 3px !important; border-top-style: solid !important; }
+    tr.grp-last  td { border-bottom-width: 3px !important; border-bottom-style: solid !important; }
+
+    /* ---------- DUO (YELLOW) ---------- */
+    tr.grp-duo td{
+      border-left-color: #f0ad4e !important;
+      border-right-color: #f0ad4e !important;
+      background: rgba(240, 173, 78, 0.14);
+    }
+    tr.grp-duo.grp-first td{ border-top-color: #f0ad4e !important; }
+    tr.grp-duo.grp-last  td{ border-bottom-color: #f0ad4e !important; }
+
+    /* ---------- SUSPECT (RED) ---------- */
+    tr.grp-suspect td{
+      border-left-color: #dc3545 !important;
+      border-right-color: #dc3545 !important;
+      background: rgba(220, 53, 69, 0.10);
+    }
+    tr.grp-suspect.grp-first td{ border-top-color: #dc3545 !important; }
+    tr.grp-suspect.grp-last  td{ border-bottom-color: #dc3545 !important; }
+  </style>
 </head>
+
 <body>
 {% load static %}
 
-      <div class='container text-dark'>
+  <div class='container text-dark'>
 
-        <h1 class="observation py-2"><img src="/static/img/logo32.png" alt=""> Liste des visites {{produit}}</h1>
-        <div class="row pb-3">
-          <div class="col-md-6">
-            <h5><small><b> medecin:</b> {{medecin.id}} {{medecin.nom}} </small></h5>
-            <h5><small><b> date d'ajout:</b> {{medecin.added}}  </small></h5>
-            <h5 class=''><small><b> telephone:</b> {{medecin.telephone}}</small></h5>
-            <h5 class=''><small><b> specialité:</b> {{medecin.specialite}}</small></h5>
-            <h5 class=''><small><b> classification:</b> {{medecin.classification}}</small></h5>
-          </div>
-          <div class="col-md-6">
-            <h5 class=''><small><b> periode:</b>  <span class="text-secondary">{{request.GET.mindate}} / {{request.GET.maxdate}}</span></small></h5>
-            <h5 class=''><small><b> nombre de visites:</b> {{nbr_visites}}</small></h5>
-            <h5 class=''><small><b> region:</b> {{medecin.medecin_region}}</small></h5>
-            <h5 class=''><small><b> adresse:</b> {{medecin.adresse}}</small></h5>
-          </div>
-        </div>
+    <h1 class="observation py-2">
+      <img src="/static/img/logo32.png" alt="">
+      Liste des visites {{produit}}
+    </h1>
 
+    <div class="row pb-3">
+      <div class="col-md-6">
+        <h5><small><b> medecin:</b> {{medecin.id}} {{medecin.nom}} </small></h5>
+        <h5><small><b> date d'ajout:</b> {{medecin.added}}  </small></h5>
+        <h5 class=''><small><b> telephone:</b> {{medecin.telephone}}</small></h5>
+        <h5 class=''><small><b> specialité:</b> {{medecin.specialite}}</small></h5>
+        <h5 class=''><small><b> classification:</b> {{medecin.classification}}</small></h5>
+      </div>
 
-        <table class="table table-sm table-bordered">
-          <thead>
-            <tr>
-              <th class="text-left">ID</th>
-              <th class="text-left">date</th>
-              <th class="text-left">delegué</th>
-              <th class="text-left">prior</th>
-              <th class="text-left">prds</th>
-              <th class="text-left">observation</th>
+      <div class="col-md-6">
+        <h5 class=''><small><b> periode:</b>  <span class="text-secondary">{{request.GET.mindate}} / {{request.GET.maxdate}}</span></small></h5>
+        <h5 class=''><small><b> nombre de visites:</b> {{nbr_visites}}</small></h5>
+        <h5 class=''><small><b> region:</b> {{medecin.medecin_region}}</small></h5>
+        <h5 class=''><small><b> adresse:</b> {{medecin.adresse}}</small></h5>
+      </div>
+    </div>
+
+    <table class="table table-sm table-bordered">
+      <thead>
+        <tr>
+          <th class="text-left">ID</th>
+          <th class="text-left">date</th>
+          <th class="text-left">delegué</th>
+          <th class="text-left">prior</th>
+          <th class="text-left">prds</th>
+          <th class="text-left">observation</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% if visites_groups %}
+          {% for g in visites_groups %}
+            <tr class="day-header">
+              <td colspan="6">
+                {{ g.day|date:"Y-m-d" }}
+                <span class="text-secondary">— {{ g.count }} visite(s)</span>
+
+                {% if g.status == "duo" %}
+                  <span class="badge badge-warning ml-2">Visite Duo</span>
+                {% elif g.status == "suspect" %}
+                  <span class="badge badge-danger ml-2">Visite Suspecte</span>
+                {% endif %}
+              </td>
             </tr>
-          </thead>
-          <tbody>
-              {% for visite in visites %}
-                <tr>
-                  <td>{{visite.id}}</td>
-                  <td>{{visite.rapport.added}}</td>
-                  <td>{{visite.rapport.user.userprofile.user_nom}}</td>
-                  <td>{{visite.priority}}</td>
-                  <td>{{visite.products_to_admin}}</td>
-                  <td  dir="rtl">{{visite.observation}}</td>
-                </tr>
-            {%endfor%}
-          </tbody>
-        </table>
-      </div>
-      <div class="pt-2 container text-right">
-        <b>Signature et cachet:</b>
-      </div>
 
+            {% for visite in g.items %}
+              <tr class="
+                {% if g.status == 'duo' or g.status == 'suspect' %}
+                  grp
+                  {% if g.status == 'duo' %} grp-duo {% else %} grp-suspect {% endif %}
+                  {% if forloop.first %} grp-first {% endif %}
+                  {% if forloop.last %} grp-last {% endif %}
+                {% endif %}
+              ">
+                <td>{{visite.id}}</td>
+                <td>{{visite.rapport.added}}</td>
+                <td>{{visite.rapport.user.userprofile.user_nom}}</td>
+                <td>{{visite.priority}}</td>
+                <td>{{visite.products_to_admin}}</td>
+                <td dir="rtl">{{visite.observation}}</td>
+              </tr>
+            {% endfor %}
+          {% endfor %}
+        {% else %}
+          {% for visite in visites %}
+            <tr>
+              <td>{{visite.id}}</td>
+              <td>{{visite.rapport.added}}</td>
+              <td>{{visite.rapport.user.userprofile.user_nom}}</td>
+              <td>{{visite.priority}}</td>
+              <td>{{visite.products_to_admin}}</td>
+              <td dir="rtl">{{visite.observation}}</td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
 
+  </div>
 
+  <div class="pt-2 container text-right">
+    <b>Signature et cachet:</b>
+  </div>
 
 </body>
 </html>

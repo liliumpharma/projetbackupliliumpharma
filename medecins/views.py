@@ -17,6 +17,11 @@ from dateutil import relativedelta
 from django.template.loader import render_to_string
 from weasyprint import HTML
 
+from django.db.models.functions import TruncDate
+from itertools import groupby
+from operator import attrgetter
+
+
 
 MEDICAL = [
     "Généraliste",
@@ -681,48 +686,82 @@ class VisitesMedecin(LoginRequiredMixin, TemplateView):
 
     def get(self, request, id):
         print("*****************VisitesMedecin*****************")
-        # if (
-        #     request.user.userprofile.speciality_rolee
-        #     in ["Superviseur_national", "CountryManager"]
-        #     or request.user.is_superuser
-        # ):
+
         filters = {}
         produit = ""
-        mindate = "2023-01-01"
+
+        # (Optionnel) tu peux garder ton mindate fixe, ou le rendre dynamique:
+        mindate = request.GET.get("mindate") or "2023-01-01"
+
         if request.GET.get("month"):
             filters["rapport__added__month"] = request.GET.get("month")
             filters["rapport__added__year"] = datetime.date.today().year
+
         if mindate:
             filters["rapport__added__gte"] = mindate
+
         if request.GET.get("maxdate"):
             filters["rapport__added__lte"] = request.GET.get("maxdate")
+
         if request.GET.get("priority") and request.GET.get("priority") != "0":
             filters["priority"] = request.GET.get("priority")
+
         if request.GET.get("produit"):
             filters["produits__id"] = request.GET.get("produit")
             produit += f'{Produit.objects.get(id=request.GET.get("produit")).nom} '
-        # Conditional ordering: put visits with specified specialties at the end
-        visites = Visite.objects.filter(medecin__id=id, **filters).order_by(
-            Case(
-                When(
-                    medecin__specialite__in=["Pharmacie", "Grossiste", "SuperGros"],
-                    then=Value("ZZZZZ"),
-                ),
-                default=Value(""),
-                output_field=CharField(),
-            ),
-            "-rapport__added",
+
+        # 1) queryset des visites + annotation "day" (date) + prefetch usersunder pour détecter duo
+        visites = (
+            Visite.objects
+            .filter(medecin__id=id, **filters)
+            .select_related("rapport", "rapport__user", "rapport__user__userprofile")
+            .prefetch_related("rapport__user__userprofile__usersunder", "produits")
+            .annotate(day=TruncDate("rapport__added"))
+            .order_by("-day", "-rapport__added", "-id")
+            .distinct()
         )
+
+        # 2) grouper par jour + status (normal / duo / suspect)
+        visites_groups = []
+        for day, items_iter in groupby(visites, key=attrgetter("day")):
+            items = list(items_iter)
+            count = len(items)
+
+            status = "normal"
+            if count >= 3:
+                status = "suspect"
+            elif count == 2:
+                u1 = items[0].rapport.user
+                u2 = items[1].rapport.user
+
+                under1 = set(u1.userprofile.usersunder.values_list("id", flat=True))
+                under2 = set(u2.userprofile.usersunder.values_list("id", flat=True))
+
+                # duo valide si relation usersunder dans un sens ou dans l'autre
+                if (u2.id in under1) or (u1.id in under2):
+                    status = "duo"
+                else:
+                    status = "suspect"
+
+            visites_groups.append({
+                "day": day,
+                "items": items,
+                "count": count,
+                "status": status,
+            })
+
         return render(
             request,
             "medecins/visites.html",
             {
-                "visites": visites,
+                "visites": visites,  # tu peux le garder si tu en as besoin ailleurs
+                "visites_groups": visites_groups,  # <-- NOUVEAU pour le template
                 "medecin": Medecin.objects.get(id=id),
-                "nbr_visites": len(visites),
+                "nbr_visites": visites.count(),
                 "produit": produit,
             },
         )
+
 
 
 def medecin_last_six_months(request, id):
