@@ -12,3 +12,4 @@ backup_server_11082025.tar.gz
 *.gz
 *.sql
 idle
+credentials.json
