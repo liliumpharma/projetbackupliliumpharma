@@ -2301,7 +2301,10 @@ for (var i = 21; i <= 23; i++) { // Update the loop range to cover all 22 questi
   function updateURLL() {
     const selectedMonth = monthSelect.value;
     const baseUrl = window.location.href.split('?')[0]; // Récupérer l'URL de base sans les paramètres
-    const newUrl = `${baseUrl}?month=${selectedMonth}`; // Construire la nouvelle URL avec le mois sélectionné
+    
+    const params1 = new URLSearchParams(window.location.search);
+    const yyyear1  = params1.get("year");
+    const newUrl = `${baseUrl}?month=${selectedMonth}&year=${yyyear1}`; // Construire la nouvelle URL avec le mois sélectionné
     history.replaceState({}, document.title, newUrl); // Mettre à jour l'URL sans recharger la page
   }
 

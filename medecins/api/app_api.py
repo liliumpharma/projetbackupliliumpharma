@@ -534,7 +534,13 @@ class NewMedecinList(APIView):
                 #print(len(data))
                 zone_user = sectors = request.user.userprofile.sectors.all()
                 print(zone_user)
-                qs1 = Medecin.objects.filter(specialite="Grossiste", wilaya__in=zone_user)
+                usrnm = ["AmelDZ", "ASMADZ", "bouchachiadz", "chirazdz", "fayzadz", "hindDZ", "itedaldz", "lounisdz", "makourdz", "NACIMADZ", "nesrinedz", "syrianadz", "Zahradz", "ChahrazedDZ"]
+                qs1=0
+                if request.user.username in usrnm:
+                    wly_nom = ["Ain Defla", "Medea", "Blida", "Tipaza", "Alger", "Boumerdes", "Bouira", "Tizi Ouzou"]
+                    qs1 = Medecin.objects.filter(specialite="Grossiste", wilaya__nom__in=wly_nom)
+                else:
+                    qs1 = Medecin.objects.filter(specialite="Grossiste", wilaya__in=zone_user)
                 qs2 = Medecin.objects.filter(specialite="Grossiste", users=request.user)
                 all_grossiste_in_same_zone = qs1.union(qs2)
                 print(all_grossiste_in_same_zone)

@@ -13,6 +13,37 @@
   <link rel="stylesheet" href="{% static 'css/toast/vanilla-toast.css'%}">
 
   {%block styles%}
+  <style>
+    .wizard-step {
+      display: none;
+      animation: fadeIn 0.5s;
+    }
+    .wizard-step.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .wizard-nav {
+      display: flex;
+      justify-content: space-between;
+      margin: 20px 0;
+      padding: 10px;
+      position: sticky;
+      bottom: 0;
+      background: white;
+      z-index: 1000;
+      border-top: 1px solid #ddd;
+    }
+    .wizard-nav button {
+      min-width: 120px;
+    }
+    /* Hide Valider button initially */
+    #submit_container {
+        display: none;
+    }
+  </style>
   {%endblock styles%}
   <title>{% block title %}{%endblock title%}</title>
 </head>
@@ -170,11 +201,12 @@ function isChecked() {
 </div>
 
 
+
 <div id="all">
+  <div id="wizard-form">
   <p id="iinfo" style="text-align: center;"></p>
-  <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
-    <h4>Partie Rapports</h4>
-  </div>
+  <input type="hidden" id="csrf_token" value="{{ csrf_token }}">
+  
   
   <script>
     const params = new URLSearchParams(window.location.search);
@@ -186,7 +218,10 @@ function isChecked() {
     document.getElementById("iinfo").innerHTML =
         `Utilisateur : <b>${uuser}</b> || Mois : <b>${moonth}</b> || Année : <b>${yyear}</b>`;
 </script>
-
+<div class="card bg-white m-4 wizard-step" data-step="1">
+  <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+    <h4>Partie Rapports</h4>
+  </div>
     <div class="row mb-3 d-bleck" style="font-size: 22px;">
       <div class="d-flex justify-content-end col-12">
         <p class="align-self-center" style="font-size: 13px; margin-top: 2px; color: red;"></p>
@@ -219,7 +254,7 @@ function isChecked() {
       </div>
 
   </div>
-
+</div>
 <script>
     nombre_rapport = document.getElementById("nombre_rapport")
     nombre_absence = document.getElementById("nombre_absence") 
@@ -380,10 +415,12 @@ document.getElementById("note_q0").innerText = note_q0 ;
 -->
 
   <!-- COMMERCIAL -->
-  <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+  
+  <!-- Q11 -->
+   <div class="card bg-white m-4 wizard-step" data-step="2">
+    <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
     <h4>Commercial</h4>
   </div>
-  <!-- Q11 -->
   <div class="card bg-white m-4">
     <h6 class="text-center">Q1</h6>
     <p><span id="note_1112" style="color: red; font-weight: bold;"></span> / 20 : NOTE</p>
@@ -408,9 +445,14 @@ document.getElementById("note_q0").innerText = note_q0 ;
     </div>
     <textarea id="doctors_11" class="form-control" rows="6" style=" height: auto;max-height: 500px; overflow-y: scroll; background-color: white;" readonly>doctors list</textarea>
   </div>
+  </div>
   <br>
 
   <!-- Q12 -->
+   <div class="card bg-white m-4 wizard-step" data-step="3">
+    <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+    <h4>Commercial</h4>
+  </div>
   <div class="card bg-white m-4">
     <h6 class="text-center">Q1.1</h6>
     <p style="margin-left:15px; color: red;">* Champ obligatoire</p>
@@ -424,8 +466,13 @@ document.getElementById("note_q0").innerText = note_q0 ;
       </div>
     </div>
   </div>
+  </div>
   <br>
 <!-- Q3 -->
+ <div class="card bg-white m-4 wizard-step" data-step="4">
+  <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+    <h4>Commercial</h4>
+  </div>
   <div class="card bg-white m-4">
     <div class="d-flex justify-content-end col-12">
       <p class="align-self-center" style="font-size: 13px; margin-top: 2px; color: red;"></p>
@@ -440,6 +487,7 @@ document.getElementById("note_q0").innerText = note_q0 ;
       </div>
       <div id="raison_3" style="padding: 10px;">
       </div>
+    </div>
     </div>
   <br>
   <script>
@@ -458,6 +506,10 @@ document.getElementById("note_q0").innerText = note_q0 ;
 </script>
 
   <!-- Q4 -->
+   <div class="card bg-white m-4 wizard-step" data-step="5">
+    <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+    <h4>Commercial</h4>
+  </div>
   <div class="card bg-white m-4">
     <div class="d-flex justify-content-end col-12">
       <p class="align-self-center" style="font-size: 13px; margin-top: 2px; color: red;"></p>
@@ -473,6 +525,7 @@ document.getElementById("note_q0").innerText = note_q0 ;
       <div id="raison_4" style="padding: 10px;">
       </div>
     </div>
+    </div>
   <br>
   <script>
     setTimeout(function() {
@@ -487,6 +540,10 @@ document.getElementById("note_q0").innerText = note_q0 ;
     }, 2000);
 </script>
   <!-- Q13 -->
+   <div class="card bg-white m-4 wizard-step" data-step="6">
+    <div class="alert alert-warning" role="alert" style="text-align: center; margin-top: 5rem; background-image: linear-gradient(to right, rgba(255, 255, 255, 0), rgba(255, 255, 255, 1) 50%, rgba(255, 255, 255, 0));">
+    <h4>Commercial</h4>
+  </div>
   <div class="card bg-white m-4">
     <div class="d-block col-12">
       <h5 class="text-right">Note:<span id="note_q13" style="font-size: 20px; margin-top: 2px; color: red; font-weight: bold;">0</span>/55</h5>
@@ -545,8 +602,11 @@ document.getElementById("note_q0").innerText = note_q0 ;
       }
     </style>
   </div>
-
+</div>
   <br>
+
+
+
   <!-- Q14 -->
    <!--
   <div class="card bg-white m-4">
@@ -558,6 +618,10 @@ document.getElementById("note_q0").innerText = note_q0 ;
     </div>
     <textarea id="response_14" class="form-control" placeholder="Suggestions..." rows="8" style=" height: auto;max-height: 500px; overflow-y: scroll; background-color: white;"></textarea>
   </div>-->
+</div>
+  <br>
+
+<div class="wizard-step" data-step="7">
   <div class="d-flex justify-content-between w-100">
     <h4 style="color: green; margin-left: 10px;">Merci pour votre coopération!</h4>
     <h4 style="color: green; margin-right: 20px;">! شكرا لتعاونكم</h4>
@@ -575,10 +639,19 @@ document.getElementById("note_q0").innerText = note_q0 ;
   <!-- <button id="submit_2" class="btn btn-primary col-12" type="submit" style="margin-top: 5px; margin-bottom: 5px;">
     Valider l'evaluation
   </button> -->
-  <div style="background-color: green; height: 70px; display: flex; align-items: center;">
+  <div id="submit_container" style="background-color: green; height: 70px; display: flex; align-items: center;">
     <a id="submit_2" class="btn col-12" type="submit" style="color: white;">
       <strong style="margin-top: 40px;">Valider l'évaluation</strong>
     </a>
+  </div>
+</div> <!-- End Step 7 -->
+
+</div> <!-- End wizard-form -->
+
+  <!-- Wizard Navigation -->
+  <div class="wizard-nav">
+    <button type="button" id="prevBtn" class="btn btn-secondary" onclick="nextPrev(-1)">Précédent</button>
+    <button type="button" id="nextBtn" class="btn btn-primary" onclick="nextPrev(1)">Suivant</button>
   </div>
 </div>
 </div>
@@ -595,6 +668,96 @@ document.getElementById("note_q0").innerText = note_q0 ;
 
 
 
+<script>
+var currentStep = 1;
+var totalSteps = 7;
+
+function showStep(step) {
+  // Hide all steps
+  document.querySelectorAll('.wizard-step').forEach(s => {
+    s.classList.remove('active');
+  });
+  
+  // Show current step
+  const stepEl = document.querySelector(`.wizard-step[data-step="${step}"]`);
+  if(stepEl) stepEl.classList.add('active');
+  
+  // Update Buttons
+  if (step === 1) {
+    document.getElementById("prevBtn").style.display = "none";
+  } else {
+    document.getElementById("prevBtn").style.display = "inline-block";
+  }
+  
+  if (step === totalSteps) {
+    document.getElementById("nextBtn").style.display = "none";
+    document.getElementById("submit_container").style.display = "flex";
+  } else {
+    document.getElementById("nextBtn").style.display = "inline-block";
+    document.getElementById("nextBtn").innerHTML = "Suivant";
+    document.getElementById("submit_container").style.display = "none";
+  }
+  
+  // Scroll to top of wizard
+  document.getElementById('wizard-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function nextPrev(n) {
+  // Validate before moving next
+  if (n === 1 && !validateCurrentStep()) return false;
+  
+  currentStep += n;
+  showStep(currentStep);
+}
+
+function validateCurrentStep() {
+  const currentStepEl = document.querySelector(`.wizard-step[data-step="${currentStep}"]`);
+  
+  // Identify mandatory fields specifically in this step
+  // Using the logic derived from original script
+  
+  // Select textareas that need validation in current step
+  // Note: Adjust the selectors if IDs are different in this file
+  const textAreasToCheck = currentStepEl.querySelectorAll(
+    '[id^="RaisonsMedecinsNonVisites_"], ' +
+    '[id^="RaisonsMedecinsNonVisites2_"], ' +
+    '[id^="RaisonsSuperGroVisites_"] ' 
+  );
+  
+  let valid = true;
+  let firstInvalid = null;
+  
+  textAreasToCheck.forEach(textArea => {
+      // Check if visible
+      if(textArea.offsetParent === null) return;
+      
+      if (textArea.value.trim() === "") {
+        textArea.classList.add("is-invalid");
+        textArea.classList.remove("is-valid");
+        valid = false;
+        if (!firstInvalid) firstInvalid = textArea;
+      } else {
+        textArea.classList.remove("is-invalid");
+        textArea.classList.add("is-valid");
+      }
+  });
+
+  if (!valid) {
+    // Assuming vanillaToast is available
+    if(typeof vanillaToast !== 'undefined') {
+        vanillaToast.error("Veuillez remplir les champs obligatoires avant de continuer.");
+    } else {
+        alert("Veuillez remplir les champs obligatoires avant de continuer.");
+    }
+    if (firstInvalid) firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  
+  return valid;
+}
+
+// Initial show
+showStep(currentStep);
+</script>
 
 
 </body> 
@@ -778,8 +941,10 @@ document.getElementById("note_q0").innerText = note_q0 ;
 
         const textAreaElement = document.createElement("textarea");
         textAreaElement.id = "RaisonsMedecinsNonVisites_" + elt;
-        textAreaElement.className = "form-control text-left";
+        textAreaElement.className = "form-control text-left required-q2";
         textAreaElement.placeholder = "Raison des visites...";
+        textAreaElement.required = true;
+
         newDiv.appendChild(textAreaElement); // Ajoute le textarea au div
 
         const brElement = document.createElement("br");
@@ -1252,7 +1417,7 @@ if (hasEmptyField && firstEmptyField !== null) {
   });
 }
 if (hasEmptyField) {
-  vanillaToast.error("ATTENTION: Remplissez tous les champs avant de soumettre le formulaire.");   
+  vanillaToast.error("ATTENTION: Remplissez tous les champs  dans la question Q2 avant de soumettre le formulaire.");   
  }else{
   $.ajax({
       url: '/monthly_evaluation/AddCommercialeMonthlyEvaluation/?month=' + monthUrl + '&user='+usr+'&year='+yyyear,

@@ -70,7 +70,7 @@ class MedecinAPI(APIView):
                 else:
                     medecins = Medecin.objects.filter(nom__icontains=name.lower())
 
-        serializer = MedecinSerializer(medecins, many=True)
+        serializer = MedecinSerializer(medecins, many=True, context={"request": request})
         return Response(serializer.data, status=200)
 
 
@@ -148,7 +148,8 @@ class MedecinFrontAPI(APIView):
     #     paginator = Paginator(medecins_list, 15)
     #     medecins = paginator.get_page(page)
 
-    #     serializer = MedecinSerializer(medecins, many=True)
+    #     serializer = MedecinSerializer(medecins, many=True, context={"request": request})
+
 
     #     return Response(
     #         self.pagination_response(
@@ -212,17 +213,12 @@ class MedecinFrontAPI(APIView):
                 export_url = f"{export_url}?{qs}"
 
             excel_svg = """
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 3.5 19.5 9H14z"/>
-                <path fill="currentColor" d="M8.2 17.6 10 14.9l-1.8-2.7h1.7l1 1.6 1-1.6h1.7L11.8 15l1.8 2.6h-1.7l-1-1.5-1 1.5z"/>
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false"><rect x="2" y="3" width="20" height="18" rx="2" fill="#107C41"/><rect x="2" y="3" width="6.5" height="18" fill="#0E6A38"/><path d="M6.5 9 L8.5 12 L6.5 15 M10.5 9 L8.5 12 L10.5 15" stroke="#FFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M11.5 8h7M11.5 11h7M11.5 14h7M11.5 17h5" stroke="#E6F4EA" stroke-width="1.2" stroke-linecap="round"/></svg>
             """
 
             other_details += (
                 f' <a href="{export_url}" '
-                f'style="margin-left:12px; display:inline-flex; align-items:center; justify-content:center; '
-                f'width:34px; height:34px; border:1px solid #1D6F42; background:#1D6F42; color:#fff; '
-                f'border-radius:6px; text-decoration:none;" '
+                f'style="margin-left:12px; display:inline-flex; align-items:center; text-decoration:none;" '
                 f'title="Exporter Excel" aria-label="Exporter Excel">'
                 f'{excel_svg}'
                 f'</a>'
@@ -249,7 +245,7 @@ class MedecinFrontAPI(APIView):
             page = request.GET.get("page", 1)
             medecins = paginator.get_page(page)
 
-            serializer = MedecinSerializer(medecins, many=True)
+            serializer = MedecinSerializer(medecins, many=True, context={"request": request})
 
             return Response(
                 self.pagination_response(
@@ -257,7 +253,7 @@ class MedecinFrontAPI(APIView):
                 ),
                 status=200,
             )
-        serializer = MedecinSerializer(medecins, many=True)
+        serializer = MedecinSerializer(medecins, many=True, context={"request": request})
         medecins = Medecin.objects.all()
         return Response(
                 self.pagination_response(
@@ -321,14 +317,12 @@ class MedecinFrontAPI(APIView):
                 export_url = f"{export_url}?{qs}"
 
             excel_svg = """
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><rect x="2" y="3" width="20" height="18" rx="2" fill="#107C41"/><rect x="2" y="3" width="6.5" height="18" fill="#0E6A38"/><path d="M6.5 9 L8.5 12 L6.5 15 M10.5 9 L8.5 12 L10.5 15" stroke="#FFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M11.5 8h7M11.5 11h7M11.5 14h7M11.5 17h5" stroke="#E6F4EA" stroke-width="1.2" stroke-linecap="round"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false"><rect x="2" y="3" width="20" height="18" rx="2" fill="#107C41"/><rect x="2" y="3" width="6.5" height="18" fill="#0E6A38"/><path d="M6.5 9 L8.5 12 L6.5 15 M10.5 9 L8.5 12 L10.5 15" stroke="#FFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M11.5 8h7M11.5 11h7M11.5 14h7M11.5 17h5" stroke="#E6F4EA" stroke-width="1.2" stroke-linecap="round"/></svg>
             """
 
             other_details += (
                 f' <a href="{export_url}" '
-                f'style="margin-left:12px; display:inline-flex; align-items:center; justify-content:center; '
-                f'width:34px; height:34px; border:1px solid #1D6F42; background:#1D6F42; color:#fff; '
-                f'border-radius:6px; text-decoration:none;" '
+                f'style="margin-left:12px; display:inline-flex; align-items:center; text-decoration:none;" '
                 f'title="Exporter Excel" aria-label="Exporter Excel">'
                 f'{excel_svg}'
                 f'</a>'
@@ -354,7 +348,8 @@ class MedecinFrontAPI(APIView):
             page = request.GET.get("page", 1)
             medecins = paginator.get_page(page)
 
-            serializer = MedecinSerializer(medecins, many=True)
+            serializer = MedecinSerializer(medecins, many=True, context={"request": request})
+
 
             return Response(
                 self.pagination_response(
@@ -362,7 +357,8 @@ class MedecinFrontAPI(APIView):
                 ),
                 status=200,
             )
-        serializer = MedecinSerializer(medecins, many=True)
+        serializer = MedecinSerializer(medecins, many=True, context={"request": request})
+
         medecins = Medecin.objects.all()
         return Response(
                 self.pagination_response(
@@ -429,7 +425,8 @@ class MedecinFrontAPI(APIView):
     #         page = request.GET.get("page", 1)
     #         medecins = paginator.get_page(page)
 
-    #         serializer = MedecinSerializer(medecins, many=True)
+    #         serializer = MedecinSerializer(medecins, many=True, context={"request": request})
+
 
     #         return Response(
     #             self.pagination_response(

@@ -249,20 +249,38 @@ def get_medecinsss(request):
             all_user_ids.update(uset)
 
         under_map = {}
+        role_map = {}
+
         if all_user_ids:
             users = (
                 User.objects.filter(id__in=all_user_ids)
                 .select_related("userprofile")
                 .prefetch_related("userprofile__usersunder")
             )
+
             for u in users:
+                # role
+                try:
+                    role_map[u.id] = (u.userprofile.rolee or "").strip()
+                except Exception:
+                    role_map[u.id] = ""
+
+                # underusers
                 try:
                     under_map[u.id] = set(u.userprofile.usersunder.values_list("id", flat=True))
                 except Exception:
                     under_map[u.id] = set()
 
         def _is_valid_duo_pair(u1_id, u2_id):
-            return (u2_id in under_map.get(u1_id, set())) or (u1_id in under_map.get(u2_id, set()))
+            # u1 supervises u2 => u1 must REALLY be a Superviseur
+            if u2_id in under_map.get(u1_id, set()):
+                return role_map.get(u1_id) == "Superviseur"
+
+            # u2 supervises u1 => u2 must REALLY be a Superviseur
+            if u1_id in under_map.get(u2_id, set()):
+                return role_map.get(u2_id) == "Superviseur"
+
+            return False
 
         duo_medecin_ids = set()
 

@@ -591,9 +591,10 @@ from datetime import date
 import xlsxwriter
 
 from django.db.models import Count
-from django.db.models.functions import TruncMonth
+from django.db.models.functions import TruncMonth, TruncDate
 from rapports.models import Visite
 from medecins.get_medecins import get_medecinsss
+from django.contrib.auth.models import User
 
 class HomeMedecinExportExcel(APIView):
     authentication_classes = [authentication.SessionAuthentication]
@@ -793,8 +794,13 @@ class HomeMedecinExportExcel(APIView):
             "valign": "vcenter",
         })
 
-        # ✅ Added "pdf visites" column
-        headers = ["délégué", "nom", "wilaya", "commune", "specialite", "telephone", "adresse", "visites", "pdf visites"]
+        visited = (request.GET.get("visites") or "").strip()
+
+        if visited == "3": # Duo
+             headers = ["Superviseur", "Underuser", "Nom", "Wilaya", "Commune", "Specialité", "Telephone", "Adresse", "Visites", "PDF Visites"]
+        else:
+             headers = ["Délégué", "Nom", "Wilaya", "Commune", "Specialité", "Telephone", "Adresse", "Visites", "PDF Visites"]
+        
         last_col = len(headers) - 1
 
         ws.merge_range(0, 0, 0, last_col, f"Export Médecins — {today:%Y-%m-%d}", title_fmt)
@@ -815,6 +821,63 @@ class HomeMedecinExportExcel(APIView):
 
         table_start_row = filters_end_row + 2
         data_start_row = table_start_row + 1
+
+        # --- PRE-COMPUTE DUO INFO IF NEEDED ---
+        duo_map = {} # medecin_id -> (super_name, under_name)
+        is_duo_mode = (visited == "3")
+
+        if is_duo_mode and medecin_ids:
+            # Optimization: fetch all visits for these medecins in the period
+            d_visites_filters = dict(visite_filters)
+            d_visites_filters.pop("rapport__user__username__icontains", None)
+            
+            # We need the hierarchy to identify super/under
+            # Fetch all user profiles to build a quick lookup
+            # This might be heavy if many users, but typically < 1000 users.
+            all_profiles = User.objects.select_related('userprofile').prefetch_related('userprofile__usersunder').all()
+            user_hierarchy = {} # id -> set(under_ids)
+            user_names = {} # id -> full name
+            for u in all_profiles:
+                try:
+                    user_hierarchy[u.id] = set(u.userprofile.usersunder.values_list('id', flat=True))
+                except:
+                    user_hierarchy[u.id] = set()
+                user_names[u.id] = f"{u.first_name} {u.last_name}".strip() or u.username
+
+            # Fetch relevant visits
+            # We need visits that contributed to the "Duo" status
+            # Only visits from the filtered period (if any)
+            d_qs = Visite.objects.filter(
+                medecin_id__in=medecin_ids, 
+                **d_visites_filters
+            ).annotate(day=TruncDate("rapport__added")).values("medecin_id", "day", "rapport__user_id")
+
+            # Group by medecin -> day -> users
+            from collections import defaultdict
+            med_day_users = defaultdict(lambda: defaultdict(set))
+            for row in d_qs:
+                 med_day_users[row['medecin_id']][row['day']].add(row['rapport__user_id'])
+            
+            for mid, days_map in med_day_users.items():
+                found_pair = None
+                for day, uids in days_map.items():
+                    if len(uids) == 2:
+                        u1, u2 = list(uids)
+                        # Check hierarchy
+                        # Case 1: u1 is super of u2
+                        if u2 in user_hierarchy.get(u1, set()):
+                            found_pair = (user_names.get(u1), user_names.get(u2)) # Super, Under
+                            break
+                        # Case 2: u2 is super of u1
+                        elif u1 in user_hierarchy.get(u2, set()):
+                            found_pair = (user_names.get(u2), user_names.get(u1)) # Super, Under
+                            break
+                        
+                if found_pair:
+                    duo_map[mid] = found_pair
+                else:
+                    # Fallback if logic strictness varies or data inconsistency
+                    duo_map[mid] = ("?", "?")
 
         row = data_start_row
         for m in base_qs:
@@ -848,27 +911,50 @@ class HomeMedecinExportExcel(APIView):
             ytd = int(ytd_by_med.get(m.id, 0) or 0)
             visites_val = (months_str + ("\n" if months_str else "")) + f"{ytd} cette année"
 
-            ws.write(row, 0, delegues, wrap_top_border)
-            ws.write(row, 1, nom_val, wrap_top_border)
-            ws.write(row, 2, wilaya, wrap_top_border)
-            ws.write(row, 3, commune, wrap_top_border)
-            ws.write(row, 4, spec_val, wrap_top_border)
-            ws.write(row, 5, tel, wrap_top_border)
-            ws.write(row, 6, adr, wrap_top_border)
-            ws.write(row, 7, visites_val, wrap_top_border)
+            if is_duo_mode:
+                super_val, under_val = duo_map.get(m.id, ("-", "-"))
+                ws.write(row, 0, super_val, wrap_top_border)
+                ws.write(row, 1, under_val, wrap_top_border)
+                ws.write(row, 2, nom_val, wrap_top_border)
+                ws.write(row, 3, wilaya, wrap_top_border)
+                ws.write(row, 4, commune, wrap_top_border)
+                ws.write(row, 5, spec_val, wrap_top_border)
+                ws.write(row, 6, tel, wrap_top_border)
+                ws.write(row, 7, adr, wrap_top_border)
+                ws.write(row, 8, visites_val, wrap_top_border)
+                
+                # PDF Link
+                pdf_params = {
+                    "priority": request.GET.get("priority", "") or "",
+                    "mindate": request.GET.get("mindate", "") or "",
+                    "maxdate": request.GET.get("maxdate", "") or "",
+                    "produit": request.GET.get("produit", "") or "",
+                    "stock": request.GET.get("stock", "") or "",
+                }
+                pdf_url = request.build_absolute_uri(f"/medecins/visites/PDF/{m.id}/") + "?" + urlencode(pdf_params)
+                ws.write_url(row, 9, pdf_url, link_fmt, string="Ouvrir")
 
-            # ✅ Exact PDF link like your real example:
-            # https://app.liliumpharma.com/medecins/visites/PDF/<id>/?priority=&mindate=...&maxdate=&produit=&stock=
-            pdf_params = {
-                "priority": request.GET.get("priority", "") or "",
-                "mindate": request.GET.get("mindate", "") or "",
-                "maxdate": request.GET.get("maxdate", "") or "",
-                "produit": request.GET.get("produit", "") or "",
-                "stock": request.GET.get("stock", "") or "",
-            }
-            pdf_url = request.build_absolute_uri(f"/medecins/visites/PDF/{m.id}/") + "?" + urlencode(pdf_params)
+            else:
+                ws.write(row, 0, delegues, wrap_top_border)
+                ws.write(row, 1, nom_val, wrap_top_border)
+                ws.write(row, 2, wilaya, wrap_top_border)
+                ws.write(row, 3, commune, wrap_top_border)
+                ws.write(row, 4, spec_val, wrap_top_border)
+                ws.write(row, 5, tel, wrap_top_border)
+                ws.write(row, 6, adr, wrap_top_border)
+                ws.write(row, 7, visites_val, wrap_top_border)
 
-            ws.write_url(row, 8, pdf_url, link_fmt, string="Ouvrir")
+                # PDF Link
+                # https://app.liliumpharma.com/medecins/visites/PDF/<id>/?priority=&mindate=...&maxdate=&produit=&stock=
+                pdf_params = {
+                    "priority": request.GET.get("priority", "") or "",
+                    "mindate": request.GET.get("mindate", "") or "",
+                    "maxdate": request.GET.get("maxdate", "") or "",
+                    "produit": request.GET.get("produit", "") or "",
+                    "stock": request.GET.get("stock", "") or "",
+                }
+                pdf_url = request.build_absolute_uri(f"/medecins/visites/PDF/{m.id}/") + "?" + urlencode(pdf_params)
+                ws.write_url(row, 8, pdf_url, link_fmt, string="Ouvrir")
 
             row += 1
 
@@ -889,16 +975,28 @@ class HomeMedecinExportExcel(APIView):
                 ws.write(table_start_row, c, h, header_fallback_fmt)
 
         ws.freeze_panes(data_start_row, 0)
-
-        ws.set_column(0, 0, 42)
-        ws.set_column(1, 1, 40)
-        ws.set_column(2, 2, 20)
-        ws.set_column(3, 3, 22)
-        ws.set_column(4, 4, 22)
-        ws.set_column(5, 5, 18)
-        ws.set_column(6, 6, 40)
-        ws.set_column(7, 7, 42)
-        ws.set_column(8, 8, 14)  # ✅ pdf visites
+        
+        if is_duo_mode:
+            ws.set_column(0, 0, 30) # Super
+            ws.set_column(1, 1, 30) # Under
+            ws.set_column(2, 2, 40) # Nom
+            ws.set_column(3, 3, 20)
+            ws.set_column(4, 4, 22)
+            ws.set_column(5, 5, 22)
+            ws.set_column(6, 6, 18)
+            ws.set_column(7, 7, 40)
+            ws.set_column(8, 8, 42)
+            ws.set_column(9, 9, 14) 
+        else:
+            ws.set_column(0, 0, 42)
+            ws.set_column(1, 1, 40)
+            ws.set_column(2, 2, 20)
+            ws.set_column(3, 3, 22)
+            ws.set_column(4, 4, 22)
+            ws.set_column(5, 5, 18)
+            ws.set_column(6, 6, 40)
+            ws.set_column(7, 7, 42)
+            ws.set_column(8, 8, 14)  # ✅ pdf visites
 
         ws.set_row(0, 28)
         ws.set_zoom(110)

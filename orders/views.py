@@ -292,6 +292,31 @@ class addorder(TemplateView):
 
         return Medecin.objects.filter(specialite="Grossiste", wilaya__in=sectors)
 
+    @staticmethod
+    def _safe_upload_name(original_name: str) -> str:
+        """
+        Make uploaded filenames filesystem-safe (ASCII only) to avoid UnicodeEncodeError
+        on servers running under ASCII locales.
+        Example: "capture_décran.png" -> "capture_decran_a1b2c3d4.png"
+        """
+        import os
+        import uuid
+        import unicodedata
+        from django.utils.text import get_valid_filename
+
+        base, ext = os.path.splitext(original_name or "")
+
+        # Remove accents (é -> e), drop non-ascii
+        base = unicodedata.normalize("NFKD", base).encode("ascii", "ignore").decode("ascii")
+
+        # Django-safe filename + small hardening
+        base = get_valid_filename(base).replace(" ", "_").strip("._")
+        if not base:
+            base = "file"
+
+        ext = (ext or "").lower()
+        return f"{base}_{uuid.uuid4().hex[:8]}{ext}"
+
     def get(self, request):
         user_id = request.session.get("user_id")
         if user_id is None:
@@ -448,6 +473,11 @@ class addorder(TemplateView):
         # --- Create the Order + its OrderItems ---
         observations = request.POST.get("observations")
         image = request.FILES.get("image")
+
+        # ✅ FIX: sanitize upload filename to prevent UnicodeEncodeError (é, à, …)
+        if image and getattr(image, "name", None):
+            image.name = self._safe_upload_name(image.name)
+
         us = User.objects.get(id=user_id)
 
         order = Order.objects.create(
@@ -465,7 +495,6 @@ class addorder(TemplateView):
 
         m = "Bon de Commande ajouter avec succes"
         return render(request, "orders/ord.html", {"m": m})
-
 
 
 class OrderAPI(APIView):

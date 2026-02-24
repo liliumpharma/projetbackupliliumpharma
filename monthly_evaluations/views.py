@@ -103,6 +103,7 @@ class MonthlyEvaluationFront(APIView):
                     return render(request, "monthly_evaluations/index copy.html")
                 if request.user.userprofile.speciality_rolee in ["Commercial"]:
                     return render(request, "monthly_evaluations/index_commercial.html")
+        return render(request, "monthly_evaluations/index copy.html")
 
     def post(self, request):
         data = request.data.copy()
@@ -367,8 +368,10 @@ class MEPDF(APIView):
     # authentication_classes = (TokenAuthentication, SessionAuthentication,)
     # permission_classes = (IsAuthenticated,)
     def get(self, request, id):
-
-        monthly_evaluation = Monthly_Evaluation.objects.get(id=id)
+        try:
+            monthly_evaluation = Monthly_Evaluation.objects.get(id=id)
+        except:
+            monthly_evaluation = Commercial_Monthly_Evaluation.objects.get(id=id)
         user = monthly_evaluation.user
         month = monthly_evaluation.added.month
         year = monthly_evaluation.added.year

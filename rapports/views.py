@@ -799,6 +799,7 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                 )
             # Count plans and calculate total similarity percentage
             plan_count = rapports.count()
+            valid_plan_count = 0
             total_similarity_percentage = 0
             if int(commercial_input) == 1000000:
                 profile = UserProfile.objects.get(user=request.user)
@@ -838,6 +839,9 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
     
             for plan in planss:
                 clients_list = plan.clients.all()
+                if clients_list.count() == 0:
+                    continue  # Ignore plans without clients
+                valid_plan_count += 1
                 #clients_list = plan.clients.exclude(
                 #    specialite__in=specialites_a_exclure
                 #)
@@ -863,16 +867,13 @@ class RapportPDF(LoginRequiredMixin, TemplateView):
                 #client_list_count = clients_list.count() or 1
                 #similarity_percentage = (matching_doctors * 100) / client_list_count
                 #total_similarity_percentage += similarity_percentage
-                if plan.plantask_set.exists():
-                    total_similarity_percentage += 100
-                else:
-                    client_list_count = clients_list.count() or 1
-                    #similarity_percentage = (matching_doctors / client_list_count) * 100
-                    similarity_percentage = round((matching_doctors / client_list_count) * 100, 2)
-                    total_similarity_percentage += similarity_percentage
+                
+                client_list_count = clients_list.count() or 1
+                similarity_percentage = round((matching_doctors / client_list_count) * 100, 2)
+                total_similarity_percentage += similarity_percentage
                 # Calculate average similarity percentage
             average_similarity_percentage = (
-                total_similarity_percentage / plan_count if plan_count else 0
+                total_similarity_percentage / valid_plan_count if valid_plan_count > 0 else 0
             )
 
             if not average_similarity_percentage:

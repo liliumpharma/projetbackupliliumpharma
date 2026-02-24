@@ -710,8 +710,13 @@ class VisitesMedecin(LoginRequiredMixin, TemplateView):
             filters["produits__id"] = request.GET.get("produit")
             produit += f'{Produit.objects.get(id=request.GET.get("produit")).nom} '
 
+        # On NE filtre PAS par utilisateur ici, car on veut voir les "autres" participants du duo
+        # user_id = request.GET.get("user")
+        # if user_id and user_id != "0":
+        #    filters["rapport__user__id"] = user_id
+
         # 1) queryset des visites + annotation "day" (date) + prefetch usersunder pour détecter duo
-        visites = (
+        visites_qs = (
             Visite.objects
             .filter(medecin__id=id, **filters)
             .select_related("rapport", "rapport__user", "rapport__user__userprofile")
@@ -723,7 +728,32 @@ class VisitesMedecin(LoginRequiredMixin, TemplateView):
 
         # 2) grouper par jour + status (normal / duo / suspect)
         visites_groups = []
-        for day, items_iter in groupby(visites, key=attrgetter("day")):
+        
+        # [NEW] Robust alias support:
+        # Use 'user' if present, otherwise try 'commercial' (app's native param)
+        user_id_filter = request.GET.get("user") or request.GET.get("commercial")
+        
+        # [NEW] Support Username or ID
+        if user_id_filter and not user_id_filter.isdigit():
+            # It's a username (e.g. "John Doe - 123" or just "John Doe")
+            clean_username = user_id_filter.split(" - ")[0].strip()
+            try:
+                found_user = User.objects.get(username=clean_username)
+                user_id_filter = str(found_user.id)
+            except User.DoesNotExist:
+                user_id_filter = None 
+
+        # [NEW] Robust alias support:
+        # Use 'visit_type' if present, otherwise try 'visites' (app's native param)
+        visit_type_filter = request.GET.get("visit_type") or request.GET.get("visites")
+
+        # [NEW] Map numeric types from frontend
+        if visit_type_filter == "3":
+            visit_type_filter = "duo"
+        elif visit_type_filter == "4":
+            visit_type_filter = "suspect"
+
+        for day, items_iter in groupby(visites_qs, key=attrgetter("day")):
             items = list(items_iter)
             count = len(items)
 
@@ -737,28 +767,75 @@ class VisitesMedecin(LoginRequiredMixin, TemplateView):
                 under1 = set(u1.userprofile.usersunder.values_list("id", flat=True))
                 under2 = set(u2.userprofile.usersunder.values_list("id", flat=True))
 
-                # duo valide si relation usersunder dans un sens ou dans l'autre
-                if (u2.id in under1) or (u1.id in under2):
+                role1 = (u1.userprofile.rolee or "").strip()
+                role2 = (u2.userprofile.rolee or "").strip()
+
+                # duo valide si relation usersunder ET le superviseur a le role "Superviseur"
+                is_duo = False
+
+                if (u2.id in under1) and (role1 == "Superviseur"):
+                    is_duo = True
+                elif (u1.id in under2) and (role2 == "Superviseur"):
+                    is_duo = True
+
+                if is_duo:
                     status = "duo"
                 else:
                     status = "suspect"
+            
+            # --- LOGIQUE DE FILTRAGE ---
+            
+            # 1. Filtre par TYPE
+            if visit_type_filter:
+                if visit_type_filter == "duo" and status != "duo":
+                    continue
+                if visit_type_filter == "suspect" and status != "suspect":
+                    continue
+                if visit_type_filter == "normal" and status != "normal":
+                    continue
+
+            # 2. Filtre par UTILISATEUR
+            # Si un user est sélectionné, on doit déterminer si on garde ce GROUPE
+            if user_id_filter and user_id_filter != "0":
+                user_matches_in_group = [v for v in items if str(v.rapport.user.id) == str(user_id_filter)]
+                
+                # Si l'utilisateur n'a fait aucune visite ce jour-là => on jette tout le groupe
+                if not user_matches_in_group:
+                    continue
+                
+                # Si c'est un groupe Duo ou Suspect, on veut garder TOUT le monde (pour voir avec qui il était)
+                if status == "duo" or status == "suspect":
+                    pass # On garde 'items' tel quel (tous les participants)
+                
+                # Si c'est un groupe Normal (visite simple ou plusieurs visites normales si < 2 mais bug de logique possible ici car count < 2 => normal)
+                # En "normal", si je filtre par user, je ne veux voir QUE ses visites à lui.
+                else: 
+                     items = user_matches_in_group
 
             visites_groups.append({
                 "day": day,
                 "items": items,
-                "count": count,
+                "count": count, # Note: count original du groupe pour la logique, ou len(items) filtré ?
+                                # Pour "normal", len(items) est mieux. Pour duo, len(items) est toujours count.
                 "status": status,
             })
+
+        # Si on a filtré par type de visite, "visites" (liste à plat) doit aussi correspondre
+        # On reconstruit la liste à plat à partir des groupes filtrés
+        visites_flat = []
+        for g in visites_groups:
+            visites_flat.extend(g["items"])
 
         return render(
             request,
             "medecins/visites.html",
             {
-                "visites": visites,  # tu peux le garder si tu en as besoin ailleurs
-                "visites_groups": visites_groups,  # <-- NOUVEAU pour le template
+                "visites": visites_flat, 
+                "visites_groups": visites_groups,
                 "medecin": Medecin.objects.get(id=id),
-                "nbr_visites": visites.count(),
+                "nbr_visites": len(visites_flat), # Compte mis à jour
                 "produit": produit,
+                "users": User.objects.all(), # Pour le filtre utilisateur
             },
         )
 
