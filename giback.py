@@ -4,6 +4,8 @@ from datetime import datetime
 # 📂 Dossier à sauvegarder
 SERVER_DIR = "/var/www/server"
 WORK_DIR = "/var/www/server"
+# 🔗 Repo GitHub (avec token)***REPLACED_TOKEN*** 
+GITHUB_REPO = "https://***REPLACED_TOKEN***@github.com/liliumpharma/projetbackupliliumpharma.git"
 
 # Aller dans le dossier
 os.chdir(WORK_DIR)
