@@ -838,6 +838,14 @@ class UserTargetMonthAdmin(admin.ModelAdmin):
     
     def New_B(self, obj):
         return self.get_quantity(obj, "New B")
+    def Prosta_Soft(self, obj):
+        return self.get_quantity(obj, "Prosta Soft")
+    
+    def Mamilis(self, obj):
+        return self.get_quantity(obj, "Mamilis")
+    
+    def Veno_Soft(self, obj):
+        return self.get_quantity(obj, "Veno Soft")
 
     def get_quantity(self, obj, product_name):
         query_set = UserTargetMonthProduct.objects.filter(
