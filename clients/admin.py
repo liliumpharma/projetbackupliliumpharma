@@ -359,7 +359,7 @@ class YearListFilter(admin.SimpleListFilter):
     parameter_name = "year"
 
     def lookups(self, request, model_admin):
-        return (("2024", "2024"),("2025", "2025"),)
+        return (("2024", "2024"),("2025", "2025"),("2026", "2026"),)
 
     def queryset(self, request, queryset):
         print("fatahfatahfatah")
@@ -371,6 +371,8 @@ class YearListFilter(admin.SimpleListFilter):
             return queryset.filter(date__year="2024")
         elif self.value() =="2025":
             return queryset.filter(date__year="2025")
+        elif self.value() =="2026":
+            return queryset.filter(date__year="2026")
         else:
             return queryset.none()
 
