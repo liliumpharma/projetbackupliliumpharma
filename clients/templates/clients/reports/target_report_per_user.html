@@ -141,8 +141,15 @@
                 </tr>
 
                 <tr style="background-color: #84c2f5">
-                    <td class="main_column">Bon_Com</td>
+                    <td class="main_column">BC Ph_Gros</td>
                     {% for t in data.total_unite_product %}
+                        <td><a href="{{ t.target_report_details_link }}" style="font-weight: bold" target="_blank">{{ t.total }}</a></td>
+                    {% endfor %}
+                </tr>
+
+                <tr style="background-color: pink">
+                    <td class="main_column">BC Gros_Super</td>
+                    {% for t in data.total_unite_product_gros_super %}
                         <td><a href="{{ t.target_report_details_link }}" style="font-weight: bold" target="_blank">{{ t.total }}</a></td>
                     {% endfor %}
                 </tr>
@@ -199,7 +206,20 @@
         </table>
 
 
-        <div style="display: flex; justify-content: flex-end; margin-top: 10px">
+        <div style="display: flex; justify-content: flex-end; margin-top: 10px; gap: 20px;">
+
+            <div class="achieve_percentage">
+                <div style="font-weight: bold;">
+                    <div style="color: limegreen; margin-bottom: 5px;">Total de la valeur des bons de commande</div>
+                    <div>Bon Ph_Gros</div>
+                    <div>Bon Gros_Super</div>
+                </div>
+                <div style="text-align: end;">
+                    <div style="margin-bottom: 5px;">&nbsp;</div>
+                    <div>{{ data.total_ph_gros_value }} Da</div>
+                    <div>{{ data.total_gros_super_value }} Da</div>
+                </div>
+            </div>
 
             <div class="achieve_percentage">
                 <div>

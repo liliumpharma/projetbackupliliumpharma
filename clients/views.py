@@ -1001,6 +1001,9 @@ def target_report_details_use(request):
     # Product
     if "product" in request_params:
         params["product_id"] = int(request_params.get("product"))
+        
+    if "gros_super" in request_params:
+        params["gros_super"] = request_params.get("gros_super") == "1"
 
     # Récupération données
     data = get_target_details_per_user_use(**params)

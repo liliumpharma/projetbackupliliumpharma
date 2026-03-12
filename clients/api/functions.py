@@ -101,7 +101,7 @@ def get_target_details_per_user(user_id=None, product_id=None, month=None, year=
 
 from django.shortcuts import render, redirect, reverse, get_object_or_404
 
-def get_target_details_per_user_use(user_id=None, product_id=None, months=None, years=None):
+def get_target_details_per_user_use(user_id=None, product_id=None, months=None, years=None, gros_super=False):
     
     data = {}
 
@@ -113,21 +113,39 @@ def get_target_details_per_user_use(user_id=None, product_id=None, months=None, 
         product = Produit.objects.get(id=product_id)
         data["product"] = product
 
-        
-        
         order_product_query_by_user = []
-        if user_profile.speciality_rolee == "Medico_commercial":
-            order_product_query_by_user = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
-        elif user_profile.speciality_rolee == "Commercial":
-            order_product_query_by_user = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
-        elif user_profile.speciality_rolee == "Superviseur_national" and user_profile.work_as_commercial == False:
-            order_product_query_by_user = Orders.objects.filter(user__in=user_profile.usersunder.all(), added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
-        elif user_profile.speciality_rolee == "Superviseur_national" and user_profile.work_as_commercial == True:
-            order_product_query_by_user = Orders.objects.filter(user__in=user_profile.usersunder.all(), added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
-        elif user_profile.speciality_rolee == "CountryManager":
-            us = User.objects.filter(userprofile__commune__wilaya__pays=user_profile.commune.wilaya.pays, userprofile__speciality_rolee__in = ["Commercial", "Medico_commercial"])
-            order_product_query_by_user = Orders.objects.filter(user__in=us, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
         
+        if user_profile.rolee == "CountryManager":
+            us = User.objects.filter(userprofile__commune__wilaya__pays=user_profile.commune.wilaya.pays, userprofile__speciality_rolee__in=["Commercial", "Medico_commercial"])
+            if gros_super:
+                order_product_query_by_user = Orders.objects.filter(user__in=us, added__month__in=months, added__year__in=years, super_gros__isnull=False, from_company=False) | Orders.objects.filter(user__in=us, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
+            else:
+                order_product_query_by_user = Orders.objects.filter(user__in=us, added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
+        
+        elif user_profile.rolee in ["Superviseur", "Superviseur_national"] and not getattr(user_profile, 'work_as_commercial', False):
+            users_under = user_profile.usersunder.all()
+            if gros_super:
+                order_product_query_by_user = Orders.objects.filter(user__in=users_under, added__month__in=months, added__year__in=years, super_gros__isnull=False, from_company=False) | Orders.objects.filter(user__in=users_under, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
+            else:
+                order_product_query_by_user = Orders.objects.filter(user__in=users_under, added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
+                
+        elif user_profile.speciality_rolee == "Medico_commercial":
+            if gros_super:
+                order_product_query_by_user = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, super_gros__isnull=False, from_company=False)
+            else:
+                order_product_query_by_user = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
+                
+        elif user_profile.speciality_rolee == "Commercial":
+            if gros_super:
+                order_product_query_by_user = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
+            else:
+                order_product_query_by_user = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
+                
+        elif user_profile.speciality_rolee == "Superviseur_national" and getattr(user_profile, 'work_as_commercial', False):
+            if gros_super:
+                order_product_query_by_user = Orders.objects.filter(user__in=user_profile.usersunder.all(), added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
+            else:
+                order_product_query_by_user = Orders.objects.filter(user__in=user_profile.usersunder.all(), added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
         
         if len(months) == 1:
             user_product = UserTargetMonthProduct.objects.get(usermonth__user=user_profile.user, product=product, usermonth__date__month__in=months, usermonth__date__year__in=years)
@@ -385,6 +403,7 @@ def get_target_per_user(user_id=None, months=None, years=None):
     total_targets = []
     total_achievements = []
     total_unite_product = []
+    total_unite_product_gros_super = []
 
     if user_id:
 
@@ -399,17 +418,23 @@ def get_target_per_user(user_id=None, months=None, years=None):
         if not years:
             years = OrderSource.objects.all().values_list('date__year').distinct()
         order_product_query_by_user = []
+        order_product_query_by_user_gros_super = []
         if user_profile.speciality_rolee == "Medico_commercial":
             order_product_query_by_user = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
+            order_product_query_by_user_gros_super = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, super_gros__isnull=False, from_company=False)
         elif user_profile.speciality_rolee == "Commercial":
-            order_product_query_by_user = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
+            order_product_query_by_user = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
+            order_product_query_by_user_gros_super = Orders.objects.filter(user=user_profile.user, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
         elif user_profile.speciality_rolee == "Superviseur_national" and user_profile.work_as_commercial == False:
             order_product_query_by_user = Orders.objects.filter(user__in=user_profile.usersunder.all(), added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
+            order_product_query_by_user_gros_super = Orders.objects.filter(user__in=user_profile.usersunder.all(), added__month__in=months, added__year__in=years, super_gros__isnull=False, from_company=False) | Orders.objects.filter(user__in=user_profile.usersunder.all(), added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
         elif user_profile.speciality_rolee == "Superviseur_national" and user_profile.work_as_commercial == True:
-            order_product_query_by_user = Orders.objects.filter(user__in=user_profile.usersunder.all(), added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
+            order_product_query_by_user = Orders.objects.filter(user__in=user_profile.usersunder.all(), added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
+            order_product_query_by_user_gros_super = Orders.objects.filter(user__in=user_profile.usersunder.all(), added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
         elif user_profile.speciality_rolee == "CountryManager":
             us = User.objects.filter(userprofile__commune__wilaya__pays=user_profile.commune.wilaya.pays)
-            order_product_query_by_user = Orders.objects.filter(user__in=us, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
+            order_product_query_by_user = Orders.objects.filter(user__in=us, added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
+            order_product_query_by_user_gros_super = Orders.objects.filter(user__in=us, added__month__in=months, added__year__in=years, super_gros__isnull=False, from_company=False) | Orders.objects.filter(user__in=us, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
 
         products = Produit.objects.all()
         user_target_month_products = UserTargetMonthProduct.objects.filter(usermonth__date__year__in=years, usermonth__date__month__in=months, usermonth__user=user_profile.user).values('product', 'product__nom').distinct()
@@ -431,6 +456,15 @@ def get_target_per_user(user_id=None, months=None, years=None):
             query_string += f'&product={product.id}'
             query_string += f'&user={user_id}'
             total_unite_product.append({"total": s, "target_report_details_link": f"{reverse('target_report_details_use')}?{query_string}"})
+            
+            # Compute BC Gros_Super quantities for Medico_commercial
+            s_gros_super = 0
+            if order_product_query_by_user_gros_super:
+                for ord_gs in order_product_query_by_user_gros_super:
+                    order_item_gs = OrderItem.objects.filter(order=ord_gs, produit=month_product['product'])
+                    for o_gs in order_item_gs:
+                        s_gros_super = s_gros_super + o_gs.qtt
+            total_unite_product_gros_super.append({"total": s_gros_super, "target_report_details_link": f"{reverse('target_report_details_use')}?{query_string}&gros_super=1"})
             
             # Appending Price
             prices.append(product.price)
@@ -579,6 +613,9 @@ def get_target_per_user(user_id=None, months=None, years=None):
         total_reached = round(sum([total for total in total_achievements if type(total) != str]), 2)
         percentage_reached = round(total_reached * 100 / total_target, 2) if total_target > 0 else 0
 
+        total_ph_gros_value = sum([item["total"] * price for item, price in zip(total_unite_product, prices)])
+        total_gros_super_value = sum([item["total"] * price for item, price in zip(total_unite_product_gros_super, prices)]) if total_unite_product_gros_super else 0
+
         comments = MonthComment.objects.filter(to_user__id=user_id)
         
         if months:
@@ -601,8 +638,12 @@ def get_target_per_user(user_id=None, months=None, years=None):
                 "total_target": thousand_separator(total_target),
                 "total_reached": thousand_separator(total_reached),
                 "percentage_reached": percentage_reached,
+                "total_ph_gros_value": thousand_separator(total_ph_gros_value),
+                "total_gros_super_value": thousand_separator(total_gros_super_value),
                 "test":0,
-                "total_unite_product":total_unite_product
+                "total_unite_product":total_unite_product,
+                "total_unite_product_gros_super":total_unite_product_gros_super,
+                "speciality_rolee": user_profile.speciality_rolee
                 }
 
         return data
@@ -657,10 +698,17 @@ def get_target_for_supervisor(user_id=None, include_user=False, months=None, yea
         total_targets = []
         total_achievements = []
         total_unite_product = []
+        total_unite_product_gros_super = []
+        order_product_query_by_user = []
+        order_product_query_by_user_gros_super = []
 
         if user_profile.speciality_rolee == "CountryManager":
             us = User.objects.filter(userprofile__commune__wilaya__pays=user_profile.commune.wilaya.pays,userprofile__speciality_rolee__in=["Commercial", "Medico_commercial"])
-            order_product_query_by_user = Orders.objects.filter(user__in=us, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
+            order_product_query_by_user = Orders.objects.filter(user__in=us, added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
+            order_product_query_by_user_gros_super = Orders.objects.filter(user__in=us, added__month__in=months, added__year__in=years, super_gros__isnull=False, from_company=False) | Orders.objects.filter(user__in=us, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
+        elif user.userprofile.rolee in ["Superviseur", "Superviseur_national"]:
+            order_product_query_by_user = Orders.objects.filter(user__in=users_under, added__month__in=months, added__year__in=years, super_gros__isnull=True, from_company=False)
+            order_product_query_by_user_gros_super = Orders.objects.filter(user__in=users_under, added__month__in=months, added__year__in=years, super_gros__isnull=False, from_company=False) | Orders.objects.filter(user__in=users_under, added__month__in=months, added__year__in=years, pharmacy__isnull=True, from_company=False)
         
         if not months:
             months = OrderSource.objects.all().values_list('date__month').distinct()
@@ -698,6 +746,14 @@ def get_target_for_supervisor(user_id=None, include_user=False, months=None, yea
             query_string += f'&user={user_id}'
             total_unite_product.append({"total": s, "target_report_details_link": f"{reverse('target_report_details_use')}?{query_string}"})
             
+            s_gros_super = 0
+            if order_product_query_by_user_gros_super:
+                for ord_gs in order_product_query_by_user_gros_super:
+                    order_item_gs = OrderItem.objects.filter(order=ord_gs, produit=user_target_month_product['product'])
+                    for o_gs in order_item_gs:
+                        s_gros_super = s_gros_super + o_gs.qtt
+            total_unite_product_gros_super.append({"total": s_gros_super, "target_report_details_link": f"{reverse('target_report_details_use')}?{query_string}&gros_super=1"})
+            
             query_string = f'user={user_id}&product={user_target_month_product["product__id"]}'
             for month in months:
                 query_string += f'&months={month}'
@@ -719,6 +775,8 @@ def get_target_for_supervisor(user_id=None, include_user=False, months=None, yea
         total_reached = round(sum([total for total in total_achievements if type(total) != str]), 2)
         percentage_reached = round(total_reached * 100 / total_target, 2) if total_target > 0 else 0
 
+        total_ph_gros_value = sum([item["total"] * price for item, price in zip(total_unite_product, prices)])
+        total_gros_super_value = sum([item["total"] * price for item, price in zip(total_unite_product_gros_super, prices)]) if total_unite_product_gros_super else 0
 
         comments = MonthComment.objects.filter(to_user__id=user_id)
         
@@ -742,7 +800,11 @@ def get_target_for_supervisor(user_id=None, include_user=False, months=None, yea
                 "total_target": thousand_separator(total_target),
                 "total_reached": thousand_separator(total_reached),
                 "percentage_reached": percentage_reached,
-                "total_unite_product":total_unite_product
+                "total_ph_gros_value": thousand_separator(total_ph_gros_value),
+                "total_gros_super_value": thousand_separator(total_gros_super_value),
+                "total_unite_product":total_unite_product,
+                "total_unite_product_gros_super":total_unite_product_gros_super,
+                "speciality_rolee": user_profile.speciality_rolee
                 }
 
         return data
