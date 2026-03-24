@@ -715,7 +715,7 @@ class OrdersExportExcel(APIView):
 
         orders_qs = (
             self.get_filtered_orders(request, filters, q)
-            .select_related("user", "touser", "pharmacy", "gros", "super_gros")
+            .select_related("user", "user__userprofile", "touser", "pharmacy", "gros", "super_gros")
             .distinct()
         )
         orders_all: List[Order] = list(orders_qs)
@@ -801,7 +801,30 @@ class OrdersExportExcel(APIView):
         for o in dash_orders:
             oid = o.id
             t = order_type.get(oid)
-            uname = _xlsx_safe(o.user.username)
+            
+            # --- UPDATE: Bulletproof specialty_rolee logic ---
+            try:
+                # Get profile safely, handling if it doesn't exist
+                up = getattr(o.user, "userprofile", None)
+                spec_val = ""
+                if up:
+                    spec_val = getattr(up, "specialty_rolee", getattr(up, "speciality_rolee", ""))
+                
+                # If still empty, check the user object directly just in case
+                if not spec_val:
+                    spec_val = getattr(o.user, "specialty_rolee", getattr(o.user, "speciality_rolee", ""))
+                    
+                spec = str(spec_val).strip() if spec_val else ""
+                
+                # Clean up if Django returns a string literal of "None"
+                if spec in ["None", "null", "-"]: 
+                    spec = ""
+                    
+            except Exception:
+                spec = ""
+                
+            raw_uname = _xlsx_safe(o.user.username)
+            uname = f"{spec} : {raw_uname}" if spec else raw_uname
 
             d = o.added.date()
             if d < eff_min or d > eff_max:
@@ -887,8 +910,14 @@ class OrdersExportExcel(APIView):
         fmt_center = wb.add_format({"border": 1, "align": "center", "valign": "vcenter"})
         fmt_center_k = wb.add_format({"border": 1, "align": "center", "valign": "vcenter", "bold": True, "bg_color": LIGHT})
 
-        fmt_dash_title = wb.add_format({"bold": True, "font_size": 16, "bg_color": DARK, "font_color": "white"})
-        fmt_dash_band = wb.add_format({"bold": True, "font_size": 12, "bg_color": MED, "font_color": "white"})
+        # Colors for the roles
+        fmt_role_blue = wb.add_format({"font_color": "#0D47A1", "bold": True})    # Commercial
+        fmt_role_green = wb.add_format({"font_color": "#2E7D32", "bold": True})   # Medico_commercial
+        fmt_role_red = wb.add_format({"font_color": "#B71C1C", "bold": True})     # Superviseur
+        # Color for the username (standard black)
+        fmt_user_black = wb.add_format({"font_color": "#000000", "bold": False}) 
+        # The base cell format (to keep the border)
+        fmt_cell = wb.add_format({"border": 1})
 
         # =========================
         # Sheet: Sommaire
@@ -1075,7 +1104,31 @@ class OrdersExportExcel(APIView):
                 return start_row, start_row + 1, 1
 
             for j, (u, v) in enumerate(items, start=1):
-                ws_data.write_string(start_row + j, 0, _xlsx_safe(u), fmt_cell)
+                # --- UPDATE: Color Logic for Roles ---
+                # Inside your loop where you process users
+                if " : " in u:
+                    role, name = u.split(" : ", 1)
+    
+                    # 1. Pick the color based on the role
+                    if role == "Commercial":
+                        role_fmt = fmt_role_blue
+                    elif role == "Medico_commercial":
+                        role_fmt = fmt_role_green
+                    elif "Superviseur" in role:
+                        role_fmt = fmt_role_red
+                    else:
+                        role_fmt = fmt_user_black # Default if role is unknown
+
+                    # 2. Write the rich string: [Format1, String1, Format2, String2, BaseCellFormat]
+                    ws_data.write_rich_string(
+                        start_row + j, 0, 
+                        role_fmt, role,          # Role in its specific color
+                        fmt_user_black, f" : {name}", # Username in black
+                        fmt_cell                 # Applies the border to the whole cell
+                    )
+                else:
+                    ws_data.write_string(start_row + j, 0, _xlsx_safe(u), fmt_cell)
+                
                 ws_data.write_number(start_row + j, 1, float(v), fmt_money if money else fmt_num)
 
             last_row = start_row + len(items)
@@ -1141,9 +1194,7 @@ class OrdersExportExcel(APIView):
         # =========================
         # Dashboards (two sheets)
         # =========================
-        def _style_chart(chart):
-            chart.set_chartarea({"fill": {"color": LIGHT}, "border": {"color": MED}})
-            chart.set_plotarea({"fill": {"color": "white"}})
+        
 
         def _x_axis_opts(n_points: int) -> Dict:
             interval = max(1, n_points // 12) if n_points > 14 else 1
@@ -1159,27 +1210,20 @@ class OrdersExportExcel(APIView):
         BAR_GAP = 50
 
         DL_NUM = {
-            "value": True,
-            "position": "outside_end",
-            "num_format": "0",
-            "font": {"color": "#263238", "bold": True},
-            "fill": {"color": "#FFFFFF"},
-            "border": {"color": "#B0BEC5"},
+            "value": True, "position": "outside_end", "num_format": "0",
+            "font": {"color": "#263238", "bold": True}, "fill": {"color": "#FFFFFF"}, "border": {"color": "#B0BEC5"},
         }
         DL_MONEY = {
-            "value": True,
-            "position": "outside_end",
-            "num_format": "#,##0.00",
-            "font": {"color": "#263238", "bold": True},
-            "fill": {"color": "#FFFFFF"},
-            "border": {"color": "#B0BEC5"},
+            "value": True, "position": "outside_end", "num_format": "#,##0.00",
+            "font": {"color": "#263238", "bold": True}, "fill": {"color": "#FFFFFF"}, "border": {"color": "#B0BEC5"},
         }
 
-        def _make_bar(title_ar: str, row0: int, last: int, fill_color: str, dl):
+        def _make_bar(title_ar: str, row0: int, last: int, fill_color: str, dl, t_dark, t_light, t_med, title_color):
             ch = wb.add_chart({"type": "bar"})
             ch.set_style(10)
-            _style_chart(ch)
-            ch.set_title({"name": title_ar})
+            ch.set_chartarea({"fill": {"color": t_light}, "border": {"color": t_med}})
+            ch.set_plotarea({"fill": {"color": "white"}})
+            ch.set_title({"name": title_ar, "name_font": {"color": title_color}})
             ch.set_legend({"none": True})
             ch.set_x_axis({"major_gridlines": {"visible": False}})
             ch.set_y_axis({"num_font": {"size": 9}})
@@ -1189,54 +1233,64 @@ class OrdersExportExcel(APIView):
                 "gap": BAR_GAP,
                 "data_labels": dl,
                 "fill": {"color": fill_color},
-                "border": {"color": DARK},
+                "border": {"color": t_dark},
             })
             return ch
 
-        def _make_time_series_chart(title_ar: str, col_values: int, y_name: str, color: str, money: bool):
-            if short_range_bars:
-                ch = wb.add_chart({"type": "column"})
-                ch.set_style(10)
-                _style_chart(ch)
-                ch.set_title({"name": title_ar})
-                ch.set_legend({"none": True})
-                ch.set_y_axis({"name": y_name, "major_gridlines": {"visible": True, "line": {"color": GRID}}})
-                ch.set_x_axis(_x_axis_opts(len(timeline_labels)))
-                ch.add_series({
-                    "categories": ["Donnees Graphiques", row_time0 + 1, 0, time_last, 0],
-                    "values":     ["Donnees Graphiques", row_time0 + 1, col_values, time_last, col_values],
-                    "gap": 75,
-                    "fill": {"color": color},
-                    "border": {"color": DARK},
-                    "data_labels": {"value": True, "num_format": "#,##0.00" if money else "0"},
-                })
-                ch.set_size({"width": 1240, "height": 300})
-                return ch
-
-            ch = wb.add_chart({"type": "line"})
+        def _make_time_series_chart(title_ar: str, col_values: int, y_name: str, fill_color: str, money: bool, t_dark, t_light, t_med, title_color):
+            ch = wb.add_chart({"type": "column" if short_range_bars else "line"})
             ch.set_style(10)
-            _style_chart(ch)
-            ch.set_title({"name": title_ar})
+            ch.set_chartarea({"fill": {"color": t_light}, "border": {"color": t_med}})
+            ch.set_plotarea({"fill": {"color": "white"}})
+            ch.set_title({"name": title_ar, "name_font": {"color": title_color}})
             ch.set_legend({"none": True})
             ch.set_y_axis({"name": y_name, "major_gridlines": {"visible": True, "line": {"color": GRID}}})
             ch.set_x_axis(_x_axis_opts(len(timeline_labels)))
-            ch.add_series({
+            
+            series_opts = {
                 "categories": ["Donnees Graphiques", row_time0 + 1, 0, time_last, 0],
                 "values":     ["Donnees Graphiques", row_time0 + 1, col_values, time_last, col_values],
-                "line": {"color": color, "width": 2.25},
-            })
+            }
+            if short_range_bars:
+                series_opts.update({
+                    "gap": 75,
+                    "fill": {"color": fill_color},
+                    "border": {"color": t_dark},
+                    "data_labels": {"value": True, "num_format": "#,##0.00" if money else "0"},
+                })
+            else:
+                series_opts.update({
+                    "line": {"color": fill_color, "width": 2.25},
+                })
+                
+            ch.add_series(series_opts)
             ch.set_size({"width": 1240, "height": 300})
             return ch
 
         def _render_dashboard(sheet_name: str, channel: str):
+            # Excel Charts enforce ONE color per title. 
+            # Defaulting to standard dark gray/black to keep the base title intact per request.
+            title_color = "#263238" 
+
+            if channel == "MED":
+                t_dark, t_med, t_light = DARK, MED, LIGHT  # Green Theme
+                suffix = "من فارماسي لجروسيست"
+            else:
+                t_dark, t_med, t_light = "#0D47A1", "#1976D2", "#E3F2FD" # Blue Theme
+                suffix = "من جروسيست لسوبر جرو"
+
+            # Re-applying theme colors for the Sheet Titles (Cells support rich colors)
+            dash_title_fmt = wb.add_format({"bold": True, "font_size": 16, "bg_color": t_dark, "font_color": "white"})
+            dash_band_fmt = wb.add_format({"bold": True, "font_size": 12, "bg_color": t_med, "font_color": "white"})
+
             ws = wb.add_worksheet(sheet_name)
             ws.hide_gridlines(2)
-            ws.set_tab_color(DARK)
+            ws.set_tab_color(t_dark)
             ws.set_column(0, 0, 2)
             ws.set_column(1, 1, 42)
             ws.set_column(2, 12, 18)
 
-            ws.merge_range(0, 0, 0, 12, sheet_name, fmt_dash_title)
+            ws.merge_range(0, 0, 0, 12, sheet_name, dash_title_fmt)
 
             if channel == "MED":
                 col_nb, col_qty, col_val = 1, 2, 3
@@ -1251,64 +1305,81 @@ class OrdersExportExcel(APIView):
 
             if comparison_mode:
                 r0 = 2
-                ws.merge_range(r0, 0, r0, 12, "مقارنة | مقارنة", fmt_dash_band)
+                ws.merge_range(r0, 0, r0, 12, "مقارنة | مقارنة", dash_band_fmt)
                 r0 += 1
 
-                title1 = _rtl_title("ترتيب المندوبين حسب عدد الطلبيات")
-                ch1 = _make_bar(title1, b_orders[0], b_orders[1], MED, DL_NUM)
+                # Determine the hardcoded title based on the channel
+                if channel == "MED":
+                    t1_text = "ترتيب المندوبين حسب عدد الطلبيات من فارماسي لجروسيست"
+                    t2_text = "ترتيب المندوبين حسب مجموع القطع في الطلبيات من فارماسي لجروسيست"
+                    t3_text = "ترتيب المندوبين حسب مجموع قيمة القطع في الطلبيات من فارماسي لجروسيست"
+                else:
+                    t1_text = "ترتيب المندوبين حسب عدد الطلبيات من جروسيست لسوبر جرو"
+                    t2_text = "ترتيب المندوبين حسب مجموع القطع في الطلبيات من جروسيست لسوبر جرو"
+                    t3_text = "ترتيب المندوبين حسب مجموع قيمة القطع في الطلبيات من جروسيست لسوبر جرو"
+
+                title1 = _rtl_title(t1_text)
+                ch1 = _make_bar(title1, b_orders[0], b_orders[1], t_med, DL_NUM, t_dark, t_light, t_med, title_color)
                 ch1.set_size({"width": 1240, "height": _bar_height_for(b_orders[2])})
                 ws.insert_chart(xl_rowcol_to_cell(r0, 0), ch1, {"x_offset": 18, "y_offset": 12})
                 r0 += _rows_for_px(_bar_height_for(b_orders[2])) + 1
 
-                title2 = _rtl_title("ترتيب المندوبين حسب مجموع القطع في الطلبيات")
-                ch2 = _make_bar(title2, b_qty[0], b_qty[1], DARK, DL_NUM)
+                title2 = _rtl_title(t2_text)
+                ch2 = _make_bar(title2, b_qty[0], b_qty[1], t_dark, DL_NUM, t_dark, t_light, t_med, title_color)
                 ch2.set_size({"width": 1240, "height": _bar_height_for(b_qty[2])})
                 ws.insert_chart(xl_rowcol_to_cell(r0, 0), ch2, {"x_offset": 18, "y_offset": 12})
                 r0 += _rows_for_px(_bar_height_for(b_qty[2])) + 1
 
-                title3 = _rtl_title("ترتيب المندوبين حسب مجموع قيمة القطع في الطلبيات")
-                ch3 = _make_bar(title3, b_val[0], b_val[1], MED, DL_MONEY)
+                title3 = _rtl_title(t3_text)
+                ch3 = _make_bar(title3, b_val[0], b_val[1], t_med, DL_MONEY, t_dark, t_light, t_med, title_color)
                 ch3.set_size({"width": 1240, "height": _bar_height_for(b_val[2])})
                 ws.insert_chart(xl_rowcol_to_cell(r0, 0), ch3, {"x_offset": 18, "y_offset": 12})
-
             else:
                 r0 = 2
-                ws.merge_range(r0, 0, r0, 12, f"تطور | {grain_fr}", fmt_dash_band)
+                ws.merge_range(r0, 0, r0, 12, f"تطور | {grain_fr}", dash_band_fmt)
                 r0 += 1
 
-                t1 = _rtl_title("تطور عدد الطلبيات")
-                ch1 = _make_time_series_chart(t1, col_nb, "عدد", MED, money=False)
+                if channel == "MED":
+                    t1_text = "تطور عدد الطلبيات من فارماسي لجروسيست"
+                    t2_text = "تطور مجموع القطع من فارماسي لجروسيست"
+                    t3_text = "تطور مجموع قيمة القطع من فارماسي لجروسيست"
+                    t4_text = "أفضل 3 صيدليات حسب عدد الطلبيات من فارماسي لجروسيست"
+                else:
+                    t1_text = "تطور عدد الطلبيات من جروسيست لسوبر جرو"
+                    t2_text = "تطور مجموع القطع من جروسيست لسوبر جرو"
+                    t3_text = "تطور مجموع قيمة القطع من جروسيست لسوبر جرو"
+                    t4_text = "أفضل 3 موزعين حسب عدد الطلبيات من جروسيست لسوبر جرو"
+
+                t1 = _rtl_title(t1_text)
+                ch1 = _make_time_series_chart(t1, col_nb, "عدد", t_med, False, t_dark, t_light, t_med, title_color)
                 ws.insert_chart(xl_rowcol_to_cell(r0, 0), ch1, {"x_offset": 18, "y_offset": 10})
                 r0 += _rows_for_px(300) + 1
 
-                t2 = _rtl_title("تطور مجموع القطع")
-                ch2 = _make_time_series_chart(t2, col_qty, "كمية", DARK, money=False)
+                t2 = _rtl_title(t2_text)
+                ch2 = _make_time_series_chart(t2, col_qty, "كمية", t_dark, False, t_dark, t_light, t_med, title_color)
                 ws.insert_chart(xl_rowcol_to_cell(r0, 0), ch2, {"x_offset": 18, "y_offset": 10})
                 r0 += _rows_for_px(300) + 1
 
-                t3 = _rtl_title("تطور مجموع قيمة القطع")
-                ch3 = _make_time_series_chart(t3, col_val, "قيمة (DA)", MED, money=True)
+                t3 = _rtl_title(t3_text)
+                ch3 = _make_time_series_chart(t3, col_val, "قيمة (DA)", t_med, True, t_dark, t_light, t_med, title_color)
                 ch3.set_size({"width": 1240, "height": 310})
                 ws.insert_chart(xl_rowcol_to_cell(r0, 0), ch3, {"x_offset": 18, "y_offset": 12})
                 r0 += _rows_for_px(310) + 1
 
-                # ---- NEW: top 3 clients chart (single-user only) ----
                 if single_user_mode:
-                    ws.merge_range(r0, 0, r0, 12, "أفضل 3 عملاء", fmt_dash_band)
+                    ws.merge_range(r0, 0, r0, 12, "أفضل 3 عملاء", dash_band_fmt)
                     r0 += 1
-
+                    title4 = _rtl_title(t4_text)
+                    
                     if channel == "MED" and med_top_ph_block is not None:
-                        title4 = _rtl_title("أفضل 3 صيدليات حسب عدد الطلبيات")
-                        ch4 = _make_bar(title4, med_top_ph_block[0], med_top_ph_block[1], DARK, DL_NUM)
+                        ch4 = _make_bar(title4, med_top_ph_block[0], med_top_ph_block[1], t_dark, DL_NUM, t_dark, t_light, t_med, title_color)
                         ch4.set_size({"width": 1240, "height": _bar_height_for(med_top_ph_block[2])})
                         ws.insert_chart(xl_rowcol_to_cell(r0, 0), ch4, {"x_offset": 18, "y_offset": 12})
 
                     if channel == "COM" and com_top_gros_block is not None:
-                        title4 = _rtl_title("أفضل 3 موزعين حسب عدد الطلبيات")
-                        ch4 = _make_bar(title4, com_top_gros_block[0], com_top_gros_block[1], DARK, DL_NUM)
+                        ch4 = _make_bar(title4, com_top_gros_block[0], com_top_gros_block[1], t_dark, DL_NUM, t_dark, t_light, t_med, title_color)
                         ch4.set_size({"width": 1240, "height": _bar_height_for(com_top_gros_block[2])})
                         ws.insert_chart(xl_rowcol_to_cell(r0, 0), ch4, {"x_offset": 18, "y_offset": 12})
-
             return ws
 
         _render_dashboard("Dashboard Medical", "MED")
@@ -1327,3 +1398,6 @@ class OrdersExportExcel(APIView):
         )
         resp["Content-Disposition"] = f'attachment; filename="{filename}"'
         return resp
+
+
+       

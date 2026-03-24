@@ -3,9 +3,15 @@
 
 {% block object-tools-items %}
 
+<style>
+    [href*="date__year=2022"],
+    [href*="date__year=2023"],
+    [href*="date__year=2024"] {
+        display: none !important;
+    }
+</style>
 
 <div style="display: flex; gap: 10px; justify-content: end;">
-
     <div class="d-flex justify-content-end">
         <button class="btn btn-primary" id="download_excel" disabled>
             Exporter sous Excel
@@ -17,14 +23,11 @@
         if (window.location.href.includes('date__year'))
             element.disabled = false
 
-
         let url = new URL(window.location.href);
         let date__year = url.searchParams.get("date__year");
         element.addEventListener('click', () => open(`{% url 'user_target_months_excel' %}?date__year=${date__year}`, '_blank'))
-
     </script>
 
     {{ block.super }}
 </div>
-
 {% endblock %}

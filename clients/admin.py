@@ -1,24 +1,19 @@
+from datetime import date, datetime
+from dateutil.relativedelta import relativedelta
+
 from django.contrib import admin
-from django.utils.safestring import mark_safe
-from django.db.models import Sum
 from django.contrib.admin import SimpleListFilter
-from django.db.models import Q
-from .models import *
-from accounts.models import UserProfile
-from produits.models import Produit
-
-from liliumpharm.utils import month_number_to_french_name
-
-
-from django.contrib import admin
-from django.utils.translation import gettext_lazy as _
-from .models import MonthComment
-
-from django.contrib import admin
+from django.db.models import Sum, Q, Prefetch
 from django.urls import reverse
 from django.utils.html import format_html
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
+from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
+
+from .models import *
+from .models import MonthComment
+from accounts.models import UserProfile
+from produits.models import Produit
+from liliumpharm.utils import month_number_to_french_name
 
 
 class MonthListFilter(admin.SimpleListFilter):
@@ -77,9 +72,7 @@ class ClientAdmin(admin.ModelAdmin):
     ]
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if (
-            db_field.name == "related_client"
-        ):  # Yeah Tertaggg - COME ON BABY TEL3ABLI BIH SHUIY...
+        if db_field.name == "related_client": 
             kwargs["queryset"] = Client.objects.filter(supergro=True)
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
@@ -105,7 +98,7 @@ class UserFilter(SimpleListFilter):
     parameter_name = "user"
 
     def lookups(self, request, model_admin):
-        users = set([userprofile for userprofile in UserProfile.objects.all()])
+        users = set([userprofile for userprofile in UserProfile.objects.select_related('user').all()])
         return [(user.user.id, user.user.username) for user in users]
 
     def queryset(self, request, queryset):
@@ -161,7 +154,6 @@ class ClientFilter(SimpleListFilter):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderProductTabular]
-    # list_display = ["source", "wilaya", "client","user", *[p.nom.replace(" ", "_") for p in Produit.objects.all()]]
     list_display = ["source", "wilaya", "client", "user"]
     list_filter = [
         SourceFilter,
@@ -170,35 +162,30 @@ class OrderAdmin(admin.ModelAdmin):
         ("products", custom_titled_filter("---------- Tout les Produits ----------")),
         UserFilter,
     ]
-    # list_filter= [("source", custom_titled_filter('---------- Tout les Super Grossistes ----------')),
-    #                 ("client", custom_titled_filter('---------- Tout les Grossistes ----------')),
-    #                 ("client__wilaya", custom_titled_filter('---------- Tout les Wilaya ----------')),
-    #                 ("products", custom_titled_filter('---------- Tout les Produits ----------')), UserFilter]
     search_fields = [
         "client__name",
     ]
-    date_hierarchy = "source__date"  # Hmmm You Touch My TKHALALAAAAAA TARTAG
-
+    date_hierarchy = "source__date"
     ordering = [
         "client",
     ]
-
     change_list_template = "admin/order/change_list.html"
 
+    # Optimization: Prefetch to prevent N+1 Queries
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('client__wilaya', 'source').prefetch_related(
+            'orderproduct_set__produit'
+        )
+
     def changelist_view(self, request, extra_context=None):
-
         params = request.GET
-
-        # Building Filter as String
         string_filter_request = ""
-
         query = Q()
 
         if "source__id__exact" in params:
             query &= Q(source__id__exact=params.get("source__id__exact"))
-            string_filter_request += (
-                f'&source__id__exact={params.get("source__id__exact")}'
-            )
+            string_filter_request += f'&source__id__exact={params.get("source__id__exact")}'
 
         if "source__date__month" in params:
             query &= Q(source__date__month=params.get("source__date__month"))
@@ -210,36 +197,24 @@ class OrderAdmin(admin.ModelAdmin):
 
         if "client__id__exact" in params:
             query &= Q(client__id__exact=params.get("client__id__exact"))
-            string_filter_request += (
-                f'&client__id__exact={params.get("client__id__exact")}'
-            )
+            string_filter_request += f'&client__id__exact={params.get("client__id__exact")}'
 
         if "client__wilaya__id__exact" in params:
-            query &= Q(
-                client__wilaya__id__exact=params.get("client__wilaya__id__exact")
-            )
-            string_filter_request += (
-                f'&client_wilaya_id={params.get("client__wilaya__id__exact")}'
-            )
+            query &= Q(client__wilaya__id__exact=params.get("client__wilaya__id__exact"))
+            string_filter_request += f'&client_wilaya_id={params.get("client__wilaya__id__exact")}'
 
         if "products__id__exact" in params:
             query &= Q(products__id__exact=params.get("products__id__exact"))
-            string_filter_request += (
-                f'&products__id__exact={params.get("products__id__exact")}'
-            )
+            string_filter_request += f'&products__id__exact={params.get("products__id__exact")}'
 
         if "user" in params:
             query &= Q(client__wilaya__userprofile__user__id=params.get("user"))
             string_filter_request += f'&user={params.get("user")}'
 
         total_products = []
-
         orders = Order.objects.filter(query)
-
         order_products = OrderProduct.objects.filter(order__in=orders)
-
         products = Produit.objects.all()
-
         global_total = 0
 
         for product in products:
@@ -257,7 +232,6 @@ class OrderAdmin(admin.ModelAdmin):
             "global_total": global_total,
             "params": string_filter_request[1:],
         }
-
         return super(OrderAdmin, self).changelist_view(request, extra_context=context)
 
     @admin.display(ordering="client__wilaya__nom")
@@ -268,81 +242,32 @@ class OrderAdmin(admin.ModelAdmin):
         query_set = UserProfile.objects.filter(sectors=obj.client.wilaya)
         return mark_safe("".join(f"{user.user.username}</br>" for user in query_set))
 
-    def FF(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="FF")
-        return query_set.first().qtt if query_set.exists() else 0
+    # Helper function for fetching quantities purely from prefetched memory
+    def get_product_quantity(self, obj, product_name):
+        for op in obj.orderproduct_set.all():
+            if op.produit.nom == product_name:
+                return op.qtt
+        return 0
 
-    def FM(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="FM")
-        return query_set.first().qtt if query_set.exists() else 0
-
-    def IRON(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="IRON")
-        return query_set.first().qtt if query_set.exists() else 0
-
-    def YES_CAL(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="YES CAL")
-        return query_set.first().qtt if query_set.exists() else 0
-
-    def YES_VIT(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="YES VIT")
-        return query_set.first().qtt if query_set.exists() else 0
-
-    def ADVAGEN(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="ADVAGEN")
-        return query_set.first().qtt if query_set.exists() else 0
-
-    def DHEA_75mg(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="DHEA 75mg")
-        return query_set.first().qtt if query_set.exists() else 0
-
-    def HAIRVOL(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="HAIRVOL")
-        return query_set.first().qtt if query_set.exists() else 0
-
-    def SUB12(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="SUB12")
-        return query_set.first().qtt if query_set.exists() else 0
-
-    def MENOLIB(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="MENOLIB")
-        return query_set.first().qtt if query_set.exists() else 0
-
-    def THYROLIB(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="THYROLIB")
-        return query_set.first().qtt if query_set.exists() else 0
-
-    def HEPALIB(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="HEPALIB")
-        return query_set.first().qtt if query_set.exists() else 0
-
-    def SOPK_FREE(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="SOPK FREE")
-        return query_set.first().qtt if query_set.exists() else 0
-
-    def URISOFT(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="URISOFT")
-        return query_set.first().qtt if query_set.exists() else 0
-
-    def URICITRIL(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="URICITRIL")
-        return query_set.first().qtt if query_set.exists() else 0
-
-    def BESTFER(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="BESTFER")
-        return query_set.first().qtt if query_set.exists() else 0
-
-    def DIGEST_PLUS(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="DIGEST PLUS")
-        return query_set.first().qtt if query_set.exists() else 0
-
-    def ANAFLAM(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="ANAFLAM")
-        return query_set.first().qtt if query_set.exists() else 0
-    
-    def New_B(self, obj):
-        query_set = OrderProduct.objects.filter(order=obj, produit__nom="New B")
-        return query_set.first().qtt if query_set.exists() else 0
+    def FF(self, obj): return self.get_product_quantity(obj, "FF")
+    def FM(self, obj): return self.get_product_quantity(obj, "FM")
+    def IRON(self, obj): return self.get_product_quantity(obj, "IRON")
+    def YES_CAL(self, obj): return self.get_product_quantity(obj, "YES CAL")
+    def YES_VIT(self, obj): return self.get_product_quantity(obj, "YES VIT")
+    def ADVAGEN(self, obj): return self.get_product_quantity(obj, "ADVAGEN")
+    def DHEA_75mg(self, obj): return self.get_product_quantity(obj, "DHEA 75mg")
+    def HAIRVOL(self, obj): return self.get_product_quantity(obj, "HAIRVOL")
+    def SUB12(self, obj): return self.get_product_quantity(obj, "SUB12")
+    def MENOLIB(self, obj): return self.get_product_quantity(obj, "MENOLIB")
+    def THYROLIB(self, obj): return self.get_product_quantity(obj, "THYROLIB")
+    def HEPALIB(self, obj): return self.get_product_quantity(obj, "HEPALIB")
+    def SOPK_FREE(self, obj): return self.get_product_quantity(obj, "SOPK FREE")
+    def URISOFT(self, obj): return self.get_product_quantity(obj, "URISOFT")
+    def URICITRIL(self, obj): return self.get_product_quantity(obj, "URICITRIL")
+    def BESTFER(self, obj): return self.get_product_quantity(obj, "BESTFER")
+    def DIGEST_PLUS(self, obj): return self.get_product_quantity(obj, "DIGEST PLUS")
+    def ANAFLAM(self, obj): return self.get_product_quantity(obj, "ANAFLAM")
+    def New_B(self, obj): return self.get_product_quantity(obj, "New B")
 
 
 class OrderSourceProductInLine(admin.TabularInline):
@@ -351,231 +276,95 @@ class OrderSourceProductInLine(admin.TabularInline):
     verbose_name_plural = "Produits en Stock"
 
 
-from datetime import datetime
-
-
 class YearListFilter(admin.SimpleListFilter):
     title = "Year"
     parameter_name = "year"
 
     def lookups(self, request, model_admin):
-        return (("2024", "2024"),("2025", "2025"),("2026", "2026"),)
+        return (("2025", "2025"), ("2026", "2026"))
 
     def queryset(self, request, queryset):
-        print("fatahfatahfatah")
-        params = request.GET.dict()
-        print(params)
-        print(queryset)
-        #if self.value() == "2024" or self.value() is None:
-        if self.value() == "2024":
-            return queryset.filter(date__year="2024")
-        elif self.value() =="2025":
+        if self.value() == "2025":
             return queryset.filter(date__year="2025")
-        elif self.value() =="2026":
+        elif self.value() == "2026":
             return queryset.filter(date__year="2026")
-        else:
-            return queryset.none()
+        return queryset
 
 
 @admin.register(OrderSource)
 class OrderSourceAdmin(admin.ModelAdmin):
-    inlines = [
-        OrderSourceProductInLine,
-    ]
-    # list_display = ["Supergrossiste", "attachement",  "Month", "number_of_orders", *[p.nom.replace(" ", "_") for p in Produit.objects.all()], "Reports"]
+    inlines = [OrderSourceProductInLine]
     list_display = ["Supergrossiste", "attachement", "Month", "Reports"]
     list_filter = [
-        (
-            "source",
-            custom_titled_filter(
-                "------------------ Tout les Super Grossistes ------------------"
-            ),
-        ),
+        ("source", custom_titled_filter("------------------ Tout les Super Grossistes ------------------")),
         YearListFilter,
     ]
     date_hierarchy = "date"
 
+    # Optimization: Prefetch related data
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('source').prefetch_related(
+            'ordersourceproduct_set__produit',
+            'order_set__orderproduct_set__produit'
+        )
+
     def attachement(self, obj):
         if obj.attachement_file:
-            return mark_safe(
-                f'<a class="btn btn-outline-success" target="_blank" href="/media/{obj.attachement_file}">Attachement</a>'
-            )
-
-        return mark_safe(
-            f'<div class="btn btn-outline-danger disabled">No Attachement</a>'
-        )
+            return mark_safe(f'<a class="btn btn-outline-success" target="_blank" href="/media/{obj.attachement_file}">Attachement</a>')
+        return mark_safe(f'<div class="btn btn-outline-danger disabled">No Attachement</a>')
 
     attachement.short_description = "Attachment"
 
-    # def number_of_orders(self, obj):
-    #     return mark_safe(f'<div class="text-bold text-center text-danger">{obj.order_set.all().count()}</a>')
-
-    def Supergrossiste(self, obj):
-        return obj.source.name
-
-    def Month(self, obj):
-        return f"{obj.date.month}/{obj.date.year}"
+    def Supergrossiste(self, obj): return obj.source.name
+    def Month(self, obj): return f"{obj.date.month}/{obj.date.year}"
 
     def Reports(self, obj):
-        month = obj.date.month
-        year = obj.date.year
-        return mark_safe(
-            f'<a class="btn btn-outline-success float-right" target="_blank" href="/clients/print-sales/{obj.id}">Rapport des Ventes</a>'
-        )
+        return mark_safe(f'<a class="btn btn-outline-success float-right" target="_blank" href="/clients/print-sales/{obj.id}">Rapport des Ventes</a>')
 
-    @staticmethod
-    def get_product_quantity(product_name, source_order):
-        query_set = (
-            OrderProduct.objects.filter(
-                produit__nom=product_name, order__in=source_order.order_set.all()
-            )
-            .values("produit__nom")
-            .annotate(total=Sum("qtt"))
+    # Replaced inefficient DB calls with memory calculation using prefetched objects
+    def get_product_quantity(self, obj, product_name):
+        total_ordered = sum(
+            op.qtt 
+            for order in obj.order_set.all() 
+            for op in order.orderproduct_set.all() 
+            if op.produit.nom == product_name
         )
-        return query_set[0].get("total") if query_set else 0
+        
+        stock_qtt = 0
+        for osp in obj.ordersourceproduct_set.all():
+            if osp.produit.nom == product_name:
+                stock_qtt = osp.qtt
+                break
+                
+        return mark_safe(f'<span>{total_ordered} | </span> <span style="color: orange">{stock_qtt}</span>')
 
-    def FF(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="FF")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("FF", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def FM(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="FM")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("FM", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def IRON(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="IRON")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("IRON", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def YES_CAL(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="YES CAL")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("YES CAL", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def YES_VIT(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="YES VIT")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span">{OrderSourceAdmin.get_product_quantity("YES VIT", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def ADVAGEN(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="ADVAGEN")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("ADVAGEN", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def DHEA_75mg(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="DHEA 75mg")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("DHEA 75mg", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def HAIRVOL(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="HAIRVOL")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("HAIRVOL", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def SUB12(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="SUB12")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("SUB12", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def MENOLIB(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="MENOLIB")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("MENOLIB", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def THYROLIB(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="THYROLIB")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("THYROLIB", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def HEPALIB(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="HEPALIB")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("HEPALIB", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def SOPK_FREE(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="SOPK FREE")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("SOPK FREE", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def URISOFT(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="URISOFT")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("URISOFT", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def URICITRIL(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="URICITRIL")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("URICITRIL", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def BESTFER(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="BESTFER")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("BESTFER", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def DIGEST_PLUS(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="DIGEST PLUS")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("DIGEST PLUS", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-
-    def ANAFLAM(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="ANAFLAM")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("ANAFLAM", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
-    def New_B(self, obj):
-        product = obj.ordersourceproduct_set.filter(produit__nom="New B")
-        quantity = product.first().qtt if product.exists() else 0
-        return mark_safe(
-            f'<span>{OrderSourceAdmin.get_product_quantity("New B", obj)} | </span> <span style="color: orange">{quantity}</span>'
-        )
+    def FF(self, obj): return self.get_product_quantity(obj, "FF")
+    def FM(self, obj): return self.get_product_quantity(obj, "FM")
+    def IRON(self, obj): return self.get_product_quantity(obj, "IRON")
+    def YES_CAL(self, obj): return self.get_product_quantity(obj, "YES CAL")
+    def YES_VIT(self, obj): return self.get_product_quantity(obj, "YES VIT")
+    def ADVAGEN(self, obj): return self.get_product_quantity(obj, "ADVAGEN")
+    def DHEA_75mg(self, obj): return self.get_product_quantity(obj, "DHEA 75mg")
+    def HAIRVOL(self, obj): return self.get_product_quantity(obj, "HAIRVOL")
+    def SUB12(self, obj): return self.get_product_quantity(obj, "SUB12")
+    def MENOLIB(self, obj): return self.get_product_quantity(obj, "MENOLIB")
+    def THYROLIB(self, obj): return self.get_product_quantity(obj, "THYROLIB")
+    def HEPALIB(self, obj): return self.get_product_quantity(obj, "HEPALIB")
+    def SOPK_FREE(self, obj): return self.get_product_quantity(obj, "SOPK FREE")
+    def URISOFT(self, obj): return self.get_product_quantity(obj, "URISOFT")
+    def URICITRIL(self, obj): return self.get_product_quantity(obj, "URICITRIL")
+    def BESTFER(self, obj): return self.get_product_quantity(obj, "BESTFER")
+    def DIGEST_PLUS(self, obj): return self.get_product_quantity(obj, "DIGEST PLUS")
+    def ANAFLAM(self, obj): return self.get_product_quantity(obj, "ANAFLAM")
+    def New_B(self, obj): return self.get_product_quantity(obj, "New B")
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "source":
             kwargs["queryset"] = Client.objects.filter(supergro=True)
-        return super(OrderSourceAdmin, self).formfield_for_foreignkey(
-            db_field, request, **kwargs
-        )
+        return super(OrderSourceAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_form(self, request, obj=None, **kwargs):
-        from datetime import date
-
         form = super(OrderSourceAdmin, self).get_form(request, obj, **kwargs)
         try:
             form.base_fields["date"].initial = date.today()
@@ -590,20 +379,16 @@ class UserTargetMonthProductInLine(admin.TabularInline):
 
 @admin.action(description="Clôner pour le Prochain Mois")
 def duplicate_for_next_month(modeladmin, request, queryset):
-    from datetime import datetime
-    from dateutil.relativedelta import relativedelta
-
     for data in queryset:
         date_after_month = data.date + relativedelta(months=1)
-        user_target_month = UserTargetMonth.objects.filter(
-            date=date_after_month, user=data.user
+        
+        # Robust Fix: Use get_or_create to prevent duplicating duplicate entries
+        user_target_month, created = UserTargetMonth.objects.get_or_create(
+            date=date_after_month, 
+            user=data.user
         )
 
-        if not user_target_month.exists():
-            user_target_month = UserTargetMonth.objects.create(
-                date=date_after_month, user=data.user
-            )
-
+        if created:
             for utm in data.usertargetmonthproduct_set.all():
                 UserTargetMonthProduct.objects.create(
                     usermonth=user_target_month,
@@ -612,149 +397,25 @@ def duplicate_for_next_month(modeladmin, request, queryset):
                 )
 
 
-# @admin.register(UserTargetMonth)
-# class UserTargetMonthAdmin(admin.ModelAdmin):
-#     inlines = (UserTargetMonthProductInLine,)
-#     list_filter = ["user", "user__userprofile__family"]
-#     list_display = [
-#         "user",
-#         "get_family",
-#         "mois",
-#         *[p.nom.replace(" ", "_") for p in Produit.objects.all()],
-#     ]
-#     date_hierarchy = "date"
-#     actions = [duplicate_for_next_month]
-
-#     def get_family(self, obj):
-#         return obj.user.userprofile.family
-
-#     get_family.short_description = "Family"
-
-#     def mois(self, obj):
-#         return f"{month_number_to_french_name(obj.date.month)} {obj.date.year}"
-
-#     def FF(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="FF"
-#         )
-#         return query_set.first().quantity if query_set.exists() else "0"
-
-#     def FM(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="FM"
-#         )
-#         return query_set.first().quantity if query_set.exists() else "0"
-
-#     def IRON(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="IRON"
-#         )
-#         return query_set.first().quantity if query_set.exists() else "0"
-
-#     def YES_CAL(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="YES CAL"
-#         )
-#         return query_set.first().quantity if query_set.exists() else "0"
-
-#     def YES_VIT(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="YES VIT"
-#         )
-#         return query_set.first().quantity if query_set.exists() else "0"
-
-#     def ADVAGEN(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="ADVAGEN"
-#         )
-#         return query_set.first().quantity if query_set.exists() else "0"
-
-#     def DHEA_75mg(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="DHEA 75mg"
-#         )
-#         return query_set.first().quantity if query_set.exists() else "0"
-
-#     def HAIRVOL(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="HAIRVOL"
-#         )
-#         return query_set.first().quantity if query_set.exists() else "0"
-
-#     def SUB12(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="SUB12"
-#         )
-#         return query_set.first().quantity if query_set.exists() else "0"
-
-#     def MENOLIB(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="MENOLIB"
-#         )
-#         return query_set.first().quantity if query_set.exists() else "0"
-
-#     def THYROLIB(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="THYROLIB"
-#         )
-#         return query_set.first().quantity if query_set.exists() else "0"
-
-#     def HEPALIB(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="HEPALIB"
-#         )
-#         return query_set.first().quantity if query_set.exists() else 0
-
-#     def SOPK_FREE(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="SOPK FREE"
-#         )
-#         return query_set.first().quantity if query_set.exists() else 0
-
-#     def URISOFT(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="URISOFT"
-#         )
-#         return query_set.first().quantity if query_set.exists() else 0
-
-#     def URICITRIL(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="URICITRIL"
-#         )
-#         return query_set.first().quantity if query_set.exists() else 0
-
-#     def BESTFER(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="BESTFER"
-#         )
-#         return query_set.first().quantity if query_set.exists() else 0
-
-#     def DIGEST_PLUS(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="DIGEST PLUS"
-#         )
-#         return query_set.first().quantity if query_set.exists() else 0
-
-#     def ANAFLAM(self, obj):
-#         query_set = UserTargetMonthProduct.objects.filter(
-#             usermonth=obj, product__nom="ANAFLAM"
-#         )
-#         return query_set.first().quantity if query_set.exists() else 0
-
-
 @admin.register(UserTargetMonth)
 class UserTargetMonthAdmin(admin.ModelAdmin):
     inlines = (UserTargetMonthProductInLine,)
     list_filter = ["user", "user__userprofile__family"]
     list_display = [
         "user",
-        # "get_family",
         "mois",
         *[p.nom.replace(" ", "_") for p in Produit.objects.all()],
         "print_button",
     ]
     date_hierarchy = "date"
     actions = [duplicate_for_next_month]
+
+    # Optimization: prefetch_related here solves your slow loading and N+1 issue
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related('user__userprofile').prefetch_related(
+            'usertargetmonthproduct_set__product'
+        )
 
     def get_family(self, obj):
         return obj.user.userprofile.family
@@ -767,93 +428,51 @@ class UserTargetMonthAdmin(admin.ModelAdmin):
         return "-"
 
     def print_button(self, obj):
-        # Créer une URL pour imprimer les cibles du mois
-        url = reverse(
-            "usertargetmonth_print", args=[obj.id]
-        )  # Utilisez le nom d'URL que vous avez défini
-        return format_html(
-            '<a class="button" href="{}" target="_blank">Imprimer</a>', url
-        )
+        url = reverse("usertargetmonth_print", args=[obj.id])
+        return format_html('<a class="button" href="{}" target="_blank">Imprimer</a>', url)
 
     print_button.short_description = "Impression"
 
-    # Méthodes pour afficher les quantités des produits
-    def FF(self, obj):
-        return self.get_quantity(obj, "FF")
-    
-    def SLEEP_ALAISE(self, obj):
-        return self.get_quantity(obj, "SLEEP_ALAISE")
-    
-    def GOLD_MAG(self, obj):
-        return self.get_quantity(obj, "GOLD_MAG")
-
-    def FM(self, obj):
-        return self.get_quantity(obj, "FM")
-
-    def IRON(self, obj):
-        return self.get_quantity(obj, "IRON")
-
-    def YES_CAL(self, obj):
-        return self.get_quantity(obj, "YES CAL")
-
-    def YES_VIT(self, obj):
-        return self.get_quantity(obj, "YES VIT")
-
-    def ADVAGEN(self, obj):
-        return self.get_quantity(obj, "ADVAGEN")
-
-    def DHEA_75mg(self, obj):
-        return self.get_quantity(obj, "DHEA 75mg")
-
-    def HAIRVOL(self, obj):
-        return self.get_quantity(obj, "HAIRVOL")
-
-    def SUB12(self, obj):
-        return self.get_quantity(obj, "SUB12")
-
-    def MENOLIB(self, obj):
-        return self.get_quantity(obj, "MENOLIB")
-
-    def THYROLIB(self, obj):
-        return self.get_quantity(obj, "THYROLIB")
-
-    def HEPALIB(self, obj):
-        return self.get_quantity(obj, "HEPALIB")
-
-    def SOPK_FREE(self, obj):
-        return self.get_quantity(obj, "SOPK FREE")
-
-    def URISOFT(self, obj):
-        return self.get_quantity(obj, "URISOFT")
-
-    def URICITRIL(self, obj):
-        return self.get_quantity(obj, "URICITRIL")
-
-    def BESTFER(self, obj):
-        return self.get_quantity(obj, "BESTFER")
-
-    def DIGEST_PLUS(self, obj):
-        return self.get_quantity(obj, "DIGEST PLUS")
-
-    def ANAFLAM(self, obj):
-        return self.get_quantity(obj, "ANAFLAM")
-    
-    def New_B(self, obj):
-        return self.get_quantity(obj, "New B")
-    def Prosta_Soft(self, obj):
-        return self.get_quantity(obj, "Prosta Soft")
-    
-    def Mamilis(self, obj):
-        return self.get_quantity(obj, "Mamilis")
-    
-    def Veno_Soft(self, obj):
-        return self.get_quantity(obj, "Veno Soft")
+    # This method is now 100% memory based and will correctly match the inline View perfectly
 
     def get_quantity(self, obj, product_name):
-        query_set = UserTargetMonthProduct.objects.filter(
-            usermonth=obj, product__nom=product_name
-        )
-        return query_set.first().quantity if query_set.exists() else "0"
+        # Normalize the requested name (lowercase, replace underscores with spaces)
+        search_target = product_name.lower().replace("_", " ")
+        
+        for utm_product in obj.usertargetmonthproduct_set.all():
+            # Normalize the database name the exact same way
+            db_product_name = utm_product.product.nom.lower().replace("_", " ")
+            
+            # Now "GOLD_MAG" and "Gold mag" will perfectly match as "gold mag"
+            if db_product_name == search_target:
+                return utm_product.quantity
+                
+        return "0"
+
+    def FF(self, obj): return self.get_quantity(obj, "FF")
+    def SLEEP_ALAISE(self, obj): return self.get_quantity(obj, "SLEEP_ALAISE")
+    def GOLD_MAG(self, obj): return self.get_quantity(obj, "GOLD_MAG")
+    def FM(self, obj): return self.get_quantity(obj, "FM")
+    def IRON(self, obj): return self.get_quantity(obj, "IRON")
+    def YES_CAL(self, obj): return self.get_quantity(obj, "YES CAL")
+    def YES_VIT(self, obj): return self.get_quantity(obj, "YES VIT")
+    def ADVAGEN(self, obj): return self.get_quantity(obj, "ADVAGEN")
+    def DHEA_75mg(self, obj): return self.get_quantity(obj, "DHEA 75mg")
+    def HAIRVOL(self, obj): return self.get_quantity(obj, "HAIRVOL")
+    def SUB12(self, obj): return self.get_quantity(obj, "SUB12")
+    def MENOLIB(self, obj): return self.get_quantity(obj, "MENOLIB")
+    def THYROLIB(self, obj): return self.get_quantity(obj, "THYROLIB")
+    def HEPALIB(self, obj): return self.get_quantity(obj, "HEPALIB")
+    def SOPK_FREE(self, obj): return self.get_quantity(obj, "SOPK FREE")
+    def URISOFT(self, obj): return self.get_quantity(obj, "URISOFT")
+    def URICITRIL(self, obj): return self.get_quantity(obj, "URICITRIL")
+    def BESTFER(self, obj): return self.get_quantity(obj, "BESTFER")
+    def DIGEST_PLUS(self, obj): return self.get_quantity(obj, "DIGEST PLUS")
+    def ANAFLAM(self, obj): return self.get_quantity(obj, "ANAFLAM")
+    def New_B(self, obj): return self.get_quantity(obj, "New B")
+    def Prosta_Soft(self, obj): return self.get_quantity(obj, "Prosta Soft")
+    def Mamilis(self, obj): return self.get_quantity(obj, "Mamilis")
+    def Veno_Soft(self, obj): return self.get_quantity(obj, "Veno Soft")
 
 
 @admin.register(Source)
@@ -863,4 +482,3 @@ class SourceAdmin(admin.ModelAdmin):
         "excel_file",
         "date",
     ]
-
