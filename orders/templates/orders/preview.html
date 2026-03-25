@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <title>Statistique Bon de commande</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; padding: 20px; color: #333; margin: 0; }
+        .card { 
+            background: white; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+            box-sizing: border-box; 
+            width: 100%;
+            overflow-x: auto; /* Allow tables to scroll if needed, preventing body expansion */
+        }
+        h2 { color: #1B5E20; border-bottom: 2px solid #2E7D32; padding-bottom: 10px; }
+        h3 { color: #0D47A1; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+        th { background-color: #E8F5E9; color: #1B5E20; }
+        
+        .chart-container { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 20px; 
+            width: 100%;
+        }
+        /* Style for the first two graph boxes */
+        .chart-box { 
+            width: calc(50% - 10px); 
+            min-height: 450px; 
+            min-width: 400px;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            box-sizing: border-box;
+            background: #fafafa;
+            position: relative; /* Chart JS absolutely needs this when height is fixed */
+        }
+        /* The third graph alone takes full width */
+        .chart-box:nth-child(3) {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <h1 style="text-align: center;">Statistique bon de commande</h1>
+
+    <div class="card">
+        <h2>1. Filtres appliqués</h2>
+        <ul id="filters-list"></ul>
+    </div>
+
+    <div class="card">
+        <h2>2. Totaux par type de transaction (Qté)</h2>
+        <table id="totaux-table">
+            <thead><tr id="totaux-headers"></tr></thead>
+            <tbody id="totaux-body"></tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>3. Dashboard Medical (Pharmacie - Grossiste)</h2>
+        <div class="chart-container">
+            <div class="chart-box" style="width: 100%;"><canvas id="medValChart"></canvas></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 style="color:#0D47A1; border-color:#1976D2;">4. Dashboard Commercial (Grossiste - SuperGros)</h2>
+        <div class="chart-container">
+            <div class="chart-box" style="width: 100%;"><canvas id="comValChart"></canvas></div>
+        </div>
+    </div>
+
+
+
+    <script>
+        const currentParams = window.location.search;
+        
+        // Added headers to ensure Django accepts the request
+        fetch('/orders/api/export/preview/' + currentParams, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                // This catches 404s, 403s, or 500s from the server
+                throw new Error(`Erreur Serveur: ${response.status} ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            // 1. Render Filters
+            const filtersList = document.getElementById('filters-list');
+            for (const [key, value] of Object.entries(data.filters)) {
+                filtersList.innerHTML += `<li><strong>${key}:</strong> ${value}</li>`;
+            }
+
+            // 2. Render Totaux Type Table (Transposed for better printing)
+            const filteredRows = data.totaux_type.rows.filter(row => {
+                const typeName = String(row[0] || "").toUpperCase();
+                return typeName !== "OFFICE" && typeName !== "ANOMALIE";
+            });
+
+            // Swap PH_GROS and GROS_SUPER columns
+            const idxPG = filteredRows.findIndex(r => String(r[0]).toUpperCase() === "PH_GROS");
+            const idxGS = filteredRows.findIndex(r => String(r[0]).toUpperCase() === "GROS_SUPER");
+            if (idxPG !== -1 && idxGS !== -1) {
+                const temp = filteredRows[idxPG];
+                filteredRows[idxPG] = filteredRows[idxGS];
+                filteredRows[idxGS] = temp;
+            }
+
+            const phGrosRow = filteredRows.find(row => String(row[0]).toUpperCase() === "PH_GROS");
+
+            let colIndices = [];
+            for (let i = 1; i < data.totaux_type.headers.length; i++) {
+                colIndices.push(i);
+            }
+
+            if (phGrosRow) {
+                colIndices.sort((a, b) => {
+                    const headerA = String(data.totaux_type.headers[a]).toLowerCase();
+                    const headerB = String(data.totaux_type.headers[b]).toLowerCase();
+                    
+                    // Keep "valeur total" at the very end
+                    if (headerA === "valeur total") return 1;
+                    if (headerB === "valeur total") return -1;
+
+                    // Keep "total" or "somme" at the end if it exists
+                    if (headerA.includes("total") || headerA.includes("somme")) return 1;
+                    if (headerB.includes("total") || headerB.includes("somme")) return -1;
+
+                    const valA = parseFloat(phGrosRow[a]) || 0;
+                    const valB = parseFloat(phGrosRow[b]) || 0;
+                    return valA - valB;
+                });
+            }
+
+            colIndices = [0, ...colIndices];
+
+            const totauxBody = document.getElementById('totaux-body');
+            const totauxHeaders = document.getElementById('totaux-headers');
+            
+            colIndices.forEach((colIndex) => {
+                const header = data.totaux_type.headers[colIndex];
+                const tr = document.createElement('tr');
+                
+                const isTotalRow = header.toLowerCase().includes('total') || header.toLowerCase().includes('somme');
+
+                // Row header (the original column header)
+                const thRowHeader = document.createElement('th');
+                thRowHeader.textContent = header;
+                thRowHeader.style.textAlign = 'left'; 
+                tr.appendChild(thRowHeader);
+                
+                // Values from each type (GROS_SUPER, PH_GROS)
+                filteredRows.forEach(row => {
+                    let cell;
+                    if (colIndex === 0) {
+                        // First row of the transposed table contains the type names as column headers
+                        cell = document.createElement('th');
+                    } else if (isTotalRow) {
+                        // Style total rows same as first column (header)
+                        cell = document.createElement('th');
+                    } else {
+                        cell = document.createElement('td');
+                    }
+                    const val = row[colIndex];
+                    if (header.toLowerCase() === "valeur total" && colIndex !== 0 && typeof val === 'number') {
+                        cell.textContent = Number(val).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' DA';
+                    } else {
+                        cell.textContent = (val !== null && val !== undefined) ? val : '-';
+                    }
+                    tr.appendChild(cell);
+                });
+                
+                totauxBody.appendChild(tr);
+            });
+            
+            // Clear top headers row since we moved to a transposed layout
+            totauxHeaders.innerHTML = '';
+
+            // Chart Generator Helper
+            const createChart = (ctxId, type, label, labels_val, valData, labels_qty, qtyData, labels_orders, ordersData, color) => {
+                const canvas = document.getElementById(ctxId);
+                const container = canvas.parentElement;
+
+                // Adjust height based on number of labels to keep bars readable
+                const barHeight = 40; // px
+                const extraSpace = 100; // for title and axis
+                const totalHeight = Math.max(450, (labels_val.length * barHeight) + extraSpace);
+                container.style.height = totalHeight + 'px';
+
+                Chart.register(ChartDataLabels);
+                new Chart(canvas, {
+                    type: type,
+                    data: {
+                        labels: labels_val,
+                        datasets: [{
+                            label: label,
+                            data: valData,
+                            backgroundColor: color,
+                            borderWidth: 1,
+                            barThickness: 25, // Fixed bar thickness
+                            maxBarThickness: 30
+                        }]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        indexAxis: 'y', // Convert to horizontal bar chart
+                        plugins: {
+                            legend: { display: false },
+                            title: {
+                                display: true,
+                                text: label,
+                                font: { size: 14 }
+                            },
+                            datalabels: {
+                                labels: {
+                                    bons: {
+                                        color: '#FBC02D', // Amber/Yellow
+                                        anchor: 'end',
+                                        align: 'end',
+                                        offset: 5,
+                                        font: { weight: 'bold' },
+                                        formatter: (value, context) => {
+                                            const repName = context.chart.data.labels[context.dataIndex];
+                                            const oIndex = labels_orders.indexOf(repName);
+                                            const orders = oIndex !== -1 ? ordersData[oIndex] : 0;
+                                            return `${orders} Bons`;
+                                        }
+                                    },
+                                    units: {
+                                        color: '#1976D2', // Blue
+                                        anchor: 'end',
+                                        align: 'end',
+                                        offset: (context) => {
+                                            const repName = context.chart.data.labels[context.dataIndex];
+                                            const oIndex = labels_orders.indexOf(repName);
+                                            const text = (oIndex !== -1 ? ordersData[oIndex] : 0) + ' Bons';
+                                            const ctx = context.chart.ctx;
+                                            ctx.font = 'bold 12px Arial'; // Approximate font size
+                                            return 5 + ctx.measureText(text).width + 12; // Start + text width + gap
+                                        },
+                                        font: { weight: 'bold' },
+                                        formatter: (value, context) => {
+                                            const repName = context.chart.data.labels[context.dataIndex];
+                                            const qIndex = labels_qty.indexOf(repName);
+                                            const qty = qIndex !== -1 ? qtyData[qIndex] : 0;
+                                            return `/ ${qty} Unités`;
+                                        }
+                                    },
+                                    da: {
+                                        color: '#2E7D32', // Green
+                                        anchor: 'end',
+                                        align: 'end',
+                                        offset: (context) => {
+                                            const repName = context.chart.data.labels[context.dataIndex];
+                                            const oIndex = labels_orders.indexOf(repName);
+                                            const qIndex = labels_qty.indexOf(repName);
+                                            
+                                            const t1 = (oIndex !== -1 ? ordersData[oIndex] : 0) + ' Bons';
+                                            const qty = qIndex !== -1 ? qtyData[qIndex] : 0;
+                                            const t2 = `/ ${qty} Unités`;
+                                            
+                                            const ctx = context.chart.ctx;
+                                            ctx.font = 'bold 12px Arial';
+                                            const w1 = ctx.measureText(t1).width;
+                                            const w2 = ctx.measureText(t2).width;
+                                            return 5 + w1 + 12 + w2 + 12;
+                                        },
+                                        font: { weight: 'bold' },
+                                        formatter: (value, context) => {
+                                            const val = value || 0;
+                                            const formattedVal = Number(val).toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+                                            return `/ ${formattedVal} DA`;
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        scales: { 
+                            x: { 
+                                beginAtZero: true,
+                                grace: '35%'
+                            } 
+                        },
+                        layout: {
+                            padding: {
+                                right: 350
+                            }
+                        }
+                    }
+                });
+            };
+
+            // 3. Render Medical Charts (Green)
+            createChart('medValChart', 'bar', 'ترتيب المندوبين حسب مجموع قيمة القطع في الطلبيات من فارماسي لجروسيست', data.dash_med.labels_val, data.dash_med.val, data.dash_med.labels_qty, data.dash_med.qty, data.dash_med.labels_orders, data.dash_med.orders, '#4CAF50');
+
+            // 4. Render Commercial Charts (Blue)
+            createChart('comValChart', 'bar', 'ترتيب المندوبين حسب مجموع قيمة القطع في الطلبيات من جروسيست لسوبر جرو', data.dash_com.labels_val, data.dash_com.val, data.dash_com.labels_qty, data.dash_com.qty, data.dash_com.labels_orders, data.dash_com.orders, '#42A5F5');
+        })
+        .catch(error => {
+            // If anything breaks, print it to the screen
+            console.error("Fetch error:", error);
+            document.getElementById('filters-list').innerHTML = `
+                <li style="color:red; font-weight:bold;">
+                    Erreur de chargement des données: ${error.message}
+                </li>
+                <li>Vérifiez la console (F12) pour plus de détails.</li>
+            `;
+        });
+    </script>

@@ -358,6 +358,121 @@ from clients.functions import (
 # from django.db.models import Q
 # from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+
+def add_special_table_data(context):
+    """Helper function to calculate special table totals if target products exist"""
+    # Ordered list of special product names to display
+    SPECIAL_PRODUCTS = ["ADVAGEN", "HAIRVOL", "GOLD MAG", "SLEEP ALAISE"]
+    show_special_table = False
+
+    target_data = context.get("data")
+
+    # Helper to force any value (string, None, etc.) into a number safely
+    def to_number(val):
+        try:
+            if isinstance(val, str):
+                val = val.replace(',', '').replace(' ', '')
+            return float(val) if val else 0
+        except (ValueError, TypeError):
+            return 0
+
+    # Helper to extract quantity from objects used in the template lists
+    def get_qty(item):
+        if hasattr(item, 'total'):
+            return to_number(item.total)
+        elif isinstance(item, dict):
+            return to_number(item.get('total', 0))
+        return to_number(item)
+
+    special_table_rows = []   # list of dicts, one per special product found
+    total_unite = 0
+    total_prix = 0
+    total_target_unite = 0
+    total_target_prix = 0
+
+    if target_data and "products" in target_data:
+        for i, product in enumerate(target_data["products"]):
+            product_name = product.nom if hasattr(product, 'nom') else str(product)
+            product_upper = product_name.upper()
+
+            if product_upper in SPECIAL_PRODUCTS:
+                show_special_table = True
+                try:
+                    # Use the same "Achevé (par unité)" source as the main table
+                    acheve_item      = target_data.get("quantities", [])[i]
+                    acheve_unite     = get_qty(acheve_item)
+                    acheve_link      = acheve_item.get("target_report_details_link", "#") if isinstance(acheve_item, dict) else "#"
+
+                    prix             = to_number(target_data.get("prices", [])[i])
+                    objectif_unite   = to_number(target_data.get("targets", [])[i])
+
+                    acheve_prix      = acheve_unite * prix
+                    objectif_prix    = objectif_unite * prix
+
+                    total_unite      += acheve_unite
+                    total_prix       += acheve_prix
+                    total_target_unite += objectif_unite
+                    total_target_prix  += objectif_prix
+
+                    special_table_rows.append({
+                        "name":           product_name,
+                        "target_unite":   int(objectif_unite),
+                        "acheve_unite":   int(acheve_unite),
+                        "acheve_link":    acheve_link,
+                        "prix":           int(prix),
+                        "target_prix":    int(objectif_prix),
+                        "acheve_prix":    int(acheve_prix),
+                    })
+                except IndexError:
+                    pass
+
+        # Sort special_table_rows by acheve_unite decreasing
+        special_table_rows.sort(key=lambda x: x["acheve_unite"], reverse=True)
+
+        # Preserve back-compat fields used elsewhere in the template
+        target_data["special_table_rows"]       = special_table_rows
+        target_data["special_total_unite"]      = int(total_unite)
+        target_data["special_total_prix"]       = int(total_prix)
+        target_data["special_target_unite"]     = int(total_target_unite)
+        target_data["special_target_prix"]      = int(total_target_prix)
+        # Legacy fields (kept in case something else references them)
+        target_data["total_unit_ph_gros"]       = 0
+        target_data["total_unit_gros_super"]    = 0
+        target_data["total_val_ph_gros"]        = 0
+        target_data["total_val_gros_super"]     = 0
+        target_data["montant_objectif_special"] = int(total_target_prix)
+
+        # Sort Main Table Columns by acheve_unite (quantities) descending
+        if "quantities" in target_data:
+            quantities = target_data.get("quantities", [])
+            products_list = list(target_data.get("products", []))
+            
+            if len(quantities) == len(products_list) and len(quantities) > 0:
+                indices = list(range(len(quantities)))
+                indices.sort(key=lambda i: get_qty(quantities[i]), reverse=True)
+                
+                def reorder(lst):
+                    if lst is None:
+                        return lst
+                    lst_as_list = list(lst)
+                    if len(lst_as_list) != len(quantities):
+                        return lst
+                    return [lst_as_list[i] for i in indices]
+                
+                keys_to_reorder = [
+                    "products", "targets", "total_unite_product", 
+                    "total_unite_product_gros_super", "prices", 
+                    "quantities", "total_targets", "total_achievements",
+                    "percentage_achievements"
+                ]
+                for key in keys_to_reorder:
+                    if key in target_data:
+                        target_data[key] = reorder(target_data[key])
+
+    context["show_special_table"] = show_special_table
+    return context
+
+
 class taruser(APIView):
     #authentication_classes = [SessionAuthentication]
     #permission_classes = [IsAuthenticated]
@@ -457,6 +572,7 @@ class taruser(APIView):
             data = get_target_for_supervisor(**params)
             #data = get_target_per_user_id(**params)
             context["data"] = data
+            context = add_special_table_data(context)
             return render(
                 request,
                 template_name="clients/reports/target_report_per_user.html",
@@ -528,6 +644,7 @@ class taruser(APIView):
         if len(months) == 1:
             data = get_target_per_user(**params)
             context["data"] = data
+            context = add_special_table_data(context)
             return render(
                 request,
                 template_name="clients/reports/target_report_per_user.html",
@@ -541,6 +658,7 @@ class taruser(APIView):
             data = get_target_per_user_per_month(**params)
             #data = get_target_per_user_per_month(**params)
             context["data"] = data
+            context = add_special_table_data(context)
             #return render(
             #    request,
             #    template_name="clients/reports/target_report_user_multiple_month.html",

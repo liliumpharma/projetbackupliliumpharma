@@ -409,10 +409,12 @@ class UserTargetMonthExcel(APIView):
         # Worksheet 1
         worksheet = workbook.add_worksheet("Ventes")
         worksheet.write(0, 0, "Delegué")
-        worksheet.write(0, 1, "Family")
-        worksheet.write(0, 2, "Mois")
+        worksheet.write(0, 1, "Role")
+        worksheet.write(0, 2, "Family")
+        worksheet.write(0, 3, "Région")
+        worksheet.write(0, 4, "Mois")
 
-        col = 3
+        col = 5
         products = Produit.objects.all()
 
         for product in products:
@@ -429,9 +431,11 @@ class UserTargetMonthExcel(APIView):
         for user_target_month in user_target_months:
 
             worksheet.write(row, 0, user_target_month.user.username)
-            worksheet.write(row, 1, user_target_month.user.userprofile.family)
+            worksheet.write(row, 1, user_target_month.user.userprofile.speciality_rolee)
+            worksheet.write(row, 2, user_target_month.user.userprofile.family)
+            worksheet.write(row, 3, str(user_target_month.user.userprofile.region))
             worksheet.write(
-                row, 2, f"{user_target_month.date.month}-{user_target_month.date.year}"
+                row, 4, f"{user_target_month.date.month}-{user_target_month.date.year}"
             )
 
             products_targets = user_target_month.usertargetmonthproduct_set.all()
@@ -440,9 +444,10 @@ class UserTargetMonthExcel(APIView):
                 product_target = products_targets.filter(product=product)
 
                 if product_target.exists():
-                    worksheet.write(row, index + 3, product_target.first().quantity)
+                    quantity = product_target.first().quantity
+                    worksheet.write(row, index + 5, quantity)
                 else:
-                    worksheet.write(row, index + 3, 0)
+                    worksheet.write(row, index + 5, "-")
 
             row += 1
 

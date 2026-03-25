@@ -206,39 +206,85 @@
         </table>
 
 
-        <div style="display: flex; justify-content: flex-end; margin-top: 10px; gap: 20px;">
+        <div style="display: flex; justify-content: space-between; margin-top: 10px; gap: 20px; align-items: stretch;">
 
-            <div class="achieve_percentage">
-                <div style="font-weight: bold;">
-                    <div style="color: limegreen; margin-bottom: 5px;">Total de la valeur des bons de commande</div>
-                    <div>Bon Ph_Gros</div>
-                    <div>Bon Gros_Super</div>
+            <!-- Objectif Special Table -->
+            <div style="flex-grow: 1; display: flex; flex-direction: column;">
+                {% if show_special_table %}
+                <div class="region" style="color: green; margin-bottom: 5px;">Objectif Commercial Special</div>
+                <div style="border: 2px solid green; border-radius: 5px; overflow: hidden; flex-grow: 1; display: flex; flex-direction: column;">
+                    <table style="width: 100%; font-size: 14px; flex-grow: 1; border-style: hidden;">
+                    <thead>
+                        <tr>
+                            <th class="main_column" style="font-size: 16px; padding: 2px 10px;"></th>
+                            {% for row in data.special_table_rows %}
+                            <th style="padding: 2px 10px;">{{ row.name }}</th>
+                            {% endfor %}
+                            <th style="padding: 2px 10px;">Total prix en DA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="background-color: #90EE90;">
+                            <td class="main_column" style="font-size: 16px;">Objectif</td>
+                            {% for row in data.special_table_rows %}
+                            <td>{{ row.target_unite|thousand_separator }}</td>
+                            {% endfor %}
+                            <td>{{ data.special_target_prix|thousand_separator }}</td>
+                        </tr>
+                        <tr>
+                            <td class="main_column" style="font-size: 16px;">Achevé</td>
+                            {% for row in data.special_table_rows %}
+                            <td><a href="{{ row.acheve_link }}" style="font-weight: bold" target="_blank">{{ row.acheve_unite|thousand_separator }}</a></td>
+                            {% endfor %}
+                            {% if data.special_total_prix >= data.special_target_prix %}
+                            <td style="background-color: #90EE90;">{{ data.special_total_prix|thousand_separator }}</td>
+                            {% else %}
+                            <td style="background-color: pink;">{{ data.special_total_prix|thousand_separator }}</td>
+                            {% endif %}
+                        </tr>
+                    </tbody>
+                    </table>
                 </div>
-                <div style="text-align: end;">
-                    <div style="margin-bottom: 5px;">&nbsp;</div>
-                    <div>{{ data.total_ph_gros_value }} Da</div>
-                    <div>{{ data.total_gros_super_value }} Da</div>
+                {% endif %}
+            </div>
+
+
+            <div style="display: flex; gap: 20px;">
+                <div class="achieve_percentage">
+                    <div style="font-weight: bold;">
+                        <div style="color: limegreen; margin-bottom: 5px;">Total de la valeur des bons de commande</div>
+                        <div>Bon Ph_Gros</div>
+                        <div>Bon Gros_Super</div>
+                    </div>
+                    <div style="text-align: end;">
+                        <div style="margin-bottom: 5px;">&nbsp;</div>
+                        <div>{{ data.total_ph_gros_value }} Da</div>
+                        <div>{{ data.total_gros_super_value }} Da</div>
+                    </div>
+                </div>
+
+                <div class="achieve_percentage">
+                    <div>
+                        <div style="color: red;">Pourcentage d'Achévement par unité</div>
+                        
+                        <div>Montant Objectif</div>
+                        <div>Montant Atteint</div>
+                        <div>Pourcentage d'Achévement</div>
+                    </div>
+
+                    <div style="text-align: end;">
+                        <div>{{ data.percentage_reached }}%</div>
+                        <div>{{ data.total_target|thousand_separator }} Da</div>
+                        <div>{{ data.total_reached|thousand_separator }} Da</div>
+                        <div>{{ data.percentage_reached }}%</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="achieve_percentage">
-                <div>
-                    <div style="color: red;">Pourcentage d'Achévement par unité</div>
-                    
-                    <div>Montant Objectif</div>
-                    <div>Montant Atteint</div>
-                    <div>Pourcentage d'Achévement</div>
-                </div>
-
-                <div style="text-align: end;">
-                    <div>{{ data.percentage_reached }}%</div>
-                    <div>{{ data.total_target|thousand_separator }} Da</div>
-                    <div>{{ data.total_reached|thousand_separator }} Da</div>
-                    <div>{{ data.percentage_reached }}%</div>
-                </div>
-
-            </div>
         </div>
+
+           
+       
 
 
     </div>
@@ -250,7 +296,7 @@
                                                                  إذا حقق المندوب ثلاث أشهر متتالية _ كوارتر يضاف له راتب شهر كحوافز.
             </br>إذا حقق المندوب ستة أشهر متتالية كواترين متتالين يحسب له راتب شهر إضافي كحوافز ويتم رفع الراتب 10000 دينار جزائري.
                 </br>إذا حقق المندوب السنة كاملة يحسب له راتب شهرين كحوافز او سفر خارج البلاد ويتم رفع الراتب 15000 دينار جزائري.
-            </div>
+            
         </div>
     </div>
 

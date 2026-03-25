@@ -595,6 +595,23 @@ class OrdersExportExcel(APIView):
     # -----------------------
     # Filters / scoping
     # -----------------------
+    @staticmethod
+    def _resolve_requested_users(request) -> List[str]:
+        us = OrdersExportExcel._parse_csv_param(request.GET.get("user"))
+        if not us:
+            return []
+        target_users = set(us)
+        try:
+            from accounts.models import UserProfile
+            supervisors = UserProfile.objects.filter(user__username__in=us, rolee="Superviseur")
+            for sup in supervisors:
+                if sup.region and sup.region != "-":
+                    regional_users = UserProfile.objects.filter(region=sup.region).values_list('user__username', flat=True)
+                    target_users.update(regional_users)
+        except Exception:
+            pass
+        return list(target_users)
+
     def apply_filters(self, request, effective_min: date_cls, effective_max: date_cls) -> Dict:
         filters: Dict = {
             "added__date__gte": effective_min,
@@ -610,9 +627,9 @@ class OrdersExportExcel(APIView):
                 filters["status__in"] = st
 
         if request.GET.get("user"):
-            us = self._parse_csv_param(request.GET.get("user"))
-            if us:
-                filters["user__username__in"] = us
+            resolved_users = self._resolve_requested_users(request)
+            if resolved_users:
+                filters["user__username__in"] = resolved_users
 
         if request.GET.get("source"):
             sources = {"Pharmacie": "pharmacy__isnull", "Gros": "gros__isnull", "Supergros": "super_gros__isnull"}
@@ -720,7 +737,7 @@ class OrdersExportExcel(APIView):
         )
         orders_all: List[Order] = list(orders_qs)
 
-        requested_users = self._parse_csv_param(request.GET.get("user"))
+        requested_users = self._resolve_requested_users(request)
         if requested_users:
             allowed = {str(o.user.username) for o in orders_all}
             effective_users = [u for u in requested_users if u in allowed]
@@ -808,10 +825,12 @@ class OrdersExportExcel(APIView):
                 up = getattr(o.user, "userprofile", None)
                 spec_val = ""
                 if up:
+                    # Prioritize correct spelling, fallback to old spelling
                     spec_val = getattr(up, "specialty_rolee", getattr(up, "speciality_rolee", ""))
                 
                 # If still empty, check the user object directly just in case
                 if not spec_val:
+                    # Prioritize correct spelling, fallback to old spelling
                     spec_val = getattr(o.user, "specialty_rolee", getattr(o.user, "speciality_rolee", ""))
                     
                 spec = str(spec_val).strip() if spec_val else ""
@@ -1400,4 +1419,172 @@ class OrdersExportExcel(APIView):
         return resp
 
 
-       
+from rest_framework.response import Response
+
+class OrdersPreviewAPI(OrdersExportExcel):
+    """
+    API endpoint that returns the exact same data as the Excel export, 
+    but formatted as JSON for the web dashboard preview.
+    """
+    def get(self, request, *args, **kwargs):
+        # 1. Dates & Filters (Reusing your existing methods)
+        eff_min, eff_max, _ = self._resolve_effective_dates(request)
+        filters = self.apply_filters(request, eff_min, eff_max)
+        q = self.apply_keyword_filter(request)
+        
+        orders_qs = self.get_filtered_orders(request, filters, q).select_related(
+            "user", "user__userprofile", "touser", "pharmacy", "gros", "super_gros"
+        ).distinct()
+        orders_all = list(orders_qs)
+
+        # 2. Extract Data (similar to your Excel logic)
+        items_qs = OrderItem.objects.filter(order__in=orders_all).select_related("produit")
+        items_by_order = defaultdict(list)
+        order_total_qty = defaultdict(int)
+        order_total_value = defaultdict(float)
+        type_prod_totals = defaultdict(lambda: defaultdict(int))
+        product_totals = defaultdict(int)
+
+        order_type_map = {o.id: self._order_type(o) for o in orders_all}
+        
+        # Calculate total value per order type
+        type_val_totals = defaultdict(float)
+
+        for it in items_qs:
+            oid = it.order_id
+            items_by_order[oid].append(it)
+            pname = it.produit.nom if it.produit else "Inconnu"
+            qty = it.qtt or 0
+            val = float(qty) * float(it.produit.price or 0)
+            
+            product_totals[pname] += qty
+            order_total_qty[oid] += qty
+            order_total_value[oid] += val
+            t = order_type_map.get(oid, "anomalie")
+            type_prod_totals[t][pname] += qty
+            type_val_totals[t] += val
+
+        product_headers_unique = sorted(product_totals.keys(), key=lambda s: s.lower())
+
+        # 3. Aggregations for Charts (Dashboard Medical & Commercial)
+        med_cnt, med_qty, med_val = defaultdict(int), defaultdict(int), defaultdict(float)
+        com_cnt, com_qty, com_val = defaultdict(int), defaultdict(int), defaultdict(float)
+
+        for o in orders_all:
+            oid = o.id
+            t = order_type_map.get(oid)
+            
+            # Specialty role logic
+            try:
+                up = getattr(o.user, "userprofile", None)
+                spec_val = ""
+                if up:
+                    spec_val = getattr(up, "speciality_rolee", getattr(up, "speciality_rolee", ""))
+                if not spec_val:
+                    spec_val = getattr(o.user, "speciality_rolee", getattr(o.user, "speciality_rolee", ""))
+                
+                spec = str(spec_val).strip() if spec_val else ""
+                if spec in ["None", "null", "-"]: spec = ""
+                
+                # Apply short format
+                if spec == "Medico_commercial":
+                    spec = "MC"
+                elif spec == "Commercial":
+                    spec = "C"
+                elif "Superviseur" in spec:
+                    spec = "SV"
+            except Exception:
+                spec = ""
+            
+            uname = f"{spec} : {o.user.username}" if spec else o.user.username
+            qty = order_total_qty.get(oid, 0)
+            val = order_total_value.get(oid, 0.0)
+
+            if t == "PH_GROS":
+                med_cnt[uname] += 1
+                med_qty[uname] += qty
+                med_val[uname] += val
+            elif t == "GROS_SUPER":
+                com_cnt[uname] += 1
+                com_qty[uname] += qty
+                com_val[uname] += val
+
+        # 4. Prepare JSON Payload
+        # Helper to sort a dict by value (smallest to biggest) and return separated lists
+        def argsort_dict(d):
+            sorted_items = sorted(d.items(), key=lambda x: x[1])
+            return [k for k, v in sorted_items], [v for k, v in sorted_items]
+
+        med_labels_orders, med_orders = argsort_dict(med_cnt)
+        med_labels_qty, med_qty_vals = argsort_dict(med_qty)
+        med_labels_val, med_val_vals = argsort_dict(med_val)
+
+        com_labels_orders, com_orders = argsort_dict(com_cnt)
+        com_labels_qty, com_qty_vals = argsort_dict(com_qty)
+        com_labels_val, com_val_vals = argsort_dict(com_val)
+
+        payload = {
+            "filters": {
+                "Utilisateur(s)": request.GET.get("user") or "Tous",
+                "Du (min_date)": eff_min.strftime("%Y-%m-%d"),
+                "Au (max_date)": eff_max.strftime("%Y-%m-%d"),
+                "Nombre de commandes": len(orders_all),
+            },
+            "totaux_type": {
+                "headers": ["Type"] + product_headers_unique + ["Totale", "Valeur total"],
+                "rows": []
+            },
+            "sommaire": {
+                "headers": ["Bon de commande", "Date", "Type", "Utilisateur", "Client", "Fournisseur"] + product_headers_unique + ["Total valeur (DA)"],
+                "rows": []
+            },
+            "dash_med": {
+                "labels_orders": med_labels_orders,
+                "orders": med_orders,
+                "labels_qty": med_labels_qty,
+                "qty": med_qty_vals,
+                "labels_val": med_labels_val,
+                "val": med_val_vals
+            },
+            "dash_com": {
+                "labels_orders": com_labels_orders,
+                "orders": com_orders,
+                "labels_qty": com_labels_qty,
+                "qty": com_qty_vals,
+                "labels_val": com_labels_val,
+                "val": com_val_vals
+            }
+        }
+
+        # Populate Totaux Type Table
+        for t in ["OFFICE", "GROS_SUPER", "PH_GROS", "anomalie"]:
+            row = [t]
+            total = 0
+            for pname in product_headers_unique:
+                q = type_prod_totals[t].get(pname, 0)
+                row.append(q)
+                total += q
+            row.append(total)
+            # Append Valeur total for this type
+            row.append(type_val_totals.get(t, 0.0))
+            payload["totaux_type"]["rows"].append(row)
+
+        # Populate Sommaire Table
+        for o in orders_all:
+            oid = o.id
+            client, fournisseur = _get_client_fournisseur(o)
+            typ = order_type_map.get(oid) or "anomalie"
+            
+            prod_qty_map = defaultdict(int)
+            for it in items_by_order.get(oid, []):
+                prod_qty_map[it.produit.nom] += (it.qtt or 0)
+
+            row = [
+                oid, o.added.strftime("%Y-%m-%d"), typ, o.user.username, client, fournisseur
+            ]
+            for pname in product_headers_unique:
+                row.append(prod_qty_map.get(pname, 0))
+            row.append(order_total_value.get(oid, 0.0))
+            payload["sommaire"]["rows"].append(row)
+
+        return Response(payload)

@@ -1,4 +1,5 @@
 from django.urls import path,re_path,include
+from django.views.generic import TemplateView
 from .views import *
 from .export_excel import *
 
@@ -30,5 +31,11 @@ urlpatterns = [
     path("exit_orders_export_excel",AllExitOrdersExportExcel.as_view(), name="exitOrderExportExcel" ),
     path("EtatStockClientExcel",EtatStockClientExcel.as_view(), name="EtatStockClientExcel" ),
     path("export-excel", OrdersExportExcel.as_view(), name="orders_export_excel"),
+    # The API endpoint that returns JSON data
+    path('api/export/preview/', OrdersPreviewAPI.as_view(), name='api_export_preview'),
+    
+    # The HTML page that the user will view
+    path('export/preview/', TemplateView.as_view(template_name='orders/preview.html'), name='export_preview_page'),
+   
 ]
 
