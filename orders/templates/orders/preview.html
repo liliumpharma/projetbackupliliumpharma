@@ -5,6 +5,8 @@
     <title>Statistique Bon de commande</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f6f9; padding: 20px; color: #333; margin: 0; }
         .card { 
@@ -45,11 +47,93 @@
         .chart-box:nth-child(3) {
             width: 100%;
         }
+
+        /* --- Share FAB --- */
+        #share-fab {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            z-index: 9999;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 11px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s, transform 0.1s;
+            font-family: Arial, sans-serif;
+        }
+        #share-fab:hover  { background: #128C7E; transform: scale(1.04); }
+        #share-fab:active { transform: scale(0.97); }
+        #share-fab:disabled { background: #9e9e9e; cursor: not-allowed; transform: none; }
+
+        @media print {
+            #share-fab { display: none !important; }
+        }
+
+        @media print {
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .card {
+                overflow: visible !important;
+                overflow-x: visible !important;
+                box-shadow: none;
+                border: none;
+                padding: 0;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            .chart-box {
+                page-break-inside: avoid;
+                break-inside: avoid;
+                border: none;
+                background: white;
+            }
+            h2, h3 {
+                page-break-after: avoid;
+                break-after: avoid;
+            }
+            /* Make sure chart containers don't restrict width incorrectly */
+            .chart-container {
+                display: block;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <h1 style="text-align: center;">Statistique bon de commande</h1>
+    <button id="share-fab" onclick="shareReport()" title="Partager le rapport via WhatsApp">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+        Partager
+    </button>
+
+    <div style="display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:24px; margin-top:4px;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 64 64" fill="none">
+            <!-- Bars -->
+            <rect x="4" y="34" width="10" height="20" rx="2" fill="#F9A825" stroke="#333" stroke-width="2"/>
+            <rect x="18" y="26" width="10" height="28" rx="2" fill="#E53935" stroke="#333" stroke-width="2"/>
+            <rect x="32" y="18" width="10" height="36" rx="2" fill="#F9A825" stroke="#333" stroke-width="2"/>
+            <rect x="46" y="8" width="10" height="46" rx="2" fill="#2E7D32" stroke="#333" stroke-width="2"/>
+            <!-- Trend line -->
+            <polyline points="9,30 23,20 37,13 51,4" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <!-- Arrow head -->
+            <polyline points="44,2 51,4 49,11" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+        <h1 style="margin:0; font-size:26px; font-weight:700; color:#1B5E20; letter-spacing:0.3px;">Statistique bon de commande</h1>
+    </div>
 
     <div class="card">
         <h2>1. Filtres appliqués</h2>
@@ -64,23 +148,161 @@
         </table>
     </div>
 
-    <div class="card">
-        <h2>3. Dashboard Medical (Pharmacie - Grossiste)</h2>
+    <div class="card" id="card-daily">
+        <h2>3. Évolution par jour ouvrable (valeur des bons)</h2>
         <div class="chart-container">
-            <div class="chart-box" style="width: 100%;"><canvas id="medValChart"></canvas></div>
+            <div class="chart-box" style="width: 100%;"><canvas id="dailyChart"></canvas></div>
         </div>
     </div>
 
-    <div class="card">
-        <h2 style="color:#0D47A1; border-color:#1976D2;">4. Dashboard Commercial (Grossiste - SuperGros)</h2>
+    <div class="card" id="card-med">
+        <h2>4. Dashboard Medical (Pharmacie - Grossiste)</h2>
+        <div class="chart-container">
+            <div class="chart-box" style="width: 100%;"><canvas id="medValChart"></canvas></div>
+        </div>
+        <div id="medZeroUsers"></div>
+    </div>
+
+    <div class="card" id="card-com">
+        <h2 style="color:#0D47A1; border-color:#1976D2;">5. Dashboard Commercial (Grossiste - SuperGros)</h2>
         <div class="chart-container">
             <div class="chart-box" style="width: 100%;"><canvas id="comValChart"></canvas></div>
         </div>
+        <div id="comZeroUsers"></div>
     </div>
 
 
 
     <script>
+        const ROLE_LABELS = {
+            'MC': 'Medical Commercial',
+            'C': 'Commercial',
+            'SV': 'Superviseur',
+        };
+
+        function expandRoleLabel(label) {
+            // Matches "ROLE : username" and expands the role prefix
+            return String(label).replace(/^([A-Za-z_]+)\s*:\s*/, (match, role) => {
+                const expanded = ROLE_LABELS[role];
+                return expanded ? expanded + ' : ' : match;
+            });
+        }
+
+        function expandLabels(arr) {
+            return (arr || []).map(expandRoleLabel);
+        }
+
+        // --- Page-ready promise (resolves once data is loaded AND all chart animations finish) ---
+        let _resolvePageReady;
+        const pageReady = new Promise(resolve => { _resolvePageReady = resolve; });
+        let _pendingCharts  = 0;
+        let _completedCharts = 0;
+        let _dataLoaded = false;
+
+        function _onChartAnimationComplete() {
+            _completedCharts++;
+            if (_dataLoaded && _completedCharts >= _pendingCharts) _resolvePageReady();
+        }
+        function _markDataLoaded() {
+            _dataLoaded = true;
+            if (_completedCharts >= _pendingCharts) _resolvePageReady();
+        }
+
+        // --- Share Report via Web Share API ---
+        async function shareReport() {
+            const btn = document.getElementById('share-fab');
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Génération...';
+
+            try {
+                // Wait for all charts to finish animating
+                await pageReady;
+
+                // Hide FAB so it doesn't appear in the capture
+                btn.style.visibility = 'hidden';
+
+                // ── Step 1: capture the full page as ONE canvas ──────────────────
+                // Scroll to top first — html2canvas captures from the current scroll
+                // position if we don't, causing the top of the page to be cut off.
+                const savedScrollY = window.scrollY;
+                window.scrollTo({ top: 0, behavior: 'instant' });
+                // Wait 2 animation frames so the browser repaints at position 0
+                await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+                const fullW = document.documentElement.scrollWidth;
+                const fullH = document.documentElement.scrollHeight;
+
+                const canvas = await window.html2canvas(document.body, {
+                    scale: 1.5,
+                    useCORS: true,
+                    logging: false,
+                    scrollX: 0,
+                    scrollY: 0,
+                    x: 0,
+                    y: 0,
+                    width:  fullW,
+                    height: fullH,
+                    windowWidth:  fullW,
+                    windowHeight: fullH
+                });
+
+                // Restore the user's scroll position after capture
+                window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+
+                btn.style.visibility = 'visible';
+
+                // ── Step 2: create a single-page PDF sized to the canvas ─────────
+                // No pagination = no cuts.  jsPDF is exposed as window.jspdf.jsPDF
+                // by the html2pdf bundle.
+                const imgData = canvas.toDataURL('image/jpeg', 0.92);
+                const pxW = canvas.width;
+                const pxH = canvas.height;
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: pxW >= pxH ? 'landscape' : 'portrait',
+                    unit: 'px',
+                    format: [pxW, pxH],
+                    hotfixes: ['px_scaling']   // ensures 1 CSS px = 1 PDF px
+                });
+                pdf.addImage(imgData, 'JPEG', 0, 0, pxW, pxH);
+                const pdfBlob = pdf.output('blob');
+
+                // ── Step 3: Blob → File (required by Web Share API on mobile) ────
+                const pdfFile = new File([pdfBlob], 'rapport_commandes.pdf', { type: 'application/pdf' });
+
+                if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                    await navigator.share({
+                        title: 'Statistique Bon de Commande',
+                        text: 'Rapport généré automatiquement',
+                        files: [pdfFile]
+                    });
+                } else {
+                    // Fallback: trigger a direct download
+                    const url = URL.createObjectURL(pdfBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'rapport_commandes.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    alert('Partage direct non disponible sur ce navigateur.\nLe PDF a été téléchargé à la place.');
+                }
+            } catch (err) {
+                btn.style.visibility = 'visible';
+                if (err.name !== 'AbortError') {
+                    console.error('shareReport error:', err);
+                    alert('Erreur lors de la génération du rapport : ' + err.message);
+                }
+            } finally {
+                btn.style.visibility = 'visible';
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        }
+
         const currentParams = window.location.search;
         
         // Added headers to ensure Django accepts the request
@@ -102,6 +324,15 @@
             const filtersList = document.getElementById('filters-list');
             for (const [key, value] of Object.entries(data.filters)) {
                 filtersList.innerHTML += `<li><strong>${key}:</strong> ${value}</li>`;
+                if (key === "Utilisateur(s)" && data.single_user) {
+                    const su = data.single_user;
+                    if (su.speciality_rolee && su.speciality_rolee !== '-') {
+                        filtersList.innerHTML += `<li><strong>Rôle :</strong> ${su.speciality_rolee.replace(/_/g, ' ')}</li>`;
+                    }
+                    if (su.region && su.region !== '-') {
+                        filtersList.innerHTML += `<li><strong>Région :</strong> ${su.region}</li>`;
+                    }
+                }
             }
 
             // 2. Render Totaux Type Table (Transposed for better printing)
@@ -130,18 +361,24 @@
                 colIndices.sort((a, b) => {
                     const headerA = String(data.totaux_type.headers[a]).toLowerCase();
                     const headerB = String(data.totaux_type.headers[b]).toLowerCase();
-                    
-                    // Keep "valeur total" at the very end
-                    if (headerA === "valeur total") return 1;
-                    if (headerB === "valeur total") return -1;
 
-                    // Keep "total" or "somme" at the end if it exists
-                    if (headerA.includes("total") || headerA.includes("somme")) return 1;
-                    if (headerB.includes("total") || headerB.includes("somme")) return -1;
+                    const isValeurTotalA = headerA === "valeur total";
+                    const isValeurTotalB = headerB === "valeur total";
+                    const isTotalA = !isValeurTotalA && (headerA.includes("total") || headerA.includes("somme"));
+                    const isTotalB = !isValeurTotalB && (headerB.includes("total") || headerB.includes("somme"));
 
+                    // "Valeur Total" comes first
+                    if (isValeurTotalA && !isValeurTotalB) return -1;
+                    if (!isValeurTotalA && isValeurTotalB) return 1;
+
+                    // "Total" (non-valeur) comes second
+                    if (isTotalA && !isTotalB) return -1;
+                    if (!isTotalA && isTotalB) return 1;
+
+                    // Product rows: sort by PH_GROS descending (bigger to smaller)
                     const valA = parseFloat(phGrosRow[a]) || 0;
                     const valB = parseFloat(phGrosRow[b]) || 0;
-                    return valA - valB;
+                    return valB - valA;
                 });
             }
 
@@ -149,31 +386,45 @@
 
             const totauxBody = document.getElementById('totaux-body');
             const totauxHeaders = document.getElementById('totaux-headers');
-            
+
+            let rowCounter = 0;
             colIndices.forEach((colIndex) => {
                 const header = data.totaux_type.headers[colIndex];
                 const tr = document.createElement('tr');
-                
-                const isTotalRow = header.toLowerCase().includes('total') || header.toLowerCase().includes('somme');
+
+                const headerLower = header.toLowerCase();
+                const isValeurTotalRow = headerLower === "valeur total";
+                const isTotalRow = !isValeurTotalRow && (headerLower.includes('total') || headerLower.includes('somme'));
+                const isHeaderRow = colIndex === 0;
+
+                const specialRowBg = isValeurTotalRow ? '#FFF8E1' : isTotalRow ? '#E3F2FD' : null;
+                const specialRowColor = isValeurTotalRow ? '#E65100' : isTotalRow ? '#0D47A1' : null;
 
                 // Row header (the original column header)
                 const thRowHeader = document.createElement('th');
-                thRowHeader.textContent = header;
-                thRowHeader.style.textAlign = 'left'; 
+                if (!isHeaderRow && !isTotalRow && !isValeurTotalRow) {
+                    rowCounter++;
+                    thRowHeader.textContent = `${rowCounter}- ${header}`;
+                } else {
+                    thRowHeader.textContent = header;
+                }
+                thRowHeader.style.textAlign = 'left';
+                if (specialRowBg) { thRowHeader.style.backgroundColor = specialRowBg; thRowHeader.style.color = specialRowColor; }
                 tr.appendChild(thRowHeader);
-                
+
                 // Values from each type (GROS_SUPER, PH_GROS)
                 filteredRows.forEach(row => {
                     let cell;
                     if (colIndex === 0) {
                         // First row of the transposed table contains the type names as column headers
                         cell = document.createElement('th');
-                    } else if (isTotalRow) {
-                        // Style total rows same as first column (header)
+                    } else if (isTotalRow || isValeurTotalRow) {
+                        // Style total rows as header cells
                         cell = document.createElement('th');
                     } else {
                         cell = document.createElement('td');
                     }
+                    if (specialRowBg) { cell.style.backgroundColor = specialRowBg; cell.style.color = specialRowColor; }
                     const val = row[colIndex];
                     if (header.toLowerCase() === "valeur total" && colIndex !== 0 && typeof val === 'number') {
                         cell.textContent = Number(val).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' DA';
@@ -189,6 +440,14 @@
             // Clear top headers row since we moved to a transposed layout
             totauxHeaders.innerHTML = '';
 
+            // Show missing products below the table
+            if (data.missing_products && data.missing_products.length > 0) {
+                const missingP = document.createElement('p');
+                missingP.style.cssText = 'color:#c62828; font-weight:bold; margin-top:10px; font-size:13px;';
+                missingP.textContent = 'Produits non présents dans les commandes : ' + data.missing_products.join(', ');
+                document.getElementById('totaux-table').insertAdjacentElement('afterend', missingP);
+            }
+
             // Chart Generator Helper
             const createChart = (ctxId, type, label, labels_val, valData, labels_qty, qtyData, labels_orders, ordersData, color) => {
                 const canvas = document.getElementById(ctxId);
@@ -201,6 +460,7 @@
                 container.style.height = totalHeight + 'px';
 
                 Chart.register(ChartDataLabels);
+                _pendingCharts++;
                 new Chart(canvas, {
                     type: type,
                     data: {
@@ -299,16 +559,157 @@
                             padding: {
                                 right: 350
                             }
-                        }
+                        },
+                        animation: { onComplete: _onChartAnimationComplete }
                     }
                 });
             };
 
-            // 3. Render Medical Charts (Green)
-            createChart('medValChart', 'bar', 'ترتيب المندوبين حسب مجموع قيمة القطع في الطلبيات من فارماسي لجروسيست', data.dash_med.labels_val, data.dash_med.val, data.dash_med.labels_qty, data.dash_med.qty, data.dash_med.labels_orders, data.dash_med.orders, '#4CAF50');
+            // 3. Render Daily Working-Day Chart
+            const createDailyChart = (ctxId, dd, labelPhGros = 'PH_GROS', labelGrosSuper = 'GROS_SUPER') => {
+                const canvas = document.getElementById(ctxId);
+                const container = canvas.parentElement;
 
-            // 4. Render Commercial Charts (Blue)
-            createChart('comValChart', 'bar', 'ترتيب المندوبين حسب مجموع قيمة القطع في الطلبيات من جروسيست لسوبر جرو', data.dash_com.labels_val, data.dash_com.val, data.dash_com.labels_qty, data.dash_com.qty, data.dash_com.labels_orders, data.dash_com.orders, '#42A5F5');
+                const barHeight = 30;
+                const extraSpace = 120;
+                const totalHeight = Math.max(450, (dd.labels.length * barHeight * 2) + extraSpace);
+                container.style.height = totalHeight + 'px';
+
+                const makeDatalabels = (cntArr, qtyArr, valArr) => ({
+                    labels: {
+                        bons: {
+                            color: '#FBC02D',
+                            anchor: 'end',
+                            align: 'end',
+                            offset: 5,
+                            font: { weight: 'bold' },
+                            formatter: (value, ctx) => `${cntArr[ctx.dataIndex]} Bons`
+                        },
+                        units: {
+                            color: '#1976D2',
+                            anchor: 'end',
+                            align: 'end',
+                            offset: (ctx) => {
+                                const t1 = `${cntArr[ctx.dataIndex]} Bons`;
+                                const c = ctx.chart.ctx;
+                                c.font = 'bold 12px Arial';
+                                return 5 + c.measureText(t1).width + 12;
+                            },
+                            font: { weight: 'bold' },
+                            formatter: (value, ctx) => `/ ${qtyArr[ctx.dataIndex]} Unités`
+                        },
+                        da: {
+                            color: '#2E7D32',
+                            anchor: 'end',
+                            align: 'end',
+                            offset: (ctx) => {
+                                const t1 = `${cntArr[ctx.dataIndex]} Bons`;
+                                const t2 = `/ ${qtyArr[ctx.dataIndex]} Unités`;
+                                const c = ctx.chart.ctx;
+                                c.font = 'bold 12px Arial';
+                                const w1 = c.measureText(t1).width;
+                                const w2 = c.measureText(t2).width;
+                                return 5 + w1 + 12 + w2 + 12;
+                            },
+                            font: { weight: 'bold' },
+                            formatter: (value, ctx) => {
+                                const v = valArr[ctx.dataIndex] || 0;
+                                return `/ ${Number(v).toLocaleString('fr-FR', { maximumFractionDigits: 2 })} DA`;
+                            }
+                        }
+                    }
+                });
+
+                Chart.register(ChartDataLabels);
+                _pendingCharts++;
+                new Chart(canvas, {
+                    type: 'bar',
+                    data: {
+                        labels: dd.labels,
+                        datasets: [
+                            {
+                                label: labelPhGros,
+                                data: dd.ph_gros_val,
+                                backgroundColor: '#4CAF50',
+                                borderWidth: 1,
+                                barThickness: 22,
+                                maxBarThickness: 28,
+                                datalabels: makeDatalabels(dd.ph_gros_cnt, dd.ph_gros_qty, dd.ph_gros_val)
+                            },
+                            {
+                                label: labelGrosSuper,
+                                data: dd.gros_super_val,
+                                backgroundColor: '#42A5F5',
+                                borderWidth: 1,
+                                barThickness: 22,
+                                maxBarThickness: 28,
+                                datalabels: makeDatalabels(dd.gros_super_cnt, dd.gros_super_qty, dd.gros_super_val)
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: { display: true },
+                            title: {
+                                display: true,
+                                text: 'Valeur des bons par jour ouvrable (PH_GROS & GROS_SUPER)',
+                                font: { size: 14 }
+                            },
+                            datalabels: {}
+                        },
+                        scales: {
+                            x: { beginAtZero: true, grace: '35%' }
+                        },
+                        layout: {
+                            padding: { right: 350 }
+                        },
+                        animation: { onComplete: _onChartAnimationComplete }
+                    }
+                });
+            };
+
+            // 3. Daily chart (always shown)
+            // Extract "Valeur total" for PH_GROS and GROS_SUPER to display in legend
+            let phGrosLegend = 'PH_GROS', grosSupLegend = 'GROS_SUPER';
+            const vtIdx = data.totaux_type.headers.findIndex(h => String(h).toLowerCase() === 'valeur total');
+            if (vtIdx !== -1) {
+                const pgRow = data.totaux_type.rows.find(r => String(r[0]).toUpperCase() === 'PH_GROS');
+                const gsRow = data.totaux_type.rows.find(r => String(r[0]).toUpperCase() === 'GROS_SUPER');
+                if (pgRow && pgRow[vtIdx] != null) phGrosLegend = 'PH_GROS : ' + Number(pgRow[vtIdx]).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' DA';
+                if (gsRow && gsRow[vtIdx] != null) grosSupLegend = 'GROS_SUPER : ' + Number(gsRow[vtIdx]).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' DA';
+            }
+            createDailyChart('dailyChart', data.dash_daily, phGrosLegend, grosSupLegend);
+
+            const renderZeroUsers = (containerId, zeroUsers) => {
+                if (zeroUsers && zeroUsers.length > 0) {
+                    document.getElementById(containerId).innerHTML =
+                        `<p style="color:red; font-weight:bold; margin-top:10px;">
+                            Utilisateur(s) avec 0 bon de commande : ${zeroUsers.join(', ')}
+                        </p>`;
+                }
+            };
+
+            // 4. Render Medical Charts (hidden for Commercial single-user)
+            if (data.dash_med) {
+                createChart('medValChart', 'bar', 'ترتيب المندوبين حسب مجموع قيمة القطع في الطلبيات من فارماسي لجروسيست', expandLabels(data.dash_med.labels_val), data.dash_med.val, expandLabels(data.dash_med.labels_qty), data.dash_med.qty, expandLabels(data.dash_med.labels_orders), data.dash_med.orders, '#4CAF50');
+                renderZeroUsers('medZeroUsers', data.dash_med.zero_users);
+            } else {
+                document.getElementById('card-med').style.display = 'none';
+            }
+
+            // 5. Render Commercial Charts (hidden for Commercial single-user)
+            if (data.dash_com) {
+                createChart('comValChart', 'bar', 'ترتيب المندوبين حسب مجموع قيمة القطع في الطلبيات من جروسيست لسوبر جرو', expandLabels(data.dash_com.labels_val), data.dash_com.val, expandLabels(data.dash_com.labels_qty), data.dash_com.qty, expandLabels(data.dash_com.labels_orders), data.dash_com.orders, '#42A5F5');
+                renderZeroUsers('comZeroUsers', data.dash_com.zero_users);
+            } else {
+                document.getElementById('card-com').style.display = 'none';
+            }
+
+            // Signal that data is loaded; pageReady resolves once all chart animations finish
+            _markDataLoaded();
         })
         .catch(error => {
             // If anything breaks, print it to the screen

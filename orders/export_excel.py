@@ -603,11 +603,29 @@ class OrdersExportExcel(APIView):
         target_users = set(us)
         try:
             from accounts.models import UserProfile
+            from django.contrib.auth import get_user_model as _get_user_model
+            _UserModel = _get_user_model()
+
+            # Supervisor expansion: add all users in the same region
             supervisors = UserProfile.objects.filter(user__username__in=us, rolee="Superviseur")
             for sup in supervisors:
                 if sup.region and sup.region != "-":
                     regional_users = UserProfile.objects.filter(region=sup.region).values_list('user__username', flat=True)
                     target_users.update(regional_users)
+
+            # Country Manager expansion: all supervisors + all users in any supervisor's usersunder list
+            country_managers = UserProfile.objects.filter(user__username__in=us, rolee="CountryManager")
+            if country_managers.exists():
+                # All supervisors
+                sup_usernames = UserProfile.objects.filter(
+                    rolee="Superviseur"
+                ).values_list('user__username', flat=True)
+                target_users.update(sup_usernames)
+                # All users that appear in any supervisor's usersunder (no duplicates via set)
+                users_under_supervisors = _UserModel.objects.filter(
+                    under__rolee="Superviseur"
+                ).values_list('username', flat=True)
+                target_users.update(users_under_supervisors)
         except Exception:
             pass
         return list(target_users)
@@ -1509,6 +1527,76 @@ class OrdersPreviewAPI(OrdersExportExcel):
                 com_qty[uname] += qty
                 com_val[uname] += val
 
+        # 3b. Build list of all filtered users formatted the same way as graph labels
+        # Each entry: (plain_username, formatted_uname, raw_spec, rolee, is_active)
+        _MC_EXCEPTIONS = {"hamzadz", "DebbarDZ", "tawfikdz", "MAROUANDZ"}
+        _EXCLUDED_ROLES = {"Superviseur", "CountryManager"}
+        all_filter_users = []  # list of (plain_username, formatted_uname, raw_spec, rolee, is_active)
+        if request.GET.get("user"):
+            resolved_users = self._resolve_requested_users(request)
+            if resolved_users:
+                from accounts.models import UserProfile
+                from django.contrib.auth import get_user_model
+                UserModel2 = get_user_model()
+                user_objs = UserModel2.objects.filter(username__in=resolved_users).prefetch_related('userprofile')
+                for u in user_objs:
+                    try:
+                        up2 = getattr(u, "userprofile", None)
+                        spec_val2 = ""
+                        rolee2 = ""
+                        if up2:
+                            spec_val2 = getattr(up2, "speciality_rolee", "")
+                            rolee2 = str(getattr(up2, "rolee", "") or "").strip()
+                        if not spec_val2:
+                            spec_val2 = getattr(u, "speciality_rolee", "")
+                        raw_spec2 = str(spec_val2).strip() if spec_val2 else ""
+                        if raw_spec2 in ["None", "null", "-"]: raw_spec2 = ""
+                        spec2 = raw_spec2
+                        if spec2 == "Medico_commercial": spec2 = "MC"
+                        elif spec2 == "Commercial": spec2 = "C"
+                        elif "Superviseur" in spec2: spec2 = "SV"
+                    except Exception:
+                        raw_spec2 = ""
+                        rolee2 = ""
+                        spec2 = ""
+                    formatted_uname = f"{spec2} : {u.username}" if spec2 else u.username
+                    all_filter_users.append((u.username, formatted_uname, raw_spec2, rolee2, bool(u.is_active)))
+
+        # 3b. Daily working-day aggregations (exclude Friday=4, Saturday=5)
+        daily_pg_cnt = defaultdict(int)
+        daily_pg_qty = defaultdict(int)
+        daily_pg_val = defaultdict(float)
+        daily_gs_cnt = defaultdict(int)
+        daily_gs_qty = defaultdict(int)
+        daily_gs_val = defaultdict(float)
+
+        working_days = []
+        cur_day = eff_min
+        while cur_day <= eff_max:
+            if cur_day.weekday() not in (4, 5):  # 4=Friday, 5=Saturday
+                working_days.append(cur_day)
+            cur_day += timedelta(days=1)
+
+        day_labels = [d.strftime("%d/%m") for d in working_days]
+        day_label_set = set(day_labels)
+
+        for o in orders_all:
+            oid = o.id
+            t = order_type_map.get(oid)
+            ds = o.added.strftime("%d/%m")
+            if ds not in day_label_set:
+                continue
+            qty = order_total_qty.get(oid, 0)
+            val = order_total_value.get(oid, 0.0)
+            if t == "PH_GROS":
+                daily_pg_cnt[ds] += 1
+                daily_pg_qty[ds] += qty
+                daily_pg_val[ds] += val
+            elif t == "GROS_SUPER":
+                daily_gs_cnt[ds] += 1
+                daily_gs_qty[ds] += qty
+                daily_gs_val[ds] += val
+
         # 4. Prepare JSON Payload
         # Helper to sort a dict by value (smallest to biggest) and return separated lists
         def argsort_dict(d):
@@ -1523,7 +1611,54 @@ class OrdersPreviewAPI(OrdersExportExcel):
         com_labels_qty, com_qty_vals = argsort_dict(com_qty)
         com_labels_val, com_val_vals = argsort_dict(com_val)
 
+        # Build single_user info if exactly one user was requested (before supervisor expansion)
+        single_user_info = None
+        raw_requested = self._parse_csv_param(request.GET.get("user"))
+        if len(raw_requested) == 1:
+            try:
+                from django.contrib.auth import get_user_model
+                _UserModel = get_user_model()
+                _u = _UserModel.objects.select_related('userprofile').get(username=raw_requested[0])
+                _up = getattr(_u, 'userprofile', None)
+                is_cm = _up and getattr(_up, 'rolee', '') == 'CountryManager'
+                _rolee = getattr(_up, 'rolee', '') if _up else ''
+                single_user_info = {
+                    "username": _u.username,
+                    "speciality_rolee": "Country Manager" if is_cm else (getattr(_up, 'speciality_rolee', '') if _up else ''),
+                    "region": "Algerie" if is_cm else (getattr(_up, 'region', '') if _up else ''),
+                    "rolee": _rolee,
+                }
+            except Exception:
+                pass
+
+        # Build missing products list
+        from produits.models import Produit
+        _is_single_commercial = (
+            single_user_info is not None
+            and single_user_info.get("rolee") == "Commercial"
+        )
+        if _is_single_commercial:
+            # For a single Commercial user: compare against their target products in the date range
+            from clients.models import UserTargetMonthProduct
+            from django.contrib.auth import get_user_model
+            _UserModel = get_user_model()
+            try:
+                _commercial_user = _UserModel.objects.get(username=raw_requested[0])
+                _target_product_names = set(
+                    UserTargetMonthProduct.objects.filter(
+                        usermonth__user=_commercial_user,
+                    ).values_list('product__nom', flat=True)
+                )
+            except Exception:
+                _target_product_names = set()
+            missing_products = sorted(_target_product_names - set(product_headers_unique), key=lambda s: s.lower())
+        else:
+            all_product_names = set(Produit.objects.values_list('nom', flat=True))
+            missing_products = sorted(all_product_names - set(product_headers_unique), key=lambda s: s.lower())
+
         payload = {
+            "single_user": single_user_info,
+            "missing_products": missing_products,
             "filters": {
                 "Utilisateur(s)": request.GET.get("user") or "Tous",
                 "Du (min_date)": eff_min.strftime("%Y-%m-%d"),
@@ -1544,7 +1679,13 @@ class OrdersPreviewAPI(OrdersExportExcel):
                 "labels_qty": med_labels_qty,
                 "qty": med_qty_vals,
                 "labels_val": med_labels_val,
-                "val": med_val_vals
+                "val": med_val_vals,
+                "zero_users": [
+                    plain for plain, fmt, _, rolee, active in all_filter_users
+                    if fmt not in med_val
+                    and active
+                    and rolee not in _EXCLUDED_ROLES
+                ],
             },
             "dash_com": {
                 "labels_orders": com_labels_orders,
@@ -1552,7 +1693,23 @@ class OrdersPreviewAPI(OrdersExportExcel):
                 "labels_qty": com_labels_qty,
                 "qty": com_qty_vals,
                 "labels_val": com_labels_val,
-                "val": com_val_vals
+                "val": com_val_vals,
+                "zero_users": [
+                    plain for plain, fmt, spec, rolee, active in all_filter_users
+                    if fmt not in com_val
+                    and active
+                    and rolee not in _EXCLUDED_ROLES
+                    and (spec != "Medico_commercial" or plain in _MC_EXCEPTIONS)
+                ],
+            },
+            "dash_daily": {
+                "labels": day_labels,
+                "ph_gros_val": [daily_pg_val[d] for d in day_labels],
+                "ph_gros_qty": [daily_pg_qty[d] for d in day_labels],
+                "ph_gros_cnt": [daily_pg_cnt[d] for d in day_labels],
+                "gros_super_val": [daily_gs_val[d] for d in day_labels],
+                "gros_super_qty": [daily_gs_qty[d] for d in day_labels],
+                "gros_super_cnt": [daily_gs_cnt[d] for d in day_labels],
             }
         }
 
@@ -1586,5 +1743,10 @@ class OrdersPreviewAPI(OrdersExportExcel):
                 row.append(prod_qty_map.get(pname, 0))
             row.append(order_total_value.get(oid, 0.0))
             payload["sommaire"]["rows"].append(row)
+
+        # If exactly 1 Commercial user is selected, hide dashboard sections (keep daily chart)
+        if single_user_info and single_user_info.get("rolee") == "Commercial":
+            payload.pop("dash_med", None)
+            payload.pop("dash_com", None)
 
         return Response(payload)

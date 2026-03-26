@@ -1,7 +1,7 @@
 (function () {
   // ===== CONFIG =====
   const TARGET_URL = "/orders/export/preview/";
-  const ARIA_LABEL = "statistique desbons de Commandes";
+  const ARIA_LABEL = "statistique des Commandes";
   // ==================
 
   // Static icon for preview
@@ -41,7 +41,7 @@ const PREVIEW_SVG = `
 
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = autres.className || ""; // inherit same classes
+    btn.className = (autres.className || "").replace(/\bhidden\b/g, "").trim(); // inherit same classes but always visible
     btn.setAttribute("data-lilium", "preview-extra");
     btn.setAttribute("aria-label", ARIA_LABEL);
     btn.setAttribute("title", ARIA_LABEL);
