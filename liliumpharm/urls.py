@@ -81,6 +81,8 @@ urlpatterns = [
 
     #Meet
     # path("meet_front", meet_front, name="meet_front"),
+    #evaluations
+    path('evaluations/', include('evaluations.urls')),
 
 
 

@@ -1,0 +1,2166 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evaluation Mensuelle - Médical</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+  <link rel="stylesheet" href="{% static 'css/toast/vanilla-toast.css'%}">
+  
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #ffffff; color: #1e1e2e; line-height: 1.5; }
+
+    /* ── HEADER (Screenshot Style) ── */
+    .top-bar {
+      background: #2e7d32; 
+      color: white;
+      padding: 10px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .top-bar .brand-text { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 8px; }
+    .top-bar .user-meta { display: flex; gap: 20px; font-size: 0.9rem; align-items: center; }
+
+    /* ── ALERTS ── */
+    .alert-container { padding: 20px 32px; }
+    .custom-alert {
+      background-color: #d1fae5;
+      border: 1px solid #a7f3d0;
+      border-radius: 8px;
+      color: #064e3b;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+    }
+
+    /* ── WIZARD ── */
+    .wizard-step { display: none; padding: 0 32px; }
+    .wizard-step.active { display: block; animation: slideInRight 0.3s ease-out forwards; }
+    .wizard-step.active.slide-back { animation: slideInLeft 0.3s ease-out forwards; }
+    @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slideInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+
+    .section-title {
+      background: #f1f8e9;
+      border-left: 5px solid #2e7d32;
+      padding: 15px;
+      text-align: left;
+      margin: 30px 0 20px;
+      border-radius: 0 4px 4px 0;
+      color: #1b5e20;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .question-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-family: inherit;
+      margin-top: 10px;
+    }
+    .is-invalid { border-color: #dc3545 !important; }
+    .is-valid { border-color: #28a745 !important; }
+
+    /* ── NAVIGATION ── */
+    .wizard-nav {
+      position: sticky;
+      bottom: 0;
+      background: white;
+      padding: 20px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #eee;
+      z-index: 1000;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.02);
+    }
+    .btn { padding: 10px 25px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s ease; text-decoration: none; display: inline-block; }
+    .btn-primary { background: #2e7d32; color: white; }
+    .btn-primary:hover { background: #1b5e20; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(46,125,50,0.2); }
+    .btn-secondary { background: #eee; color: #555; }
+    .btn-secondary:hover { background: #e0e0e0; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+    .btn-submit { background: #1b5e20; color: white; width: 100%; font-size: 1.1rem; text-align: center; }
+    .btn-submit:hover { background: #144d17; transform: translateY(-2px) scale(1.01); box-shadow: 0 6px 12px rgba(27,94,32,0.25); }
+
+    /* ── UTILS ── */
+    .text-red { color: #d32f2f; font-weight: bold; }
+    .text-green { color: #2e7d32; font-weight: bold; }
+    .dropdown-box { max-height: 250px; overflow-y: auto; background: white; border-radius: 4px; z-index: 9999; }
+    .dropdown-box p { padding: 8px; margin: 0; cursor: pointer; border-bottom: 1px solid #eee; }
+    .dropdown-box p:hover { background: #f1f8e9; }
+    
+    .table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+    .table th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; }
+    .table td { padding: 12px; border-bottom: 1px solid #eee; }
+    /* ── SCORE BADGES & BANNER ── */
+    .score-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.85rem; border: 1px solid transparent; margin-left: 5px; }
+    .score-red { background: #ffebee; color: #c62828; border-color: #ffcdd2; }
+    .score-orange { background: #fff3e0; color: #ef6c00; border-color: #ffe0b2; }
+    .score-green { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
+
+    /* ── MODERN INFO BANNER ── */
+    .info-banner-modern {
+      display: flex;
+      justify-content: center;
+      margin: 0;
+      padding: 15px 32px;
+      position: sticky;
+      top: 0;
+      z-index: 990;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #eee;
+    }
+    .info-badges {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .info-badge {
+      background: #f1f8e9;
+      border: 1px solid #c8e6c9;
+      color: #1b5e20;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .info-badge i { color: #4caf50; font-size: 1.1em; }
+
+    /* ── Q2 CARDS (Replacing missing Bootstrap) ── */
+    .q2-card {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      padding: 16px;
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      transition: all 0.2s ease-in-out;
+    }
+    .q2-card:hover {
+      border-color: #81c784;
+      box-shadow: 0 4px 12px rgba(46, 125, 50, 0.08);
+      transform: translateY(-1px);
+    }
+    @media(min-width: 768px) {
+      .q2-card { flex-direction: row; align-items: stretch; }
+    }
+    .q2-info-section { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .q2-input-section { flex: 1; display: flex; flex-direction: column; }
+    
+    .q2-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .q2-doctor-name { color: #1b5e20; font-weight: 700; font-size: 1.1rem; margin: 0; }
+    
+    .q2-badge-spec {
+      background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 12px;
+      font-size: 0.75rem; font-weight: 600; border: 1px solid #c8e6c9;
+    }
+    .q2-badge-visit {
+      background: #fff3e0; color: #e65100; padding: 4px 10px; border-radius: 12px;
+      font-size: 0.75rem; font-weight: 600; border: 1px solid #ffe0b2;
+      display: inline-flex; align-items: center; gap: 5px; width: fit-content;
+    }
+    .q2-dates { font-size: 0.8rem; color: #6c757d; display: flex; align-items: flex-start; gap: 6px; margin-top: 4px;}
+    .q2-date-pill {
+      background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 4px;
+      text-decoration: none; font-weight: 500; transition: 0.2s; display: inline-block; margin-bottom: 4px;
+    }
+    .q2-date-pill:hover { background: #bbdefb; color: #0d47a1; }
+    
+    .q2-textarea {
+      width: 100%; height: 100%; min-height: 80px; border: 1px solid #c8e6c9;
+      background: #fafafa; border-radius: 6px; padding: 12px; font-size: 0.85rem;
+      font-family: inherit; resize: vertical; transition: all 0.2s;
+    }
+    .q2-textarea:focus {
+      outline: none; border-color: #4caf50; background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
+    }
+    
+    /* ── FEEDBACK & SEARCH WRAPPER ── */
+    .is-valid { border-color: #4caf50 !important; background-color: #f1f8e9 !important; box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15); }
+  
+    /* ── BILINGUAL HEADERS ── */
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #f0f0f0;
+      gap: 15px;
+    }
+   .report-item {
+  display: grid !important;
+  /* Fixed 140px center ensures "4.7 Dr/j" and "21/21" align perfectly */
+  grid-template-columns: 1fr 140px 1fr; 
+  align-items: center;
+  gap: 10px;
+  width: 100%; /* Ensures all rows are the same width */
+  margin: 0;
+  padding: 0;
+}
+
+.center-value {
+  display: block;
+  text-align: center;
+  width: 100%;
+  font-weight: 700;
+}
+    
+    .question-text {
+      display: flex;
+      flex-direction: row;
+      gap: 15px;
+      flex: 1;
+    }
+    .question-text > * {
+      flex: 1;
+    }
+    .fr-text { margin: 0; font-size: 1.05rem; color: #1e1e2e; font-weight: 600; text-align: left; }
+    .ar-text { margin: 0; font-size: 1.05rem; color: #1b5e20; font-weight: 600; text-align: right; direction: rtl; }
+    .question-score { 
+      flex-shrink: 0; 
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+    /* ── SCORE HINT ── */
+    .score-hint {
+      margin-top: 15px;
+      padding: 12px 18px;
+      background-color: #f8f9fa;
+      border-left: 4px solid #17a2b8;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: row;
+      gap: 15px;
+    }
+    .score-hint > * {
+      flex: 1;
+    }
+    .score-hint p { margin: 0; font-size: 0.9rem; color: #495057; display: flex; align-items: flex-start; }
+    .score-hint .ar-hint { text-align: right; direction: rtl; }
+    .d-none { display: none !important; }
+
+    /* ── Q5 DOCTOR TAGS ── */
+    .q5-doc-tag {
+        display: inline-flex;
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 6px 14px;
+        margin: 4px;
+        font-size: 0.88rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        gap: 8px;
+        transition: all 0.2s;
+    }
+    .q5-doc-tag:hover {
+        border-color: #81c784;
+        box-shadow: 0 4px 8px rgba(46,125,50,0.08);
+    }
+    .q5-doc-id { font-weight: 700; color: #2e7d32; }
+    .q5-doc-name { color: #1e1e2e; font-weight: 500; }
+    .q5-doc-spec { color: #1565c0; font-size: 0.75rem; font-weight: 600; font-style: italic; background: #e3f2fd; padding: 2px 8px; border-radius: 12px; }
+    .q5-doc-remove { color: #c62828; cursor: pointer; font-weight: bold; margin-left: 5px; opacity: 0.6; transition: 0.2s; }
+    .q5-doc-remove:hover { opacity: 1; color: #d32f2f; }
+    .q5-container-styled {
+        min-height: 80px; 
+        background: #fafafa; 
+        border: 1px dashed #c8e6c9; 
+        border-radius: 8px; 
+        padding: 12px; 
+        display: flex; 
+        flex-wrap: wrap; 
+        align-content: flex-start;
+        gap: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="brand-text"><i class="fas fa-leaf"></i> Bienvenue</div>
+  <div class="user-meta">
+    <span><i class="far fa-calendar-alt"></i> Tuesday 17th March 2026</span>
+    <span><i class="fas fa-user"></i> {{ request.user.first_name }} {{ request.user.last_name }}</span>
+    <a id="imprimer-bouton" href="#" style="color:white; margin-left:15px;"><i class="fas fa-print"></i></a>
+  </div>
+</div>
+
+<div class="alert-container">
+  <div class="custom-alert">
+    <div>
+      <strong>Important!</strong>
+      <p>Vérifiez le mois sélectionné. L'action de validation est irréversible.</p>
+    </div>
+    <div style="text-align: right;">
+      <strong>!هام</strong>
+      <p>تحقق من الشهر المحدد. إجراء التحقق لا رجوع فيه.</p>
+    </div>
+  </div>
+</div>
+
+<div id="info-banner" class="info-banner-modern">
+    <div class="info-badges" id="iinfo"></div>
+</div>
+
+<form id="wizard-form" method="post">
+  <input type="hidden" id="csrf_token" value="{{ csrf_token }}">
+
+  <div class="wizard-step active" data-step="1">
+    <div class="section-title"><h4>Partie Rapports | قسم التقارير</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Évaluation des Rapports Quotidiens</h5>
+          <h5 class="ar-text">تقييم التقارير اليومية</h5>
+        </div>
+        <div class="question-score">
+          <span class="text-red">Note: <span id="note_q0">0</span>/20</span>
+        </div>
+      </div>
+      <!-- Score hint — bilingual, red text per screenshot -->
+      <div style="text-align: center; margin-bottom: 18px; font-size: 0.88rem; color: #c62828; font-weight: 600; line-height: 1.6;">
+        Note totale 20 points, chaque rapport manquant moins un point &nbsp;|&nbsp; العلامة الإجمالية 20 علامة، كل تقرير غير موجود، ناقص علامة
+      </div>
+
+      <!-- Bilingual list rows -->
+       <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px;">
+
+  <li class="report-item">
+    <span style="font-weight: 700; font-size: 0.97rem;">• Nombre de jour de travail:</span>
+    <span id="nombre_rapport" class="text-green center-value">21/21</span>
+    <span style="font-weight: 600; font-size: 0.97rem; direction: rtl; text-align: right;">• عدد أيام العمل</span>
+  </li>
+
+  <li class="report-item">
+    <span style="font-weight: 700; font-size: 0.97rem;">• Similarité rapport/planning:</span>
+    <span id="similarity_perc" class="text-green center-value">3.1%</span>
+    <span style="font-weight: 600; font-size: 0.97rem; direction: rtl; text-align: right;">• تطابق التقارير مع التخطيط</span>
+  </li>
+
+  <li class="report-item">
+    <span style="font-weight: 700; font-size: 0.97rem;">• Nombre de rapport(s) manquant(s):</span>
+    <span id="nombre_absence" class="text-red center-value">0</span>
+    <span style="font-weight: 600; font-size: 0.97rem; direction: rtl; text-align: right;">• عدد الرابورات الناقصة</span>
+  </li>
+
+  <li class="report-item">
+    <span style="font-weight: 700; font-size: 0.97rem;">• Dates des rapports manquants:</span>
+    <span id="dates_absence" class="center-value" style="color: #555; font-weight: normal;">0</span>
+    <span style="font-weight: 600; font-size: 0.97rem; direction: rtl; text-align: right;">• تواريخ التقارير الناقصة</span>
+  </li>
+
+  <li class="report-item">
+    <span style="padding-left: 28px; font-size: 0.9rem; color: #666;">Absences (<span id="absences_count">0</span>):</span>
+    <span id="absences_dates" class="text-red center-value">0</span>
+    <span style="font-size: 0.9rem; direction: rtl; text-align: right; color: #666;">الغيابات</span>
+  </li>
+
+  <li class="report-item">
+    <span style="padding-left: 28px; font-size: 0.9rem; color: #666;">Congés (<span id="conges_count">0</span>):</span>
+    <span id="conges_dates" class="text-red center-value">0</span>
+    <span style="font-size: 0.9rem; direction: rtl; text-align: right; color: #666;">العطل</span>
+  </li>
+
+  <li class="report-item" style="margin-top: 6px; border-top: 1px solid #eee; padding-top: 10px;">
+    <span style="font-weight: 700;">• Nombre de clients visités:</span>
+    <span></span>
+    <span style="font-weight: 600; direction: rtl; text-align: right;">• عدد الزبائن المزارين</span>
+  </li>
+
+  <li class="report-item">
+    <span style="padding-left: 28px;">Medical:</span>
+    <span id="total_clients_med" class="text-green center-value">89</span>
+    <span style="direction: rtl; text-align: right;">طبي</span>
+  </li>
+
+  <li class="report-item">
+    <span style="padding-left: 28px;">Commercial:</span>
+    <span id="total_clients_com" class="text-green center-value">76</span>
+    <span style="direction: rtl; text-align: right;">تجاري</span>
+  </li>
+
+  <li class="report-item" style="margin-top: 6px; border-top: 1px solid #eee; padding-top: 10px;">
+    <span style="font-weight: 700;">• Nombre des visite(s):</span>
+    <span></span>
+    <span style="font-weight: 600; direction: rtl; text-align: right;">• عدد الزيارات الشهرية</span>
+  </li>
+
+  <li class="report-item">
+    <span style="padding-left: 28px;">Medical:</span>
+    <span id="total_visites_med" class="text-green center-value">99</span>
+    <span style="direction: rtl; text-align: right;">طبي</span>
+  </li>
+
+  <li class="report-item">
+    <span style="padding-left: 28px;">Commercial:</span>
+    <span id="total_visites_com" class="text-green center-value">76</span>
+    <span style="direction: rtl; text-align: right;">تجاري</span>
+  </li>
+
+  <li class="report-item" style="margin-top: 6px; border-top: 1px solid #eee; padding-top: 10px;">
+    <span style="font-weight: 700;">• Moyenne des visites medicales:</span>
+    <span id="moyenne_visites_med" class="center-value">4.7 Dr/j</span>
+    <span style="font-weight: 600; direction: rtl; text-align: right;">• معدل زيارات الأطباء يوميا</span>
+  </li>
+
+</ul>
+    </div>
+  </div>
+
+  <div class="wizard-step" data-step="2">
+    <div class="section-title"><h4>Médical | طبي</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Combien de médecins avez-vous visités au cours du mois ?</h5>
+          <h5 class="ar-text">كم عدد الأطباء الذين زرتهم خلال الشهر؟</h5>
+        </div>
+        <div class="question-score">
+          <span class="text-red">Note: <span id="note_q1">0</span>/25</span>
+        </div>
+      </div>
+      <div class="score-hint">
+        <p><i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i> Note totale 25 points, moins un point pour chaque médecin en dessous de 100.</p>
+        <p class="ar-hint"><i class="fas fa-info-circle" style="color: #17a2b8; margin-left: 8px;"></i> العلامة الإجمالية 25 نقطة، يُخصم نقطة واحدة لكل طبيب أقل من 100.</p>
+      </div>
+      <!-- <h3 id="response_1" class="text-green" style="margin-top: 15px;">0</h3> -->
+      <!-- <div id="doctors_1" style="display:none;"></div> -->
+      <div id="doctors_1_container" style="margin-top: 15px;">
+        <div id="specialty_summary" style="font-weight: 600; color: #555; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-left: 4px solid #2e7d32; border-radius: 4px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wizard-step" data-step="3">
+    <div class="section-title"><h4>Visites multiples (Q2)</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Qui sont les médecins visités plus d'une fois ce mois-ci, et pourquoi ?</h5>
+          <h5 class="ar-text">ما سبب زيارة هؤلاء الأطباء أكثر من مرة هذا الشهر؟</h5>
+        </div>
+        <div class="question-score">
+          <span class="text-red" style="font-weight: 600;">Note: <span id="note_q2">0</span>/20</span>
+        </div>
+      </div>
+      <div id="specialty_summary_q2" style="font-weight: 600; color: #555; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-left: 4px solid #1565c0; border-radius: 4px; display: none;"></div>
+      <div id="raison_2" style="background: transparent; border-radius: 6px;">
+        <!-- Dynamic Q2 Content -->
+      </div>
+      <div style="text-align: center; margin-top: 15px;">
+        <button type="button" id="btn_voir_plus_q2" class="btn btn-secondary btn-sm" style="display: none; padding: 5px 15px; font-size: 0.85rem;">Voir plus <i class="fas fa-chevron-down"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wizard-step" data-step="4">
+    <div class="section-title"><h4>Médecins non visités (Q3)</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Qui sont les médecins qui n'ont pas été visités ce mois-ci, et pourquoi ?</h5>
+          <h5 class="ar-text">من هم الأطباء الذين لم يتم زيارتهم هذا الشهر ولماذا؟</h5>
+        </div>
+        <div class="question-score">
+          <!-- <span class="text-green" style="font-weight: 600;">Total: <span id="response_3_medecins">0</span></span> -->
+          <span class="text-red" style="font-weight: 600;">Note: <span id="note_q3">0</span>/25</span>
+        </div>
+      </div>
+      <div class="score-hint" style="margin-bottom: 15px;">
+        <p><i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i> Note totale 25 points, moins un demi point pour chaque médecin non visité.</p>
+        <p class="ar-hint"><i class="fas fa-info-circle" style="color: #17a2b8; margin-left: 8px;"></i> العلامة الإجمالية 25 نقطة، يُخصم نصف نقطة عن كل طبيب لم تتم زيارته.</p>
+
+      </div>
+      <div id="specialty_summary_q3" style="font-weight: 600; color: #555; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-left: 4px solid #c62828; border-radius: 4px; display: none;"></div>
+      <div id="raison_3" style="background: transparent; border-radius: 6px;">
+        <!-- Dynamic Q3 Content -->
+      </div>
+      <div style="text-align: center; margin-top: 15px;">
+        <button type="button" id="btn_voir_plus_q3" class="btn btn-secondary btn-sm" style="display: none; padding: 5px 15px; font-size: 0.85rem;">Voir plus <i class="fas fa-chevron-down"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wizard-step" data-step="5">
+    <div class="section-title"><h4>Visites en Duo (Q4)</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Qui sont les médecins visités ce mois-ci avec un Superviseur et quel est le but de la visite :</h5>
+          <h5 class="ar-text"> من هم الاطباء التي تمت زيارتهم هذا الشهر مع السوبر فايزر وما هو الهدف من الزياره</h5>
+        </div>
+        <div class="question-score">
+          <!-- <span class="text-green" style="font-weight: 600; margin-right: 15px;">Total: <span id="response_4_medecins">0</span></span> -->
+          <span class="text-green">Bonus: <span id="note_q4">0</span>/5</span>
+        </div>
+      </div>
+      <div class="score-hint">
+        <p><i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i> Note bonus de 5 points, plus un demi point pour chaque médecin en duo.</p>
+        <p class="ar-hint"><i class="fas fa-info-circle" style="color: #17a2b8; margin-left: 8px;"></i> علامة إضافية 5 نقاط، يضاف نصف نقطة لكل طبيب تمت زيارته مع المشرف.</p>
+      </div>
+      <div id="raison_4"></div>
+    </div>
+  </div>
+
+  <div class="wizard-step" data-step="6">
+    <div class="section-title"><h4>Top 5 Médecins (Q5)</h4></div>
+    <div class="question-card" style="border: none; box-shadow: none; padding: 0; margin-bottom: 0;">
+      <div class="question-header" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+        <div class="question-text">
+          <h5 class="fr-text">Écrivez cinq médecins importants en ciblage pour chaque produit.</h5>
+          <h5 class="ar-text">اكتب خمسة أطباء مهمين لكل منتج.</h5>
+        </div>
+        <div class="question-score">
+          <span class="text-red">Note: <span id="note_q5">0</span>/15</span>
+        </div>
+      </div>
+      <div class="score-hint" style="margin-bottom: 15px;">
+        <p><i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i> Note totale 15 points, plus un demi point pour chaque médecin ajouté.</p>
+        <p class="ar-hint"><i class="fas fa-info-circle" style="color: #17a2b8; margin-left: 8px;"></i> العلامة الإجمالية 15 نقطة، يضاف نصف نقطة لكل طبيب مضاف.</p>
+      </div>
+    </div>
+    <div id="productContainer"></div>
+  </div>
+
+  <div class="wizard-step" data-step="7">
+    <div class="section-title"><h4>Analyse Inactivité (Q6)</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Mentionnez 10 médecins qui ont été visité plus de trois visites et n'ont pas encore prescrit, en expliquant la raison à votre avis</h5>
+          <h5 class="ar-text">كاذكر 10 اطباء مزارين اكثر من ثلاث زيارات ولم يكتبوا بعد مع توضيح السبب برايك</h5>
+        </div>
+        <div class="question-score">
+          <!-- <span class="text-green" style="font-weight: 600;">Total: <span id="q6_count">0/10</span></span> -->
+          <span class="text-green">Bonus: <span id="note_q6">0</span>/5</span>
+        </div>
+      </div>
+      <div class="score-hint" style="margin-bottom: 15px;">
+        <p><i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i> Note bonus de 5 points pour les 10 médecins inactifs visités.</p>
+        <p class="ar-hint"><i class="fas fa-info-circle" style="color: #17a2b8; margin-left: 8px;"></i> علامة إضافية 5 نقاط لزيارة 10 أطباء غير نشطين.</p>
+      </div>
+      <div style="position: relative; margin-bottom: 15px;">
+        <input class="form-control" id="doctor_input_q6" placeholder="Rechercher un médecin à ajouter (Max 10)..." style="border-radius: 8px; font-size: 0.9rem; border: 1px solid #c8e6c9; padding: 12px;" />
+        <div id="doctor_dropdown_q6" class="dropdown-box d-none position-absolute shadow w-100" style="max-height: 250px; overflow-y: auto; border: 1px solid #e0e0e0; z-index: 10000; background: white;"></div>
+      </div>
+      <div id="q6_container" style="display:flex; flex-direction:column; gap:10px;">
+      </div>
+    </div>
+  </div>
+
+  <div class="wizard-step" data-step="8">
+    <div class="section-title"><h4>Valeur Ajoutée (Q7)</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Plus apporté ce mois-ci :</h5>
+          <h5 class="ar-text">ما هي الاضافه التي حققتها مع الاطباء هذا الشهر مع ذكر اسم الطبيب ونوع الاضافه</h5>
+        </div>
+        <div class="question-score">
+          <!-- <span class="text-green" style="font-weight: 600;">Total: <span id="q7_count">0/10</span></span> -->
+          <span class="text-green">Bonus: <span id="note_q7">0</span>/5</span>
+        </div>
+      </div>
+      <div class="score-hint" style="margin-bottom: 15px;">
+        <p><i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i> Note bonus de 5 points pour la valeur ajoutée apportée au secteur.</p>
+        <p class="ar-hint"><i class="fas fa-info-circle" style="color: #17a2b8; margin-left: 8px;"></i> علامة إضافية 5 نقاط للقيمة المضافة في المنطقة.</p>
+      </div>
+      <div style="position: relative; margin-bottom: 15px;">
+        <input class="form-control" id="doctor_input_q7" placeholder="Rechercher un médecin à ajouter (Max 10)..." style="border-radius: 8px; font-size: 0.9rem; border: 1px solid #c8e6c9; padding: 12px;" />
+        <div id="doctor_dropdown_q7" class="dropdown-box d-none position-absolute shadow w-100" style="max-height: 250px; overflow-y: auto; border: 1px solid #e0e0e0; z-index: 10000; background: white;"></div>
+      </div>
+      <div id="q7_container" style="display:flex; flex-direction:column; gap:10px;">
+      </div>
+    </div>
+  </div>
+
+  <div class="wizard-step" data-step="9">
+    <div class="section-title"><h4>Retrait de la liste (Q8)</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Quels sont les médecins que vous suggérez de retirer de la liste, en mentionnant la raison</h5>
+          <h5 class="ar-text"> السببمن هم الاطباء الذي تقترح شطبهم من القائمه مع ذكر </h5>
+        </div>
+        <div class="question-score">
+          <!-- <span class="text-green" style="font-weight: 600;">Total: <span id="q8_count">0/10</span></span> -->
+          <span class="text-green">Bonus: <span id="note_q8">0</span>/5</span>
+        </div>
+      </div>
+      <div class="score-hint" style="margin-bottom: 15px;">
+        <p><i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i> Note bonus de 5 points pour les médecins retirés de la liste.</p>
+        <p class="ar-hint"><i class="fas fa-info-circle" style="color: #17a2b8; margin-left: 8px;"></i> علامة إضافية 5 نقاط للأطباء المحذوفين من القائمة.</p>
+      </div>
+      <div style="position: relative; margin-bottom: 15px;">
+        <input class="form-control" id="doctor_input_q8" placeholder="Rechercher un médecin à ajouter (Max 10)..." style="border-radius: 8px; font-size: 0.9rem; border: 1px solid #c8e6c9; padding: 12px;" />
+        <div id="doctor_dropdown_q8" class="dropdown-box d-none position-absolute shadow w-100" style="max-height: 250px; overflow-y: auto; border: 1px solid #e0e0e0; z-index: 10000; background: white;"></div>
+      </div>
+      <div id="q8_container" style="display:flex; flex-direction:column; gap:10px;">
+      </div>
+    </div>
+  </div>
+
+  <div class="wizard-step" data-step="10">
+    <div class="section-title"><h4>Suggestions Prescription (Q9)</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Quelles sont vos suggestions pour les médecins qui sont visités régulièrement et qui n'écrivent pas encore bien. Mentionnez le nom du médecin et la suggestion</h5>
+          <h5 class="ar-text">ما هي مقترحاتك للاطباء الذين تمت زيارتهم بشكل منتظم ولا يكتبون لغايه الان بشكل جيد. مع ذكر اسم الطبيب والمقترح</h5>
+        </div>
+        <div class="question-score">
+          <!-- <span class="text-green" style="font-weight: 600;">Total: <span id="q9_count">0/10</span></span> -->
+          <span class="text-green">Bonus: <span id="note_q9">0</span>/5</span>
+        </div>
+      </div>
+      <div class="score-hint" style="margin-bottom: 15px;">
+        <p><i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i> Note bonus de 5 points pour les suggestions d'optimisation.</p>
+        <p class="ar-hint"><i class="fas fa-info-circle" style="color: #17a2b8; margin-left: 8px;"></i> علامة إضافية 5 نقاط لاقتراحات تحسين الزيارات.</p>
+      </div>
+      <div style="position: relative; margin-bottom: 15px;">
+        <input class="form-control" id="doctor_input_q9" placeholder="Rechercher un médecin à ajouter (Max 10)..." style="border-radius: 8px; font-size: 0.9rem; border: 1px solid #c8e6c9; padding: 12px;" />
+        <div id="doctor_dropdown_q9" class="dropdown-box d-none position-absolute shadow w-100" style="max-height: 250px; overflow-y: auto; border: 1px solid #e0e0e0; z-index: 10000; background: white;"></div>
+      </div>
+      <div id="q9_container" style="display:flex; flex-direction:column; gap:10px;">
+      </div>
+    </div>
+  </div>
+
+  <div class="wizard-step" data-step="11">
+    <div class="section-title"><h4>Deals Commerciaux (Q10)</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Choisissez un médecin pour chaque produit pour qui vous proposez un deal avec l'entreprise pour augmenter les ventes. Le nom du médecin et la suggestion</h5>
+          <h5 class="ar-text">اختر طبيب واحد لكل منتج تقترح له ديل من الشركة لزيادة المبيعات اسم الطبيب والمقترح</h5>
+        </div>
+        <div class="question-score">
+          <span class="text-green">Bonus: <span id="note_q10">0</span>/5</span>
+        </div>
+      </div>
+      <div class="score-hint" style="margin-bottom: 15px;">
+        <p><i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i> Note bonus de 5 points pour les deals commerciaux proposés.</p>
+        <p class="ar-hint"><i class="fas fa-info-circle" style="color: #17a2b8; margin-left: 8px;"></i> علامة إضافية 5 نقاط للصفقات التجارية المقترحة.</p>
+      </div>
+      <div id="productContainerq10"></div>
+    </div>
+  </div>
+
+  <div class="wizard-step" data-step="12">
+    <div class="section-title"><h4>Commercial - Visites</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Combien de pharmacies et de grossistes avez-vous visités au cours du mois ?</h5>
+          <h5 class="ar-text">كم عدد الصيدليات وتجار الجملة الذين قمت بزيارتهم خلال الشهر ؟</h5>
+        </div>
+        <div class="question-score">
+          <span class="text-red">Note: <span id="note_1112">0</span>/20</span>
+        </div>
+      </div>
+      <div class="score-hint" style="margin-bottom: 15px;">
+        <p><i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i> Note totale 20 points, 10 points par spécialité en atteignant la couverture.</p>
+        <p class="ar-hint"><i class="fas fa-info-circle" style="color: #17a2b8; margin-left: 8px;"></i> العلامة الإجمالية 20 نقطة، 10 نقاط لكل تخصص عند بلوغ التغطية.</p>
+      </div>
+      <div style="display: flex; gap: 20px;">
+        <div style="flex:1; background: #f1f8e9; padding: 15px; border-radius: 8px; text-align: center;">
+          <small>Pharmacies</small><br><strong id="total_pharma" class="text-green">0</strong>
+        </div>
+        <div style="flex:1; background: #f1f8e9; padding: 15px; border-radius: 8px; text-align: center;">
+          <small>Grossistes</small><br><strong id="total_gro" class="text-green">0</strong>
+        </div>
+      </div>
+      <!-- <div id="doctors_11" style="display:none;"></div> -->
+      <div id="doctors_11_container" style="margin-top: 15px; display: none;">
+      </div>
+      <input type="hidden" id="response_11">
+    </div>
+  </div>
+
+  <div class="wizard-step" data-step="13">
+    <div class="section-title"><h4>Commercial - Super Grossistes</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Combien de super grossistes avez-vous visités ce mois-ci, en mentionnant le nom du super grossiste et la raison de la visite ?</h5>
+          <h5 class="ar-text">كم عدد سوبر جروسيست الذين زرتهم هذا الشهر ، مع ذكر اسم تاجر الجملة وسبب الزيارة ؟</h5>
+        </div>
+        <div class="question-score">
+          <!-- <span class="text-green" style="font-weight: 600;">Total: <span id="response_12_medecins">0</span></span> -->
+        </div>
+      </div>
+      <div id="raison_12" style="margin-top:15px;"></div>
+    </div>
+  </div>
+
+  <div class="wizard-step" data-step="14">
+    <div class="section-title"><h4>Bons de Commande (Q13)</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Combien de bons de commande durant ce mois, en mentionnant le nom du client, le produit et la quantité ?</h5>
+          <h5 class="ar-text">كم عدد الطلبيات خلال هذا الشهر، مع ذكر اسم الزبون، المنتج والكمية ؟</h5>
+        </div>
+        <div class="question-score">
+          <!-- <span class="text-green" style="font-weight: 600;">Total: <span id="response_13_nombre">0</span></span> -->
+          <span class="text-red">Note: <span id="note_q13">0</span>/15</span>
+        </div>
+      </div>
+      <div class="score-hint">
+        <p><i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i> Note totale 15 points, plus un demi point pour chaque bon de commande de : pharmacie à grossiste ou de grossiste à supergrossiste.</p>
+        <p class="ar-hint"><i class="fas fa-info-circle" style="color: #17a2b8; margin-left: 8px;"></i> العلامة الإجمالية 15 نقطة، يضاف نصف نقطة لكل طلبية من صيدلية إلى بائع جملة أو من بائع جملة إلى بائع جملة كبير.</p>
+      </div>
+      <div id="raison_13_resume" style="font-size:0.85rem; margin:10px 0;"></div>
+      <div id="raison_13_summary"></div>
+      <div style="overflow-x: auto;">
+        <table class="table">
+          <thead><tr><th>Date</th><th>ID</th><th>Statut</th><th>Pharmacie</th><th>Grossiste</th><th>Super Grossiste</th><th>Produits</th></tr></thead>
+          <tbody id="field_13"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="wizard-step" data-step="15">
+    <div class="section-title"><h4>Validation (Q14)</h4></div>
+    <div class="question-card">
+      <div class="question-header" style="border-bottom: none; margin-bottom: 10px; padding-bottom: 0;">
+        <div class="question-text">
+          <h5 class="fr-text">Suggestions pour améliorer les ventes :</h5>
+          <h5 class="ar-text">اقتراحات لتحسين المبيعات :</h5>
+        </div>
+      </div>
+      <textarea id="response_14" class="form-control" rows="6" placeholder="Vos suggestions..."></textarea>
+    </div>
+    <div style="text-align: center; padding: 30px 0;">
+      <i class="fas fa-check-circle" style="font-size: 3rem; color: #2e7d32; margin-bottom: 15px;"></i>
+      <h3>Merci pour votre coopération !</h3>
+      <br>
+      <div id="submit_container" style="display:none;">
+        <button type="button" id="submit_2" class="btn btn-submit">Valider l'évaluation</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wizard-nav">
+    <button type="button" id="prevBtn" class="btn btn-secondary" onclick="nextPrev(-1)" style="visibility: hidden;">Précédent</button>
+    <div id="step-counter" style="font-weight: 600; color: #555; font-size: 0.95rem;">Étape <span id="current-step-text">1</span> / 15</div>
+    <button type="button" id="nextBtn" class="btn btn-primary" onclick="nextPrev(1)">Suivant</button>
+  </div>
+</form>
+
+<script src="{% static 'js/jquery.min.js'%}"></script>
+<script src="{% static 'js/toast/vanilla-toast.js'%}"></script>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const month = urlParams.get('month'); // Changed from 'moonth' to 'month'
+  const ussser = urlParams.get('user');
+  const yyyear = urlParams.get('year') || 2026;
+
+  // ── READ-ONLY MODE (set by Django when a supervisor views a submitted eval) ──
+  const IS_READ_ONLY = {{ read_only|default:"false"|lower }};
+  const EVAL_SCORE   = {{ evaluation_score|default:"null" }};
+  const SAVED_ANSWERS = {{ answers_json|default:"{}"|safe }};
+
+  // Real-time Form Validation Feedback
+  document.body.addEventListener('input', function(e) {
+      if (e.target && e.target.tagName.toLowerCase() === 'textarea') {
+          if (e.target.classList.contains('is-invalid') && e.target.value.trim() !== '') {
+              e.target.classList.remove('is-invalid');
+              e.target.classList.add('is-valid');
+          } else if (e.target.classList.contains('is-valid') && e.target.value.trim() === '') {
+              e.target.classList.remove('is-valid');
+          }
+      }
+  });
+
+
+
+  // Run this immediately to populate the banner
+  if (ussser && month) {
+      document.getElementById("iinfo").innerHTML = `
+          <div class="info-badge"><i class="fas fa-user-tie"></i> ${ussser}</div>
+          <div class="info-badge"><i class="fas fa-calendar-alt"></i> Mois: ${month}</div>
+          <div class="info-badge"><i class="fas fa-clock"></i> Année: ${yyyear}</div>
+      `;
+  }
+
+  function updateScoreBadge(elementId, current, max) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      el.innerText = current;
+      const parent = el.parentElement;
+      if (parent) {
+          parent.className = "score-badge"; // override text-red etc.
+          const val = parseFloat(current) || 0;
+          const ratio = max > 0 ? (val / max) : 0;
+          if (ratio >= 0.8) parent.classList.add("score-green");
+          else if (ratio >= 0.5) parent.classList.add("score-orange");
+          else parent.classList.add("score-red");
+      }
+  }
+
+  // ── READ-ONLY HELPERS ──
+  function restoreDoctorJustifications(prefix, savedData) {
+    if (!IS_READ_ONLY || !savedData || typeof savedData !== 'object') return;
+    Object.entries(savedData).forEach(([docId, text]) => {
+      const el = document.getElementById(prefix + docId);
+      if (el && typeof text === 'string') el.value = text;
+    });
+  }
+
+  function lockFormReadOnly() {
+    if (!IS_READ_ONLY) return;
+    document.querySelectorAll('textarea, input:not([type=hidden])').forEach(el => {
+      el.disabled = true;
+      el.style.background = '#f8f9fa';
+      el.style.cursor = 'not-allowed';
+    });
+    const sc = document.getElementById('submit_container');
+    if (sc) sc.style.display = 'none';
+  }
+
+  // Wizard Logic
+  var currentStep = 1;
+  var totalSteps = 15;
+
+  function showStep(step, direction) {
+    document.querySelectorAll('.wizard-step').forEach(s => {
+        s.classList.remove('active', 'slide-back');
+    });
+    const nextStepEl = document.querySelector(`.wizard-step[data-step="${step}"]`);
+    if (direction < 0) {
+        nextStepEl.classList.add('slide-back');
+    }
+    nextStepEl.classList.add('active');
+    
+    document.getElementById("prevBtn").style.visibility = (step === 1) ? "hidden" : "visible";
+    document.getElementById("nextBtn").style.display = (step === totalSteps) ? "none" : "inline-block";
+    document.getElementById("submit_container").style.display = (step === totalSteps) ? "flex" : "none";
+    
+    // Update step counter
+    const stepCounterEl = document.getElementById("step-counter");
+    if (step === totalSteps) {
+        stepCounterEl.style.display = "none";
+    } else {
+        stepCounterEl.style.display = "block";
+        document.getElementById("current-step-text").innerText = step;
+    }
+
+    if (step > 1) {
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+  }
+
+  function nextPrev(n) {
+    if (n === 1 && !validateCurrentStep()) return false;
+    currentStep += n;
+    showStep(currentStep, n);
+  }
+
+  function validateCurrentStep() {
+    if (IS_READ_ONLY) return true;
+    const stepEl = document.querySelector(`.wizard-step[data-step="${currentStep}"]`);
+    const fields = stepEl.querySelectorAll('textarea[id^="RaisonsMedecinsNonVisites_"], textarea[id^="RaisonsMedecinsMultiplesVisites_"], textarea[id^="RaisonsMedecinsVisitesDuo_"], textarea[id^="plus_7_"], textarea[id^="RaisonsSuperGroVisites_"], textarea[id^="RaisonsMedecinsInactifs_"], textarea[id^="RaisonsMedecinsRetires_"], textarea[id^="RaisonsMedecinsSuggestions_"]');
+    let valid = true;
+    fields.forEach(f => {
+      if (f.value.trim() === "") {
+        f.classList.add("is-invalid");
+        valid = false;
+      } else {
+        f.classList.remove("is-invalid");
+      }
+    });
+    if (!valid) vanillaToast.error("Veuillez remplir les champs obligatoires.");
+    return valid;
+  }
+
+  // --- RESTORED CORE DATA FETCH FUNCTIONS ---
+  function fetchData() {
+    // ── Shared state for Step 1 aggregation ──
+    window._step1 = { numReports: 0, uniqueMedClients: 0, totalVisitesMed: 0 };
+
+    // Helper: recompute moyenne whenever either Q0 or Q2 finishes
+    function _recalcMoyenne() {
+      let nr = window._step1.numReports || 0;
+      let tv = window._step1.totalVisitesMed || 0;
+      let moy = nr > 0 ? (tv / nr).toFixed(1) : 0;
+      let el = document.getElementById('moyenne_visites_med');
+      if (el) el.textContent = moy + ' Dr/j';
+    }
+    // Similarity API Call
+    fetch(`/evaluations/api/similarity/?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json())
+      .then(data => {
+          const simEl = document.getElementById("similarity_perc");
+          if (simEl) {
+              simEl.textContent = (data.similarity_perc || 0) + '%';
+              // Optional: Color coding
+              if (data.similarity_perc < 50) simEl.className = "text-red center-value";
+              else simEl.className = "text-green center-value";
+          }
+      });
+
+    // Q0: Rapports
+    fetch(`https://app.liliumpharma.com/rapports/RapportSummaryAPIView?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json()).then(data => {
+        document.getElementById("nombre_rapport").textContent = data.num_reports + '/' + data.days_in_month;
+        document.getElementById("nombre_absence").textContent = data.num_absence;
+
+        let absence_dates_list = [];
+        let conges_dates_list = [];
+
+        const _FR_MONTHS = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+
+        function makeDateLink(dateStr, isConge) {
+            const d = new Date(dateStr);
+            const label = d.getDate().toString().padStart(2,'0') + ' ' + _FR_MONTHS[d.getMonth()];
+            const url = `/leaves/front?user=${encodeURIComponent(ussser)}&starting_date=${dateStr}&ending_date=${dateStr}`;
+            const bg = isConge ? '#e8f5e9' : '#ffebee';
+            const color = isConge ? '#2e7d32' : '#c62828';
+            const border = isConge ? '#a5d6a7' : '#ef9a9a';
+            return `<a href="${url}" target="_blank" style="display:inline-block;margin:2px;padding:3px 10px;border-radius:20px;background:${bg};color:${color};border:1px solid ${border};font-weight:600;font-size:0.82rem;text-decoration:none;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">${label}</a>`;
+        }
+
+        (data.absence_dates || []).forEach(dateStr => {
+            const d = new Date(dateStr);
+            let isConge = false;
+
+            if (data.leaves_response) {
+                for (let leaf of data.leaves_response) {
+                    const start = new Date(leaf.starting_date);
+                    const end = new Date(leaf.ending_date);
+                    if (d >= start && d <= end) {
+                        isConge = true;
+                        break;
+                    }
+                }
+            }
+
+            if (isConge) {
+                conges_dates_list.push(makeDateLink(dateStr, true));
+            } else {
+                absence_dates_list.push(makeDateLink(dateStr, false));
+            }
+        });
+
+        document.getElementById("dates_absence").textContent = "-";
+
+        let absencesEl = document.getElementById("absences_dates");
+        absencesEl.innerHTML = absence_dates_list.length ? absence_dates_list.join('') : '<span style="color:#999">—</span>';
+        absencesEl.className = "center-value";
+        let absencesCount = document.getElementById("absences_count");
+        if(absencesCount) absencesCount.textContent = absence_dates_list.length;
+
+        let congesEl = document.getElementById("conges_dates");
+        congesEl.innerHTML = conges_dates_list.length ? conges_dates_list.join('') : '<span style="color:#999">—</span>';
+        congesEl.className = "center-value";
+        let congesCount = document.getElementById("conges_count");
+        if(congesCount) congesCount.textContent = conges_dates_list.length;
+
+        let note = Math.max(0, 20 - (data.days_in_month - data.num_reports));
+        updateScoreBadge("note_q0", note, 20);
+        // Store for Moyenne calculation
+        window._step1.numReports = data.num_reports || 0;
+        _recalcMoyenne();
+      });
+
+    // Q1: Visits
+    fetch(`/evaluations/api/visits_per_user/?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json()).then(data => {
+        // document.getElementById("response_1").innerHTML = data.nombre_visites;
+        if(document.getElementById("doctors_1")) {
+            document.getElementById("doctors_1").innerHTML = data.noms_medecins_visites;
+        }
+        let note = data.nombre_visites > 100 ? 25 : Math.max(0, 25 - (100 - data.nombre_visites));
+        updateScoreBadge("note_q1", note, 25);
+        
+        let summaryText = `<span style="color:#2e7d32;">${data.nombre_visites} médecins visités</span> : `;
+        if (data.specialty_counts) {
+            let specParts = [];
+            for (let [spec, count] of Object.entries(data.specialty_counts)) {
+                specParts.push(`<b>${count}</b> ${spec}s`);
+            }
+            summaryText += specParts.join(', ');
+        }
+        let spSummary = document.getElementById("specialty_summary");
+        if(spSummary) spSummary.innerHTML = summaryText;
+        
+        // Render list
+        let container = document.getElementById("doctors_list_table");
+        if (container && data.details_medecins_visites && data.details_medecins_visites.length > 0) {
+            let html = '<table class="table" style="font-size: 0.85rem;"><thead><tr><th>ID</th><th>Nom</th><th>Spécialité</th><th>Région</th></tr></thead><tbody>';
+            data.details_medecins_visites.forEach((m, index) => {
+                let display = index < 5 ? '' : 'display:none;';
+                let rowClass = index >= 5 ? 'hidden-medecin-row' : '';
+                html += `<tr class="${rowClass}" style="${display}">
+                    <td><strong>${m.id}</strong></td>
+                    <td style="color: #2e7d32; font-weight: 600;">${m.nom}</td>
+                    <td>${m.specialite}</td>
+                    <td><small class="text-muted"><i class="fas fa-map-marker-alt"></i> ${m.region}</small></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+            
+            let btn = document.getElementById("btn_voir_plus_q1");
+            if (btn && data.details_medecins_visites.length > 5) {
+                btn.style.display = 'inline-block';
+                btn.onclick = function() {
+                    let rows = document.querySelectorAll('.hidden-medecin-row');
+                    rows.forEach(r => r.style.display = '');
+                    this.style.display = 'none';
+                };
+            }
+        } else if (container) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #9e9e9e;"><i class="fas fa-user-md fa-2x" style="margin-bottom: 10px;"></i><p>Aucun médecin visité trouvé.</p></div>';
+        }
+
+        // ── Step 1: Populate unique medical clients ──
+        let medClients = data.nombre_visites || 0;
+        window._step1.uniqueMedClients = medClients;
+        let elMedClients = document.getElementById("total_clients_med");
+        if (elMedClients) elMedClients.textContent = medClients;
+      });
+
+    // Q2: Multiple Visits
+    fetch(`/evaluations/api/visits_more_than_once/?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json()).then(data => {
+        let countEl = document.getElementById("response_2_medecins");
+        if(countEl) countEl.innerText = data.nombre_medecins_visites || 0;
+        
+        let container = document.getElementById("raison_2");
+        if(container && data.noms_medecins_visites && data.noms_medecins_visites.length > 0) {
+            let html = '';
+
+            let specialty_counts = {};
+            data.noms_medecins_visites.forEach(m => {
+                let spec = m.specialite || "Inconnu";
+                specialty_counts[spec] = (specialty_counts[spec] || 0) + 1;
+            });
+            
+            let summaryText = `<span style="color:#1565c0;">${data.nombre_medecins_visites} médecins visités plus d'une fois</span> : `;
+            let specParts = [];
+            for (let [spec, count] of Object.entries(specialty_counts)) {
+                specParts.push(`<b>${count}</b> ${spec}s`);
+            }
+            summaryText += specParts.join(', ');
+            let spSummary = document.getElementById("specialty_summary_q2");
+            if(spSummary) {
+                spSummary.innerHTML = summaryText;
+                spSummary.style.display = 'block';
+            }
+
+            data.noms_medecins_visites.forEach((m, index) => {
+                let badgeSpec = m.specialite ? `<span class="q2-badge-spec"><i class="fas fa-stethoscope"></i> ${m.specialite}</span>` : '';
+                let badgeVisits = `<span class="q2-badge-visit"><i class="fas fa-layer-group"></i> ${m.total_visites} Visites</span>`;
+                
+                let encodedUser = encodeURIComponent(ussser || '');
+                let datesStr = '';
+                if (m.dates_visites && m.dates_visites.length) {
+                    let links = m.dates_visites.map(d => {
+                        let link = `/medecins/visites/PDF/${m.id}/?pays=0&wilaya=0&commune=0&priority=&commercial=${encodedUser}&medecin=&mindate=${d}&maxdate=${d}&specialite=&classification=&produit=&visites=1&shared=&stock=&note=&deal=&visit_type=1&user=${encodedUser}`;
+                        return `<a href="${link}" target="_blank" class="q2-date-pill">${d}</a>`;
+                    });
+                    datesStr = links.join(' ');
+                }
+                
+                let display = index < 5 ? '' : 'display:none;';
+                let rowClass = index >= 5 ? 'hidden-medecin-row-q2' : '';
+
+                html += `
+                <div class="q2-card ${rowClass}" style="${display}">
+                  <div class="q2-info-section">
+                    <div class="q2-header">
+                       <h6 class="q2-doctor-name">${m.nom}</h6>
+                       ${badgeSpec}
+                    </div>
+                    <div>
+                        ${badgeVisits}
+                    </div>
+                    <div class="q2-dates">
+                       <i class="far fa-calendar-check" style="margin-top: 4px; color: #9e9e9e;"></i> 
+                       <div style="display: flex; flex-wrap: wrap; gap: 4px;">${datesStr}</div>
+                    </div>
+                  </div>
+                  <div class="q2-input-section">
+                    <textarea id="RaisonsMedecinsMultiplesVisites_${m.id}" class="q2-textarea" placeholder="Justification détaillée de la visite multiple... (Champ obligatoire)"></textarea>
+                  </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+            restoreDoctorJustifications('RaisonsMedecinsMultiplesVisites_', SAVED_ANSWERS.q_justifications_multi_visites);
+
+            let note_q2 = Math.max(0, 20 - (data.nombre_medecins_visites || 0));
+            updateScoreBadge("note_q2", note_q2, 20);
+
+            let btn = document.getElementById("btn_voir_plus_q2");
+            if (btn && data.noms_medecins_visites.length > 5) {
+                btn.style.display = 'inline-block';
+                btn.onclick = function() {
+                    let rows = document.querySelectorAll('.hidden-medecin-row-q2');
+                    rows.forEach(r => r.style.display = 'flex');
+                    this.style.display = 'none';
+                };
+            }
+        } else if (container) {
+            container.innerHTML = `<div style="text-align: center; padding: 20px; color: #9e9e9e;"><i class="fas fa-check-circle fa-2x" style="color: #81c784; margin-bottom: 10px;"></i><p>Aucun médecin visité plus d'une fois.</p></div>`;
+            updateScoreBadge("note_q2", 20, 20);
+        }
+
+        // ── Step 1: Compute total medical visits & moyenne ──
+        let multiVisitTotal = 0;
+        let multiVisitDoctorCount = 0;
+        if (data.noms_medecins_visites && data.noms_medecins_visites.length > 0) {
+          data.noms_medecins_visites.forEach(m => {
+            multiVisitTotal += (m.total_visites || 0);
+          });
+          multiVisitDoctorCount = data.noms_medecins_visites.length;
+        }
+        // Single-visit doctors = unique Q1 count - multi-visit doctor count (each counted once)
+        let singleVisitDoctors = Math.max(0, (window._step1.uniqueMedClients || 0) - multiVisitDoctorCount);
+        let totalVisitesMed = singleVisitDoctors + multiVisitTotal;
+
+        let elTotalVisMed = document.getElementById("total_visites_med");
+        if (elTotalVisMed) elTotalVisMed.textContent = totalVisitesMed;
+
+        // Store total and recompute moyenne
+        window._step1.totalVisitesMed = totalVisitesMed;
+        _recalcMoyenne();
+      })
+      .catch(err => console.error("Error fetching Q2 multiple visits:", err));
+
+    // Q3: Non-Visits
+    fetch(`/evaluations/api/doctors_not_visited/?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json()).then(data => {
+        let countEl = document.getElementById("response_3_medecins");
+        if(countEl) countEl.innerText = data.nombre_medecins_non_visites || 0;
+        
+        let container = document.getElementById("raison_3");
+        if(container && data.medecins_non_visites && data.medecins_non_visites.length > 0) {
+            let html = '';
+            
+            let specialty_counts = {};
+            data.medecins_non_visites.forEach(m => {
+                let spec = m.specialite || "Inconnu";
+                specialty_counts[spec] = (specialty_counts[spec] || 0) + 1;
+            });
+            
+            let summaryText = `<span style="color:#c62828;">${data.nombre_medecins_non_visites} médecins non visités</span> : `;
+            let specParts = [];
+            for (let [spec, count] of Object.entries(specialty_counts)) {
+                specParts.push(`<b>${count}</b> ${spec}s`);
+            }
+            summaryText += specParts.join(', ');
+            let spSummary = document.getElementById("specialty_summary_q3");
+            if(spSummary) {
+                spSummary.innerHTML = summaryText;
+                spSummary.style.display = 'block';
+            }
+
+            data.medecins_non_visites.forEach((m, index) => {
+                let badgeSpec = m.specialite ? `<span class="q2-badge-spec"><i class="fas fa-stethoscope"></i> ${m.specialite}</span>` : '';
+                
+                let encodedUser = encodeURIComponent(ussser || '');
+                let lastVisitText = m.date_derniere_visite ? `<a href="/medecins/visites/PDF/${m.id}/?pays=0&wilaya=0&commune=0&priority=&commercial=${encodedUser}&medecin=&mindate=${m.date_derniere_visite}&maxdate=${m.date_derniere_visite}&specialite=&classification=&produit=&visites=1&shared=&stock=&note=&deal=&visit_type=1&user=${encodedUser}" target="_blank" class="q2-date-pill">${m.date_derniere_visite}</a>` : '<span class="q2-badge-visit" style="background:#ffebee; color:#c62828; border-color:#ffcdd2;">Jamais</span>';
+                
+                let display = index < 5 ? '' : 'display:none;';
+                let rowClass = index >= 5 ? 'hidden-medecin-row-q3' : '';
+
+                html += `
+                <div class="q2-card ${rowClass}" style="${display}">
+                  <div class="q2-info-section">
+                    <div class="q2-header">
+                       <h6 class="q2-doctor-name">${m.id} - ${m.nom}</h6>
+                       ${badgeSpec}
+                    </div>
+                    <div class="q2-dates" style="margin-top: 8px;">
+                       <i class="far fa-clock" style="margin-top: 4px; color: #9e9e9e;"></i>
+                       <div style="display: flex; flex-direction: column; gap: 2px;">
+                         <span style="font-size: 0.75rem; font-weight: 600; color: #757575;">Dernière visite:</span>
+                         ${lastVisitText}
+                       </div>
+                    </div>
+                  </div>
+                  <div class="q2-input-section">
+                    <textarea id="RaisonsMedecinsNonVisites_${m.id}" class="q2-textarea" placeholder="Raison de non visite détaillée... (Champ obligatoire)"></textarea>
+                  </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+            restoreDoctorJustifications('RaisonsMedecinsNonVisites_', SAVED_ANSWERS.q_justifications_non_visites);
+
+            let btn = document.getElementById("btn_voir_plus_q3");
+            if (btn && data.medecins_non_visites.length > 5) {
+                btn.style.display = 'inline-block';
+                btn.onclick = function() {
+                    let rows = document.querySelectorAll('.hidden-medecin-row-q3');
+                    rows.forEach(r => r.style.display = 'flex');
+                    this.style.display = 'none';
+                };
+            }
+        } else if (container) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #9e9e9e;"><i class="fas fa-check-double fa-2x" style="color: #81c784; margin-bottom: 10px;"></i><p>Tous les médecins du portfolio ont été visités.</p></div>';
+        }
+        
+        let note = Math.max(0, 25 - Math.ceil((data.nombre_medecins_non_visites || 0) / 2));
+        updateScoreBadge("note_q3", note, 25);
+      })
+      .catch(err => console.error("Error fetching Q3 non visits:", err));
+
+    // Q4: Duo Visits
+    fetch(`/evaluations/api/doctors_duo/?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json()).then(data => {
+        let countEl = document.getElementById("response_4_medecins");
+        if(countEl) countEl.innerText = data.nombre_medecins_visites || 0;
+        
+        let container = document.getElementById("raison_4");
+        if(container && data.noms_medecins_visites && data.noms_medecins_visites.length > 0) {
+            let html = '';
+            
+            data.noms_medecins_visites.forEach((m, index) => {
+                let badgeSpec = m.specialite ? `<span class="q2-badge-spec"><i class="fas fa-stethoscope"></i> ${m.specialite}</span>` : '';
+                let badgeVisits = `<span class="q2-badge-visit"><i class="fas fa-user-friends"></i> ${m.total_visites} Visite(s) Duo</span>`;
+                
+                let encodedUser = encodeURIComponent(ussser || '');
+                let datesStr = '';
+                if (m.dates_visites && m.dates_visites.length) {
+                    let links = m.dates_visites.map(d => {
+                        let link = `/medecins/visites/PDF/${m.id}/?pays=0&wilaya=0&commune=0&priority=&commercial=${encodedUser}&medecin=&mindate=${d}&maxdate=${d}&specialite=&classification=&produit=&visites=1&shared=&stock=&note=&deal=&visit_type=1&user=${encodedUser}`;
+                        return `<a href="${link}" target="_blank" class="q2-date-pill">${d}</a>`;
+                    });
+                    datesStr = links.join(' ');
+                }
+                
+                let display = index < 5 ? '' : 'display:none;';
+                let rowClass = index >= 5 ? 'hidden-medecin-row-q4' : '';
+
+                html += `
+                <div class="q2-card ${rowClass}" style="${display}">
+                  <div class="q2-info-section">
+                    <div class="q2-header">
+                       <h6 class="q2-doctor-name">${m.nom}</h6>
+                       ${badgeSpec}
+                    </div>
+                    <div>
+                        ${badgeVisits}
+                    </div>
+                    <div class="q2-dates">
+                       <i class="far fa-calendar-check" style="margin-top: 4px; color: #9e9e9e;"></i> 
+                       <div style="display: flex; flex-wrap: wrap; gap: 4px;">${datesStr}</div>
+                    </div>
+                  </div>
+                  <div class="q2-input-section">
+                    <textarea id="RaisonsMedecinsVisitesDuo_${m.id}" class="q2-textarea" placeholder="Justification de la visite en duo... (Champ obligatoire)"></textarea>
+                  </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+            restoreDoctorJustifications('RaisonsMedecinsVisitesDuo_', SAVED_ANSWERS.q_justifications_duo);
+
+            let btnDiv = document.createElement("div");
+            btnDiv.style.textAlign = "center";
+            btnDiv.style.marginTop = "15px";
+            
+            let btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "btn btn-secondary btn-sm";
+            btn.style.display = data.noms_medecins_visites.length > 5 ? 'inline-block' : 'none';
+            btn.style.padding = "5px 15px";
+            btn.style.fontSize = "0.85rem";
+            btn.innerHTML = 'Voir plus <i class="fas fa-chevron-down"></i>';
+            btn.onclick = function() {
+                let rows = container.querySelectorAll('.hidden-medecin-row-q4');
+                rows.forEach(r => r.style.display = 'flex');
+                this.style.display = 'none';
+            };
+            btnDiv.appendChild(btn);
+            container.appendChild(btnDiv);
+        } else if (container) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #9e9e9e;"><i class="fas fa-user-times fa-2x" style="margin-bottom: 10px;"></i><p>Aucun médecin visité en duo ce mois-ci.</p></div>';
+        }
+
+        let note = Math.min(5, (data.nombre_medecins_visites || 0) * 0.5);
+        updateScoreBadge("note_q4", note, 5);
+      })
+      .catch(err => console.error("Error fetching Q4 duo visits:", err));
+      
+    // Q5: Top 5 Medecins par Produit
+    fetchProduits();
+
+    // Q10: Deals Commerciaux (Q10)
+    fetchProduitsQ10();
+
+    // Q11: Commercial Visites (Pharmacie & Grossiste)
+    fetch(`/evaluations/api/visits_per_user_pharma_gro/?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json()).then(data => {
+        let pharmaCount = data.specialty_counts ? (data.specialty_counts["Pharmacie"] || 0) : 0;
+        let groCount = data.specialty_counts ? (data.specialty_counts["Grossiste"] || 0) : 0;
+        
+        let elPharma = document.getElementById("total_pharma");
+        if(elPharma) elPharma.innerText = pharmaCount;
+        
+        let elGro = document.getElementById("total_gro");
+        if(elGro) elGro.innerText = groCount;
+        
+        let elDocs = document.getElementById("doctors_11");
+        if(elDocs) elDocs.innerHTML = data.noms_medecins_visites || "";
+        
+        let container = document.getElementById("doctors_list_table_11");
+        if (container && data.details_medecins_visites && data.details_medecins_visites.length > 0) {
+            let html = '<table class="table" style="font-size: 0.85rem;"><thead><tr><th>ID</th><th>Nom</th><th>Spécialité</th><th>Région</th></tr></thead><tbody>';
+            data.details_medecins_visites.forEach((m, index) => {
+                let display = index < 5 ? '' : 'display:none;';
+                let rowClass = index >= 5 ? 'hidden-medecin-row-11' : '';
+                html += `<tr class="${rowClass}" style="${display}">
+                    <td><strong>${m.id}</strong></td>
+                    <td style="color: #2e7d32; font-weight: 600;">${m.nom}</td>
+                    <td>${m.specialite}</td>
+                    <td><small class="text-muted"><i class="fas fa-map-marker-alt"></i> ${m.region}</small></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+            
+            let btn = document.getElementById("btn_voir_plus_q11");
+            if (btn && data.details_medecins_visites.length > 5) {
+                btn.style.display = 'inline-block';
+                btn.onclick = function() {
+                    let rows = document.querySelectorAll('.hidden-medecin-row-11');
+                    rows.forEach(r => r.style.display = '');
+                    this.style.display = 'none';
+                };
+            }
+        } else if (container) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #9e9e9e;"><i class="fas fa-store fa-2x" style="margin-bottom: 10px;"></i><p>Aucun client (Pharmacie/Grossiste) visité trouvé.</p></div>';
+        }
+        
+        let elResp = document.getElementById("response_11");
+        if(elResp) elResp.value = data.nombre_visites;
+
+        // ── Step 1: Populate commercial clients & visits ──
+        let comClients = data.nombre_visites || 0;
+        let elComClients = document.getElementById("total_clients_com");
+        if (elComClients) elComClients.textContent = comClients;
+        let elComVisits = document.getElementById("total_visites_com");
+        if (elComVisits) elComVisits.textContent = comClients;
+      })
+      .catch(err => console.error("Error fetching Q11 visits:", err));
+
+    // Q12: Commercial - Super Grossistes
+    fetch(`/evaluations/api/visits_supergros/?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json()).then(data => {
+        let countEl = document.getElementById("response_12_medecins");
+        if(countEl) countEl.innerText = data.nombre_medecins_visites || 0;
+        
+        let container = document.getElementById("raison_12");
+        if(container && data.noms_medecins_visites && data.noms_medecins_visites.length > 0) {
+            let html = '';
+            
+            data.noms_medecins_visites.forEach((m, index) => {
+                let badgeSpec = m.specialite ? `<span class="q2-badge-spec"><i class="fas fa-building"></i> ${m.specialite}</span>` : '';
+                let badgeVisits = `<span class="q2-badge-visit"><i class="fas fa-layer-group"></i> ${m.total_visites} Visites</span>`;
+                
+                let encodedUser = encodeURIComponent(ussser || '');
+                let datesStr = '';
+                if (m.dates_visites && m.dates_visites.length) {
+                    let links = m.dates_visites.map(d => {
+                        let link = `/medecins/visites/PDF/${m.id}/?pays=0&wilaya=0&commune=0&priority=&commercial=${encodedUser}&medecin=&mindate=${d}&maxdate=${d}&specialite=&classification=&produit=&visites=1&shared=&stock=&note=&deal=&visit_type=1&user=${encodedUser}`;
+                        return `<a href="${link}" target="_blank" class="q2-date-pill">${d}</a>`;
+                    });
+                    datesStr = links.join(' ');
+                }
+                
+                let display = index < 5 ? '' : 'display:none;';
+                let rowClass = index >= 5 ? 'hidden-medecin-row-12' : '';
+
+                html += `
+                <div class="q2-card ${rowClass}" style="${display}">
+                  <div class="q2-info-section">
+                    <div class="q2-header">
+                       <h6 class="q2-doctor-name">${m.nom}</h6>
+                       ${badgeSpec}
+                    </div>
+                    <div>
+                        ${badgeVisits}
+                    </div>
+                    <div class="q2-dates">
+                       <i class="far fa-calendar-check" style="margin-top: 4px; color: #9e9e9e;"></i> 
+                       <div style="display: flex; flex-wrap: wrap; gap: 4px;">${datesStr}</div>
+                    </div>
+                  </div>
+                  <div class="q2-input-section">
+                    <textarea id="RaisonsSuperGroVisites_${m.id}" class="q2-textarea" placeholder="Justification détaillée de la visite chez le super grossiste... (Champ obligatoire)"></textarea>
+                  </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+            restoreDoctorJustifications('RaisonsSuperGroVisites_', SAVED_ANSWERS.q_justifications_supergros);
+
+            let btnDiv = document.createElement("div");
+            btnDiv.style.textAlign = "center";
+            btnDiv.style.marginTop = "15px";
+            
+            let btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "btn btn-secondary btn-sm";
+            btn.style.display = data.noms_medecins_visites.length > 5 ? 'inline-block' : 'none';
+            btn.style.padding = "5px 15px";
+            btn.style.fontSize = "0.85rem";
+            btn.innerHTML = 'Voir plus <i class="fas fa-chevron-down"></i>';
+            btn.onclick = function() {
+                let rows = container.querySelectorAll('.hidden-medecin-row-12');
+                rows.forEach(r => r.style.display = 'flex');
+                this.style.display = 'none';
+            };
+            btnDiv.appendChild(btn);
+            container.appendChild(btnDiv);
+        } else if (container) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #9e9e9e;"><i class="fas fa-building fa-2x" style="margin-bottom: 10px;"></i><p>Aucun Super Grossiste visité ce mois-ci.</p></div>';
+        }
+      })
+      .catch(err => console.error("Error fetching Q12 supergros visits:", err));
+
+    // Q13: Bons de Commande
+    fetchOrders();
+
+    // ... Additional Fetch calls for Q14 follow the same pattern as your original file ...
+  }
+
+  function fetchOrders() {
+    fetch(`/orders/ordersPerUserPerMonth?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json()).then(data => {
+        let validOrders = [];
+        let newProductSummary = {};
+        
+        let pharmacyGrossisteCount = 0;
+        let grossisteSuperGrossisteCount = 0;
+        let pharmacySuperGrossisteCount = 0;
+        let supergrotoofficeCount = 0;
+
+        if (data.orders) {
+            data.orders.forEach(order => {
+                const pharmacyValue = order.pharmacy || "-";
+                const grossisteValue = order.gros || "-";
+                const superGrossisteValue = order.super_gros || "-";
+                
+                // Filter out "Super Grossistes to Office" (i.e. pharmacy and gros are "-", but super_gros is not)
+                if (pharmacyValue === "-" && grossisteValue === "-" && superGrossisteValue !== "-") {
+                    supergrotoofficeCount++;
+                    // Do not add to validOrders and newProductSummary
+                } else {
+                    validOrders.push(order);
+                    
+                    if (pharmacyValue === "-" && grossisteValue !== "-" && superGrossisteValue !== "-") {
+                        grossisteSuperGrossisteCount++;
+                    } else if (pharmacyValue !== "-" && grossisteValue !== "-" && superGrossisteValue === "-") {
+                        pharmacyGrossisteCount++;
+                    } else if (pharmacyValue !== "-" && grossisteValue === "-" && superGrossisteValue !== "-") {
+                        pharmacySuperGrossisteCount++;
+                    }
+                    
+                    if (order.products) {
+                        order.products.forEach(p => {
+                            let qty = parseInt(p.quantity) || 0;
+                            newProductSummary[p.product_name] = (newProductSummary[p.product_name] || 0) + qty;
+                        });
+                    }
+                }
+            });
+        }
+        
+        // Update Total Commandes
+        let totalCountEl = document.getElementById("response_13_nombre");
+        if(totalCountEl) totalCountEl.innerText = validOrders.length;
+        
+        // Product Summaries
+        let summaryContainer = document.getElementById("raison_13_summary");
+        if(summaryContainer) {
+            let html = '<div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">';
+            for (const [pName, pQty] of Object.entries(newProductSummary)) {
+                html += `
+                <div class="q2-card" style="flex: 1; min-width: 150px; flex-direction: column; align-items: center; justify-content: center; padding: 12px; margin-bottom: 0;">
+                  <h6 style="color: #2e7d32; font-weight: 700; margin: 0; text-align: center;">${pName}</h6>
+                  <div style="font-size: 0.9rem; margin-top: 5px;">Quantité: <strong>${pQty}</strong></div>
+                </div>`;
+            }
+            html += '</div>';
+            
+            if (Object.keys(newProductSummary).length === 0) {
+                summaryContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #9e9e9e; width: 100%;"><i class="fas fa-box-open fa-2x" style="margin-bottom: 10px;"></i><p>Aucun produit commandé.</p></div>';
+            } else {
+                summaryContainer.innerHTML = html;
+            }
+        }
+        
+        // Orders Table
+        let tableBody = document.getElementById("field_13");
+        if(tableBody) {
+            if (validOrders.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Aucune commande trouvée.</td></tr>';
+            } else {
+                let html = '';
+                validOrders.forEach(order => {
+                    let statusColor = "#1e1e2e";
+                    if (order.status === "initial") statusColor = "#1565c0"; // blue
+                    else if (order.status === "confirme" || order.status === "confirmed") statusColor = "#2e7d32"; // green
+                    else if (order.status === "en cours") statusColor = "#ef6c00"; // orange
+                    
+                    let productsHtml = '<ul style="margin: 0; padding-left: 20px; font-size: 0.85rem;">';
+                    if (order.products) {
+                        order.products.forEach(p => {
+                            productsHtml += `<li>${p.product_name} - Qte: <strong>${p.quantity}</strong></li>`;
+                        });
+                    }
+                    productsHtml += '</ul>';
+                    
+                    html += `<tr>
+                        <td>${order.date || "-"}</td>
+                        <td><strong>${order.order_id || "-"}</strong></td>
+                        <td style="color: ${statusColor}; font-weight: 600;">${order.status || "-"}</td>
+                        <td>${order.pharmacy || "-"}</td>
+                        <td>${order.gros || "-"}</td>
+                        <td>${order.super_gros || "-"}</td>
+                        <td>${productsHtml}</td>
+                    </tr>`;
+                });
+                tableBody.innerHTML = html;
+            }
+        }
+        
+        // Note Calculation
+        let note_q13 = (pharmacyGrossisteCount + grossisteSuperGrossisteCount) * 0.5;
+        if (note_q13 > 15) note_q13 = 15;
+        updateScoreBadge("note_q13", note_q13, 15);
+        
+        // Summary Text
+        let resumeEl = document.getElementById("raison_13_resume");
+        if(resumeEl) {
+            resumeEl.innerHTML = `
+                <div style="background: #f8f9fa; border-left: 4px solid #1565c0; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+                        <div><strong>Pharmacie &rarr; Grossiste:</strong> ${pharmacyGrossisteCount}</div>
+                        <div><strong>Grossiste &rarr; Super Grossiste:</strong> ${grossisteSuperGrossisteCount}</div>
+                        <div><strong>Pharmacie &rarr; Super Grossiste:</strong> ${pharmacySuperGrossisteCount}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Save the validOrders somewhere accessible for submission logic if needed
+        window.response_13 = validOrders;
+      })
+      .catch(err => console.error("Error fetching orders:", err));
+  }
+
+  // --- Q5 LOGIC ---
+  let nombre_medecins_added = 0;
+
+  function fetchProduits() {
+    fetch(`/evaluations/api/get_user_products/?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json())
+      .then(data => generateProductCards(data))
+      .catch(err => console.error('Error fetching Q5 products:', err));
+  }
+
+  function generateProductCards(products) {
+    const container = document.getElementById("productContainer");
+    if(!container) return;
+    
+    if(!products || products.length === 0) {
+        container.innerHTML = '<div class="alert alert-info py-2" style="font-size:0.85rem;">Aucun produit assigné.</div>';
+        return;
+    }
+
+    products.forEach(product => {
+      const pCard = document.createElement("div");
+      pCard.className = "q2-card mb-3";
+      pCard.style.flexDirection = "column";
+
+      const productId = product.product_id;
+      
+      pCard.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h6 style="color: #2e7d32; font-size: larger; font-weight: 700; margin: 0;">Produit: ${product.product_name}</h6>
+        </div>
+        <div style="position: relative; margin-bottom: 15px;">
+            <input class="form-control" id="input_q5_${productId}" placeholder="Rechercher un médecin à ajouter pour ce produit..." style="border-radius: 8px; font-size: 0.9rem; border: 1px solid #c8e6c9; padding: 12px;" />
+            <div id="dropdown_q5_${productId}" class="dropdown-box d-none position-absolute shadow w-100" style="max-height: 250px; overflow-y: auto; border: 1px solid #e0e0e0; z-index: 10000; background: white;"></div>
+        </div>
+        <div id="container_q5_${productId}" class="q5-container-styled"></div>
+      `;
+      container.appendChild(pCard);
+
+      const inputEl = document.getElementById(`input_q5_${productId}`);
+      const dropdownEl = document.getElementById(`dropdown_q5_${productId}`);
+      const textareaEl = document.getElementById(`textarea_q5_${productId}`);
+
+      inputEl.addEventListener("input", (e) => {
+        const value = e.target.value.toLowerCase();
+        if (value.length >= 3) {
+          fetch(`/medecins/api/v2/search?name=${value}&user=${ussser}`)
+            .then(r => r.json())
+            .then(data => {
+              if (data && data.length > 0) {
+                let html = "";
+                data.forEach(d => {
+                    const rawNom = d.nom || '';
+                    let docId = '??';
+                    let docName = rawNom;
+                    let docSpec = '';
+                    
+                    let parts = rawNom.split(' / ');
+                    if (parts.length > 1) {
+                        docSpec = parts.pop().trim();
+                        docName = parts.slice(0).join(' / ').trim();
+                    }
+                    let spaceParts = docName.split(' ');
+                    if (spaceParts.length > 0 && !isNaN(spaceParts[0]) && spaceParts[0].trim() !== '') {
+                        docId = spaceParts[0];
+                        docName = spaceParts.slice(1).join(' ').trim() || docName;
+                    }
+
+                    const escapedId = docId.replace(/'/g, "\\'");
+                    const escapedName = docName.replace(/'/g, "\\'");
+                    const escapedSpec = docSpec.replace(/'/g, "\\'");
+                    const escapedRaw = rawNom.replace(/'/g, "\\'");
+
+                    html += `<p class="dropdown-item" style="padding: 10px 14px; margin: 0; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem;" onclick="addMedecinQ5_${productId}('${escapedId}', '${escapedName}', '${escapedSpec}', '${escapedRaw}')"><strong style="color:#2e7d32;">${docId}</strong> ${docName} <span style="font-size:0.75rem; color:#1565c0; float:right;">${docSpec}</span></p>`;
+                });
+                dropdownEl.innerHTML = html;
+                dropdownEl.classList.remove("d-none");
+              } else {
+                dropdownEl.innerHTML = '<p style="padding: 10px 14px; font-size: 0.9rem; color: #757575; margin: 0;">Aucun résultat</p>';
+                dropdownEl.classList.remove("d-none");
+              }
+            }).catch(err => console.error("Error searching doctors:", err));
+        } else {
+          dropdownEl.classList.add("d-none");
+        }
+      });
+
+      // hover effects for dynamically added dropdown items
+      dropdownEl.addEventListener("mouseover", (e) => {
+          let item = e.target.closest('.dropdown-item');
+          if(item) {
+              item.style.backgroundColor = '#f1f8e9';
+          }
+      });
+      dropdownEl.addEventListener("mouseout", (e) => {
+          let item = e.target.closest('.dropdown-item');
+          if(item) {
+              item.style.backgroundColor = '';
+          }
+      });
+
+      document.body.addEventListener("click", (e) => {
+        if (!inputEl.contains(e.target) && !dropdownEl.contains(e.target)) {
+          dropdownEl.classList.add("d-none");
+        }
+      });
+
+      const containerQ5 = document.getElementById(`container_q5_${productId}`);
+
+      window[`addMedecinQ5_${productId}`] = (id, name, spec, raw) => {
+        const existingTags = containerQ5.querySelectorAll(`[data-raw="${raw}"]`);
+        if (existingTags.length === 0) {
+            const tagHTML = `
+                <div class="q5-doc-tag" data-raw="${raw}">
+                    <span class="q5-doc-id">${id}</span>
+                    <span class="q5-doc-name">${name}</span>
+                    ${spec ? `<span class="q5-doc-spec">${spec}</span>` : ''}
+                    <span class="q5-doc-remove" onclick="this.parentElement.remove(); recomputeQ5Score();">&times;</span>
+                </div>
+            `;
+            containerQ5.insertAdjacentHTML('beforeend', tagHTML);
+            nombre_medecins_added++;
+            recomputeQ5Score();
+        } else {
+            if(typeof vanillaToast !== 'undefined') vanillaToast.warning("Ce médecin a déjà été ajouté pour ce produit.");
+        }
+
+        inputEl.value = "";
+        dropdownEl.classList.add("d-none");
+        inputEl.blur();
+      };
+    });
+  }
+
+  function recomputeQ5Score() {
+      let totalAdded = 0;
+      document.querySelectorAll('.q5-doc-tag').forEach(tag => totalAdded++);
+      nombre_medecins_added = totalAdded;
+      let note = Math.min(15, totalAdded * 0.5);
+      updateScoreBadge("note_q5", note, 15);
+  }
+
+  // --- Q10 LOGIC: Deals Commerciaux ---
+  function fetchProduitsQ10() {
+    fetch(`/evaluations/api/get_user_products/?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json())
+      .then(data => generateProductCardsQ10(data))
+      .catch(err => console.error('Error fetching Q10 products:', err));
+  }
+
+  function generateProductCardsQ10(products) {
+    const container = document.getElementById("productContainerq10");
+    if(!container) return;
+    
+    if(!products || products.length === 0) {
+        container.innerHTML = '<div class="alert alert-info py-2" style="font-size:0.85rem;">Aucun produit assigné.</div>';
+        return;
+    }
+
+    products.forEach(product => {
+      const pCard = document.createElement("div");
+      pCard.className = "q2-card mb-3";
+      pCard.style.flexDirection = "column";
+
+      const productId = product.product_id;
+
+      pCard.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h6 style="color: #2e7d32; font-weight: 700; margin: 0;">Produit: ${product.product_name}</h6>
+        </div>
+        <div id="selection_q10_${productId}" style="margin-bottom: 10px;">
+            <!-- Search input -->
+            <div style="position: relative; margin-bottom: 5px;">
+                <input class="form-control" id="input_q10_${productId}" placeholder="Rechercher un médecin par nom pour ce deal..." style="border-radius: 6px; font-size: 0.85rem; border: 1px solid #c8e6c9;" />
+                <div id="dropdown_q10_${productId}" class="dropdown-box d-none position-absolute shadow w-100" style="max-height: 200px; overflow-y: auto; border: 1px solid #e0e0e0; z-index: 9999; background: white;"></div>
+            </div>
+            <!-- Selected doctor display -->
+            <div id="selected_doc_container_q10_${productId}" style="display: none; align-items: center; gap: 10px; background: #e8f5e9; padding: 8px; border-radius: 4px; border: 1px solid #c8e6c9;">
+                <span id="selected_doc_name_q10_${productId}" style="font-weight: 600; color: #2e7d32; font-size: 0.9rem;"></span>
+                <input type="hidden" id="hidden_doc_id_q10_${productId}">
+                <button type="button" class="btn btn-sm" style="background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 2px 8px; font-size: 0.75rem; border-radius:12px;" onclick="removeMedecinQ10_${productId}()">Changer médecin</button>
+            </div>
+        </div>
+        <textarea id="textarea_q10_${productId}" class="q2-textarea" rows="2" placeholder="Proposition de deal commercial détaillée..." style="min-height: 50px; border: 1px solid #e0e0e0;"></textarea>
+      `;
+      container.appendChild(pCard);
+
+      const inputEl = document.getElementById(`input_q10_${productId}`);
+      const dropdownEl = document.getElementById(`dropdown_q10_${productId}`);
+      const selectedContainer = document.getElementById(`selected_doc_container_q10_${productId}`);
+      const selectedNameEl = document.getElementById(`selected_doc_name_q10_${productId}`);
+      const hiddenIdEl = document.getElementById(`hidden_doc_id_q10_${productId}`);
+      const textareaEl = document.getElementById(`textarea_q10_${productId}`);
+
+      const calculateNoteQ10 = () => {
+          setTimeout(updateGlobalQ10Score, 50);
+      };
+
+      textareaEl.addEventListener("input", calculateNoteQ10);
+
+      inputEl.addEventListener("input", (e) => {
+        const value = e.target.value.toLowerCase();
+        if (value.length >= 3) {
+          fetch(`/medecins/api/v2/search?name=${value}&user=${ussser}`)
+            .then(r => r.json())
+            .then(data => {
+              if (data && data.length > 0) {
+                let html = "";
+                data.forEach(d => {
+                    const escapedName = d.nom.replace(/'/g, "\\'");
+                    const escapedId = d.id || '';
+                    html += `<p class="dropdown-item" style="padding: 8px 12px; margin: 0; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 0.85rem;" onclick="addMedecinQ10_${productId}('${escapedId}', '${escapedName}')">${d.nom}</p>`;
+                });
+                dropdownEl.innerHTML = html;
+                dropdownEl.classList.remove("d-none");
+              } else {
+                dropdownEl.innerHTML = '<p style="padding: 8px 12px; font-size: 0.85rem; color: #757575; margin: 0;">Aucun résultat</p>';
+                dropdownEl.classList.remove("d-none");
+              }
+            }).catch(err => console.error("Error searching doctors:", err));
+        } else {
+          dropdownEl.classList.add("d-none");
+        }
+      });
+
+      dropdownEl.addEventListener("mouseover", (e) => {
+          if(e.target.tagName.toLowerCase() === 'p' && e.target.classList.contains('dropdown-item')) {
+              e.target.style.backgroundColor = '#f1f8e9';
+          }
+      });
+      dropdownEl.addEventListener("mouseout", (e) => {
+          if(e.target.tagName.toLowerCase() === 'p' && e.target.classList.contains('dropdown-item')) {
+              e.target.style.backgroundColor = '';
+          }
+      });
+
+      document.body.addEventListener("click", (e) => {
+        if (!inputEl.contains(e.target) && !dropdownEl.contains(e.target)) {
+          dropdownEl.classList.add("d-none");
+        }
+      });
+
+      window[`addMedecinQ10_${productId}`] = (id, name) => {
+        selectedNameEl.innerText = name;
+        hiddenIdEl.value = name;
+        
+        inputEl.style.display = 'none';
+        dropdownEl.classList.add("d-none");
+        selectedContainer.style.display = 'flex';
+        
+        calculateNoteQ10();
+      };
+
+      window[`removeMedecinQ10_${productId}`] = () => {
+        selectedNameEl.innerText = '';
+        hiddenIdEl.value = '';
+        
+        inputEl.value = '';
+        inputEl.style.display = 'block';
+        selectedContainer.style.display = 'none';
+        
+        calculateNoteQ10();
+      };
+    });
+  }
+
+  function updateGlobalQ10Score() {
+      let validDeals = 0;
+      const containers = document.querySelectorAll('div[id^="selection_q10_"]');
+      containers.forEach(c => {
+          const productId = c.id.replace('selection_q10_', '');
+          const hiddenIdEl = document.getElementById(`hidden_doc_id_q10_${productId}`);
+          const textareaEl = document.getElementById(`textarea_q10_${productId}`);
+          
+          if (hiddenIdEl && hiddenIdEl.value.trim() !== '' && textareaEl && textareaEl.value.trim() !== '') {
+              validDeals++;
+          }
+      });
+      
+      let note = Math.min(5, validDeals * 0.5); 
+      updateScoreBadge("note_q10", note, 5);
+  }
+
+  // --- FACTORY FUNCTION FOR Q6, Q7, Q8, Q9 ---
+  const doctorListsState = {};
+
+  function initDoctorSearchList(qKey, prefix, maxItems, placeholder) {
+      doctorListsState[qKey] = { addedCount: 0, prefix: prefix, placeholder: placeholder };
+      
+      const inputEl = document.getElementById(`doctor_input_${qKey}`);
+      const dropdownEl = document.getElementById(`doctor_dropdown_${qKey}`);
+
+      if (inputEl && dropdownEl) {
+          inputEl.addEventListener("input", (e) => {
+            const value = e.target.value.toLowerCase();
+            if (value.length >= 3) {
+              fetch(`/medecins/api/v2/search?name=${value}&user=${ussser}`)
+                .then(r => r.json())
+                .then(data => {
+                  if (data && data.length > 0) {
+                    let html = "";
+                    data.forEach(d => {
+                        const rawNom = d.nom || '';
+                        let docId = Math.random().toString(36).substr(2, 9);
+                        let docName = rawNom;
+                        let docSpec = '';
+                        
+                        let parts = rawNom.split(' / ');
+                        if (parts.length > 1) {
+                            docSpec = parts.pop().trim();
+                            docName = parts.join(' / ').trim();
+                        }
+                        let spaceParts = docName.split(' ');
+                        if (spaceParts.length > 0 && !isNaN(spaceParts[0]) && spaceParts[0].trim() !== '') {
+                            docId = spaceParts[0];
+                            docName = spaceParts.slice(1).join(' ').trim() || docName;
+                        }
+                        
+                        const escapedId = docId.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                        const escapedName = docName.replace(/'/g, "\\'").replace(/"/g, "&quot;") || 'Médecin inconnu';
+                        const escapedSpec = docSpec.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                        
+                        html += `<p class="dropdown-item" style="padding: 10px 14px; margin: 0; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem;" onclick="addMedecinFactory('${qKey}', '${escapedId}', '${escapedName}', '${escapedSpec}')"><strong style="color:#2e7d32;">${docId}</strong> ${docName} <span style="font-size:0.75rem; color:#1565c0; float:right;">${docSpec}</span></p>`;
+                    });
+                    dropdownEl.innerHTML = html;
+                    dropdownEl.classList.remove("d-none");
+                  } else {
+                    dropdownEl.innerHTML = '<p style="padding: 8px 12px; font-size: 0.85rem; color: #757575; margin: 0;">Aucun résultat</p>';
+                    dropdownEl.classList.remove("d-none");
+                  }
+                }).catch(err => console.error("Error searching doctors:", err));
+            } else {
+              dropdownEl.innerHTML = "";
+              dropdownEl.classList.add("d-none");
+            }
+          });
+
+          // hover effects
+          dropdownEl.addEventListener("mouseover", (e) => {
+              if(e.target.tagName.toLowerCase() === 'p' && e.target.classList.contains('dropdown-item')) {
+                  e.target.style.backgroundColor = '#f1f8e9';
+              }
+          });
+          dropdownEl.addEventListener("mouseout", (e) => {
+              if(e.target.tagName.toLowerCase() === 'p' && e.target.classList.contains('dropdown-item')) {
+                  e.target.style.backgroundColor = '';
+              }
+          });
+
+          document.body.addEventListener("click", (e) => {
+            if (!inputEl.contains(e.target) && !dropdownEl.contains(e.target)) {
+              dropdownEl.classList.add("d-none");
+            }
+          });
+      }
+  }
+
+  window.addMedecinFactory = (qKey, id, nom, specialite) => {
+      const maxItems = 10;
+      const state = doctorListsState[qKey];
+      const prefix = state.prefix;
+      const placeholder = state.placeholder;
+      const inp = document.getElementById(`doctor_input_${qKey}`);
+      const drop = document.getElementById(`doctor_dropdown_${qKey}`);
+      
+      if (state.addedCount >= maxItems) {
+          if(typeof vanillaToast !== 'undefined') vanillaToast.warning(`Vous avez atteint la limite de ${maxItems} médecins.`);
+          if(inp) inp.value = "";
+          if(drop) { drop.innerHTML = ""; drop.classList.add("d-none"); }
+          return;
+      }
+      
+      const cardId = `${qKey}_card_${id}`;
+      if (document.getElementById(cardId)) {
+          if(typeof vanillaToast !== 'undefined') vanillaToast.warning("Ce médecin est déjà ajouté.");
+          if(inp) inp.value = "";
+          if(drop) { drop.innerHTML = ""; drop.classList.add("d-none"); }
+          return;
+      }
+
+      state.addedCount++;
+      const currentCount = state.addedCount;
+      const countEl = document.getElementById(`${qKey}_count`);
+      if(countEl) countEl.innerText = `${currentCount}/${maxItems}`;
+      updateScoreBadge(`note_${qKey}`, currentCount * 0.5, 5);
+
+      const badgeSpec = specialite ? `<span class="q2-badge-spec"><i class="fas fa-stethoscope"></i> ${specialite}</span>` : '';
+      
+      const cardHTML = `
+      <div class="q2-card" id="${cardId}">
+        <div class="q2-info-section">
+          <div class="q2-header">
+             <h6 class="q2-doctor-name">${nom}</h6>
+             ${badgeSpec}
+          </div>
+          <div style="margin-top:8px;">
+            <button type="button" class="btn btn-sm" style="background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 4px 10px; font-size: 0.75rem; border-radius:12px;" onclick="removeMedecinFactory('${qKey}', '${id}')"><i class="fas fa-trash-alt"></i> Retirer</button>
+          </div>
+        </div>
+        <div class="q2-input-section">
+          <textarea id="${prefix}_${id}" class="q2-textarea" placeholder="${placeholder}"></textarea>
+        </div>
+      </div>
+      `;
+      
+      const container = document.getElementById(`${qKey}_container`);
+      if(container) container.insertAdjacentHTML('beforeend', cardHTML);
+      
+      if(inp) { 
+          inp.value = ""; 
+          inp.blur(); 
+      }
+      if(drop) { 
+          drop.innerHTML = ""; 
+          drop.classList.add("d-none"); 
+      }
+  };
+
+  window.removeMedecinFactory = (qKey, id) => {
+      const card = document.getElementById(`${qKey}_card_${id}`);
+      if (card) {
+          card.remove();
+          const state = doctorListsState[qKey];
+          state.addedCount--;
+          
+          const maxItems = 10;
+          const countEl = document.getElementById(`${qKey}_count`);
+          if(countEl) countEl.innerText = `${state.addedCount}/${maxItems}`;
+          updateScoreBadge(`note_${qKey}`, state.addedCount * 0.5, 5);
+      }
+  };
+
+  // Initialize them
+  initDoctorSearchList('q6', 'RaisonsMedecinsInactifs', 10, "Raison de l'inactivité détaillée... (Champ obligatoire)");
+  initDoctorSearchList('q7', 'plus_7', 10, "Type de plus apporté détaillé... (Champ obligatoire)");
+  initDoctorSearchList('q8', 'RaisonsMedecinsRetires', 10, "Raison du retrait détaillée... (Champ obligatoire)");
+  initDoctorSearchList('q9', 'RaisonsMedecinsSuggestions', 10, "Suggestion d'optimisation détaillée... (Champ obligatoire)");
+
+  // --- SUBMIT LOGIC ---
+
+  function validateAllStepsMedical() {
+    const prefixes = [
+      'RaisonsMedecinsNonVisites_',
+      'RaisonsMedecinsMultiplesVisites_',
+      'RaisonsMedecinsVisitesDuo_',
+      'RaisonsSuperGroVisites_',
+      'RaisonsMedecinsInactifs_',
+      'plus_7_',
+      'RaisonsMedecinsRetires_',
+      'RaisonsMedecinsSuggestions_'
+    ];
+    const selector = prefixes.map(p => `textarea[id^="${p}"]`).join(', ');
+    const fields = document.querySelectorAll(selector);
+    let valid = true;
+    fields.forEach(f => {
+      if (f.value.trim() === '') {
+        f.classList.add('is-invalid');
+        valid = false;
+      } else {
+        f.classList.remove('is-invalid');
+      }
+    });
+    if (!valid) vanillaToast.error("Veuillez remplir tous les champs de justification obligatoires.");
+    return valid;
+  }
+
+  function collectJustifications(prefix) {
+    const result = {};
+    document.querySelectorAll(`textarea[id^="${prefix}"]`).forEach(ta => {
+      const itemId = ta.id.replace(prefix, '');
+      result[itemId] = ta.value.trim();
+    });
+    return result;
+  }
+
+  function collectQ5Data() {
+    const result = {};
+    document.querySelectorAll('div[id^="container_q5_"]').forEach(div => {
+      const productId = div.id.replace('container_q5_', '');
+      let names = [];
+      div.querySelectorAll('.q5-doc-tag').forEach(tag => {
+          names.push(tag.getAttribute('data-raw'));
+      });
+      if (names.length > 0) result[productId] = names.join(" - ");
+    });
+    return result;
+  }
+
+  function collectQ10Data() {
+    const result = {};
+    document.querySelectorAll('div[id^="selection_q10_"]').forEach(c => {
+      const productId = c.id.replace('selection_q10_', '');
+      const docName = document.getElementById(`hidden_doc_id_q10_${productId}`);
+      const textarea = document.getElementById(`textarea_q10_${productId}`);
+      if (docName && docName.value.trim() && textarea && textarea.value.trim()) {
+        result[productId] = { medecin: docName.value.trim(), suggestion: textarea.value.trim() };
+      }
+    });
+    return result;
+  }
+
+  function makePostRequestMedical(e) {
+    e.preventDefault();
+    if (!validateAllStepsMedical()) return;
+
+    const scoreQ0  = parseFloat(document.getElementById("note_q0")?.innerText)  || 0;
+    const scoreQ1  = parseFloat(document.getElementById("note_q1")?.innerText)  || 0;
+    const scoreQ2  = parseFloat(document.getElementById("note_q2")?.innerText)  || 0;
+    const scoreQ3  = parseFloat(document.getElementById("note_q3")?.innerText)  || 0;
+    const scoreQ4  = parseFloat(document.getElementById("note_q4")?.innerText)  || 0;
+    const scoreQ5  = parseFloat(document.getElementById("note_q5")?.innerText)  || 0;
+    const scoreQ6  = parseFloat(document.getElementById("note_q6")?.innerText)  || 0;
+    const scoreQ7  = parseFloat(document.getElementById("note_q7")?.innerText)  || 0;
+    const scoreQ8  = parseFloat(document.getElementById("note_q8")?.innerText)  || 0;
+    const scoreQ9  = parseFloat(document.getElementById("note_q9")?.innerText)  || 0;
+    const scoreQ10 = parseFloat(document.getElementById("note_q10")?.innerText) || 0;
+    const score1112 = parseFloat(document.getElementById("note_1112")?.innerText) || 0;
+    const scoreQ13 = parseFloat(document.getElementById("note_q13")?.innerText) || 0;
+    const totalScore = scoreQ0 + scoreQ1 + scoreQ2 + scoreQ3 + scoreQ4 + scoreQ5 +
+                       scoreQ6 + scoreQ7 + scoreQ8 + scoreQ9 + scoreQ10 + score1112 + scoreQ13;
+
+    const postData = {
+      csrfmiddlewaretoken: document.getElementById("csrf_token").value,
+      evaluation_type: 'MEDICAL',
+      own_perc: totalScore,
+      month: month,
+      user: ussser,
+      year: yyyear,
+      q_justifications_non_visites:    JSON.stringify(collectJustifications('RaisonsMedecinsNonVisites_')),
+      q_justifications_multi_visites:  JSON.stringify(collectJustifications('RaisonsMedecinsMultiplesVisites_')),
+      q_justifications_duo:            JSON.stringify(collectJustifications('RaisonsMedecinsVisitesDuo_')),
+      q_justifications_supergros:      JSON.stringify(collectJustifications('RaisonsSuperGroVisites_')),
+      q_justifications_inactifs:       JSON.stringify(collectJustifications('RaisonsMedecinsInactifs_')),
+      q_justifications_valeur_ajoutee: JSON.stringify(collectJustifications('plus_7_')),
+      q_justifications_retires:        JSON.stringify(collectJustifications('RaisonsMedecinsRetires_')),
+      q_justifications_suggestions:    JSON.stringify(collectJustifications('RaisonsMedecinsSuggestions_')),
+      q_top5_products:                 JSON.stringify(collectQ5Data()),
+      q_deals_commerciaux:             JSON.stringify(collectQ10Data()),
+      q_suggestion_finale:             document.getElementById("response_14")?.value || ''
+    };
+
+    $.ajax({
+      url: '/evaluations/submit/',
+      type: 'POST',
+      data: postData,
+      success: () => {
+        vanillaToast.success('Évaluation enregistrée avec succès!');
+        setTimeout(() => { window.location.href = '/evaluations/landing/'; }, 1500);
+      },
+      error: () => vanillaToast.error('Erreur: Rapport déjà existant ou problème serveur.')
+    });
+  }
+
+  document.getElementById('submit_2').addEventListener('click', makePostRequestMedical);
+
+  if (IS_READ_ONLY) {
+    const alertContainer = document.querySelector('.alert-container');
+    if (alertContainer) {
+      const scoreText = EVAL_SCORE !== null ? ` &nbsp;|&nbsp; Score total : <strong>${EVAL_SCORE}</strong>` : '';
+      alertContainer.innerHTML = `<div style="background:#e3f2fd; border:1px solid #90caf9; border-radius:8px; padding:15px; color:#0d47a1; font-weight:600; display:flex; justify-content:space-between; align-items:center;"><span><i class="fas fa-eye" style="margin-right:8px;"></i>Mode Consultation — Évaluation déjà soumise</span><span>${scoreText}</span></div>`;
+    }
+    const submitBtn = document.getElementById('submit_2');
+    if (submitBtn) submitBtn.closest('#submit_container') && (submitBtn.closest('#submit_container').style.display = 'none');
+    setTimeout(lockFormReadOnly, 2500);
+  }
+
+  // Restore Q14 suggestion finale (supervisor read-only view)
+  if (IS_READ_ONLY && SAVED_ANSWERS.q_suggestion_finale) {
+    const el14 = document.getElementById('response_14');
+    if (el14) el14.value = SAVED_ANSWERS.q_suggestion_finale;
+  }
+
+  showStep(1);
+  fetchData();
+</script>
+</body>
+</html>

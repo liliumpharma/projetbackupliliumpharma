@@ -1,0 +1,315 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Évaluation – {{ target_user.first_name }} {{ target_user.last_name }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #fff;
+      color: #1e1e2e;
+      padding: 32px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    @media print {
+      body { padding: 10px; }
+      .no-print { display: none !important; }
+      @page { margin: 1.5cm; }
+    }
+
+    /* ── PRINT BUTTON ── */
+    .no-print {
+      text-align: right;
+      margin-bottom: 24px;
+    }
+    .print-btn {
+      padding: 10px 22px;
+      background: linear-gradient(135deg, #0f2456, #2451b3);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+    }
+    .print-btn:hover { opacity: 0.9; }
+
+    /* ── HEADER ── */
+    .doc-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      border-bottom: 3px solid #0f2456;
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+    .doc-header .company-info h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #0f2456;
+      letter-spacing: -0.5px;
+    }
+    .doc-header .company-info p {
+      font-size: 0.82rem;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+    .doc-header .doc-title {
+      text-align: right;
+    }
+    .doc-header .doc-title h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1e1e2e;
+    }
+    .doc-header .doc-title .eval-type-badge {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 4px 12px;
+      border-radius: 50px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .eval-type-badge.medical   { background: #dbeafe; color: #1d4ed8; }
+    .eval-type-badge.commercial { background: #d1fae5; color: #065f46; }
+
+    /* ── META GRID ── */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      background: #f8f9ff;
+      border: 1px solid #e8eaf6;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 28px;
+    }
+    .meta-item label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #9ca3af;
+      letter-spacing: 0.8px;
+      margin-bottom: 4px;
+    }
+    .meta-item .val {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1e1e2e;
+    }
+
+    /* ── SCORE BANNER ── */
+    .score-banner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      background: linear-gradient(135deg, #0f2456, #2451b3);
+      border-radius: 12px;
+      padding: 20px 28px;
+      margin-bottom: 28px;
+      color: white;
+    }
+    .score-banner .score-val {
+      font-size: 3rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+    .score-banner .score-label {
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+    .score-banner .score-sub {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+    .score-divider {
+      width: 2px;
+      height: 60px;
+      background: rgba(255,255,255,0.25);
+    }
+
+    /* ── SECTIONS ── */
+    .section-title {
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #2451b3;
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #e8eaf6;
+    }
+
+    /* ── ANSWER CARDS ── */
+    .answer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 600px) { .answer-grid { grid-template-columns: 1fr; } }
+
+    .answer-card {
+      border: 1px solid #e8eaf6;
+      border-radius: 10px;
+      padding: 14px 16px;
+      background: #fafbff;
+    }
+    .answer-card .q-id {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 4px;
+    }
+    .answer-card .q-val {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #1e1e2e;
+      word-break: break-word;
+    }
+    .answer-card .q-val.verified   { color: #059669; }
+    .answer-card .q-val.unverified { color: #dc2626; }
+    .answer-card .q-val.empty      { color: #d1d5db; font-style: italic; }
+
+    /* ── FULL-WIDTH ANSWER ── */
+    .answer-card.full {
+      grid-column: 1 / -1;
+    }
+    .answer-card .q-val pre {
+      white-space: pre-wrap;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.88rem;
+      margin: 0;
+    }
+
+    /* ── FOOTER ── */
+    .doc-footer {
+      border-top: 1px solid #e8eaf6;
+      padding-top: 16px;
+      margin-top: 32px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+
+    /* ── ERROR STATE ── */
+    .error-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: #ef4444;
+    }
+    .error-state h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 8px; }
+    .error-state p  { color: #6b7280; }
+  </style>
+</head>
+<body>
+
+{% if error %}
+<div class="error-state">
+  <div style="font-size:3rem;margin-bottom:16px;">⚠️</div>
+  <h2>Erreur</h2>
+  <p>{{ error }}</p>
+</div>
+{% else %}
+
+<!-- Print button (hidden on print) -->
+<div class="no-print">
+  <button class="print-btn" onclick="window.print()">🖨 Imprimer / Télécharger PDF</button>
+</div>
+
+<!-- DOCUMENT HEADER -->
+<div class="doc-header">
+  <div class="company-info">
+    <h1>LILIUM PHARMA</h1>
+    <p>Évaluation Mensuelle des Délégués</p>
+  </div>
+  <div class="doc-title">
+    <h2>Fiche d'Évaluation</h2>
+    <span class="eval-type-badge {% if evaluation.evaluation_type == 'MEDICAL' %}medical{% else %}commercial{% endif %}">
+      {{ evaluation.evaluation_type }}
+    </span>
+  </div>
+</div>
+
+<!-- META INFO -->
+<div class="meta-grid">
+  <div class="meta-item">
+    <label>Délégué</label>
+    <div class="val">{{ target_user.first_name }} {{ target_user.last_name }}</div>
+  </div>
+  <div class="meta-item">
+    <label>Période</label>
+    <div class="val">{{ month_name }} {{ year }}</div>
+  </div>
+  <div class="meta-item">
+    <label>Date de soumission</label>
+    <div class="val">{{ evaluation.created_at|date:"d/m/Y" }}</div>
+  </div>
+</div>
+
+<!-- SCORE BANNER -->
+<div class="score-banner">
+  <div>
+    <div class="score-label">Score total</div>
+    <div class="score-val">{{ evaluation.total_score }}</div>
+  </div>
+  <div class="score-divider"></div>
+  <div>
+    <div class="score-label">Type d'évaluation</div>
+    <div class="score-sub">{{ evaluation.evaluation_type }}</div>
+  </div>
+  <div class="score-divider"></div>
+  <div>
+    <div class="score-label">Nb. réponses</div>
+    <div class="score-val" style="font-size:2rem;">{{ answers|length }}</div>
+  </div>
+</div>
+
+<!-- ANSWERS -->
+{% if answers %}
+<div class="section-title">Réponses aux questions</div>
+<div class="answer-grid">
+  {% for q_id, val in answers.items %}
+    <div class="answer-card {% if val|length > 80 %}full{% endif %}">
+      <div class="q-id">{{ q_id }}</div>
+      {% if val == "option1" or val == "Vérifié" or val == "oui" %}
+        <div class="q-val verified">✓ Vérifié</div>
+      {% elif val == "option2" or val == "Non Vérifié" or val == "non" %}
+        <div class="q-val unverified">✗ Non Vérifié</div>
+      {% elif val %}
+        <div class="q-val"><pre>{{ val }}</pre></div>
+      {% else %}
+        <div class="q-val empty">— sans réponse —</div>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+{% else %}
+<p style="color:#9ca3af;text-align:center;padding:32px 0;">Aucune réponse enregistrée.</p>
+{% endif %}
+
+<!-- FOOTER -->
+<div class="doc-footer">
+  <span>LILIUM PHARMA – Document confidentiel</span>
+  <span>Ref: EVAL-{{ evaluation.id }} | {{ evaluation.created_at|date:"d/m/Y H:i" }}</span>
+</div>
+
+{% endif %}
+</body>
+</html>

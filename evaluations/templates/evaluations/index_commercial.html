@@ -1,0 +1,1492 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evaluation Mensuelle - Commercial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+  <link rel="stylesheet" href="{% static 'css/toast/vanilla-toast.css'%}">
+  
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #ffffff; color: #1e1e2e; line-height: 1.5; }
+
+    /* ── HEADER (Screenshot Style) ── */
+    .top-bar {
+      background: #2e7d32; 
+      color: white;
+      padding: 10px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .top-bar .brand-text { font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 8px; }
+    .top-bar .user-meta { display: flex; gap: 20px; font-size: 0.9rem; align-items: center; }
+
+    /* ── ALERTS ── */
+    .alert-container { padding: 20px 32px; }
+    .custom-alert {
+      background-color: #d1fae5;
+      border: 1px solid #a7f3d0;
+      border-radius: 8px;
+      color: #064e3b;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+    }
+
+    /* ── WIZARD ── */
+    .wizard-step { display: none; padding: 0 32px 90px; }
+    .wizard-step.active { display: block; animation: slideInRight 0.3s ease-out forwards; }
+    .wizard-step.active.slide-back { animation: slideInLeft 0.3s ease-out forwards; }
+    @keyframes slideInRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slideInLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+
+    .section-title {
+      background: #f1f8e9;
+      border-left: 5px solid #2e7d32;
+      padding: 15px;
+      text-align: left;
+      margin: 30px 0 20px;
+      border-radius: 0 4px 4px 0;
+      color: #1b5e20;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .question-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-family: inherit;
+      margin-top: 10px;
+    }
+    .is-invalid { border-color: #dc3545 !important; }
+    .is-valid { border-color: #28a745 !important; }
+
+    /* ── NAVIGATION ── */
+    .wizard-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      padding: 20px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #eee;
+      z-index: 1000;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+    }
+    .btn { padding: 10px 25px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s ease; text-decoration: none; display: inline-block; }
+    .btn-primary { background: #2e7d32; color: white; }
+    .btn-primary:hover { background: #1b5e20; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(46,125,50,0.2); }
+    .btn-secondary { background: #eee; color: #555; }
+    .btn-secondary:hover { background: #e0e0e0; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+    .btn-submit { background: #1b5e20; color: white; width: 100%; font-size: 1.1rem; text-align: center; }
+    .btn-submit:hover { background: #144d17; transform: translateY(-2px) scale(1.01); box-shadow: 0 6px 12px rgba(27,94,32,0.25); }
+
+    /* ── UTILS ── */
+    .text-red { color: #d32f2f; font-weight: bold; }
+    .text-green { color: #2e7d32; font-weight: bold; }
+    .dropdown-box { max-height: 250px; overflow-y: auto; background: white; border-radius: 4px; z-index: 9999; }
+    .dropdown-box p { padding: 8px; margin: 0; cursor: pointer; border-bottom: 1px solid #eee; }
+    .dropdown-box p:hover { background: #f1f8e9; }
+    
+    .table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+    .table th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; }
+    .table td { padding: 12px; border-bottom: 1px solid #eee; }
+    /* ── SCORE BADGES & BANNER ── */
+    .score-badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-weight: 700; font-size: 0.85rem; border: 1px solid transparent; margin-left: 5px; }
+    .score-red { background: #ffebee; color: #c62828; border-color: #ffcdd2; }
+    .score-orange { background: #fff3e0; color: #ef6c00; border-color: #ffe0b2; }
+    .score-green { background: #e8f5e9; color: #2e7d32; border-color: #c8e6c9; }
+
+    /* ── MODERN INFO BANNER ── */
+    .info-banner-modern {
+      display: flex;
+      justify-content: center;
+      margin: 0;
+      padding: 15px 32px;
+      position: sticky;
+      top: 0;
+      z-index: 990;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #eee;
+    }
+    .info-badges {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .info-badge {
+      background: #f1f8e9;
+      border: 1px solid #c8e6c9;
+      color: #1b5e20;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .info-badge i { color: #4caf50; font-size: 1.1em; }
+
+    /* ── Q2 CARDS (Replacing missing Bootstrap) ── */
+    .q2-card {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      padding: 16px;
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      transition: all 0.2s ease-in-out;
+    }
+    .q2-card:hover {
+      border-color: #81c784;
+      box-shadow: 0 4px 12px rgba(46, 125, 50, 0.08);
+      transform: translateY(-1px);
+    }
+    @media(min-width: 768px) {
+      .q2-card { flex-direction: row; align-items: stretch; }
+    }
+    .q2-info-section { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .q2-input-section { flex: 1; display: flex; flex-direction: column; }
+    
+    .q2-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .q2-doctor-name { color: #1b5e20; font-weight: 700; font-size: 1.1rem; margin: 0; }
+    
+    .q2-badge-spec {
+      background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 12px;
+      font-size: 0.75rem; font-weight: 600; border: 1px solid #c8e6c9;
+    }
+    .q2-badge-visit {
+      background: #fff3e0; color: #e65100; padding: 4px 10px; border-radius: 12px;
+      font-size: 0.75rem; font-weight: 600; border: 1px solid #ffe0b2;
+      display: inline-flex; align-items: center; gap: 5px; width: fit-content;
+    }
+    .q2-dates { font-size: 0.8rem; color: #6c757d; display: flex; align-items: flex-start; gap: 6px; margin-top: 4px;}
+    .q2-date-pill {
+      background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 4px;
+      text-decoration: none; font-weight: 500; transition: 0.2s; display: inline-block; margin-bottom: 4px;
+    }
+    .q2-date-pill:hover { background: #bbdefb; color: #0d47a1; }
+    
+    .q2-textarea {
+      width: 100%; height: 100%; min-height: 80px; border: 1px solid #c8e6c9;
+      background: #fafafa; border-radius: 6px; padding: 12px; font-size: 0.85rem;
+      font-family: inherit; resize: vertical; transition: all 0.2s;
+    }
+    .q2-textarea:focus {
+      outline: none; border-color: #4caf50; background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
+    }
+    
+    /* ── FEEDBACK & SEARCH WRAPPER ── */
+    .is-valid { border-color: #4caf50 !important; background-color: #f1f8e9 !important; box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15); }
+    /* ── BILINGUAL HEADERS ── */
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #f0f0f0;
+      gap: 15px;
+    }
+    .question-text {
+      display: flex;
+      flex-direction: row;
+      gap: 15px;
+      flex: 1;
+    }
+    .question-text > * {
+      flex: 1;
+    }
+    .fr-text { margin: 0; font-size: 1.05rem; color: #1e1e2e; font-weight: 600; text-align: left; }
+    .ar-text { margin: 0; font-size: 1.05rem; color: #1b5e20; font-weight: 600; text-align: right; direction: rtl; }
+    /* ── SCORE HINT ── */
+    .score-hint {
+      margin-top: 15px;
+      padding: 12px 18px;
+      background-color: #f8f9fa;
+      border-left: 4px solid #17a2b8;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: row;
+      gap: 15px;
+    }
+    .score-hint > * {
+      flex: 1;
+    }
+    .score-hint p { margin: 0; font-size: 0.9rem; color: #495057; display: flex; align-items: flex-start; }
+    .score-hint .ar-hint { text-align: right; direction: rtl; }
+    .report-item {
+      display: grid !important;
+      grid-template-columns: 1fr 140px 1fr;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    .center-value {
+      display: block;
+      text-align: center;
+      width: 100%;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="brand-text"><i class="fas fa-leaf"></i> Bienvenue</div>
+  <div class="user-meta">
+    <span><i class="far fa-calendar-alt"></i> Tuesday 17th March 2026</span>
+    <span><i class="fas fa-user"></i> {{ request.user.first_name }} {{ request.user.last_name }}</span>
+    <a id="imprimer-bouton" href="#" style="color:white; margin-left:15px;"><i class="fas fa-print"></i></a>
+  </div>
+</div>
+
+
+<div id="info-banner" class="info-banner-modern">
+    <div class="info-badges" id="iinfo"></div>
+</div>
+
+<form id="wizard-form" method="post">
+  <input type="hidden" id="csrf_token" value="{{ csrf_token }}">
+
+  <!-- Step 1: Rapports (Q0 from medical) -->
+  <div class="wizard-step active" data-step="1">
+    <div class="section-title"><h4>Partie Rapports | قسم التقارير</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Évaluation des Rapports Quotidiens</h5>
+          <h5 class="ar-text">تقييم التقارير اليومية</h5>
+        </div>
+        <div class="question-score">
+          <span class="text-red">Note: <span id="note_q0">0</span>/20</span>
+        </div>
+      </div>
+      <!-- Score hint — bilingual, red text per screenshot -->
+      <div style="text-align: center; margin-bottom: 18px; font-size: 0.88rem; color: #c62828; font-weight: 600; line-height: 1.6;">
+        Note totale 20 points, chaque rapport manquant moins un point &nbsp;|&nbsp; العلامة الإجمالية 20 علامة، كل تقرير غير موجود، ناقص علامة
+      </div>
+
+      <!-- Bilingual list rows -->
+       <ul style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px;">
+
+  <li class="report-item">
+    <span style="font-weight: 700; font-size: 0.97rem;">• Nombre de jour de travail:</span>
+    <span id="nombre_rapport" class="text-green center-value">21/21</span>
+    <span style="font-weight: 600; font-size: 0.97rem; direction: rtl; text-align: right;">• عدد أيام العمل</span>
+  </li>
+
+  <li class="report-item">
+    <span style="font-weight: 700; font-size: 0.97rem;">• Similarité rapport/planning:</span>
+    <span id="similarity_perc" class="text-green center-value">3.1%</span>
+    <span style="font-weight: 600; font-size: 0.97rem; direction: rtl; text-align: right;">• تطابق التقارير مع التخطيط</span>
+  </li>
+
+  <li class="report-item">
+    <span style="font-weight: 700; font-size: 0.97rem;">• Nombre de rapport(s) manquant(s):</span>
+    <span id="nombre_absence" class="text-red center-value">0</span>
+    <span style="font-weight: 600; font-size: 0.97rem; direction: rtl; text-align: right;">• عدد الرابورات الناقصة</span>
+  </li>
+
+  <li class="report-item">
+    <span style="font-weight: 700; font-size: 0.97rem;">• Dates des rapports manquants:</span>
+    <span id="dates_absence" class="center-value" style="color: #555; font-weight: normal;">0</span>
+    <span style="font-weight: 600; font-size: 0.97rem; direction: rtl; text-align: right;">• تواريخ التقارير الناقصة</span>
+  </li>
+
+  <li class="report-item">
+    <span style="padding-left: 28px; font-size: 0.9rem; color: #666;">Absences (<span id="absences_count">0</span>):</span>
+    <span id="absences_dates" class="text-red center-value">0</span>
+    <span style="font-size: 0.9rem; direction: rtl; text-align: right; color: #666;">الغيابات</span>
+  </li>
+
+  <li class="report-item">
+    <span style="padding-left: 28px; font-size: 0.9rem; color: #666;">Congés (<span id="conges_count">0</span>):</span>
+    <span id="conges_dates" class="text-red center-value">0</span>
+    <span style="font-size: 0.9rem; direction: rtl; text-align: right; color: #666;">العطل</span>
+  </li>
+
+  <li class="report-item" style="margin-top: 6px; border-top: 1px solid #eee; padding-top: 10px;">
+    <span style="font-weight: 700;">• Nombre de clients visités:</span>
+    <span></span>
+    <span style="font-weight: 600; direction: rtl; text-align: right;">• عدد الزبائن المزارين</span>
+  </li>
+
+  <li class="report-item">
+    <span style="padding-left: 28px;">Super Grossiste:</span>
+    <span id="total_clients_supgros" class="text-green center-value">—</span>
+    <span style="direction: rtl; text-align: right;">سوبر غروسيست</span>
+  </li>
+
+  <li class="report-item">
+    <span style="padding-left: 28px;">Commercial (Ph/Gro):</span>
+    <span id="total_clients_com" class="text-green center-value">—</span>
+    <span style="direction: rtl; text-align: right;">تجاري (صيدلية/جملة)</span>
+  </li>
+
+  <li class="report-item" style="margin-top: 6px; border-top: 1px solid #eee; padding-top: 10px;">
+    <span style="font-weight: 700;">• Nombre des visite(s):</span>
+    <span></span>
+    <span style="font-weight: 600; direction: rtl; text-align: right;">• عدد الزيارات الشهرية</span>
+  </li>
+
+  <li class="report-item">
+    <span style="padding-left: 28px;">Super Grossiste:</span>
+    <span id="total_visites_supgros" class="text-green center-value">—</span>
+    <span style="direction: rtl; text-align: right;">سوبر غروسيست</span>
+  </li>
+
+  <li class="report-item">
+    <span style="padding-left: 28px;">Commercial (Ph/Gro):</span>
+    <span id="total_visites_com" class="text-green center-value">—</span>
+    <span style="direction: rtl; text-align: right;">تجاري (صيدلية/جملة)</span>
+  </li>
+
+  <li class="report-item" style="margin-top: 6px; border-top: 1px solid #eee; padding-top: 10px;">
+    <span style="font-weight: 700;">• Moyenne des visites commercial (Ph/Gros):</span>
+    <span id="moyenne_visites_supgros" class="center-value">—</span>
+    <span style="font-weight: 600; direction: rtl; text-align: right;">• معدل زيارات تجاري (صيدلية/جملة) يوميا</span>
+  </li>
+
+</ul>
+    </div>
+  </div>
+
+  <!-- Step 2: Evaluation des commandes (NEW) -->
+  <div class="wizard-step" data-step="2">
+    <div class="section-title"><h4>Évaluation des commandes | تقييم الطلبيات</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Evaluation des bons de commande par rapport à votre objectif du mois !</h5>
+          <h5 class="ar-text">تقييم أوامر الشراء بناءً على هدفك الشهري</h5>
+        </div>
+        <div class="question-score">
+          <span class="text-red">Note: <span id="note_step2">0</span>/15</span>
+        </div>
+      </div>
+      <div class="score-hint">
+        <p><i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i> Note sur 15 : (valeur totale Ph→Gros / 1 000 000 × 7,5) + (valeur totale Gros→Super / 2 000 000 × 7,5), plafonnée à 15.</p>
+        <p class="ar-hint"><i class="fas fa-info-circle" style="color: #17a2b8; margin-left: 8px;"></i> علامة من 15: (قيمة Ph→Gros / 1,000,000 × 7.5) + (قيمة Gros→Super / 2,000,000 × 7.5)، بحد أقصى 15.</p>
+      </div>
+      <div id="orders_per_product_container">
+        <div style="text-align: center; padding: 40px; color: #9e9e9e;">
+          <i class="fas fa-spinner fa-spin fa-2x"></i>
+          <p style="margin-top: 10px;">Chargement...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3: Objectif commercial special -->
+  <div class="wizard-step" data-step="3">
+    <div class="section-title"><h4>Objectif commercial special | الهدف التجاري الخاص</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Evaluation des bons de commande par rapport à votre objectif du mois (produits spéciaux) !</h5>
+          <h5 class="ar-text">تقييم أوامر الشراء بناءً على هدفك الشهري (المنتجات الخاصة)</h5>
+        </div>
+        <div class="question-score">
+          <span class="text-red">Note: <span id="note_step3">0</span>/15</span>
+        </div>
+      </div>
+      <div id="orders_per_product_special_container">
+        <div style="text-align: center; padding: 40px; color: #9e9e9e;">
+          <i class="fas fa-spinner fa-spin fa-2x"></i>
+          <p style="margin-top: 10px;">Chargement...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 4: Commercial - Visites (Step 12 from medical) -->
+  <div class="wizard-step" data-step="4">
+    <div class="section-title"><h4>Commercial - Visites</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Combien de pharmacies et de grossistes avez vous visités au cours du mois ?</h5>
+          <h5 class="ar-text">كم عدد الصيدليات وتجار الجملة الذين قمت بزيارتها خلال الشهر ؟</h5>
+        </div>
+        <div class="question-score">
+          <span class="text-red">Note: <span id="note_1112">0</span>/20</span>
+        </div>
+      </div>
+      <div class="score-hint" style="margin-bottom: 15px;">
+        <p><i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i> Note totale 20 points, 10 points par spécialité en atteignant la couverture.</p>
+        <p class="ar-hint"><i class="fas fa-info-circle" style="color: #17a2b8; margin-left: 8px;"></i> العلامة الإجمالية 20 نقطة، 10 نقاط لكل تخصص عند بلوغ التغطية.</p>
+      </div>
+      <div style="display: flex; gap: 20px;">
+        <div style="flex:1; background: #f1f8e9; padding: 15px; border-radius: 8px; text-align: center;">
+          <small>Pharmacies</small><br><strong id="total_pharma" class="text-green">0</strong>
+        </div>
+        <div style="flex:1; background: #f1f8e9; padding: 15px; border-radius: 8px; text-align: center;">
+          <small>Grossistes</small><br><strong id="total_gro" class="text-green">0</strong>
+        </div>
+      </div>
+      <input type="hidden" id="response_11">
+    </div>
+  </div>
+
+  <!-- Step 5: Super Grossistes (Step 13 from medical) -->
+  <div class="wizard-step" data-step="5">
+    <div class="section-title"><h4>Commercial - Super Grossistes</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Combien de super grossistes avez vous visité ce mois-ci, en mentionnant le nom du super grossistes et la raison de la visite ?</h5>
+          <h5 class="ar-text">كم عدد سوبر جروسيست الذين زرتها هذا الشهر ، مع ذكر اسم تاجر الجملة وسبب الزيارة ؟</h5>
+        </div>
+        <div class="question-score">
+          <!-- <span class="text-green" style="font-weight: 600;">Total: <span id="response_12_medecins">0</span></span> -->
+        </div>
+      </div>
+      <div id="raison_12" style="margin-top:15px;"></div>
+    </div>
+  </div>
+
+  <!-- Step 6: Visites Multiples (Q2 from medical, step 3) -->
+  <div class="wizard-step" data-step="6">
+    <div class="section-title"><h4>Visites multiples (Q2)</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Qui sont les clients qui ont été visités plus d'une fois ce mois-ci, et la raison ?</h5>
+          <h5 class="ar-text">ما سبب زيارة هؤلاء الزبائن اكثر من مرة هذا الشهر ؟</h5>
+        </div>
+        <div class="question-score">
+          <span class="text-red">Note: <span id="note_q2">0</span>/20</span>
+        </div>
+      </div>
+      <div class="score-hint">
+        <p><i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i> Note totale 20 points, moins un point pour chaque client visité plus d'une fois.</p>
+        <p class="ar-hint"><i class="fas fa-info-circle" style="color: #17a2b8; margin-left: 8px;"></i> العلامة الإجمالية 20 نقطة، يُخصم نقطة واحدة عن كل زبون تمت زيارته أكثر من مرة.</p>
+      </div>
+      <div id="specialty_summary_q2" style="font-weight: 600; color: #555; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-left: 4px solid #1565c0; border-radius: 4px; display: none;"></div>
+      <div id="raison_2" style="background: transparent; border-radius: 6px;">
+        <!-- Dynamic Q2 Content -->
+      </div>
+      <div style="text-align: center; margin-top: 15px;">
+        <button type="button" id="btn_voir_plus_q2" class="btn btn-secondary btn-sm" style="display: none; padding: 5px 15px; font-size: 0.85rem;">Voir plus <i class="fas fa-chevron-down"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 7: Médecins / Clients non visités (Q3 from medical, step 4) -->
+  <div class="wizard-step" data-step="7">
+    <div class="section-title"><h4>Clients non visités (Q3)</h4></div>
+    <div class="question-card">
+      <div class="question-header">
+        <div class="question-text">
+          <h5 class="fr-text">Qui sont les clients qui n'ont pas été visités ce mois-ci ?</h5>
+          <h5 class="ar-text">من هم الزبائن الذين لم تتم زيارتهم هذا الشهر؟</h5>
+        </div>
+        <div class="question-score">
+          <!-- <span class="text-green" style="font-weight: 600;">Total: <span id="response_3_medecins">0</span></span> -->
+          <span class="text-red">Note: <span id="note_q3">0</span>/25</span>
+        </div>
+      </div>
+      <div class="score-hint">
+        <p><i class="fas fa-info-circle" style="color: #17a2b8; margin-right: 8px;"></i> Note totale 25 points, moins un demi point pour chaque client non visité.</p>
+        <p class="ar-hint"><i class="fas fa-info-circle" style="color: #17a2b8; margin-left: 8px;"></i> العلامة الإجمالية 25 نقطة، يُخصم نصف نقطة عن كل زبون لم تتم زيارته.</p>
+      </div>
+      <div id="specialty_summary_q3" style="font-weight: 600; color: #555; margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-left: 4px solid #c62828; border-radius: 4px; display: none;"></div>
+      <div id="raison_3" style="background: transparent; border-radius: 6px;">
+        <!-- Dynamic Q3 Content -->
+      </div>
+      <div style="text-align: center; margin-top: 15px;">
+        <button type="button" id="btn_voir_plus_q3" class="btn btn-secondary btn-sm" style="display: none; padding: 5px 15px; font-size: 0.85rem;">Voir plus <i class="fas fa-chevron-down"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 8: Validation finale (Q14 from medical, step 15) -->
+  <div class="wizard-step" data-step="8">
+    <div class="section-title"><h4>Validation (Q14)</h4></div>
+    <div class="question-card">
+      <div class="question-header" style="border-bottom: none; margin-bottom: 10px; padding-bottom: 0;">
+        <div class="question-text">
+          <h5 class="fr-text">Suggestions pour améliorer les ventes :</h5>
+          <h5 class="ar-text">اقتراحات لتحسين المبيعات :</h5>
+        </div>
+      </div>
+      <textarea id="response_14" class="form-control" rows="6" placeholder="Vos suggestions..."></textarea>
+    </div>
+    <div style="text-align: center; padding: 30px 0;">
+      <i class="fas fa-check-circle" style="font-size: 3rem; color: #2e7d32; margin-bottom: 15px;"></i>
+      <h3>Merci pour votre coopération !</h3>
+      <br>
+      <div id="submit_container" style="display:none;">
+        <button type="button" id="submit_2" class="btn btn-submit">Valider l'évaluation</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wizard-nav">
+    <button type="button" id="prevBtn" class="btn btn-secondary" onclick="nextPrev(-1)" style="visibility: hidden;">Précédent</button>
+    <div id="step-counter" style="font-weight: 600; color: #555; font-size: 0.95rem;">Étape <span id="current-step-text">1</span> / 8</div>
+    <button type="button" id="nextBtn" class="btn btn-primary" onclick="nextPrev(1)">Suivant</button>
+  </div>
+</form>
+
+<script src="{% static 'js/jquery.min.js'%}"></script>
+<script src="{% static 'js/toast/vanilla-toast.js'%}"></script>
+
+<script>
+ 
+  const CONNECTED_USER_ROLE = "{{ user_role }}";
+  const urlParams = new URLSearchParams(window.location.search);
+  const month = urlParams.get('month');
+  const ussser = urlParams.get('user');
+  const yyyear = urlParams.get('year') || 2026;
+
+  // ── READ-ONLY MODE (set by Django when a supervisor views a submitted eval) ──
+  const IS_READ_ONLY = {{ read_only|default:"false"|lower }};
+  const EVAL_SCORE   = {{ evaluation_score|default:"null" }};
+  const SAVED_ANSWERS = {{ answers_json|default:"{}"|safe }};
+
+  // Real-time Form Validation Feedback
+  document.body.addEventListener('input', function(e) {
+      if (e.target && e.target.tagName.toLowerCase() === 'textarea') {
+          if (e.target.classList.contains('is-invalid') && e.target.value.trim() !== '') {
+              e.target.classList.remove('is-invalid');
+              e.target.classList.add('is-valid');
+          } else if (e.target.classList.contains('is-valid') && e.target.value.trim() === '') {
+              e.target.classList.remove('is-valid');
+          }
+      }
+  });
+
+  if (ussser && month) {
+      document.getElementById("iinfo").innerHTML = `
+          <div class="info-badge"><i class="fas fa-user-tie"></i> ${ussser}</div>
+          <div class="info-badge"><i class="fas fa-calendar-alt"></i> Mois: ${month}</div>
+          <div class="info-badge"><i class="fas fa-clock"></i> Année: ${yyyear}</div>
+      `;
+  }
+
+  function updateScoreBadge(elementId, current, max) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      el.innerText = current;
+      const parent = el.parentElement;
+      if (parent) {
+          parent.className = "score-badge"; // override text-red etc.
+          const val = parseFloat(current) || 0;
+          const ratio = max > 0 ? (val / max) : 0;
+          if (ratio >= 0.8) parent.classList.add("score-green");
+          else if (ratio >= 0.5) parent.classList.add("score-orange");
+          else parent.classList.add("score-red");
+      }
+  }
+
+  // ── READ-ONLY HELPERS ──
+  function restoreDoctorJustifications(prefix, savedData) {
+    if (!IS_READ_ONLY || !savedData || typeof savedData !== 'object') return;
+    Object.entries(savedData).forEach(([docId, text]) => {
+      const el = document.getElementById(prefix + docId);
+      if (el && typeof text === 'string') el.value = text;
+    });
+  }
+
+  function lockFormReadOnly() {
+    // Lock if the evaluation is submitted OR if the user is a CountryManager
+    if (IS_READ_ONLY || CONNECTED_USER_ROLE === 'CountryManager' || CONNECTED_USER_ROLE === 'Admin') {
+        document.querySelectorAll('textarea, input:not([type=hidden])').forEach(el => {
+          el.disabled = true;
+          el.style.background = '#f8f9fa';
+          el.style.cursor = 'not-allowed';
+        });
+        const sc = document.getElementById('submit_container');
+        if (sc) sc.style.display = 'none';
+    }
+}
+
+  // Wizard Logic
+  var currentStep = 1;
+  var totalSteps = 8;
+
+  function showStep(step, direction) {
+    document.querySelectorAll('.wizard-step').forEach(s => {
+        s.classList.remove('active', 'slide-back');
+    });
+    const nextStepEl = document.querySelector(`.wizard-step[data-step="${step}"]`);
+    if (direction < 0) {
+        nextStepEl.classList.add('slide-back');
+    }
+    nextStepEl.classList.add('active');
+    
+    document.getElementById("prevBtn").style.visibility = (step === 1) ? "hidden" : "visible";
+    document.getElementById("nextBtn").style.display = (step === totalSteps) ? "none" : "inline-block";
+    
+    // Logic for Submit button: Only show if NOT CountryManager
+    const isLastStep = (step === totalSteps);
+    const isCM = (CONNECTED_USER_ROLE === 'CountryManager' || CONNECTED_USER_ROLE === 'Admin');
+    document.getElementById("submit_container").style.display = (isLastStep && !isCM) ? "flex" : "none";
+    
+    // Update step counter
+    const stepCounterEl = document.getElementById("step-counter");
+    if (step === totalSteps) {
+        stepCounterEl.style.display = "none";
+    } else {
+        stepCounterEl.style.display = "block";
+        document.getElementById("current-step-text").innerText = step;
+    }
+
+    if (step > 1) {
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+  }
+
+  function nextPrev(n) {
+    if (n === 1 && !validateCurrentStep()) return false;
+    currentStep += n;
+    showStep(currentStep, n);
+  }
+
+  function validateCurrentStep() {
+    // If CountryManager, skip validation entirely
+    if (CONNECTED_USER_ROLE === 'CountryManager' || CONNECTED_USER_ROLE === 'Admin') return true;
+
+    if (IS_READ_ONLY) return true;
+    const stepEl = document.querySelector(`.wizard-step[data-step="${currentStep}"]`);
+    const fields = stepEl.querySelectorAll('textarea[id^="RaisonsMedecinsNonVisites_"], textarea[id^="RaisonsMedecinsMultiplesVisites_"], textarea[id^="RaisonsSuperGroVisites_"]');
+    let valid = true;
+    fields.forEach(f => {
+      if (f.value.trim() === "") {
+        f.classList.add("is-invalid");
+        valid = false;
+      } else {
+        f.classList.remove("is-invalid");
+      }
+    });
+    if (!valid) vanillaToast.error("Veuillez remplir les champs obligatoires.");
+    return valid;
+}
+
+  // DATA FETCH FUNCTIONS
+  function fetchData() {
+    // ── Shared state for Step 1 aggregation ──
+    window._step1 = { numReports: 0, totalVisitesCom: 0 };
+
+    // Helper: recompute moyenne = visites commercial / jours de travail
+    function _recalcMoyenne() {
+      let nr = window._step1.numReports || 0;
+      let tv = window._step1.totalVisitesCom || 0;
+      let moy = nr > 0 ? (tv / nr).toFixed(1) : 0;
+      let el = document.getElementById('moyenne_visites_supgros');
+      if (el) el.textContent = moy + ' v/j';
+    }
+
+    // Similarity API Call
+    fetch(`/evaluations/api/similarity/?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json())
+      .then(data => {
+        const simEl = document.getElementById("similarity_perc");
+        if (simEl) {
+          simEl.textContent = (data.similarity_perc || 0) + '%';
+          if (data.similarity_perc < 50) simEl.className = "text-red center-value";
+          else simEl.className = "text-green center-value";
+        }
+      }).catch(() => {});
+
+    // Q0: Rapports
+    fetch(`https://app.liliumpharma.com/rapports/RapportSummaryAPIView?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json()).then(data => {
+        document.getElementById("nombre_rapport").textContent = data.num_reports + '/' + data.days_in_month;
+        document.getElementById("nombre_absence").textContent = data.num_absence;
+
+        let absence_dates_list = [];
+        let conges_dates_list = [];
+
+        const _FR_MONTHS = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+
+        function makeDateLink(dateStr, isConge) {
+          const d = new Date(dateStr);
+          const label = d.getDate().toString().padStart(2,'0') + ' ' + _FR_MONTHS[d.getMonth()];
+          const url = `/leaves/front?user=${encodeURIComponent(ussser)}&starting_date=${dateStr}&ending_date=${dateStr}`;
+          const bg = isConge ? '#e8f5e9' : '#ffebee';
+          const color = isConge ? '#2e7d32' : '#c62828';
+          const border = isConge ? '#a5d6a7' : '#ef9a9a';
+          return `<a href="${url}" target="_blank" style="display:inline-block;margin:2px;padding:3px 10px;border-radius:20px;background:${bg};color:${color};border:1px solid ${border};font-weight:600;font-size:0.82rem;text-decoration:none;transition:opacity 0.15s;" onmouseover="this.style.opacity='0.75'" onmouseout="this.style.opacity='1'">${label}</a>`;
+        }
+
+        (data.absence_dates || []).forEach(dateStr => {
+          const d = new Date(dateStr);
+          let isConge = false;
+          if (data.leaves_response) {
+            for (let leaf of data.leaves_response) {
+              const start = new Date(leaf.starting_date);
+              const end = new Date(leaf.ending_date);
+              if (d >= start && d <= end) { isConge = true; break; }
+            }
+          }
+          if (isConge) conges_dates_list.push(makeDateLink(dateStr, true));
+          else absence_dates_list.push(makeDateLink(dateStr, false));
+        });
+
+        document.getElementById("dates_absence").textContent = "-";
+
+        let absencesEl = document.getElementById("absences_dates");
+        absencesEl.innerHTML = absence_dates_list.length ? absence_dates_list.join('') : '<span style="color:#999">—</span>';
+        absencesEl.className = "center-value";
+        let absencesCount = document.getElementById("absences_count");
+        if(absencesCount) absencesCount.textContent = absence_dates_list.length;
+
+        let congesEl = document.getElementById("conges_dates");
+        congesEl.innerHTML = conges_dates_list.length ? conges_dates_list.join('') : '<span style="color:#999">—</span>';
+        congesEl.className = "center-value";
+        let congesCount = document.getElementById("conges_count");
+        if(congesCount) congesCount.textContent = conges_dates_list.length;
+
+        let note = Math.max(0, 20 - (data.days_in_month - data.num_reports));
+        updateScoreBadge("note_q0", note, 20);
+        window._step1.numReports = data.num_reports || 0;
+        _recalcMoyenne();
+      });
+
+    // Step 2: Commercial Visites (Pharmacie & Grossiste)
+    fetch(`/evaluations/api/visits_per_user_pharma_gro/?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json()).then(data => {
+        let pharmaCount = data.specialty_counts ? (data.specialty_counts["Pharmacie"] || 0) : 0;
+        let groCount = data.specialty_counts ? (data.specialty_counts["Grossiste"] || 0) : 0;
+
+        // Step 1: Commercial = Pharmacie + Grossiste
+        let comClients = (pharmaCount || 0) + (groCount || 0);
+        let elComClients = document.getElementById("total_clients_com");
+        if (elComClients) elComClients.textContent = comClients;
+        let elComVisits = document.getElementById("total_visites_com");
+        if (elComVisits) elComVisits.textContent = data.total_visites || 0;
+        window._step1.totalVisitesCom = data.total_visites || 0;
+        _recalcMoyenne();
+
+        let elPharma = document.getElementById("total_pharma");
+        if(elPharma) elPharma.innerText = pharmaCount;
+
+        let elGro = document.getElementById("total_gro");
+        if(elGro) elGro.innerText = groCount;
+        
+        let elDocs = document.getElementById("doctors_11");
+        if(elDocs) elDocs.innerHTML = data.noms_medecins_visites || "";
+        
+        let container = document.getElementById("doctors_list_table_11");
+        if (container && data.details_medecins_visites && data.details_medecins_visites.length > 0) {
+            let html = '<table class="table" style="font-size: 0.85rem;"><thead><tr><th>ID</th><th>Nom</th><th>Spécialité</th><th>Région</th></tr></thead><tbody>';
+            data.details_medecins_visites.forEach((m, index) => {
+                let display = index < 5 ? '' : 'display:none;';
+                let rowClass = index >= 5 ? 'hidden-medecin-row-11' : '';
+                html += `<tr class="${rowClass}" style="${display}">
+                    <td><strong>${m.id}</strong></td>
+                    <td style="color: #2e7d32; font-weight: 600;">${m.nom}</td>
+                    <td>${m.specialite}</td>
+                    <td><small class="text-muted"><i class="fas fa-map-marker-alt"></i> ${m.region}</small></td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+            
+            let btn = document.getElementById("btn_voir_plus_q11");
+            if (btn && data.details_medecins_visites.length > 5) {
+                btn.style.display = 'inline-block';
+                btn.onclick = function() {
+                    let rows = document.querySelectorAll('.hidden-medecin-row-11');
+                    rows.forEach(r => r.style.display = '');
+                    this.style.display = 'none';
+                };
+            }
+        } else if (container) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #9e9e9e;"><i class="fas fa-store fa-2x" style="margin-bottom: 10px;"></i><p>Aucun client (Pharmacie/Grossiste) visité trouvé.</p></div>';
+        }
+        
+        let elResp = document.getElementById("response_11");
+        if(elResp) elResp.value = data.nombre_visites;
+
+        // Calculate note 11/12 logic that originally existed
+        let nPharma = pharmaCount < 180 ? 5 : 10;
+        let nGro = groCount < 20 ? 5 : 10;
+        let note_1112 = nPharma + nGro;
+        updateScoreBadge("note_1112", note_1112, 20);
+      })
+      .catch(err => console.error("Error fetching Q11 visits:", err));
+
+    // Step 3: Commercial - Super Grossistes
+    fetch(`/evaluations/api/visits_supergros/?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json()).then(data => {
+        // Step 1: SuperGros totals
+        let sgClients = data.nombre_medecins_visites || 0;
+        let elSgClients = document.getElementById("total_clients_supgros");
+        if (elSgClients) elSgClients.textContent = sgClients;
+        let sgVisites = data.total_visites || 0;
+        let elSgVisites = document.getElementById("total_visites_supgros");
+        if (elSgVisites) elSgVisites.textContent = sgVisites;
+        window._step1.totalVisitesSupGros = sgVisites;
+
+        let countEl = document.getElementById("response_12_medecins");
+        if(countEl) countEl.innerText = sgClients;
+        
+        let container = document.getElementById("raison_12");
+        if(container && data.noms_medecins_visites && data.noms_medecins_visites.length > 0) {
+            let html = '';
+            
+            data.noms_medecins_visites.forEach((m, index) => {
+                let badgeSpec = m.specialite ? `<span class="q2-badge-spec"><i class="fas fa-building"></i> ${m.specialite}</span>` : '';
+                let badgeVisits = `<span class="q2-badge-visit"><i class="fas fa-layer-group"></i> ${m.total_visites} Visites</span>`;
+                
+                let encodedUser = encodeURIComponent(ussser || '');
+                let datesStr = '';
+                if (m.dates_visites && m.dates_visites.length) {
+                    let links = m.dates_visites.map(d => {
+                        let link = `/medecins/visites/PDF/${m.id}/?pays=0&wilaya=0&commune=0&priority=&commercial=${encodedUser}&medecin=&mindate=${d}&maxdate=${d}&specialite=&classification=&produit=&visites=1&shared=&stock=&note=&deal=&visit_type=1&user=${encodedUser}`;
+                        return `<a href="${link}" target="_blank" class="q2-date-pill">${d}</a>`;
+                    });
+                    datesStr = links.join(' ');
+                }
+                
+                let display = index < 5 ? '' : 'display:none;';
+                let rowClass = index >= 5 ? 'hidden-medecin-row-12' : '';
+
+                html += `
+                <div class="q2-card ${rowClass}" style="${display}">
+                  <div class="q2-info-section">
+                    <div class="q2-header">
+                       <h6 class="q2-doctor-name">${m.nom}</h6>
+                       ${badgeSpec}
+                    </div>
+                    <div>
+                        ${badgeVisits}
+                    </div>
+                    <div class="q2-dates">
+                       <i class="far fa-calendar-check" style="margin-top: 4px; color: #9e9e9e;"></i> 
+                       <div style="display: flex; flex-wrap: wrap; gap: 4px;">${datesStr}</div>
+                    </div>
+                  </div>
+                  <div class="q2-input-section">
+                    <textarea id="RaisonsSuperGroVisites_${m.id}" class="q2-textarea" placeholder="Justification détaillée de la visite chez le super grossiste... (Champ obligatoire)"></textarea>
+                  </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+            restoreDoctorJustifications('RaisonsSuperGroVisites_', SAVED_ANSWERS.q_justifications_supergros);
+
+            let btnDiv = document.createElement("div");
+            btnDiv.style.textAlign = "center";
+            btnDiv.style.marginTop = "15px";
+            
+            let btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "btn btn-secondary btn-sm";
+            btn.style.display = data.noms_medecins_visites.length > 5 ? 'inline-block' : 'none';
+            btn.style.padding = "5px 15px";
+            btn.style.fontSize = "0.85rem";
+            btn.innerHTML = 'Voir plus <i class="fas fa-chevron-down"></i>';
+            btn.onclick = function() {
+                let rows = container.querySelectorAll('.hidden-medecin-row-12');
+                rows.forEach(r => r.style.display = 'flex');
+                this.style.display = 'none';
+            };
+            btnDiv.appendChild(btn);
+            container.appendChild(btnDiv);
+        } else if (container) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #9e9e9e;"><i class="fas fa-building fa-2x" style="margin-bottom: 10px;"></i><p>Aucun Super Grossiste visité ce mois-ci.</p></div>';
+        }
+      })
+      .catch(err => console.error("Error fetching Q12 supergros visits:", err));
+
+    // Step 4: Multiple Visits (Q2)
+    fetch(`/evaluations/api/visits_more_than_once/?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json()).then(data => {
+        let countEl = document.getElementById("response_2_medecins");
+        if(countEl) countEl.innerText = data.nombre_medecins_visites || 0;
+        
+        let container = document.getElementById("raison_2");
+        if(container && data.noms_medecins_visites && data.noms_medecins_visites.length > 0) {
+            let html = '';
+
+            let specialty_counts = {};
+            data.noms_medecins_visites.forEach(m => {
+                let spec = m.specialite || "Inconnu";
+                specialty_counts[spec] = (specialty_counts[spec] || 0) + 1;
+            });
+            
+            let summaryText = `<span style="color:#1565c0;">${data.nombre_medecins_visites} clients visités plus d'une fois</span> : `;
+            let specParts = [];
+            for (let [spec, count] of Object.entries(specialty_counts)) {
+                specParts.push(`<b>${count}</b> ${spec}s`);
+            }
+            summaryText += specParts.join(', ');
+            let spSummary = document.getElementById("specialty_summary_q2");
+            if(spSummary) {
+                spSummary.innerHTML = summaryText;
+                spSummary.style.display = 'block';
+            }
+
+            data.noms_medecins_visites.forEach((m, index) => {
+                let badgeSpec = m.specialite ? `<span class="q2-badge-spec"><i class="fas fa-stethoscope"></i> ${m.specialite}</span>` : '';
+                let badgeVisits = `<span class="q2-badge-visit"><i class="fas fa-layer-group"></i> ${m.total_visites} Visites</span>`;
+                
+                let encodedUser = encodeURIComponent(ussser || '');
+                let datesStr = '';
+                if (m.dates_visites && m.dates_visites.length) {
+                    let links = m.dates_visites.map(d => {
+                        let link = `/medecins/visites/PDF/${m.id}/?pays=0&wilaya=0&commune=0&priority=&commercial=${encodedUser}&medecin=&mindate=${d}&maxdate=${d}&specialite=&classification=&produit=&visites=1&shared=&stock=&note=&deal=&visit_type=1&user=${encodedUser}`;
+                        return `<a href="${link}" target="_blank" class="q2-date-pill">${d}</a>`;
+                    });
+                    datesStr = links.join(' ');
+                }
+                
+                let display = index < 5 ? '' : 'display:none;';
+                let rowClass = index >= 5 ? 'hidden-medecin-row-q2' : '';
+
+                html += `
+                <div class="q2-card ${rowClass}" style="${display}">
+                  <div class="q2-info-section">
+                    <div class="q2-header">
+                       <h6 class="q2-doctor-name">${m.nom}</h6>
+                       ${badgeSpec}
+                    </div>
+                    <div>
+                        ${badgeVisits}
+                    </div>
+                    <div class="q2-dates">
+                       <i class="far fa-calendar-check" style="margin-top: 4px; color: #9e9e9e;"></i> 
+                       <div style="display: flex; flex-wrap: wrap; gap: 4px;">${datesStr}</div>
+                    </div>
+                  </div>
+                  <div class="q2-input-section">
+                    <textarea id="RaisonsMedecinsMultiplesVisites_${m.id}" class="q2-textarea" placeholder="Justification détaillée de la visite multiple... (Champ obligatoire)"></textarea>
+                  </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+            restoreDoctorJustifications('RaisonsMedecinsMultiplesVisites_', SAVED_ANSWERS.q_justifications_multi_visites);
+
+            let btn = document.getElementById("btn_voir_plus_q2");
+            if (btn && data.noms_medecins_visites.length > 5) {
+                btn.style.display = 'inline-block';
+                btn.onclick = function() {
+                    let rows = document.querySelectorAll('.hidden-medecin-row-q2');
+                    rows.forEach(r => r.style.display = 'flex');
+                    this.style.display = 'none';
+                };
+            }
+        } else if (container) {
+            container.innerHTML = `<div style="text-align: center; padding: 20px; color: #9e9e9e;"><i class="fas fa-check-circle fa-2x" style="color: #81c784; margin-bottom: 10px;"></i><p>Aucun client visité plus d'une fois.</p></div>`;
+        }
+
+        let note_q2 = Math.max(0, 20 - (data.nombre_medecins_visites || 0));
+        updateScoreBadge("note_q2", note_q2, 20);
+      })
+      .catch(err => console.error("Error fetching Q2 multiple visits:", err));
+
+    // Step 5: Non-Visits (Q3)
+    fetch(`/evaluations/api/doctors_not_visited/?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json()).then(data => {
+        let countEl = document.getElementById("response_3_medecins");
+        if(countEl) countEl.innerText = data.nombre_medecins_non_visites || 0;
+        
+        let container = document.getElementById("raison_3");
+        if(container && data.medecins_non_visites && data.medecins_non_visites.length > 0) {
+            let html = '';
+            
+            let specialty_counts = {};
+            data.medecins_non_visites.forEach(m => {
+                let spec = m.specialite || "Inconnu";
+                specialty_counts[spec] = (specialty_counts[spec] || 0) + 1;
+            });
+            
+            let summaryText = `<span style="color:#c62828;">${data.nombre_medecins_non_visites} clients non visités</span> : `;
+            let specParts = [];
+            for (let [spec, count] of Object.entries(specialty_counts)) {
+                specParts.push(`<b>${count}</b> ${spec}s`);
+            }
+            summaryText += specParts.join(', ');
+            let spSummary = document.getElementById("specialty_summary_q3");
+            if(spSummary) {
+                spSummary.innerHTML = summaryText;
+                spSummary.style.display = 'block';
+            }
+
+            data.medecins_non_visites.forEach((m, index) => {
+                let badgeSpec = m.specialite ? `<span class="q2-badge-spec"><i class="fas fa-stethoscope"></i> ${m.specialite}</span>` : '';
+                let encodedUser3 = encodeURIComponent(ussser || '');
+                let lastVisitText = m.date_derniere_visite
+                    ? `<a href="/medecins/visites/PDF/${m.id}/?pays=0&wilaya=0&commune=0&priority=&commercial=${encodedUser3}&medecin=&mindate=${m.date_derniere_visite}&maxdate=${m.date_derniere_visite}&specialite=&classification=&produit=&visites=1&shared=&stock=&note=&deal=&visit_type=1&user=${encodedUser3}" target="_blank" class="q2-date-pill">${m.date_derniere_visite}</a>`
+                    : '<span class="q2-badge-visit" style="background:#ffebee; color:#c62828; border-color:#ffcdd2;">Jamais</span>';
+                
+                let display = index < 5 ? '' : 'display:none;';
+                let rowClass = index >= 5 ? 'hidden-medecin-row-q3' : '';
+
+                html += `
+                <div class="q2-card ${rowClass}" style="${display}">
+                  <div class="q2-info-section">
+                    <div class="q2-header">
+                       <h6 class="q2-doctor-name">${m.id} - ${m.nom}</h6>
+                       ${badgeSpec}
+                    </div>
+                    <div class="q2-dates" style="margin-top: 8px;">
+                       <i class="far fa-clock" style="margin-top: 4px; color: #9e9e9e;"></i>
+                       <div style="display: flex; flex-direction: column; gap: 2px;">
+                         <span style="font-size: 0.75rem; font-weight: 600; color: #757575;">Dernière visite:</span>
+                         ${lastVisitText}
+                       </div>
+                    </div>
+                  </div>
+                  <div class="q2-input-section">
+                    <textarea id="RaisonsMedecinsNonVisites_${m.id}" class="q2-textarea" placeholder="Raison de non visite détaillée... (Champ obligatoire)"></textarea>
+                  </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+            restoreDoctorJustifications('RaisonsMedecinsNonVisites_', SAVED_ANSWERS.q_justifications_non_visites);
+
+            let btn = document.getElementById("btn_voir_plus_q3");
+            if (btn && data.medecins_non_visites.length > 5) {
+                btn.style.display = 'inline-block';
+                btn.onclick = function() {
+                    let rows = document.querySelectorAll('.hidden-medecin-row-q3');
+                    rows.forEach(r => r.style.display = 'flex');
+                    this.style.display = 'none';
+                };
+            }
+        } else if (container) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: #9e9e9e;"><i class="fas fa-check-double fa-2x" style="color: #81c784; margin-bottom: 10px;"></i><p>Tous les clients du portfolio ont été visités.</p></div>';
+        }
+        
+        let note = Math.max(0, 25 - Math.ceil((data.nombre_medecins_non_visites || 0) / 2));
+        updateScoreBadge("note_q3", note, 25);
+      })
+      .catch(err => console.error("Error fetching Q3 non visits:", err));
+
+    // Step 2: Evaluation des commandes (orders per product)
+    fetch(`/evaluations/api/orders_per_product/?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json()).then(data => {
+        let container = document.getElementById("orders_per_product_container");
+        if (!container) return;
+
+        if (!Array.isArray(data) || data.length === 0) {
+          container.innerHTML = '<div style="text-align: center; padding: 30px; color: #9e9e9e;"><i class="fas fa-box-open fa-2x" style="margin-bottom: 10px;"></i><p>Aucun objectif produit trouvé.</p></div>';
+          return;
+        }
+
+        // ── helpers ──
+        function percColor(v) { return v >= 80 ? '#2e7d32' : (v >= 50 ? '#ef6c00' : '#c62828'); }
+        function percBg(v)    { return v >= 80 ? '#e8f5e9' : (v >= 50 ? '#fff3e0' : '#ffebee'); }
+        function percBadge(val, target) {
+          if (target === 0) return `<span style="color:#9e9e9e; font-weight:600; font-size:1rem;">—</span>`;
+          let p = (val / target * 100).toFixed(1);
+          return `<span style="
+            display:inline-block; padding:5px 12px; border-radius:20px;
+            background:${percBg(p)}; color:${percColor(p)};
+            font-weight:700; font-size:0.92rem; white-space:nowrap;
+          ">${p}%</span>`;
+        }
+        function fmt(n) { return Number(n).toLocaleString('fr-DZ'); }
+        // Ph→Gros label = green, Gros/Ph→Super label = blue
+        // Stats: Bons = #f9a825 (amber), Unités = #1565c0 (blue), Da = #2e7d32 (green)
+        function bonsBadge(label, count, units, value, labelColor) {
+          return `
+            <div style="display:flex; align-items:center; gap:8px; padding:5px 0;">
+              <span style="
+                font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+                color:${labelColor}; background:${labelColor}1a; padding:3px 9px;
+                border-radius:10px; white-space:nowrap; border:1px solid ${labelColor}33;
+                display:inline-block; min-width:110px; text-align:center;
+              ">${label}</span>
+              <span style="font-size:0.92rem; white-space:nowrap; font-weight:700; display:inline-flex; align-items:center; gap:0;margin-left:20px;">
+                <span style="color:#f9a825; display:inline-block; min-width:70px; text-align:right;">${count} Bons</span>
+                <span style="color:#bdbdbd; margin:0 5px; font-weight:400;">/</span>
+                <span style="color:#1565c0; display:inline-block; min-width:80px; text-align:letf;">${units} Unités</span>
+                <span style="color:#bdbdbd; margin:0 5px; font-weight:400;">/</span>
+                <span style="color:#2e7d32;">${fmt(value)} Da</span>
+              </span>
+            </div>`;
+        }
+
+        // ── aggregate totals ──
+        let totPhGrosCount = 0, totPhGrosUnits = 0, totPhGrosValue = 0;
+        let totGrosSuperCount = 0, totGrosSuperUnits = 0, totGrosSuperValue = 0;
+        let totTargetQty = 0, totTargetValue = 0;
+        data.forEach(p => {
+          totPhGrosCount    += p.ph_gros.count;      totPhGrosUnits    += p.ph_gros.total_units;
+          totPhGrosValue    += p.ph_gros.total_value;
+          totGrosSuperCount += p.gros_super.count;   totGrosSuperUnits += p.gros_super.total_units;
+          totGrosSuperValue += p.gros_super.total_value;
+          totTargetQty  += p.target_quantity;        totTargetValue += p.target_value;
+        });
+
+        // ── Step 2 note /15 ──
+        let noteStep2Raw = (totPhGrosValue / 1000000 * 7.5) + (totGrosSuperValue / 2000000 * 7.5);
+        let noteStep2 = Math.min(15, Math.ceil(Math.max(0, noteStep2Raw) * 2) / 2);
+        updateScoreBadge("note_step2", noteStep2, 15);
+
+        // ── build HTML ──
+        // Ph→Gros = green (#2e7d32), Gros/Ph→Super = blue (#1565c0)
+        const PH_GROS_COLOR  = '#2e7d32';
+        const GROS_SUP_COLOR = '#1565c0';
+
+        let html = `
+        <style>
+          .opp-table { width:100%; border-collapse:separate; border-spacing:0; font-size:0.9rem; }
+          .opp-table thead th {
+            background:#1b5e20; color:#fff; padding:11px 16px;
+            font-weight:600; font-size:0.78rem; text-transform:uppercase; letter-spacing:.6px;
+            border:none;
+          }
+          .opp-table thead th:first-child { border-radius:8px 0 0 0; }
+          .opp-table thead th:last-child  { border-radius:0 8px 0 0; }
+          .opp-table tbody tr td { padding:10px 16px; border-bottom:1px solid #f0f0f0; vertical-align:middle; }
+          .opp-total-row td  { background:#f1f8e9 !important; }
+          .opp-prod-row1 td  { background:#ffffff; border-top:2px solid #e8e8e8 !important; }
+          .opp-prod-row2 td  { background:#ffffff; }
+          .opp-hidden-row    { display:none; }
+          .opp-prod-name {
+            font-weight:700; color:#1b5e20; font-size:1.15rem;
+            border-left:4px solid #4caf50; padding-left:12px !important;
+          }
+          .opp-total-name {
+            font-weight:800; color:#1b5e20; font-size:1.15rem;
+            border-left:4px solid #2e7d32; padding-left:12px !important;
+          }
+          .opp-obj { line-height:1.8; }
+          .opp-voir-plus {
+            display:block; width:100%; text-align:center; margin-top:10px;
+            padding:9px; background:#f8f9fa; border:1px solid #e0e0e0; border-radius:0 0 8px 8px;
+            color:#2e7d32; font-weight:600; font-size:0.88rem; cursor:pointer;
+            transition:background .15s;
+          }
+          .opp-voir-plus:hover { background:#e8f5e9; }
+        </style>
+        <div style="overflow-x:auto; border-radius:8px; border:1px solid #e0e0e0; box-shadow:0 2px 10px rgba(0,0,0,0.06);">
+          <table class="opp-table">
+            <thead>
+              <tr>
+                <th style="width:20%">Produit</th>
+                <th>Bons de commande</th>
+                <th style="width:13%; text-align:center;">Pourcentage</th>
+                <th style="width:17%">Objectif</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+        // ── TOTAL rows ──
+        html += `
+          <tr class="opp-total-row">
+            <td rowspan="2" class="opp-total-name">
+              <i class="fas fa-layer-group" style="margin-right:6px; opacity:.8;"></i>Total
+            </td>
+            <td>${bonsBadge('Ph → Gros', totPhGrosCount, totPhGrosUnits, totPhGrosValue, PH_GROS_COLOR)}</td>
+            <td style="text-align:center;">${percBadge(totPhGrosValue, totTargetValue)}</td>
+            <td rowspan="2" class="opp-obj">
+              <span style="color:#1565c0; font-weight:700; font-size:1rem;">${totTargetQty} <span style="font-size:0.8rem;">Unités</span></span><br>
+              <span style="color:#2e7d32; font-weight:700; font-size:1rem;">${fmt(totTargetValue)} <span style="font-size:0.8rem;">DA</span></span>
+            </td>
+          </tr>
+          <tr class="opp-total-row">
+            <td>${bonsBadge('Gros → Super', totGrosSuperCount, totGrosSuperUnits, totGrosSuperValue, GROS_SUP_COLOR)}</td>
+            <td style="text-align:center;">${percBadge(totGrosSuperValue, totTargetValue)}</td>
+          </tr>`;
+
+        // ── sort by Gros→Super % descending ──
+        data.sort((a, b) => {
+          let pA = a.target_value > 0 ? a.gros_super.total_value / a.target_value : 0;
+          let pB = b.target_value > 0 ? b.gros_super.total_value / b.target_value : 0;
+          return pB - pA;
+        });
+
+        // ── per-product rows (first 5 visible, rest hidden) ──
+        const VISIBLE = 5;
+        data.forEach((p, idx) => {
+          let hidden = idx >= VISIBLE ? 'opp-hidden-row' : '';
+          html += `
+          <tr class="opp-prod-row1 ${hidden}">
+            <td rowspan="2" class="opp-prod-name">${p.product_name}</td>
+            <td>${bonsBadge('Ph → Gros', p.ph_gros.count, p.ph_gros.total_units, p.ph_gros.total_value, PH_GROS_COLOR)}</td>
+            <td style="text-align:center;">${percBadge(p.ph_gros.total_value, p.target_value)}</td>
+            <td rowspan="2" class="opp-obj">
+              <span style="color:#1565c0; font-weight:700; font-size:1rem;">${p.target_quantity} <span style="font-size:0.8rem;">Unités</span></span><br>
+              <span style="color:#2e7d32; font-weight:700; font-size:1rem;">${fmt(p.target_value)} <span style="font-size:0.8rem;">DA</span></span>
+            </td>
+          </tr>
+          <tr class="opp-prod-row2 ${hidden}">
+            <td>${bonsBadge('Gros → Super', p.gros_super.count, p.gros_super.total_units, p.gros_super.total_value, GROS_SUP_COLOR)}</td>
+            <td style="text-align:center;">${percBadge(p.gros_super.total_value, p.target_value)}</td>
+          </tr>`;
+        });
+
+        html += `</tbody></table>`;
+
+        if (data.length > VISIBLE) {
+          html += `<button type="button" class="opp-voir-plus" id="opp_voir_plus_btn">
+            Voir plus (${data.length - VISIBLE} produits) <i class="fas fa-chevron-down" style="margin-left:6px;"></i>
+          </button>`;
+        }
+
+        html += `</div>`;
+        container.innerHTML = html;
+
+        // wire "voir plus" button
+        let btn = document.getElementById("opp_voir_plus_btn");
+        if (btn) {
+          btn.addEventListener('click', function() {
+            container.querySelectorAll('.opp-hidden-row').forEach(r => r.style.display = 'table-row');
+            this.style.display = 'none';
+          });
+        }
+      })
+      .catch(err => console.error("Error fetching orders per product:", err));
+
+    // Step 3: Objectif commercial special (filtered to 4 special products)
+    const SPECIAL_PRODUCTS = ["HAIRVOL", "GOLD MAG", "ADVAGEN", "SLEEP ALAISE"];
+    fetch(`/evaluations/api/orders_per_product/?month=${month}&user=${ussser}&year=${yyyear}`)
+      .then(r => r.json()).then(data => {
+        let container = document.getElementById("orders_per_product_special_container");
+        if (!container) return;
+
+        if (!Array.isArray(data) || data.length === 0) {
+          container.innerHTML = '<div style="text-align: center; padding: 30px; color: #9e9e9e;"><i class="fas fa-box-open fa-2x" style="margin-bottom: 10px;"></i><p>Aucun objectif produit trouvé.</p></div>';
+          return;
+        }
+
+        // filter to special products only
+        let specialData = data.filter(p => SPECIAL_PRODUCTS.includes(p.product_name));
+
+        if (specialData.length === 0) {
+          container.innerHTML = '<div style="text-align: center; padding: 30px; color: #9e9e9e;"><i class="fas fa-box-open fa-2x" style="margin-bottom: 10px;"></i><p>Aucun objectif trouvé pour les produits spéciaux.</p></div>';
+          return;
+        }
+
+        function percColorS(v) { return v >= 80 ? '#2e7d32' : (v >= 50 ? '#ef6c00' : '#c62828'); }
+        function percBgS(v)    { return v >= 80 ? '#e8f5e9' : (v >= 50 ? '#fff3e0' : '#ffebee'); }
+        function percBadgeS(val, target) {
+          if (target === 0) return `<span style="color:#9e9e9e; font-weight:600; font-size:1rem;">—</span>`;
+          let p = (val / target * 100).toFixed(1);
+          return `<span style="display:inline-block; padding:5px 12px; border-radius:20px; background:${percBgS(p)}; color:${percColorS(p)}; font-weight:700; font-size:0.92rem; white-space:nowrap;">${p}%</span>`;
+        }
+        function fmtS(n) { return Number(n).toLocaleString('fr-DZ'); }
+        function bonsBadgeS(label, count, units, value, labelColor) {
+          return `
+            <div style="display:flex; align-items:center; gap:8px; padding:5px 0;">
+              <span style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:${labelColor}; background:${labelColor}1a; padding:3px 9px; border-radius:10px; white-space:nowrap; border:1px solid ${labelColor}33; display:inline-block; min-width:110px; text-align:center;">${label}</span>
+              <span style="font-size:0.92rem; white-space:nowrap; font-weight:700; display:inline-flex; align-items:center; gap:0; margin-left:20px;">
+                <span style="color:#f9a825; display:inline-block; min-width:70px; text-align:right;">${count} Bons</span>
+                <span style="color:#bdbdbd; margin:0 5px; font-weight:400;">/</span>
+                <span style="color:#1565c0; display:inline-block; min-width:80px;">${units} Unités</span>
+                <span style="color:#bdbdbd; margin:0 5px; font-weight:400;">/</span>
+                <span style="color:#2e7d32;">${fmtS(value)} Da</span>
+              </span>
+            </div>`;
+        }
+
+        let totPhGrosCountS = 0, totPhGrosUnitsS = 0, totPhGrosValueS = 0;
+        let totGrosSuperCountS = 0, totGrosSuperUnitsS = 0, totGrosSuperValueS = 0;
+        let totTargetQtyS = 0, totTargetValueS = 0;
+        specialData.forEach(p => {
+          totPhGrosCountS    += p.ph_gros.count;      totPhGrosUnitsS    += p.ph_gros.total_units;
+          totPhGrosValueS    += p.ph_gros.total_value;
+          totGrosSuperCountS += p.gros_super.count;   totGrosSuperUnitsS += p.gros_super.total_units;
+          totGrosSuperValueS += p.gros_super.total_value;
+          totTargetQtyS  += p.target_quantity;        totTargetValueS += p.target_value;
+        });
+
+        const PH_GROS_COLOR_S  = '#2e7d32';
+        const GROS_SUP_COLOR_S = '#1565c0';
+
+        let html = `
+        <div style="overflow-x:auto; border-radius:8px; border:1px solid #e0e0e0; box-shadow:0 2px 10px rgba(0,0,0,0.06);">
+          <table class="opp-table">
+            <thead>
+              <tr>
+                <th style="width:20%">Produit</th>
+                <th>Bons de commande</th>
+                <th style="width:13%; text-align:center;">Pourcentage</th>
+                <th style="width:17%">Objectif</th>
+              </tr>
+            </thead>
+            <tbody>
+          <tr class="opp-total-row">
+            <td rowspan="2" class="opp-total-name">
+              <i class="fas fa-layer-group" style="margin-right:6px; opacity:.8;"></i>Total
+            </td>
+            <td>${bonsBadgeS('Ph → Gros', totPhGrosCountS, totPhGrosUnitsS, totPhGrosValueS, PH_GROS_COLOR_S)}</td>
+            <td style="text-align:center;">${percBadgeS(totPhGrosValueS, totTargetValueS)}</td>
+            <td rowspan="2" class="opp-obj">
+              <span style="color:#1565c0; font-weight:700; font-size:1rem;">${totTargetQtyS} <span style="font-size:0.8rem;">Unités</span></span><br>
+              <span style="color:#2e7d32; font-weight:700; font-size:1rem;">${fmtS(totTargetValueS)} <span style="font-size:0.8rem;">DA</span></span>
+            </td>
+          </tr>
+          <tr class="opp-total-row">
+            <td>${bonsBadgeS('Gros → Super', totGrosSuperCountS, totGrosSuperUnitsS, totGrosSuperValueS, GROS_SUP_COLOR_S)}</td>
+            <td style="text-align:center;">${percBadgeS(totGrosSuperValueS, totTargetValueS)}</td>
+          </tr>`;
+
+        specialData.forEach((p) => {
+          html += `
+          <tr class="opp-prod-row1">
+            <td rowspan="2" class="opp-prod-name">${p.product_name}</td>
+            <td>${bonsBadgeS('Ph → Gros', p.ph_gros.count, p.ph_gros.total_units, p.ph_gros.total_value, PH_GROS_COLOR_S)}</td>
+            <td style="text-align:center;">${percBadgeS(p.ph_gros.total_value, p.target_value)}</td>
+            <td rowspan="2" class="opp-obj">
+              <span style="color:#1565c0; font-weight:700; font-size:1rem;">${p.target_quantity} <span style="font-size:0.8rem;">Unités</span></span><br>
+              <span style="color:#2e7d32; font-weight:700; font-size:1rem;">${fmtS(p.target_value)} <span style="font-size:0.8rem;">DA</span></span>
+            </td>
+          </tr>
+          <tr class="opp-prod-row2">
+            <td>${bonsBadgeS('Gros → Super', p.gros_super.count, p.gros_super.total_units, p.gros_super.total_value, GROS_SUP_COLOR_S)}</td>
+            <td style="text-align:center;">${percBadgeS(p.gros_super.total_value, p.target_value)}</td>
+          </tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+        container.innerHTML = html;
+
+        // ── Step 3 note /15: compare totals against the special products' target value ──
+        let noteStep3Raw = totTargetValueS > 0
+          ? (totPhGrosValueS / totTargetValueS * 7.5) + (totGrosSuperValueS / totTargetValueS * 7.5)
+          : 0;
+        let noteStep3 = Math.min(15, Math.ceil(Math.max(0, noteStep3Raw) * 2) / 2);
+        updateScoreBadge("note_step3", noteStep3, 15);
+      })
+      .catch(err => console.error("Error fetching special orders per product:", err));
+
+  }
+
+  // --- SUBMIT LOGIC ---
+
+  function validateAllSteps() {
+    // ADD THIS LINE: If CountryManager, skip all global validation
+    if (CONNECTED_USER_ROLE === 'CountryManager' || CONNECTED_USER_ROLE === 'Admin') return true;
+    const prefixes = [
+      'RaisonsMedecinsNonVisites_',
+      'RaisonsMedecinsMultiplesVisites_',
+      'RaisonsSuperGroVisites_'
+    ];
+    const selector = prefixes.map(p => `textarea[id^="${p}"]`).join(', ');
+    const fields = document.querySelectorAll(selector);
+    let valid = true;
+    fields.forEach(f => {
+      if (f.value.trim() === '') {
+        f.classList.add('is-invalid');
+        valid = false;
+      } else {
+        f.classList.remove('is-invalid');
+      }
+    });
+    if (!valid) vanillaToast.error("Veuillez remplir tous les champs de justification obligatoires.");
+    return valid;
+}
+
+  function collectJustifications(prefix) {
+    const result = {};
+    document.querySelectorAll(`textarea[id^="${prefix}"]`).forEach(ta => {
+      const clientId = ta.id.replace(prefix, '');
+      result[clientId] = ta.value.trim();
+    });
+    return result;
+  }
+
+  function makePostRequest(e) {
+    e.preventDefault();
+    if (!validateAllSteps()) return;
+
+    const nonVisitesJson = JSON.stringify(collectJustifications('RaisonsMedecinsNonVisites_'));
+    const multiVisitesJson = JSON.stringify(collectJustifications('RaisonsMedecinsMultiplesVisites_'));
+    const superGrosJson = JSON.stringify(collectJustifications('RaisonsSuperGroVisites_'));
+
+    const postData = {
+      csrfmiddlewaretoken: document.getElementById("csrf_token").value,
+      evaluation_type: 'COMMERCIAL',
+      own_perc: (parseFloat(document.getElementById("note_q0").innerText) || 0) +
+                (parseFloat(document.getElementById("note_1112").innerText) || 0) +
+                (parseFloat(document.getElementById("note_q2").innerText) || 0) +
+                (parseFloat(document.getElementById("note_q3").innerText) || 0),
+      month: month,
+      user: ussser,
+      year: yyyear,
+      q_justifications_non_visites: nonVisitesJson,
+      q_justifications_multi_visites: multiVisitesJson,
+      q_justifications_supergros: superGrosJson,
+      q_suggestion_finale: document.getElementById('response_14')?.value || ''
+    };
+
+    $.ajax({
+      url: '/evaluations/submit/',
+      type: 'POST',
+      data: postData,
+      success: () => {
+        vanillaToast.success('Évaluation enregistrée avec succès!');
+        setTimeout(() => { window.location.href = '/evaluations/landing/'; }, 1500);
+      },
+      error: () => vanillaToast.error('Erreur: Rapport déjà existant ou problème serveur.')
+    });
+  }
+
+  document.getElementById('submit_2').addEventListener('click', makePostRequest);
+
+  // At the very bottom of the script
+if (IS_READ_ONLY || CONNECTED_USER_ROLE === 'CountryManager' || CONNECTED_USER_ROLE === 'Admin') {
+    // If it's a Country Manager, we treat it like "Mode Consultation"
+    if (!IS_READ_ONLY && CONNECTED_USER_ROLE === 'CountryManager') {
+        const alertContainer = document.querySelector('.alert-container');
+        if (alertContainer) {
+            alertContainer.innerHTML = `<div style="background:#fff3e0; border:1px solid #ffe0b2; border-radius:8px; padding:15px; color:#e65100; font-weight:600; display:flex; justify-content:space-between; align-items:center;"><span><i class="fas fa-user-shield" style="margin-right:8px;"></i>Mode Country Manager — Consultation uniquement</span></div>`;
+        }
+    } else if (IS_READ_ONLY) {
+        // Existing logic for submitted evaluations
+        const alertContainer = document.querySelector('.alert-container');
+        if (alertContainer) {
+            const scoreText = EVAL_SCORE !== null ? ` &nbsp;|&nbsp; Score total : <strong>${EVAL_SCORE}</strong>` : '';
+            alertContainer.innerHTML = `<div style="background:#e3f2fd; border:1px solid #90caf9; border-radius:8px; padding:15px; color:#0d47a1; font-weight:600; display:flex; justify-content:space-between; align-items:center;"><span><i class="fas fa-eye" style="margin-right:8px;"></i>Mode Consultation — Évaluation déjà soumise</span><span>${scoreText}</span></div>`;
+        }
+    }
+
+    // Lock the form
+    lockFormReadOnly();
+    // Run it again after a delay to catch data loaded via AJAX
+    setTimeout(lockFormReadOnly, 2500);
+}
+
+  // Restore Q14 suggestion finale (supervisor read-only view)
+  if (IS_READ_ONLY && SAVED_ANSWERS.q_suggestion_finale) {
+    const el14 = document.getElementById('response_14');
+    if (el14) el14.value = SAVED_ANSWERS.q_suggestion_finale;
+  }
+
+  showStep(1);
+  fetchData();
+</script>
+</body>
+</html>

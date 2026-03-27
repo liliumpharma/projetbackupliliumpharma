@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "deals",
     "concurents",
     "monthly_evaluations",
+    "evaluations",
     "visite_duo",
     "application_user_manual",
     # "supervisors_evaluations",

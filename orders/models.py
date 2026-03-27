@@ -19,7 +19,7 @@ class Order(models.Model):
     done_date=models.DateField(null=True,blank=True)
 
     infos=models.CharField(max_length=255,choices=(("yalidine", "yalidine"), ('livreur',"livreur"), ("bureau", "bureau"), ("delegue", "delegue")),null=True,blank=True)
-    tracking=models.JSONField(blank=True,default=[])
+    tracking = models.JSONField(default=dict)
     bl=models.CharField(max_length=255,null=True,blank=True)
 
 

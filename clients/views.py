@@ -656,19 +656,30 @@ class taruser(APIView):
             params["months"] = months
             context = {"month": m, "year": year}
             data = get_target_per_user_per_month(**params)
-            #data = get_target_per_user_per_month(**params)
             context["data"] = data
             context = add_special_table_data(context)
-            #return render(
-            #    request,
-            #    template_name="clients/reports/target_report_user_multiple_month.html",
-            #    context=context,
-            #    )
+
+            # Build per-month individual sections
+            per_month_sections = []
+            for single_month in months:
+                single_params = dict(params)
+                single_params["months"] = [single_month]
+                single_data = get_target_per_user(**single_params)
+                single_french_month = month_number_to_french_name(int(single_month))
+                single_ctx = {"data": single_data}
+                single_ctx = add_special_table_data(single_ctx)
+                per_month_sections.append({
+                    "month": single_french_month,
+                    "data": single_ctx["data"],
+                    "show_special_table": single_ctx.get("show_special_table", False),
+                })
+            context["per_month_sections"] = per_month_sections
+
             return render(
-            request,
-            template_name="clients/reports/target_report_per_user.html",
-            context=context,
-        )
+                request,
+                template_name="clients/reports/target_report_per_user.html",
+                context=context,
+            )
         
         data = get_target_all_users(**params)
         context["data"] = data

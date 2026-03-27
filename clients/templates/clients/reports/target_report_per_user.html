@@ -211,7 +211,7 @@
             <!-- Objectif Special Table -->
             <div style="flex-grow: 1; display: flex; flex-direction: column;">
                 {% if show_special_table %}
-                <div class="region" style="color: green; margin-bottom: 5px;">Objectif Commercial Special</div>
+                <div class="region" style="color: green; margin-bottom: 5px;">Objectif Special</div>
                 <div style="border: 2px solid green; border-radius: 5px; overflow: hidden; flex-grow: 1; display: flex; flex-direction: column;">
                     <table style="width: 100%; font-size: 14px; flex-grow: 1; border-style: hidden;">
                     <thead>
@@ -239,7 +239,7 @@
                             {% if data.special_total_prix >= data.special_target_prix %}
                             <td style="background-color: #90EE90;">{{ data.special_total_prix|thousand_separator }}</td>
                             {% else %}
-                            <td style="background-color: pink;">{{ data.special_total_prix|thousand_separator }}</td>
+                            <td style="background-color: pink">{{ data.special_total_prix|thousand_separator }}</td>
                             {% endif %}
                         </tr>
                     </tbody>
@@ -296,7 +296,7 @@
                                                                  إذا حقق المندوب ثلاث أشهر متتالية _ كوارتر يضاف له راتب شهر كحوافز.
             </br>إذا حقق المندوب ستة أشهر متتالية كواترين متتالين يحسب له راتب شهر إضافي كحوافز ويتم رفع الراتب 10000 دينار جزائري.
                 </br>إذا حقق المندوب السنة كاملة يحسب له راتب شهرين كحوافز او سفر خارج البلاد ويتم رفع الراتب 15000 دينار جزائري.
-            
+
         </div>
     </div>
 
@@ -306,6 +306,150 @@
         <span>Signature du Superviseur</span>
         <span>Signature du Country Manager</span>
     </div>
+
+    {% for section in per_month_sections %}
+    <hr style="border: 2px solid #333; margin: 30px 0;">
+
+    <div class="title">
+        <div>Rapport des Ventes</div>
+        <b>{{ section.month }}, {{ year }}</b>
+    </div>
+
+    <div class="region_frame">
+        <div class="user">Délégué:</div>{{ section.data.user }}
+
+        <div>
+            <div class="region">Région(s):</div>
+            {% for wilaya in section.data.wilayas %}
+            {{ wilaya }} |
+            {% endfor %}
+        </div>
+
+        <table>
+            <thead>
+                <th class="main_column">Products</th>
+                {% for product in section.data.products %}
+                <th>{{ product }}</th>
+                {% endfor %}
+            </thead>
+            <tbody>
+                <tr style="background-color: #90EE90">
+                    <td class="main_column">Objectif</td>
+                    {% for t in section.data.targets %}
+                    <td>{{ t|thousand_separator }}</td>
+                    {% endfor %}
+                </tr>
+                <tr style="background-color: #84c2f5">
+                    <td class="main_column">BC Ph_Gros</td>
+                    {% for t in section.data.total_unite_product %}
+                        <td><a href="{{ t.target_report_details_link }}" style="font-weight: bold" target="_blank">{{ t.total }}</a></td>
+                    {% endfor %}
+                </tr>
+                <tr style="background-color: pink">
+                    <td class="main_column">BC Gros_Super</td>
+                    {% for t in section.data.total_unite_product_gros_super %}
+                        <td><a href="{{ t.target_report_details_link }}" style="font-weight: bold" target="_blank">{{ t.total }}</a></td>
+                    {% endfor %}
+                </tr>
+                <tr style="background-color: yellow">
+                    <td class="main_column">Prix</td>
+                    {% for p in section.data.prices %}
+                    <td>{{ p|thousand_separator }}</td>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <td class="main_column">Achevé (par unité)</td>
+                    {% for q in section.data.quantities %}
+                    <td><a href="{{ q.target_report_details_link }}" style="font-weight: bold" target="_blank">{{ q.total|thousand_separator }}</a></td>
+                    {% endfor %}
+                </tr>
+                <tr style="background-color: #90EE90">
+                    <td class="main_column">Total Objectif</td>
+                    {% for tt in section.data.total_targets %}
+                    <td>{{ tt|thousand_separator }}</td>
+                    {% endfor %}
+                </tr>
+                <tr style="background-color: pink">
+                    <td class="main_column">Total Achevé</td>
+                    {% for ta in section.data.total_achievements %}
+                    <td>{{ ta|thousand_separator }}</td>
+                    {% endfor %}
+                </tr>
+            </tbody>
+        </table>
+
+        <div style="display: flex; justify-content: space-between; margin-top: 10px; gap: 20px; align-items: stretch;">
+            <div style="flex-grow: 1; display: flex; flex-direction: column;">
+                {% if section.show_special_table %}
+                <div class="region" style="color: green; margin-bottom: 5px;">Objectif Special</div>
+                <div style="border: 2px solid green; border-radius: 5px; overflow: hidden; flex-grow: 1; display: flex; flex-direction: column;">
+                    <table style="width: 100%; font-size: 14px; flex-grow: 1; border-style: hidden;">
+                    <thead>
+                        <tr>
+                            <th class="main_column" style="font-size: 16px; padding: 2px 10px;"></th>
+                            {% for row in section.data.special_table_rows %}
+                            <th style="padding: 2px 10px;">{{ row.name }}</th>
+                            {% endfor %}
+                            <th style="padding: 2px 10px;">Total prix en DA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="background-color: #90EE90;">
+                            <td class="main_column" style="font-size: 16px;">Objectif</td>
+                            {% for row in section.data.special_table_rows %}
+                            <td>{{ row.target_unite|thousand_separator }}</td>
+                            {% endfor %}
+                            <td>{{ section.data.special_target_prix|thousand_separator }}</td>
+                        </tr>
+                        <tr>
+                            <td class="main_column" style="font-size: 16px;">Achevé</td>
+                            {% for row in section.data.special_table_rows %}
+                            <td><a href="{{ row.acheve_link }}" style="font-weight: bold" target="_blank">{{ row.acheve_unite|thousand_separator }}</a></td>
+                            {% endfor %}
+                            {% if section.data.special_total_prix >= section.data.special_target_prix %}
+                            <td style="background-color: #90EE90;">{{ section.data.special_total_prix|thousand_separator }}</td>
+                            {% else %}
+                            <td style="background-color: pink">{{ section.data.special_total_prix|thousand_separator }}</td>
+                            {% endif %}
+                        </tr>
+                    </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+
+            <div style="display: flex; gap: 20px;">
+                <div class="achieve_percentage">
+                    <div style="font-weight: bold;">
+                        <div style="color: limegreen; margin-bottom: 5px;">Total de la valeur des bons de commande</div>
+                        <div>Bon Ph_Gros</div>
+                        <div>Bon Gros_Super</div>
+                    </div>
+                    <div style="text-align: end;">
+                        <div style="margin-bottom: 5px;">&nbsp;</div>
+                        <div>{{ section.data.total_ph_gros_value }} Da</div>
+                        <div>{{ section.data.total_gros_super_value }} Da</div>
+                    </div>
+                </div>
+
+                <div class="achieve_percentage">
+                    <div>
+                        <div style="color: red;">Pourcentage d'Achévement par unité</div>
+                        <div>Montant Objectif</div>
+                        <div>Montant Atteint</div>
+                        <div>Pourcentage d'Achévement</div>
+                    </div>
+                    <div style="text-align: end;">
+                        <div>{{ section.data.percentage_reached }}%</div>
+                        <div>{{ section.data.total_target|thousand_separator }} Da</div>
+                        <div>{{ section.data.total_reached|thousand_separator }} Da</div>
+                        <div>{{ section.data.percentage_reached }}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
 
 </body>
 

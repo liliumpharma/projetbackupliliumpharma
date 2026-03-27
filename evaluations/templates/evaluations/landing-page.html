@@ -1,0 +1,445 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de Bord – Évaluations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #ffffff;
+      min-height: 100vh;
+      color: #1e1e2e;
+    }
+
+    /* ── HEADER (Screenshot Style) ── */
+    .top-bar {
+      background: #2e7d32; /* Dark green from screenshot */
+      color: white;
+      padding: 10px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+    }
+    .top-bar .brand-text {
+      font-weight: 700;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .top-bar .user-meta {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .top-bar a { color: white; text-decoration: none; }
+
+    /* ── ALERT MESSAGE ── */
+    .alert-container { margin: 20px 32px; }
+    .custom-alert {
+      background-color: #d1fae5;
+      border: 1px solid #a7f3d0;
+      border-radius: 8px;
+      color: #064e3b;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ── MONTH NAVIGATOR ── */
+    .month-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 10px 0;
+    }
+    .month-nav .nav-arrow {
+      background: #4caf50;
+      border: none;
+      border-radius: 4px;
+      width: 36px; height: 36px;
+      color: white;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .month-nav .nav-arrow:disabled { opacity: 0.3; cursor: not-allowed; }
+    .month-label {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #2e7d32;
+      min-width: 200px;
+      text-align: center;
+    }
+
+    /* ── MAIN CONTENT CARD ── */
+    .main-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 15px rgba(0,0,0,0.08);
+      margin: 10px 32px 40px;
+      border: 1px solid #e0e0e0;
+      overflow: hidden;
+    }
+
+    /* ── TABS (Screenshot Green Tones) ── */
+    .tabs-bar {
+      display: flex;
+      background: #f1f8e9;
+      border-bottom: 1px solid #c8e6c9;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 16px;
+      border: none;
+      background: none;
+      font-weight: 600;
+      color: #4caf50;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.2s;
+    }
+    .tab-btn.active {
+      background: white;
+      color: #2e7d32;
+      border-bottom: 4px solid #2e7d32;
+    }
+
+    .tab-content { display: none; padding: 25px; }
+    .tab-content.active { display: block; }
+
+    /* ── SUB TABS ── */
+    .sub-tabs-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+    .sub-tab-btn {
+      padding: 10px 20px;
+      border-radius: 4px;
+      border: 1px solid #c8e6c9;
+      background: white;
+      color: #4caf50;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .sub-tab-btn.active {
+      background: #4caf50;
+      color: white;
+    }
+
+    /* ── TABLE STYLING (Screenshot Inspired) ── */
+    .delegate-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .delegate-table th {
+      text-align: left;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: #777;
+      padding: 12px;
+      border-bottom: 2px solid #eee;
+    }
+    
+    /* Menu-style rows from screenshot */
+    .delegate-row {
+      background: linear-gradient(to right, #ffffff 0%, #e8f5e9 50%, #ffffff 100%);
+      border: 1px solid #c8e6c9;
+      transition: 0.2s;
+    }
+    .delegate-row:hover { filter: brightness(0.98); }
+    .delegate-row td { padding: 15px 12px; border-bottom: 8px solid white; }
+
+    /* Region headers */
+    .region-header td {
+      padding: 20px 12px 10px;
+      font-weight: 700;
+      color: #2e7d32;
+      font-size: 0.9rem;
+      background: white;
+    }
+
+    /* Badges & Buttons */
+    .status-pill { font-weight: 700; font-size: 0.85rem; }
+    .status-pill.submitted { color: #2e7d32; }
+    .status-pill.pending { color: #ef6c00; }
+
+    .action-btn {
+      padding: 8px 15px;
+      border-radius: 4px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 5px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .btn-view { background: #4caf50; color: white; }
+    .btn-print { background: white; color: #333; border: 1px solid #ccc; }
+    .btn-disabled { background: #eee; color: #aaa; cursor: not-allowed; }
+
+    /* Delegate Name + Avatar */
+    .delegate-name-wrap { display: flex; align-items: center; gap: 10px; }
+    .delegate-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: #2e7d32; color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
+    }
+    .delegate-name-text { font-weight: 600; font-size: 0.9rem; }
+
+    /* Score Badge */
+    .score-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 20px;
+      font-weight: 700; font-size: 0.85rem;
+    }
+    .score-badge.has-eval { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+    .score-badge.no-eval  { background: #f5f5f5; color: #aaa;    border: 1px solid #e0e0e0; }
+
+    /* States */
+    .loading-state, .empty-state, .soon-msg { text-align: center; padding: 40px; color: #888; }
+    .spinner {
+      width: 30px; height: 30px; border: 3px solid #f3f3f3;
+      border-top: 3px solid #4caf50; border-radius: 50%;
+      animation: spin 1s linear infinite; margin: 0 auto 15px;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="brand-text">
+    <i class="fas fa-leaf"></i> Bienvenue
+  </div>
+  <div class="user-meta">
+    <span><i class="far fa-calendar-alt"></i> Tuesday 17th March 2026</span>
+    <span><i class="fas fa-user"></i> {{ request.user.first_name }} {{ request.user.last_name }}</span>
+    <a href="#"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+  </div>
+</div>
+
+<div class="alert-container">
+    <div class="custom-alert">
+      <div>
+        <h4 style="margin:0">Important!</h4>
+        <p style="margin:0; font-size:0.9rem;">Avant de commencer Vous devez vérifier le mois séléctionné</p>
+      </div>
+      <div style="text-align: right;">
+        <h4 style="margin:0">!هام</h4>
+        <p style="margin:0; font-size:0.9rem;">قبل أن تبدأ يجب عليك التحقق من الشهر المحدد</p>
+      </div>
+    </div>
+</div>
+
+<div class="month-nav">
+  <button class="nav-arrow" id="btn-prev" onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
+  <div class="month-label" id="month-label">—</div>
+  <button class="nav-arrow" id="btn-next" onclick="changeMonth(1)"><i class="fas fa-chevron-right"></i></button>
+</div>
+
+<div class="main-card">
+  <div class="tabs-bar">
+    <button class="tab-btn active" id="tab-btn-delegues" onclick="switchTab('delegues')">👥 Délégués</button>
+    <button class="tab-btn" id="tab-btn-superviseurs" onclick="switchTab('superviseurs')">🧑‍💼 Superviseurs</button>
+    <button class="tab-btn" id="tab-btn-direction" onclick="switchTab('direction')">🏢 Direction</button>
+  </div>
+
+  <div class="tab-content active" id="tab-delegues">
+    <div class="sub-tabs-bar">
+      <button class="sub-tab-btn active" id="sub-btn-medico" onclick="switchSubTab('medico')">Médico-commercial</button>
+      <button class="sub-tab-btn" id="sub-btn-commercial" onclick="switchSubTab('commercial')">Commercial</button>
+    </div>
+
+    <div class="sub-tab-content active" id="sub-medico">
+      <div class="loading-state" id="loading-medico"><div class="spinner"></div><p>Chargement...</p></div>
+      <table class="delegate-table" id="table-medico" style="display:none;">
+        <thead><tr><th>Délégué</th><th>Score</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody id="tbody-medico"></tbody>
+      </table>
+      <div class="empty-state" id="empty-medico" style="display:none;"><p>Aucun délégué trouvé.</p></div>
+    </div>
+
+    <div class="sub-tab-content" id="sub-commercial" style="display:none;">
+      <div class="loading-state" id="loading-commercial"><div class="spinner"></div><p>Chargement...</p></div>
+      <table class="delegate-table" id="table-commercial" style="display:none;">
+        <thead><tr><th>Délégué</th><th>Score</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody id="tbody-commercial"></tbody>
+      </table>
+      <div class="empty-state" id="empty-commercial" style="display:none;"><p>Aucun délégué trouvé.</p></div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-superviseurs">
+    <div class="soon-msg"><h3>🚧 Bientôt disponible</h3></div>
+  </div>
+
+  <div class="tab-content" id="tab-direction">
+    <div class="soon-msg"><h3>🚧 Bientôt disponible</h3></div>
+  </div>
+</div>
+
+<script>
+  const MONTH_NAMES = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const now = new Date();
+  let currentMonth = now.getMonth() === 0 ? 12 : now.getMonth(); 
+  let currentYear  = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+  const maxMonth = currentMonth; const maxYear = currentYear;
+
+  function renderMonthLabel() {
+    document.getElementById('month-label').textContent = MONTH_NAMES[currentMonth - 1] + ' ' + currentYear;
+    document.getElementById('btn-next').disabled = (currentYear === maxYear && currentMonth === maxMonth);
+  }
+
+  function changeMonth(delta) {
+    currentMonth += delta;
+    if (currentMonth < 1) { currentMonth = 12; currentYear--; }
+    if (currentMonth > 12) { currentMonth = 1;  currentYear++; }
+    if (currentYear > maxYear || (currentYear === maxYear && currentMonth > maxMonth)) {
+      currentMonth = maxMonth; currentYear = maxYear;
+    }
+    renderMonthLabel();
+    loadDelegates();
+  }
+
+  function switchTab(name) {
+    ['delegues','superviseurs','direction'].forEach(t => {
+      document.getElementById('tab-'+t).classList.remove('active');
+      document.getElementById('tab-btn-'+t).classList.remove('active');
+    });
+    document.getElementById('tab-'+name).classList.add('active');
+    document.getElementById('tab-btn-'+name).classList.add('active');
+  }
+
+  function switchSubTab(name) {
+    ['medico','commercial'].forEach(t => {
+      document.getElementById('sub-'+t).style.display = (t === name) ? 'block' : 'none';
+      document.getElementById('sub-btn-'+t).classList.toggle('active', t === name);
+    });
+  }
+
+  function loadDelegates() {
+    ['medico','commercial'].forEach(t => {
+        document.getElementById('loading-'+t).style.display = 'block';
+        document.getElementById('table-'+t).style.display = 'none';
+        document.getElementById('empty-'+t).style.display = 'none';
+    });
+
+    fetch(`/evaluations/api/users/?month=${currentMonth}&year=${currentYear}`)
+      .then(r => r.json())
+      .then(data => {
+        renderTable('medico', data.filter(u => u.role === 'Medico_commercial'));
+        renderTable('commercial', data.filter(u => u.role !== 'Medico_commercial'));
+      }).catch(() => {
+        ['medico','commercial'].forEach(t => {
+            document.getElementById('loading-'+t).style.display = 'none';
+            document.getElementById('empty-'+t).style.display = 'block';
+        });
+      });
+  }
+
+  function renderTable(type, users) {
+    document.getElementById('loading-'+type).style.display = 'none';
+    const tbody = document.getElementById('tbody-'+type);
+    tbody.innerHTML = '';
+
+    if (!users || users.length === 0) {
+      showEmpty(type);
+      return;
+    }
+
+    // Sort users by region (Centre, Est, Ouest, Sud) then alphabetically
+    const regionOrder = { 'Centre': 1, 'Est': 2, 'Ouest': 3, 'Sud': 4 };
+    users.sort((a, b) => {
+      let rA = a.region || 'Non Spécifié';
+      let rB = b.region || 'Non Spécifié';
+      if (regionOrder[rA] !== regionOrder[rB]) {
+         return (regionOrder[rA] || 99) - (regionOrder[rB] || 99);
+      }
+      let nA = (a.name || a.user || '').toLowerCase();
+      let nB = (b.name || b.user || '').toLowerCase();
+      return nA.localeCompare(nB);
+    });
+
+    let currentRegion = null;
+
+    users.forEach(u => {
+      // Display region header if region changes
+      let userRegion = u.region || 'Non Spécifié';
+      if (userRegion !== currentRegion) {
+        currentRegion = userRegion;
+        tbody.innerHTML += `
+          <tr class="region-header">
+            <td colspan="4">
+              <i class="fas fa-map-marker-alt" style="margin-right:6px; color:#2e7d32;"></i> Région : ${currentRegion}
+              <hr>
+            </td>
+          </tr>
+        `;
+      }
+
+      const initials = u.name
+        ? u.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)
+        : u.user.slice(0,2).toUpperCase();
+
+      const displayName = u.name || u.user;
+      const score = u.own_perc ? parseFloat(u.own_perc).toFixed(1) : null;
+
+      const scoreBadge = u.has_eval
+        ? `<span class="score-badge has-eval"><i class="fas fa-star" style="font-size:0.75rem;"></i>${score}</span>`
+        : `<span class="score-badge no-eval">—</span>`;
+
+      const statusPill = u.has_eval
+        ? `<span class="status-pill submitted"><i class="fas fa-check-circle"></i> Soumise</span>`
+        : `<span class="status-pill pending"><i class="fas fa-clock"></i> Non soumise</span>`;
+
+      // VIEW BUTTON: Always enabled. Passes both username and role
+      const viewBtn = `<button class="action-btn btn-view" onclick="viewEval('${u.user}', '${u.role}')">
+                        <i class="fas fa-eye"></i> Voir
+                       </button>`;
+
+      // PRINT BUTTON: Only enabled if an evaluation has been submitted
+      const printBtn = u.has_eval
+        ? `<a class="action-btn btn-print" href="/evaluations/print/?user=${u.user}&month=${currentMonth}&year=${currentYear}" target="_blank"><i class="fas fa-print"></i></a>`
+        : `<button class="action-btn btn-disabled" disabled><i class="fas fa-print"></i></button>`;
+
+      tbody.innerHTML += `
+        <tr class="delegate-row">
+          <td>
+            <div class="delegate-name-wrap">
+              <div class="delegate-avatar">${initials}</div>
+              <div class="delegate-name-text">${displayName}</div>
+            </div>
+          </td>
+          <td>${scoreBadge}</td>
+          <td>${statusPill}</td>
+          <td>${viewBtn}${printBtn}</td>
+        </tr>`;
+    });
+
+    document.getElementById('table-'+type).style.display = 'table';
+}
+
+  function viewEval(username, role) {
+    // Determine the path based on the user's role: 'medical' for Medico_commercial, 'commercial' otherwise
+    const path = (role === 'Medico_commercial') ? 'medical' : 'commercial';
+    
+    // Construct the target URL with the selected user, month, and year from the navigator state
+    const targetUrl = `/evaluations/${path}/?user=${username}&month=${currentMonth}&year=${currentYear}`;
+    
+    // Open the evaluation form in a new tab for the supervisor/manager
+    window.open(targetUrl, '_blank');
+}
+
+  renderMonthLabel();
+  loadDelegates();
+</script>
+</body>
+</html>
