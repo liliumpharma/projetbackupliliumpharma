@@ -7,6 +7,8 @@ from produits.api.serializers import ProduitSerializer
 
 class OrderSerializer(serializers.ModelSerializer):
 
+    valeur_net = serializers.ReadOnlyField()
+    valeur_brute = serializers.ReadOnlyField()
     items=serializers.SerializerMethodField()
     pharm=serializers.SerializerMethodField()
     grs=serializers.SerializerMethodField()

@@ -2100,21 +2100,21 @@ def SinglePlanPDF(request, id):
 
 
 def MsMonthlyPlanning(request):
+    print("je suis ici dans la vue MsMonthlyPlanning")
 
+    token = ""
     if request.user.is_authenticated:
-        token = Token.objects.filter(user=request.user)
+        # get_or_create pour éviter de faire 2 requêtes
+        token_obj, created = Token.objects.get_or_create(user=request.user)
+        token = token_obj.key
 
-        if token.exists():
-            token = token.first().key
-        else:
-            Token.objects.create(user=request.user)
-            token = Token.objects.filter(user=request.user)
-            token = token.first().key
+    # ⚡ Ici on peut ajouter les RDV plus tard, mais avec pagination
+    # Exemple : rdvs = RDV.objects.filter(...).select_related(...)
 
     return render(
         request,
         "micro_frontends/monthly_planning/index.html",
-        {"token": token if request.user.is_authenticated else ""},
+        {"token": token},
     )
 
 

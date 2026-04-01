@@ -129,11 +129,12 @@ class RapportAPI(APIView):
 
             # Retrieve visits and doctors in one go
             visites = Visite.objects.filter(rapport__in=rapports_list)
+            visite_ids = Visite.objects.filter(rapport__in=rapports_list).values_list("id", flat=True)
             print("1")
 
             # Count medecins and their specializations
             medecin_counts = (
-                Medecin.objects.filter(visite__in=visites)
+                Medecin.objects.filter(visite__id__in=visite_ids)
                 .values("specialite")
                 .annotate(dcount=Count("id"))
             )
@@ -164,12 +165,12 @@ class RapportAPI(APIView):
             # Product-specific visits
             produit_id = request.GET.get("produit")
             if produit_id:
-                prd_visites = visites.filter(produits__id=produit_id)
-                prd_medecins = Medecin.objects.filter(
-                    id__in=prd_visites.values("medecin__id")
-                )
-                other_details += f" dont ({len(prd_visites)} visites et {len(prd_medecins)} medecins) contenant le produit"
+                prd_visites_count = visites.filter(produits__id=produit_id).count()
+                prd_medecins_count = Medecin.objects.filter(
+                    id__in=visites.filter(produits__id=produit_id).values("medecin__id")
+                ).count()
 
+                other_details += f" dont ({prd_visites_count} visites et {prd_medecins_count} medecins) contenant le produit"
             print("5")
 
             serializer = RapportSerializer(rapports_list, many=True)

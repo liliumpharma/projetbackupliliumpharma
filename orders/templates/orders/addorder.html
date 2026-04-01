@@ -223,15 +223,23 @@
 
     
 <br>
-    <h4>Produits  ...... Quantites</h4>
-    <p>(Pour saisir la quantite d'un produit <br>il faut cocher la case)</p>
-    {% for pr in pro %}
-    <div class="product-row">
-        <input type="checkbox" name="check_{{pr.nom}}" id="check_{{pr.nom}}" onchange="toggleInput('{{ pr.nom }}')">
-        <label for="enable_{{pr.nom}}" style="width: 120px;">{{pr.nom}} :</label>
-        <input type="number" id="enable_{{pr.nom}}" name="qtt_{{pr.nom}}" min="0" step="1" placeholder="" style="border: solid 2px; width:100px;" disabled>
-    </div>
-    {% endfor %}
+    <h4>Produits ...... Quantites</h4>
+<p>(Pour saisir la quantite d'un produit <br>il faut cocher la case)</p>
+{% for pr in pro %}
+<div class="product-row" data-product-name="{{ pr.nom }}">
+    <input type="checkbox" name="check_{{pr.nom}}" id="check_{{pr.nom}}" onchange="toggleInput('{{ pr.nom }}')">
+    <label for="enable_{{pr.nom}}" style="width: 120px;">{{pr.nom}} :</label>
+    
+    <span class="display-price" 
+          id="price_{{pr.nom}}" 
+          data-base-price="{{ pr.price|floatformat:2 }}" 
+          style="color: #28a745; font-weight: bold; margin-left: auto; margin-right: 10px;">
+        0.00 Da
+    </span>
+
+    <input type="number" id="enable_{{pr.nom}}" name="qtt_{{pr.nom}}" min="0" step="1" placeholder="" style="border: solid 2px; width:100px;" disabled>
+</div>
+{% endfor %}
 <br>
 
     <div class="mb-3">
@@ -239,6 +247,14 @@
         <textarea id="observations" name="observations" rows="5" cols="40" placeholder="Ajoutez des remarques ici..." style="border: solid 2px;"></textarea>
     </div>
 <br>
+
+<div id="total-container" style="background: #e9ecef; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px;">
+    <h3 style="margin: 0; color: #333;">
+        Valeur du bon : <span id="total-order-amount" style="color: #28a745;">0.00</span> Da TTC
+    </h3>
+</div>
+
+
 
 <br>
     <button type="submit" class="btn btn-primary">Envoyer</button>
@@ -261,6 +277,70 @@
         document.querySelector("button[type='submit']").disabled = true;
     });
     
+</script>
+<script>
+function calculateGrandTotal() {
+    let total = 0;
+
+    // On parcourt chaque ligne de produit
+    document.querySelectorAll('.product-row').forEach(row => {
+        const checkbox = row.querySelector('input[type="checkbox"]');
+        const qtyInput = row.querySelector('input[type="number"]');
+        const priceSpan = row.querySelector('.display-price');
+
+        // On ne calcule que si le produit est coché
+        if (checkbox && checkbox.checked) {
+            const price = parseFloat(priceSpan.innerText.replace(' DZD', '')) || 0;
+            const quantity = parseFloat(qtyInput.value) || 0;
+            total += price * quantity;
+        }
+    });
+
+    // Mise à jour de l'affichage final
+    document.getElementById('total-order-amount').innerText = total.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function updateCalculatedPrices() {
+    const pharSelected = document.getElementById('phar').value !== "";
+    const grosSelected = document.getElementById('gros').value !== "";
+    const sugrosSelected = document.getElementById('sugros').value !== "";
+
+    let multiplier = 1;
+
+    // Logique des formules selon vos critères
+    if (pharSelected) {
+        multiplier = 1.19 * 1.15 * 1.1;
+    } else if (sugrosSelected && grosSelected) {
+        multiplier = 1.19 * 1.15;
+    } else if (sugrosSelected) {
+        multiplier = 1.19;
+    }
+
+    document.querySelectorAll('.display-price').forEach(span => {
+        const basePrice = parseFloat(span.getAttribute('data-base-price')) || 0;
+        const finalPrice = basePrice * multiplier;
+        span.innerText = finalPrice.toFixed(2) + " DZD";
+    });
+
+    // Une fois les prix mis à jour, on recalcule le total
+    calculateGrandTotal();
+}
+
+// Écouter la saisie des quantités en temps réel
+$(document).ready(function() {
+    // Déclencher le calcul quand on tape une quantité
+    $(document).on('input', 'input[type="number"]', function() {
+        calculateGrandTotal();
+    });
+
+    // Initialisation via Select2 existant
+    $('#phar, #gros, #sugros').on('change', function() {
+        updateCalculatedPrices();
+    });
+});
 </script>
 
 </div>
@@ -328,11 +408,12 @@ function goBack() {
 </script>
 <script>
     function limitSelect() {
+        // 1. Identify all select elements and track selections
         var selects = document.querySelectorAll('select');
         var selectedCount = 0;
         var emptySelects = [];
 
-        // Compter les sélections non vides et collecter les selects vides
+        // 2. Count non-empty selections and collect empty ones
         selects.forEach(function(select) {
             if (select.value !== "") {
                 selectedCount++;
@@ -341,30 +422,43 @@ function goBack() {
             }
         });
 
-        // Si plus de 2 sélections sont faites, désactiver et masquer le troisième select vide
+        // 3. UI Logic: Disable the remaining empty select if 2 are already chosen
         if (selectedCount >= 2 && emptySelects.length > 0) {
-            var thirdEmptySelect = emptySelects[0];  // Choisir le premier select vide
-            thirdEmptySelect.disabled = true; // Désactiver le troisième select vide
-            thirdEmptySelect.style.display = 'none'; // Masquer le troisième select vide
+            var thirdEmptySelect = emptySelects[0];
+            thirdEmptySelect.disabled = true;
+            // Note: Since you are using Select2, you may need to hide the container if display:none 
+            // doesn't hide the Select2 UI element specifically.
+            thirdEmptySelect.style.display = 'none'; 
         } else {
-            // Réactiver et afficher tous les selects vides si moins de 2 sélections sont faites
+            // 4. Reset: Re-enable and show selects if less than 2 are chosen
             emptySelects.forEach(function(select) {
                 select.disabled = false;
                 select.style.display = 'block';
             });
         }
+
+        /** * 5. PRICE CALCULATION TRIGGER
+         * We call this here so prices update instantly when a selection is changed 
+         * or cleared via the 'x' button.
+         */
+        if (typeof updateCalculatedPrices === "function") {
+            updateCalculatedPrices();
+        }
     }
 </script>
 <script>
     function toggleInput(nom) {
-      var checkbox = document.getElementById('check_' + nom);
-      var input = document.getElementById('enable_' + nom);
-  
-      if (checkbox.checked) {
+    var checkbox = document.getElementById('check_' + nom);
+    var input = document.getElementById('enable_' + nom);
+
+    if (checkbox.checked) {
         input.disabled = false;
-      } else {
+    } else {
         input.disabled = true;
-        input.value = ""; // vide le champ quand décoché (optionnel)
-      }
+        input.value = ""; // On vide la quantité si on décoche
     }
+    
+    // Recalculer le total immédiatement
+    calculateGrandTotal();
+}
   </script>

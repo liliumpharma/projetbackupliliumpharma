@@ -17,7 +17,7 @@ urlpatterns = [
     path("api/tasks/", PlanTasksAPI.as_view(), name="PlanTasksAPI"),
     path("PDF/", PlanPDF, name="PlanPDF"),
     path("PDF/<int:id>", SinglePlanPDF, name="SinglePlanPDF"),
-    path("mServices/monthly_planning/", MsMonthlyPlanning, name="MsMonthlyPlanning"),
+    #path("mServices/monthly_planning/", MsMonthlyPlanning, name="MsMonthlyPlanning"),
 ]
 
 from django.urls import path, re_path, include

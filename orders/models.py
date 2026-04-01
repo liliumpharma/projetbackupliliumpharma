@@ -19,7 +19,7 @@ class Order(models.Model):
     done_date=models.DateField(null=True,blank=True)
 
     infos=models.CharField(max_length=255,choices=(("yalidine", "yalidine"), ('livreur',"livreur"), ("bureau", "bureau"), ("delegue", "delegue")),null=True,blank=True)
-    tracking = models.JSONField(default=dict)
+    tracking = models.JSONField(default=dict,blank=True)
     bl=models.CharField(max_length=255,null=True,blank=True)
 
 
@@ -36,6 +36,28 @@ class Order(models.Model):
 
     def items_admin(self):
         return '<br/> '.join([f'{item}' for item in OrderItem.objects.filter(order=self)])  
+    
+    @property
+    def valeur_net(self):
+        """Calcule la somme de (prix unitaire x quantité) pour tous les articles."""
+        return sum(item.produit.price * item.qtt for item in self.orderitem_set.all())
+
+    @property
+    def valeur_brute(self):
+        """Applique les multiplicateurs selon le type de client sélectionné."""
+        net = self.valeur_net
+        # 1. Si une Pharmacie est sélectionnée
+        if self.pharmacy:
+            return net * 1.19 * 1.15 * 1.1
+        # 2. Si un Super Grossiste ET un Grossiste sont sélectionnés
+        elif self.super_gros and self.gros:
+            return net * 1.19 * 1.15
+        # 3. Si uniquement un Super Grossiste est sélectionné
+        elif self.super_gros:
+            return net * 1.19
+        # Par défaut (si rien n'est sélectionné ou autre cas)
+        return net
+    # ---------------------------
 
     def save(self, *args, **kwargs):
         if  not  ( self.super_gros and self.super_gros.id == 149 or (not self.pharmacy and  not self.gros and self.super_gros ) ):
