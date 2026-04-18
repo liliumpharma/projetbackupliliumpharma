@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiques des Commandes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f0f2f5;
+            color: #1e1e2e;
+            padding: 30px 16px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* ── PAGE TITLE ── */
+        .page-title {
+            margin-bottom: 28px;
+            border-left: 4px solid #2e7d32;
+            padding-left: 16px;
+        }
+        .page-title h2 { font-size: 1.5rem; color: #1b5e20; font-weight: 700; }
+        .page-title p  { margin-top: 4px; color: #666; font-size: 0.88rem; }
+
+        /* ── ACCORDION CARD ── */
+        .stat-card {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            margin-bottom: 14px;
+            overflow: hidden;
+            transition: box-shadow 0.3s, border-color 0.3s;
+        }
+        .stat-card.open { box-shadow: 0 8px 28px rgba(0,0,0,0.1); border-color: #81c784; }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 22px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .stat-header:hover { background: #f9fbf9; }
+
+        .header-left  { display: flex; align-items: center; gap: 14px; }
+        .header-right { display: flex; align-items: center; gap: 10px; }
+
+        .stat-icon {
+            width: 46px; height: 46px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; flex-shrink: 0;
+        }
+        .icon-user    { background: #e3f2fd; color: #1565c0; }
+        .icon-client  { background: #f3e5f5; color: #7b1fa2; }
+        .icon-product { background: #fff3e0; color: #e65100; }
+
+        .stat-info .title    { display: block; font-weight: 700; font-size: 0.98rem; color: #222; }
+        .stat-info .subtitle { font-size: 0.8rem; color: #888; margin-top: 2px; }
+
+        .badge {
+            background: #e8f5e9; color: #2e7d32;
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 0.7rem; font-weight: 700;
+            border: 1px solid #c8e6c9;
+            letter-spacing: 0.3px;
+        }
+        .chevron { color: #ccc; transition: transform 0.3s; font-size: 0.85rem; }
+        .stat-card.open .chevron { transform: rotate(180deg); color: #2e7d32; }
+
+        .stat-body {
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .stat-card.open .stat-body { max-height: 1200px; }
+
+        .body-content {
+            padding: 24px 24px 28px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        /* ── FILTER FORM ── */
+        .filters-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .filters-row { grid-template-columns: 1fr; }
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-group label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .filter-group label i { color: #2e7d32; font-size: 0.7rem; }
+
+        .input-wrap { position: relative; }
+
+        .input-wrap select,
+        .input-wrap input[type="date"] {
+            width: 100%;
+            padding: 10px 36px 10px 14px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+            color: #333;
+            background: #fafafa;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .input-wrap select:focus,
+        .input-wrap input[type="date"]:focus {
+            outline: none;
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46,125,50,0.12);
+            background: #fff;
+        }
+
+        /* icon inside input */
+        .input-wrap .field-icon {
+            position: absolute;
+            right: 13px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+            font-size: 0.75rem;
+            pointer-events: none;
+        }
+
+        /* ── SEARCH BUTTON ── */
+        .btn-search {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #2e7d32, #43a047);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            transition: opacity 0.2s, transform 0.15s;
+            letter-spacing: 0.2px;
+            box-shadow: 0 4px 14px rgba(46,125,50,0.3);
+        }
+        .btn-search:hover  { opacity: 0.92; }
+        .btn-search:active { transform: scale(0.98); }
+
+        /* ── PLACEHOLDER ── */
+        .placeholder {
+            padding: 40px 20px;
+            text-align: center;
+            color: #bbb;
+            font-size: 0.88rem;
+        }
+        .placeholder i { display: block; margin-bottom: 10px; opacity: 0.25; }
+
+        /* ── CUSTOM SEARCHABLE SELECT ── */
+        .custom-select-wrapper {
+            position: relative;
+        }
+
+        .custom-select-trigger {
+            width: 100%;
+            padding: 10px 36px 10px 14px;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-family: 'Inter', sans-serif;
+            color: #333;
+            background: #fafafa;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            user-select: none;
+        }
+
+        .custom-select-trigger:hover { background: #fff; }
+        .custom-select-trigger.open {
+            border-color: #2e7d32;
+            box-shadow: 0 0 0 3px rgba(46,125,50,0.12);
+            background: #fff;
+        }
+        .custom-select-trigger.disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .custom-select-trigger .trigger-icon {
+            color: #aaa;
+            font-size: 0.75rem;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+        .custom-select-trigger.open .trigger-icon { transform: rotate(180deg); color: #2e7d32; }
+
+        .custom-select-dropdown {
+            display: none;
+            position: fixed;
+            background: #fff;
+            border: 1.5px solid #c8e6c9;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            z-index: 99999;
+            overflow: hidden;
+        }
+        .custom-select-dropdown.open { display: block; }
+
+        .dropdown-search-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            background: #f9fbf9;
+        }
+        .dropdown-search-wrap i { color: #aaa; font-size: 0.8rem; flex-shrink: 0; }
+        .dropdown-search-wrap input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 0.85rem;
+            font-family: 'Inter', sans-serif;
+            color: #333;
+            background: transparent;
+        }
+        .dropdown-search-wrap input::placeholder { color: #bbb; }
+
+        .dropdown-options {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .dropdown-option {
+            padding: 9px 14px;
+            font-size: 0.875rem;
+            color: #333;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .dropdown-option:hover { background: #e8f5e9; color: #2e7d32; }
+        .dropdown-option.selected { background: #f1f8e9; font-weight: 600; color: #2e7d32; }
+        .dropdown-option.hidden { display: none; }
+        .dropdown-no-results {
+            padding: 12px 14px;
+            font-size: 0.82rem;
+            color: #bbb;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="page-title">
+        <h2>Statistiques des Commandes</h2>
+        <p>Analyse globale des bons de commandes par Utilisateurs, Clients ou Produits</p>
+    </div>
+
+    <!-- ── USERS CARD ── -->
+    <div class="stat-card" id="card-users">
+        <div class="stat-header" onclick="toggle('users')">
+            <div class="header-left">
+                <div class="stat-icon icon-user"><i class="fas fa-users"></i></div>
+                <div class="stat-info">
+                    <span class="title">Statistiques Utilisateurs</span>
+                    <span class="subtitle">Filtres & rapport de performance</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <i class="fas fa-chevron-down chevron"></i>
+            </div>
+        </div>
+        <div class="stat-body">
+            <div class="body-content">
+                <form id="filter-form" onsubmit="goToPreview(event)">
+
+                    <div class="filters-row">
+
+                        <!-- Région -->
+                        <div class="filter-group">
+                            <label><i class="fas fa-map-marker-alt"></i> Région</label>
+                            <div class="input-wrap">
+                                <select id="usr-region" name="user_region" onchange="onUserRegionChange()">
+                                    <option value="">Toutes les régions</option>
+                                    <option value="Centre">Centre</option>
+                                    <option value="Est">Est</option>
+                                    <option value="Ouest">Ouest</option>
+                                    <option value="Sud">Sud</option>
+                                </select>
+                                <i class="fas fa-chevron-down field-icon"></i>
+                            </div>
+                        </div>
+
+                        <!-- Utilisateur -->
+                        <div class="filter-group">
+                            <label><i class="fas fa-user"></i> Utilisateur</label>
+                            <div class="custom-select-wrapper" id="usr-wrapper">
+                                <div class="custom-select-trigger" id="usr-trigger" onclick="toggleUserDropdown()">
+                                    <span id="usr-display">Tous les utilisateurs</span>
+                                    <i class="fas fa-chevron-down trigger-icon"></i>
+                                </div>
+                                <div class="custom-select-dropdown" id="usr-dropdown">
+                                    <div class="dropdown-search-wrap">
+                                        <i class="fas fa-search"></i>
+                                        <input type="text" id="usr-search" placeholder="Rechercher un utilisateur..." oninput="filterUserOptions()" onclick="event.stopPropagation()">
+                                    </div>
+                                    <div class="dropdown-options" id="usr-options"></div>
+                                    <div class="dropdown-no-results" id="usr-no-results">Aucun résultat</div>
+                                </div>
+                                <input type="hidden" name="user" id="usr-value">
+                            </div>
+                        </div>
+
+                        <!-- Statut -->
+                        <div class="filter-group">
+                            <label><i class="fas fa-tag"></i> Statut</label>
+                            <div class="input-wrap">
+                                <select name="status">
+                                    <option value="">Tous les statuts</option>
+                                    <option value="initial">Initial</option>
+                                    <option value="confirme">Confirmé</option>
+                                    <option value="en cours">En cours</option>
+                                    <option value="traite">Traité</option>
+                                </select>
+                                <i class="fas fa-chevron-down field-icon"></i>
+                            </div>
+                        </div>
+
+                        <!-- Date début -->
+                        <div class="filter-group">
+                            <label><i class="fas fa-calendar-alt"></i> Date début</label>
+                            <div class="input-wrap">
+                                <input type="date" name="min_date" id="min_date">
+                                <i class="fas fa-calendar field-icon"></i>
+                            </div>
+                        </div>
+
+                        <!-- Date fin -->
+                        <div class="filter-group">
+                            <label><i class="fas fa-calendar-check"></i> Date fin</label>
+                            <div class="input-wrap">
+                                <input type="date" name="max_date" id="max_date">
+                                <i class="fas fa-calendar-check field-icon"></i>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="btn-search">
+                        <i class="fas fa-chart-bar"></i> Voir le rapport
+                    </button>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── CLIENTS CARD ── -->
+    <div class="stat-card" id="card-clients">
+        <div class="stat-header" onclick="toggle('clients')">
+            <div class="header-left">
+                <div class="stat-icon icon-client"><i class="fas fa-hospital-user"></i></div>
+                <div class="stat-info">
+                    <span class="title">Statistiques Clients</span>
+                    <span class="subtitle">Répartition par région et type</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <i class="fas fa-chevron-down chevron"></i>
+            </div>
+        </div>
+        <div class="stat-body">
+            <div class="body-content">
+                <form id="client-filter-form" onsubmit="goToTracker(event)">
+                    <div class="filters-row">
+
+                        <!-- Date début -->
+                        <div class="filter-group">
+                            <label><i class="fas fa-calendar-alt"></i> Date début</label>
+                            <div class="input-wrap">
+                                <input type="date" name="min_date" id="ct-min-date">
+                                <i class="fas fa-calendar field-icon"></i>
+                            </div>
+                        </div>
+
+                        <!-- Date fin -->
+                        <div class="filter-group">
+                            <label><i class="fas fa-calendar-check"></i> Date fin</label>
+                            <div class="input-wrap">
+                                <input type="date" name="max_date" id="ct-max-date">
+                                <i class="fas fa-calendar-check field-icon"></i>
+                            </div>
+                        </div>
+
+                        <!-- Type -->
+                        <div class="filter-group">
+                            <label><i class="fas fa-layer-group"></i> Type</label>
+                            <div class="input-wrap">
+                                <select name="type" id="ct-type" onchange="onClientTypeChange()">
+                                    <option value="">-- Sélectionner --</option>
+                                    <option value="SuperGros">SuperGros</option>
+                                    <option value="Grossiste">Grossiste</option>
+                                </select>
+                                <i class="fas fa-chevron-down field-icon"></i>
+                            </div>
+                        </div>
+
+                        <!-- Région -->
+                        <div class="filter-group">
+                            <label><i class="fas fa-map-marker-alt"></i> Région</label>
+                            <div class="input-wrap">
+                                <select name="region" id="ct-region">
+                                    <option value="">Toutes les régions</option>
+                                    <option value="Centre">Centre</option>
+                                    <option value="Sud">Sud</option>
+                                    <option value="Est">Est</option>
+                                    <option value="Ouest">Ouest</option>
+                                </select>
+                                <i class="fas fa-chevron-down field-icon"></i>
+                            </div>
+                        </div>
+
+                        <!-- Client (searchable) -->
+                        <div class="filter-group">
+                            <label><i class="fas fa-building"></i> Client</label>
+                            <div class="custom-select-wrapper" id="ct-entity-wrapper">
+                                <div class="custom-select-trigger disabled" id="ct-entity-trigger" onclick="toggleEntityDropdown()">
+                                    <span id="ct-entity-display">-- Choisir un type d'abord --</span>
+                                    <i class="fas fa-chevron-down trigger-icon"></i>
+                                </div>
+                                <div class="custom-select-dropdown" id="ct-entity-dropdown">
+                                    <div class="dropdown-search-wrap">
+                                        <i class="fas fa-search"></i>
+                                        <input type="text" id="ct-entity-search" placeholder="Rechercher un client..." oninput="filterEntityOptions()" onclick="event.stopPropagation()">
+                                    </div>
+                                    <div class="dropdown-options" id="ct-entity-options"></div>
+                                    <div class="dropdown-no-results" id="ct-entity-no-results">Aucun résultat</div>
+                                </div>
+                                <input type="hidden" name="id" id="ct-entity-value">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="btn-search" id="ct-btn-search" disabled>
+                        <i class="fas fa-chart-bar"></i> Voir le rapport
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── PRODUCTS CARD ── -->
+    <div class="stat-card" id="card-products">
+        <div class="stat-header" onclick="toggle('products')">
+            <div class="header-left">
+                <div class="stat-icon icon-product"><i class="fas fa-box-open"></i></div>
+                <div class="stat-info">
+                    <span class="title">Statistiques Produits</span>
+                    <span class="subtitle">Volume de vente et produits phares</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <i class="fas fa-chevron-down chevron"></i>
+            </div>
+        </div>
+        <div class="stat-body">
+            <div class="body-content">
+                <div class="placeholder">
+                    <i class="fas fa-tools fa-2x"></i>
+                    Coming Soon
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const USERS_LIST       = {{ users_json|safe }};
+    const RESTRICTED_USER  = {{ restricted_user|safe }};
+    const IS_RESTRICTED    = {{ is_restricted|yesno:"true,false" }};
+    const SUPER_GROS_LIST  = {{ super_gros_json|safe }};
+    const GROSSISTE_LIST   = {{ grossistes_json|safe }};
+
+    // ── Default dates: first day of current month → today ──
+    (function () {
+        const now   = new Date();
+        const year  = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day   = String(now.getDate()).padStart(2, '0');
+        const firstDay = `${year}-${month}-01`;
+        const today    = `${year}-${month}-${day}`;
+        document.getElementById('min_date').value    = firstDay;
+        document.getElementById('max_date').value    = today;
+        document.getElementById('ct-min-date').value = firstDay;
+        document.getElementById('ct-max-date').value = today;
+    })();
+
+    // Re-init the custom dropdown when the browser restores the page from bfcache
+    // (back button) — the <select> value is restored visually but no change event fires.
+    window.addEventListener('pageshow', function () {
+        const type = document.getElementById('ct-type').value;
+        if (type) onClientTypeChange();
+    });
+
+    function toggle(id) {
+        const card   = document.getElementById('card-' + id);
+        const isOpen = card.classList.contains('open');
+        document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('open'));
+        if (!isOpen) card.classList.add('open');
+    }
+
+    function goToPreview(e) {
+        e.preventDefault();
+        const data   = new FormData(document.getElementById('filter-form'));
+        const params = new URLSearchParams();
+        for (const [key, value] of data.entries()) {
+            if (value && value.trim() !== '') params.append(key, value);
+        }
+        window.location.href = '/orders/export/preview/?' + params.toString();
+    }
+
+    // ── Custom searchable entity dropdown ──
+    let entityOptions = []; // { value, label }
+
+    function onClientTypeChange() {
+        const type    = document.getElementById('ct-type').value;
+        const trigger = document.getElementById('ct-entity-trigger');
+        const btn     = document.getElementById('ct-btn-search');
+
+        // Reset selection
+        document.getElementById('ct-entity-value').value = '';
+        document.getElementById('ct-entity-display').textContent = '-- Sélectionner --';
+        document.getElementById('ct-entity-search').value = '';
+        btn.disabled = true;
+
+        if (!type) {
+            trigger.classList.add('disabled');
+            entityOptions = [];
+            renderEntityOptions();
+            return;
+        }
+
+        const list     = type === 'SuperGros' ? SUPER_GROS_LIST : GROSSISTE_LIST;
+        const allLabel = type === 'SuperGros' ? 'Tous les SuperGros' : 'Tous les Grossistes';
+
+        entityOptions = [{ value: 'ALL', label: allLabel }];
+        list.forEach(item => entityOptions.push({ value: String(item.id), label: item.name }));
+
+        trigger.classList.remove('disabled');
+        renderEntityOptions();
+    }
+
+    function renderEntityOptions(filter) {
+        const container  = document.getElementById('ct-entity-options');
+        const noResults  = document.getElementById('ct-entity-no-results');
+        const currentVal = document.getElementById('ct-entity-value').value;
+        const q          = (filter || '').toLowerCase().trim();
+
+        container.innerHTML = '';
+        let visible = 0;
+
+        entityOptions.forEach(opt => {
+            const matches = !q || opt.label.toLowerCase().includes(q);
+            if (!matches) return;
+            visible++;
+            const div = document.createElement('div');
+            div.className = 'dropdown-option' + (opt.value === currentVal ? ' selected' : '');
+            div.textContent = opt.label;
+            div.dataset.value = opt.value;
+            div.onclick = function (e) {
+                e.stopPropagation();
+                selectEntityOption(opt.value, opt.label);
+            };
+            container.appendChild(div);
+        });
+
+        noResults.style.display = visible === 0 ? 'block' : 'none';
+    }
+
+    function selectEntityOption(value, label) {
+        document.getElementById('ct-entity-value').value   = value;
+        document.getElementById('ct-entity-display').textContent = label;
+        document.getElementById('ct-btn-search').disabled  = !value;
+        closeEntityDropdown();
+    }
+
+    function positionEntityDropdown() {
+        const trigger  = document.getElementById('ct-entity-trigger');
+        const dropdown = document.getElementById('ct-entity-dropdown');
+        const rect     = trigger.getBoundingClientRect();
+        dropdown.style.top   = (rect.bottom + 5) + 'px';
+        dropdown.style.left  = rect.left + 'px';
+        dropdown.style.width = rect.width + 'px';
+    }
+
+    function toggleEntityDropdown() {
+        const trigger  = document.getElementById('ct-entity-trigger');
+        if (trigger.classList.contains('disabled')) return;
+        const dropdown = document.getElementById('ct-entity-dropdown');
+        const isOpen   = dropdown.classList.contains('open');
+        if (isOpen) {
+            closeEntityDropdown();
+        } else {
+            positionEntityDropdown();
+            dropdown.classList.add('open');
+            trigger.classList.add('open');
+            renderEntityOptions(document.getElementById('ct-entity-search').value);
+            setTimeout(() => document.getElementById('ct-entity-search').focus(), 50);
+        }
+    }
+
+    function closeEntityDropdown() {
+        document.getElementById('ct-entity-dropdown').classList.remove('open');
+        document.getElementById('ct-entity-trigger').classList.remove('open');
+    }
+
+    // Close only when scrolling outside the dropdown (e.g. the page), not inside it
+    window.addEventListener('scroll', function (e) {
+        const dropdown = document.getElementById('ct-entity-dropdown');
+        if (dropdown && !dropdown.contains(e.target)) closeEntityDropdown();
+    }, true);
+
+    function filterEntityOptions() {
+        renderEntityOptions(document.getElementById('ct-entity-search').value);
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function (e) {
+        const wrapper = document.getElementById('ct-entity-wrapper');
+        if (wrapper && !wrapper.contains(e.target)) closeEntityDropdown();
+    });
+
+    // ── Role display labels & sort order ──
+    const ROLE_LABELS = {
+        'CountryManager':       'Country Manager',
+        'Superviseur_national': 'Superviseur National',
+        'Medico_commercial':    'Medico commercial',
+        'Commercial':           'Commercial',
+    };
+    const ROLE_ORDER = ['CountryManager', 'Superviseur_national', 'Medico_commercial', 'Commercial'];
+
+    function roleRank(role) {
+        const idx = ROLE_ORDER.indexOf(role);
+        return idx === -1 ? ROLE_ORDER.length : idx;
+    }
+
+    function userDisplayLabel(u) {
+        const roleName = ROLE_LABELS[u.role] || u.role || '';
+        return roleName ? u.label + ' - ' + roleName : u.label;
+    }
+
+    function sortedUsers(list) {
+        return [...list].sort((a, b) => {
+            const rankDiff = roleRank(a.role) - roleRank(b.role);
+            if (rankDiff !== 0) return rankDiff;
+            return a.label.localeCompare(b.label);
+        });
+    }
+
+    // ── User searchable dropdown ──
+    (function initUserDropdown() {
+        if (IS_RESTRICTED && RESTRICTED_USER) {
+            document.getElementById('usr-value').value   = RESTRICTED_USER.value;
+            document.getElementById('usr-display').textContent = userDisplayLabel(RESTRICTED_USER);
+            document.getElementById('usr-trigger').classList.add('disabled');
+        }
+    })();
+
+    function onUserRegionChange() {
+        // Reset user selection when region changes
+        document.getElementById('usr-value').value = '';
+        document.getElementById('usr-display').textContent = 'Tous les utilisateurs';
+        document.getElementById('usr-search').value = '';
+        renderUserOptions();
+    }
+
+    function renderUserOptions(filter) {
+        const container  = document.getElementById('usr-options');
+        const noResults  = document.getElementById('usr-no-results');
+        const currentVal = document.getElementById('usr-value').value;
+        const q          = (filter || '').toLowerCase().trim();
+        const regionFilter = document.getElementById('usr-region').value;
+
+        container.innerHTML = '';
+        let visible = 0;
+
+        const filteredByRegion = regionFilter
+            ? USERS_LIST.filter(u => u.region === regionFilter)
+            : USERS_LIST;
+
+        const sorted = sortedUsers(filteredByRegion);
+        const options = IS_RESTRICTED ? sorted : [{ value: '', label: 'Tous les utilisateurs', role: '' }, ...sorted];
+        options.forEach(opt => {
+            const displayLabel = opt.value === '' ? opt.label : userDisplayLabel(opt);
+            const matches = !q || displayLabel.toLowerCase().includes(q);
+            if (!matches) return;
+            visible++;
+            const div = document.createElement('div');
+            div.className = 'dropdown-option' + (opt.value === currentVal ? ' selected' : '');
+            div.textContent = displayLabel;
+            div.dataset.value = opt.value;
+            div.onclick = function (e) {
+                e.stopPropagation();
+                selectUserOption(opt.value, displayLabel);
+            };
+            container.appendChild(div);
+        });
+
+        noResults.style.display = visible === 0 ? 'block' : 'none';
+    }
+
+    function selectUserOption(value, label) {
+        document.getElementById('usr-value').value = value;
+        document.getElementById('usr-display').textContent = label;
+        closeUserDropdown();
+    }
+
+    function positionUserDropdown() {
+        const trigger  = document.getElementById('usr-trigger');
+        const dropdown = document.getElementById('usr-dropdown');
+        const rect     = trigger.getBoundingClientRect();
+        dropdown.style.top   = (rect.bottom + 5) + 'px';
+        dropdown.style.left  = rect.left + 'px';
+        dropdown.style.width = rect.width + 'px';
+    }
+
+    function toggleUserDropdown() {
+        const trigger  = document.getElementById('usr-trigger');
+        if (trigger.classList.contains('disabled')) return;
+        const dropdown = document.getElementById('usr-dropdown');
+        const isOpen   = dropdown.classList.contains('open');
+        if (isOpen) {
+            closeUserDropdown();
+        } else {
+            positionUserDropdown();
+            dropdown.classList.add('open');
+            trigger.classList.add('open');
+            renderUserOptions(document.getElementById('usr-search').value);
+            setTimeout(() => document.getElementById('usr-search').focus(), 50);
+        }
+    }
+
+    function closeUserDropdown() {
+        document.getElementById('usr-dropdown').classList.remove('open');
+        document.getElementById('usr-trigger').classList.remove('open');
+    }
+
+    function filterUserOptions() {
+        renderUserOptions(document.getElementById('usr-search').value);
+    }
+
+    window.addEventListener('scroll', function (e) {
+        const d = document.getElementById('usr-dropdown');
+        if (d && !d.contains(e.target)) closeUserDropdown();
+    }, true);
+
+    document.addEventListener('click', function (e) {
+        const wrapper = document.getElementById('usr-wrapper');
+        if (wrapper && !wrapper.contains(e.target)) closeUserDropdown();
+    });
+
+    function goToTracker(e) {
+        e.preventDefault();
+        const data   = new FormData(document.getElementById('client-filter-form'));
+        const params = new URLSearchParams();
+        for (const [key, value] of data.entries()) {
+            if (value && value.trim() !== '') params.append(key, value);
+        }
+        window.location.href = '/orders/transaction-tracker/?' + params.toString();
+    }
+
+</script>
+</body>
+</html>

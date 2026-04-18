@@ -505,7 +505,18 @@ class RapportAppAPI(APIView):
 
         details = f"{len(medecins)} clients {medecin_nbr} medecins {other_details}"
 
-        paginator = Paginator(rapports_list, 3)
+        # Keep default = 3 (existing behavior) unless mobile sends page_size
+        raw_ps = request.GET.get("page_size") or request.GET.get("pageSize")
+        try:
+            page_size = int(raw_ps) if raw_ps else 3
+        except Exception:
+            page_size = 3
+
+        # Safety clamp
+        page_size = max(1, min(page_size, 100))
+
+        paginator = Paginator(rapports_list, page_size)
+
         page = (
             request.GET.get("page")
             if request.GET.get("page") and request.GET.get("page") != "0"
@@ -706,6 +717,43 @@ class CommentAppAPI(APIView):
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class RapportNoteAppAPI(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, id, format=None):
+        rapport = Rapport.objects.filter(id=id).first()
+        if not rapport:
+            raise Http404
+
+        profile = getattr(request.user, "userprofile", None)
+        rolee = (getattr(profile, "rolee", "") or "").strip()
+        speciality = (getattr(profile, "speciality_rolee", "") or "").strip()
+
+        allowed_roles = {
+            "CountryManager",
+            "Superviseur",
+            "Superviseur_regional",
+            "Superviseur_national",
+        }
+
+        if not (request.user.is_superuser or rolee in allowed_roles or speciality in allowed_roles):
+            return Response({"message": "forbidden"}, status=403)
+
+        raw_note = request.data.get("note", None)
+        try:
+            note = int(raw_note)
+        except Exception:
+            return Response({"note": "Must be an integer"}, status=400)
+
+        if note < 0 or note > 5:
+            return Response({"note": "Must be between 0 and 5"}, status=400)
+
+        rapport.note = note
+        rapport.save(update_fields=["note"])
+        return Response({"id": rapport.id, "note": rapport.note}, status=200)
+
 
 
 class CommentAPI(APIView):

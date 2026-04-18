@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import UserProfile, PersonalInfo, UserProduct, UserNotificationPermissions
+from .models import UserProfile, PersonalInfo, UserProduct, UserNotificationPermissions, UserSectorDetail
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from plans.models import Plan
@@ -161,8 +161,53 @@ class CustomUserAdmin(UserAdmin):
     commune_nom.short_description = "Commune"
 
 
+class UserSectorDetailInline(admin.TabularInline):
+    model = UserSectorDetail
+    template = 'admin/accounts/user_sector_custom.html'
+    extra = 0
+
+    def display_wilayas(self, obj):
+        return ", ".join(w.nom for w in obj.wilayas.all()) or "—"
+
+    display_wilayas.short_description = "Wilayas"
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        resolved = request.resolver_match
+        parent_id = resolved.kwargs.get("object_id")
+        if db_field.name == "wilayas":
+            if parent_id:
+                try:
+                    profile = UserProfile.objects.get(pk=parent_id)
+                    kwargs["queryset"] = profile.sectors.all()
+                except UserProfile.DoesNotExist:
+                    pass
+        elif db_field.name == "communes":
+            if parent_id:
+                try:
+                    from regions.models import Commune
+                    profile = UserProfile.objects.get(pk=parent_id)
+                    kwargs["queryset"] = Commune.objects.filter(
+                        wilaya__in=profile.sectors.all()
+                    ).order_by('wilaya__nom', 'nom')
+                except UserProfile.DoesNotExist:
+                    pass
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+
+from django.urls import path
+from .export_excel import ExportDepSemiExcel
+
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "display_superusers")
+    inlines = [UserSectorDetailInline]
+    change_list_template = "admin/accounts/userprofile/change_list.html"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('export-dep-semi/', ExportDepSemiExcel.as_view(), name='export_dep_semi'),
+        ]
+        return custom_urls + urls
 
     def display_superusers(self, obj):
         superusers = obj.usersunder.all()

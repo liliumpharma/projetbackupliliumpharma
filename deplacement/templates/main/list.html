@@ -1,327 +1,1464 @@
 <!DOCTYPE html>
 {% load static %}
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Liste des Déplacements</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css"
-    />
+    <title>Suivi des Déplacements</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" />
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
+      [x-cloak] { display: none !important; }
+
       body {
-        background-color: #f4f8f4;
-        font-family: Arial, sans-serif;
+        background-color: #f4f8f4; 
+        /* Modern System Font Stack */
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
       }
-      .header {
-        background-color: #28a745;
+
+      /* ── Header ── */
+      .page-header {
+        background-color: green;
         color: white;
-        padding: 15px 20px;
+        padding: 0 20px;
+        height: 70px;
         display: flex;
         align-items: center;
         justify-content: space-between;
       }
-      .header img {
-        height: 50px;
+      .page-header .btn-back {
+        color: white;
+        border: 1px solid rgba(255,255,255,.6);
+        background: transparent;
+        font-size: .875rem;
+        padding: 6px 14px;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
       }
-      .header h1 {
-        margin: 0;
-        font-size: 1.8rem;
+      .page-header .btn-back:hover { background: rgba(255,255,255,.15); color: white; }
+      .page-header .header-right { display: flex; align-items: center; gap: 14px; font-size: .9rem; }
+      .page-header .btn-logout {
+        color: white;
+        border: 1px solid rgba(255,255,255,.6);
+        background: transparent;
+        font-size: .875rem;
+        padding: 6px 14px;
+        border-radius: 4px;
+        cursor: pointer;
+        text-decoration: none;
       }
-      .filters {
-        background-color: white;
+      .page-header .btn-logout:hover { background: rgba(255,255,255,.15); color: white; }
+
+      /* ── Page title ── */
+      .page-title { text-align: center; margin: 22px 0 18px; color: #1a5c2e; font-weight: 700; }
+
+      /* ── Filter bar ── */
+      .filter-bar {
+        background: white;
         border-radius: 8px;
-        padding: 15px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 16px 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.08);
+        margin-bottom: 20px;
       }
-      .card {
-        margin: 15px;
-        border: 2px solid #28a745;
+      .filter-bar select { font-size: .875rem; }
+
+      /* ── Sector table ── */
+      .sector-table-wrap {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  overflow-x: auto; /* Keep this so the table can still scroll horizontally on small screens */
+}
+      .sector-table {
+        width: 100%;
+        min-width: max-content;
+        border-collapse: separate; /* Required for sticky borders */
+        border-spacing: 0;
+        font-size: .875rem;
+      }
+      .sector-table thead th {
+        background: #28a745;
+        color: white;
+        padding: 10px 12px;
+        text-align: center;
+        white-space: nowrap;
+        border-bottom: 2px solid #1e7e34;
+        border-right: 1px solid #1e7e34;
+        position: sticky; /* Sticky Header */
+        top: 0;
+        z-index: 10;
+      }
+      .sector-table thead th .ar {
+        display: block;
+        font-size: .75rem;
+        opacity: .85;
+        direction: rtl;
+        margin-top: 2px;
+      }
+      .sector-table tbody td {
+        padding: 8px 12px;
+        border-bottom: 1px solid #dee2e6;
+        border-right: 1px solid #dee2e6;
+        vertical-align: middle;
+        text-align: center;
+      }
+      .sector-table .td-user {
+        font-weight: 700;
+        background: #f8f9fa;
+        min-width: 120px;
+        position: sticky; /* Sticky User Column */
+        left: 0;
+        z-index: 5;
+        border-right: 2px solid #c5c9cc; /* Stronger border to show it's overlapping */
+      }
+      /* Ensure the top-left cell stays above everything when scrolling diagonally */
+      .sector-table thead th:first-child {
+        position: sticky;
+        left: 0;
+        z-index: 15;
+      }
+      .sector-table tbody tr:hover td { background: #f0faf3; }
+      
+      .sector-table .td-placeholder { color: #aaa; }
+      .type-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: .75rem;
+        font-weight: 700;
+      }
+      .type-semi { background: #ffc107; color: #212529; } /* Modern Gold */
+      .type-dep  { background: #dc3545; color: white; }   /* Modern Red */
+      
+      .summary-card--semi .summary-card__header { background: #ffc107; color: #212529; }
+      .summary-card--dep  .summary-card__header { background: #dc3545; color: white; }
+
+      /* ── Summary cards ── */
+      .summary-card {
         border-radius: 10px;
         overflow: hidden;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s;
-        background-color: white;
+        box-shadow: 0 3px 10px rgba(0,0,0,.1);
+        background: white;
       }
-      .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+      .summary-card__header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 18px;
+        font-weight: 700;
+        font-size: 1rem;
+        color: white;
       }
-      .card-header {
-        padding: 15px;
-        font-size: 1.2rem;
-        background-color: white;
-        border-bottom: 2px solid #28a745;
+     
+      .summary-card__body { padding: 14px 18px; display: flex; gap: 30px; }
+      .summary-card__row  { display: flex; flex-direction: column; }
+      .summary-card__label { font-size: .75rem; color: #888; text-transform: uppercase; letter-spacing: .04em; }
+      .summary-card__value { font-size: 1.4rem; font-weight: 700; color: #222; margin-top: 2px; }
+
+      /* ── Loading / empty states ── */
+      .table-state { 
+        padding: 60px 30px !important; 
+        text-align: center; 
+        color: #6c757d; 
+        font-size: 1.1rem;
+        background-color: #f8f9fa !important;
       }
-      .card-header span {
+
+      /* ── Non honoré ── */
+      .non-honore { color: #dc3545; font-weight: 700; text-align: center; }
+
+      /* ── Hierarchy Borders ── */
+      /* Thicker top border to visually separate User → Sector/Trip boundaries */
+      tr.row-separator > td {
+        border-top: 3px solid #c5c9cc !important;
+      }
+
+      /* ── Error Cells Styling ── */
+      /* ── Error Cells Styling ── */
+/* ── Error Cells Styling ── */
+      
+      /* 1. Paint the parent cell pink, whether the class is directly on the TD or inside it */
+      td.cell-error,
+      td:has(> .cell-error) {
+        background-color: #f8d7da !important;
+        vertical-align: middle !important;
+        text-align: center !important;
+      }
+
+      /* 2. For the "Région planifiée" row (where the TD has the class directly):
+            Do NOT use flexbox here, so the colspan="5" spans the full width naturally */
+      td.cell-error {
+        color: #842029 !important;
+        padding: 8px 12px !important;
+      }
+
+      /* 3. Remove default padding from the TD when using a DIV wrapper so it stays flush */
+      td:has(> div.cell-error) {
+        padding: 0 !important;
+      }
+
+      /* 4. For the "Non Couvert" and "Planning" columns (where a DIV is used):
+            Make the background transparent so the parent TD's pink background shows through */
+      div.cell-error {
+        background-color: transparent !important; 
+        color: #842029 !important;
+        padding: 8px 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .cell-error .fr-text {
+        font-weight: 700;
+        font-size: .85rem;
         display: block;
-        margin: 5px 0;
       }
-      .card-header .title {
-        font-weight: bold;
-        color: #28a745;
-      }
-      .card-header .subtitle {
-        font-weight: normal;
-        color: #555;
-      }
-      .card-body {
-        padding: 15px;
-        display: none;
-      }
-      .card.expanded .card-body {
+
+      .cell-error .ar-text {
+        font-weight: 600;
+        font-size: .75rem;
+        opacity: 0.85;
         display: block;
+        margin-top: 2px;
       }
-      .toggle-icon {
-        font-size: 1.5rem;
-        color: #28a745;
-        float: right;
+
+      /* ── Rapport Links ── */
+      .rapport-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        padding: 4px;
+        border-radius: 4px;
+        transition: background-color 0.2s, color 0.2s;
+      }
+      .rapport-link:hover {
+        background-color: #e8f5e9;
+        color: #1e7e34;
+      }
+      /* ── Order Links ── */
+      .order-link {
+        text-decoration: none;
+        color: #0d6efd;
+        font-weight: 600;
+        transition: color 0.2s;
+      }
+      .order-link:hover {
+        text-decoration: underline;
+        color: #0a58ca;
+      }
+
+      /* ── Month Navigator ── */
+      .month-navigator {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #e9ecef;
+      }
+      .month-navigator .nav-arrow {
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s, transform 0.1s;
       }
-      .footer {
+      .month-navigator .nav-arrow:hover:not(:disabled) {
+        background: #1e7e34;
+        transform: scale(1.05);
+      }
+      .month-navigator .nav-arrow:disabled {
+        background: #ced4da;
+        cursor: not-allowed;
+      }
+      .month-navigator .month-display {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1a5c2e;
+        min-width: 160px;
         text-align: center;
-        margin: 20px 0;
-        font-size: 0.9rem;
-        color: #555;
       }
+
     </style>
   </head>
   <body>
-    <header class="header">
-      <img src="{% static 'img/logo.png' %}" style="height: 80px" />
-      <h1>Liste des Demandes de Déplacement</h1>
+
+    {% csrf_token %}
+
+    <!-- ════════════════════════════════════════
+         HEADER
+    ════════════════════════════════════════ -->
+    <header class="page-header">
+      <button class="btn-back" onclick="history.back()">&#8592; Retour</button>
+
+      <div class="header-right">
+        <span>{{ today_date }}</span>
+        <span>&#128100; {{ user.username }}</span>
+        <a href="{% url 'logout' %}" class="btn-logout">Déconnexion</a>
+      </div>
     </header>
 
-    <div class="row mt-3">
-      <div class="col-md-3 ms-auto">
-        <a
-          href="https://app.liliumpharma.com/deplacement/addfront/"
-          class="btn btn-success w-100"
-        >
-          Ajouter une demande de déplacement
-        </a>
-      </div>
-    </div>
+    <!-- ════════════════════════════════════════
+         PAGE TITLE
+    ════════════════════════════════════════ -->
+    <h2 class="page-title">Suivi des Déplacement et Semi-déplacement</h2>
 
-    <div class="container my-5">
-      <!-- Filters -->
-      <div class="filters mb-4">
-        <div class="row">
-          <div class="col-md-3">
-            <input
-              type="date"
-              id="filter-start-date"
-              class="form-control"
-              placeholder="Date de début"
-            />
+    <div class="container-fluid px-4"
+         x-data="filterApp()"
+         x-init="init()">
+
+      <!-- ════════════════════════════════════════
+           FILTER BAR
+      ════════════════════════════════════════ -->
+      <div class="filter-bar">
+        <!-- Date range row -->
+        <div class="month-navigator">
+          <button class="nav-arrow" @click="prevMonth()" title="Mois précédent">&#10094;</button>
+          <span class="month-display" x-text="formatMonthDisplay(filters.month)"></span>
+          <button class="nav-arrow" @click="nextMonth()" :disabled="filters.month === maxMonth" title="Mois suivant">&#10095;</button>
+        </div>
+        <div class="row g-2 align-items-end">
           </div>
-          <div class="col-md-3">
-            <input
-              type="date"
-              id="filter-end-date"
-              class="form-control"
-              placeholder="Date de fin"
-            />
+
+        <div class="row g-2 align-items-end">
+
+
+          <!-- Region -->
+          <div class="col-md-2 col-sm-6">
+            <label class="form-label fw-semibold mb-1" style="font-size:.8rem;">Région</label>
+            <select class="form-select" x-model="filters.region" @change="onRegionChange()">
+              <option value="">Toutes</option>
+              <template x-for="r in allRegions" :key="r.id">
+                <option :value="r.id" x-text="r.name"></option>
+              </template>
+            </select>
           </div>
-          <div class="col-md-2">
-            <input
-              type="number"
-              id="filter-nb-jours"
-              class="form-control"
-              placeholder="Nombre de jours"
-            />
+
+          <!-- Wilaya -->
+          <div class="col-md-2 col-sm-6">
+            <label class="form-label fw-semibold mb-1" style="font-size:.8rem;">Wilaya</label>
+            <select class="form-select" x-model="filters.wilaya" @change="onWilayaChange()">
+              <option value="">Toutes</option>
+              <template x-for="w in filteredWilayas" :key="w.id">
+                <option :value="w.id" x-text="w.nom"></option>
+              </template>
+            </select>
           </div>
-          <div class="col-md-2">
-            <input
-              type="number"
-              id="filter-nb-nuits"
-              class="form-control"
-              placeholder="Nombre de nuits"
-            />
+
+          <!-- Type -->
+          <div class="col-md-2 col-sm-6">
+            <label class="form-label fw-semibold mb-1" style="font-size:.8rem;">Type</label>
+            <select class="form-select" x-model="filters.type" @change="applyFilters()">
+              <option value="">Tous</option>
+              <template x-for="t in allTypes" :key="t.value">
+                <option :value="t.value" x-text="t.label"></option>
+              </template>
+            </select>
           </div>
-          <div class="col-md-2">
-            <button id="filter-btn" class="btn btn-success w-100">
+
+          <!-- Role -->
+          <div class="col-md-2 col-sm-6">
+            <label class="form-label fw-semibold mb-1" style="font-size:.8rem;">Rôle</label>
+            <select class="form-select" x-model="filters.role" @change="onRoleChange()">
+              <option value="">Tous</option>
+              <template x-for="r in allRoles" :key="r.value">
+                <option :value="r.value" x-text="r.label"></option>
+              </template>
+            </select>
+          </div>
+
+          <!-- User -->
+          <div class="col-md-2 col-sm-6">
+            <label class="form-label fw-semibold mb-1" style="font-size:.8rem;">Utilisateur</label>
+            <select class="form-select" x-model="filters.user" @change="applyFilters()">
+              <option value="">Tous</option>
+              <template x-for="u in filteredUsers" :key="u.id">
+                <option :value="u.id" x-text="u.username"></option>
+              </template>
+            </select>
+          </div>
+
+          <!-- Statut -->
+          <div class="col-md-2 col-sm-6">
+            <label class="form-label fw-semibold mb-1" style="font-size:.8rem;">Statut</label>
+            <select class="form-select" x-model="filters.validation_status" @change="applyFilters()">
+              <option value="">Tous</option>
+              <option value="en_attente">En attente</option>
+              <option value="valide_sup">Validé Sup</option>
+              <option value="valide_dir">Validé Dir</option>
+            </select>
+          </div>
+
+          <!-- Conformité -->
+          <div class="col-md-2 col-sm-6">
+            <label class="form-label fw-semibold mb-1" style="font-size:.8rem;">Conformité</label>
+            <select class="form-select" x-model="filters.honor_status" @change="applyFilters()">
+              <option value="">Tous</option>
+              <option value="honore">Honoré</option>
+              <option value="non_honore">Non honoré</option>
+              <option value="extra">Extra</option>
+            </select>
+          </div>
+
+          <!-- Filter button -->
+          <div class="col-md-2 col-sm-6">
+            <button class="btn btn-success w-100" @click="applyFilters()">
               Filtrer
             </button>
           </div>
+
+        </div>
+
+        
+
+      </div>
+
+      <!-- ════════════════════════════════════════
+           WILAYA REAL SALES BANNER
+      ════════════════════════════════════════ -->
+      <div x-show="filters.wilaya" class="mb-3" x-cloak>
+        <div style="background: white; border-radius: 8px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,.08); border-left: 4px solid #28a745; min-height: 60px; display: flex; align-items: center;">
+
+          <!-- Loading state -->
+          <template x-if="isLoadingWilayaSales">
+            <span style="color: #888; font-size: .9rem;">Chargement des ventes réelles…</span>
+          </template>
+
+          <!-- Loaded state -->
+          <template x-if="!isLoadingWilayaSales && wilayaSales">
+            <div>
+              <div style="font-size: .75rem; color: #888; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px;">
+                Ventes réelles SuperGros — wilaya sélectionnée
+              </div>
+              <div style="font-size: .97rem; color: #222; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
+                <span>
+                  <strong x-text="wilayaSales.current_units.toLocaleString('fr-DZ')"></strong> Unités
+                  &nbsp;/&nbsp;
+                  <strong x-text="formatDA(wilayaSales.current_value)"></strong>
+                </span>
+                <span style="color: #ccc;">|</span>
+                <!-- Evolution: shown only when previous data exists -->
+                <template x-if="wilayaSales.evolution_pct !== null">
+                  <span style="font-weight: 700;"
+                        :class="{
+                          'text-success': wilayaSales.evolution_pct > 0,
+                          'text-danger':  wilayaSales.evolution_pct < 0,
+                          'text-secondary': wilayaSales.evolution_pct === 0
+                        }">
+                    Évolution de
+                    <span x-text="(wilayaSales.evolution_pct > 0 ? '+' : '') + wilayaSales.evolution_pct + '%'"></span>
+                    par rapport au mois précédent
+                  </span>
+                </template>
+                <template x-if="wilayaSales.evolution_pct === null">
+                  <span style="color: #aaa; font-size: .85rem;">Pas de données pour le mois précédent</span>
+                </template>
+              </div>
+            </div>
+          </template>
+
+          <!-- No data state -->
+          <template x-if="!isLoadingWilayaSales && !wilayaSales">
+            <span style="color: #bbb; font-size: .88rem;">Aucune donnée de vente pour cette wilaya.</span>
+          </template>
+
         </div>
       </div>
 
-      <!-- List of Déplacements -->
-      <div id="deplacement-list" class="row">
-        <!-- Cards will be dynamically loaded here -->
-      </div>
-    </div>
+      <!-- ════════════════════════════════════════
+           SUMMARY CARDS
+      ════════════════════════════════════════ -->
+      <div class="row g-3 mb-4">
 
-    <footer class="footer">
-      &copy; 2025 Gestion des Déplacements. Tous droits réservés.
-    </footer>
-    <script>
-      async function fetchDeplacements(filters = {}) {
-        try {
-          const queryString = new URLSearchParams(filters).toString();
-          const response = await fetch(
-            `https://app.liliumpharma.com/deplacement/api/?${queryString}`
-          );
-          if (!response.ok) throw new Error("Failed to fetch data");
-          return await response.json();
-        } catch (error) {
-          console.error(error);
-          alert("Erreur lors du chargement des déplacements.");
-        }
-      }
-
-      function renderDeplacementCard(deplacement) {
-        const nuitsDetailsHtml = deplacement.nuits_details
-          .map(
-            (nuit) => `
-              <p><strong>Nuit ${nuit.nuit}:</strong> Du ${nuit.start_date} au ${nuit.end_date}</p>
-            `
-          )
-          .join("");
-
-        const validateButton =
-          deplacement.status !== "processed" &&
-          (window.isSuperuser === "True" || window.userRole === "Office")
-            ? `<button class="btn btn-success validate-btn" onclick="event.stopPropagation(); updateStatus(${deplacement.id}, '${deplacement.status}', this.closest('.card'))">Valider</button>`
-            : "";
-
-        tarif_restauration = 2000;
-        tarif_hebergement = 7000;
-        total_restauration = tarif_restauration * deplacement.nb_jours;
-        total_hebergement = tarif_hebergement * deplacement.nb_nuits;
-        total_deplacement = 20 * deplacement.distance;
-        total_final =
-          total_hebergement + total_deplacement + total_restauration;
-
-        return `
-            <div class="col-md-4">
-              <div class="card" onclick="toggleCard(this)">
-                <div class="card-header">
-                  <span class="title">Demande de déplacement : ID ${deplacement.id}</span>
-                  <span class="subtitle">Pour: ${deplacement.user}</span>
-                  <span class="subtitle">Date début: <strong>${deplacement.start_date}</strong></span>
-                  <span class="subtitle">Date fin: <strong>${deplacement.end_date}</strong></span>
-                  <span class="subtitle">Status: <strong id="status_${deplacement.id}" class="status-value">${deplacement.status}</strong></span>
-                  <span class="toggle-icon">&#9662;</span>
-                </div>
-                <div class="card-body">
-                  <p><strong>Nombre de jours:</strong> ${deplacement.nb_jours}</p>
-                  <p><strong>Nombre de nuits:</strong> ${deplacement.nb_nuits}</p>
-                  <p><strong>Wilaya départ:</strong> ${deplacement.wilaya1}</p>
-                  <p><strong>Wilaya arrivée:</strong> ${deplacement.wilaya2}</p>
-                  <p><strong>Distance:</strong> ${deplacement.distance} km</p>
-                  <p><strong>Date création:</strong> ${deplacement.created_at}</p>
-                  <p><strong>Tarif final :</strong> ${total_final} DZD</p>
-                  <div>
-                    <h6>Détails des nuits:</h6>
-                    ${nuitsDetailsHtml}
-                    </div>
-                  ${validateButton}
-                </div>
+        <!-- Semi-déplacement -->
+        <div class="col-md-6" x-show="filters.type === '' || filters.type === 'SEMI'">
+          <div class="summary-card summary-card--semi">
+            <div class="summary-card__header">
+              <span class="summary-card__title">Total Semi-déplacement</span>
+            </div>
+            <div class="summary-card__body">
+              <div class="summary-card__row">
+                <span class="summary-card__label">Valeur prévue</span>
+                <span class="summary-card__value" id="semi-prevu">—</span>
+              </div>
+              <div class="summary-card__row">
+                <span class="summary-card__label">Valeur validée</span>
+                <span class="summary-card__value" id="semi-valide">—</span>
               </div>
             </div>
-          `;
+          </div>
+        </div>
+
+        <!-- Déplacement -->
+        <div class="col-md-6" x-show="filters.type === '' || filters.type === 'DEP'">
+          <div class="summary-card summary-card--dep">
+            <div class="summary-card__header">
+              <span class="summary-card__title">Total Déplacement</span>
+            </div>
+            <div class="summary-card__body">
+              <div class="summary-card__row">
+                <span class="summary-card__label">Valeur prévue</span>
+                <span class="summary-card__value" id="dep-prevu">—</span>
+              </div>
+              <div class="summary-card__row">
+                <span class="summary-card__label">Valeur validée</span>
+                <span class="summary-card__value" id="dep-valide">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ════════════════════════════════════════
+           SECTOR TABLE
+      ════════════════════════════════════════ -->
+      <div class="sector-table-wrap">
+        <table class="sector-table">
+          <thead>
+            <tr>
+              <th>Utilisateur<span class="ar">المستخدم</span></th>
+              <th>Wilaya<span class="ar">الولاية</span></th>
+              <th>Commune<span class="ar">البلدية</span></th>
+              <th>Type<span class="ar">النوع</span></th>
+              <th>Date<span class="ar">التاريخ</span></th>
+              <th>Objectif Visite<span class="ar">هدف الزيارة</span></th>
+              <th>Planning<span class="ar">التخطيط</span></th>
+              <th>Rapport<span class="ar">التقرير</span></th>
+              <th>Rendement<span class="ar">المردود</span></th>
+              <th>Prix Prévu<span class="ar">السعر المتوقع</span></th>
+              <th>Prix Validé<span class="ar">السعر المصادق</span></th>
+            </tr>
+          </thead>
+          <tbody id="sector-tbody">
+            <tr><td colspan="12" class="table-state">Chargement…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /container-fluid -->
+
+    <footer class="text-center text-muted py-4" style="font-size:.85rem;">
+      
+    </footer>
+
+    <!-- ════════════════════════════════════════
+         SCRIPTS
+    ════════════════════════════════════════ -->
+    <script>
+      /* ── Seed data from Django context ── */
+      const SEED = {
+        regions: {{ regions_json|safe }},
+        wilayas: {{ wilayas_json|safe }},
+        types:   {{ types_json|safe }},
+        roles:   {{ roles_json|safe }},
+        users:   {{ users_json|safe }},
+      };
+
+      /* ── Current user role (from Django session) ── */
+      const currentUserRole = "{{ request.user.userprofile.speciality_rolee|escapejs }}";
+
+      /* ── CSRF helper ── */
+      function getCsrfToken() {
+        return document.cookie.split('; ')
+          .find(r => r.startsWith('csrftoken='))
+          ?.split('=')[1] ?? '';
       }
 
-      async function updateStatus(deplacementId, currentStatus, cardElement) {
-        try {
-          let nextStatus;
+      /* ── Alpine component ── */
+      /* ── Alpine component ── */
+      function filterApp() {
+        // Calculate the current YYYY-MM once to use as default and maximum
+        const currentD = new Date();
+        const currentYYYYMM = currentD.getFullYear() + '-' + String(currentD.getMonth() + 1).padStart(2, '0');
 
-          // Determine the next status
-          if (currentStatus === "waiting") {
-            nextStatus = "validated_by_supervisor";
-          } else if (currentStatus === "validated_by_supervisor") {
-            nextStatus = "validated_by_direction";
-          } else if (currentStatus === "validated_by_direction") {
-            nextStatus = "Traité";
-          } else {
-            alert("Status update not allowed");
-            return;
-          }
+        return {
+          allRegions:  SEED.regions,
+          allWilayas:  SEED.wilayas,
+          allTypes:    SEED.types,
+          allRoles:    SEED.roles,
+          allUsers:    SEED.users,
 
-          // Send PATCH request to update the status
-          const response = await fetch(
-            `https://app.liliumpharma.com/deplacement/api/${deplacementId}/update_status/`,
-            {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCSRFToken(), // Include CSRF token
-              },
-              body: JSON.stringify({ status: nextStatus }),
+          filteredWilayas: SEED.wilayas,
+          filteredUsers:   SEED.users,
+
+          maxMonth: currentYYYYMM, // Used to disable the Right Arrow
+
+          filters: {
+            region: '', wilaya: '', type: '', role: '', user: '',
+            month: currentYYYYMM,
+            validation_status: '',
+            honor_status: '',
+          },
+
+          wilayaSales: null,
+          isLoadingWilayaSales: false,
+
+          // Converts "2026-04" to "Avril 2026"
+          formatMonthDisplay(ym) {
+            if (!ym) return '';
+            const months = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+            const [y, m] = ym.split('-');
+            return `${months[parseInt(m, 10) - 1]} ${y}`;
+          },
+
+          prevMonth() {
+            let [y, m] = this.filters.month.split('-').map(Number);
+            m--;
+            if (m === 0) { m = 12; y--; } // Wrap around to December of previous year
+            this.filters.month = `${y}-${String(m).padStart(2, '0')}`;
+            this.applyFilters();
+          },
+
+          nextMonth() {
+            if (this.filters.month === this.maxMonth) return; // Failsafe
+            let [y, m] = this.filters.month.split('-').map(Number);
+            m++;
+            if (m === 13) { m = 1; y++; } // Wrap around to January of next year
+            this.filters.month = `${y}-${String(m).padStart(2, '0')}`;
+            this.applyFilters();
+          },
+
+          init() {
+            this.applyFilters();
+          },
+          
+          // ... (keep the rest of your methods: onRegionChange, applyFilters, etc.)
+          onRegionChange() {
+            const rid = this.filters.region;
+
+            // Reset downstream
+            this.filters.wilaya = '';
+            this.filters.user   = '';
+
+            this.filteredWilayas = rid
+              ? this.allWilayas.filter(w => String(w.region_id) === String(rid))
+              : this.allWilayas;
+
+            this._refreshUserList();
+            this.applyFilters();
+          },
+
+          onWilayaChange() {
+            this.filters.user = '';
+            this._refreshUserList();
+            this.applyFilters();
+          },
+
+          onRoleChange() {
+            this.filters.user = '';
+            this._refreshUserList();
+            this.applyFilters();
+          },
+
+          _refreshUserList() {
+            let users = this.allUsers;
+
+            if (this.filters.region) {
+              users = users.filter(u => String(u.region_id) === String(this.filters.region));
             }
-          );
+            if (this.filters.wilaya) {
+              users = users.filter(u => u.wilaya_ids && u.wilaya_ids.includes(Number(this.filters.wilaya)));
+            }
+            if (this.filters.role) {
+              users = users.filter(u => u.speciality_rolee === this.filters.role);
+            }
 
-          if (!response.ok) {
-            throw new Error("Failed to update status");
-          }
+            this.filteredUsers = users;
+          },
 
-          // Update the UI on success
-          const statusElement = document.getElementById(
-            `status_${deplacementId}`
-          );
-          if (statusElement) {
-            statusElement.textContent = nextStatus.replace(/_/g, " ");
-          }
+          applyFilters() {
+            const params = {};
+            if (this.filters.user)      params.user_id    = this.filters.user;
+            if (this.filters.type)      params.type       = this.filters.type;
+            if (this.filters.region)    params.region_id  = this.filters.region;
+            if (this.filters.wilaya)    params.wilaya_id  = this.filters.wilaya;
+            if (this.filters.role)      params.role       = this.filters.role;
+            if (this.filters.month) {
+              const [year, month] = this.filters.month.split('-');
+              // First day is always 01
+              params.start_date = `${year}-${month}-01`;
+              // Get the last day of the selected month
+              const lastDay = new Date(year, parseInt(month, 10), 0).getDate();
+              params.end_date = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+            }
+            loadSectorTable(params, this.filters.month, this.filters.validation_status, this.filters.honor_status);
 
-          // Optionally remove the button if no further actions are required
-          if (nextStatus === "processed") {
-            const validateButton = cardElement.querySelector(".validate-btn");
-            if (validateButton) validateButton.remove();
-          }
-        } catch (error) {
-          console.error("Error updating status:", error);
-          alert("Une erreur est survenue lors de la mise à jour du statut.");
-        }
-      }
+            // Wilaya real-sales banner
+            if (this.filters.wilaya && this.filters.month) {
+              this.fetchWilayaSales();
+            } else {
+              this.wilayaSales = null;
+            }
+          },
 
-      function getCSRFToken() {
-        const cookieValue = document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("csrftoken="))
-          ?.split("=")[1];
-        return cookieValue;
-      }
+          async fetchWilayaSales() {
+            this.isLoadingWilayaSales = true;
+            this.wilayaSales = null;
+            try {
+              const qs = new URLSearchParams({
+                wilaya_id: this.filters.wilaya,
+                month:     this.filters.month,
+              }).toString();
+              const res = await fetch(`/deplacement/wilaya-sales/?${qs}`);
+              if (!res.ok) throw new Error();
+              this.wilayaSales = await res.json();
+            } catch {
+              this.wilayaSales = null;
+            } finally {
+              this.isLoadingWilayaSales = false;
+            }
+          },
 
-      async function loadDeplacements(filters = {}) {
-        const deplacementList = document.getElementById("deplacement-list");
-        deplacementList.innerHTML = "<p>Chargement...</p>";
-        const deplacements = await fetchDeplacements(filters);
-        if (deplacements && deplacements.length > 0) {
-          deplacementList.innerHTML = deplacements
-            .map(renderDeplacementCard)
-            .join("");
-        } else {
-          deplacementList.innerHTML = "<p>Aucun déplacement trouvé.</p>";
-        }
-      }
-
-      function toggleCard(cardElement) {
-        cardElement.classList.toggle("expanded");
-        const toggleIcon = cardElement.querySelector(".toggle-icon");
-        toggleIcon.innerHTML = cardElement.classList.contains("expanded")
-          ? "&#9650;"
-          : "&#9662;";
-      }
-
-      document.getElementById("filter-btn").addEventListener("click", () => {
-        const filters = {
-          start_date: document.getElementById("filter-start-date").value,
-          end_date: document.getElementById("filter-end-date").value,
-          nb_jours: document.getElementById("filter-nb-jours").value,
-          nb_nuits: document.getElementById("filter-nb-nuits").value,
+          formatDA(value) {
+            if (value == null) return '—';
+            // Format: "8 452 142,02 DA" (French locale with DA suffix)
+            return value.toLocaleString('fr-DZ', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }) + ' DA';
+          },
         };
-        loadDeplacements(filters);
-      });
+      }
 
-      // Pass user role dynamically
-      window.userRole = "{{ request.user.userprofile.rolee }}";
-      window.isSuperuser = "{{ request.user.is_superuser }}";
+      /* ── Classify a sector as honore / non_honore / extra ── */
+      function sectorMatchesHonorStatus(s, filterValue) {
+        const maxAllowed = s.times || 1;
+        let hasHonore = false, hasNonHonore = false, hasExtra = false;
 
-      // Initial load
-      loadDeplacements();
+        if (s.category === 'SEMI') {
+          const dates = s.plan_dates || [];
+          const unplanned = s.unplanned_dates || [];
+          let validCount = 0;
+
+          if (dates.length === 0 && unplanned.length === 0) {
+            hasNonHonore = true;
+          }
+
+          for (const entry of dates) {
+            if (!entry || entry.status === 'non_honore' ||
+                entry.rapport_status === 'missing' || entry.rapport_status === 'wrong_region') {
+              hasNonHonore = true;
+            } else {
+              validCount++;
+              if (validCount <= maxAllowed) hasHonore = true;
+              else hasExtra = true;
+            }
+          }
+
+          for (const u of unplanned) {
+            validCount++;
+            if (validCount <= maxAllowed) hasHonore = true;
+            else hasExtra = true;
+          }
+
+        } else { // DEP
+          const trips = s.trips || [];
+          let validCount = 0;
+
+          if (trips.length === 0) {
+            hasNonHonore = true;
+          }
+
+          for (const trip of trips) {
+            const isTripFullyValid = trip.every(slot =>
+              slot &&
+              slot.status !== 'non_honore' &&
+              slot.rapport_status !== 'missing' &&
+              slot.rapport_status !== 'wrong_region'
+            );
+
+            if (isTripFullyValid) {
+              validCount++;
+              if (validCount <= maxAllowed) hasHonore = true;
+              else hasExtra = true;
+            } else {
+              hasNonHonore = true;
+            }
+          }
+        }
+
+        if (filterValue === 'honore')     return hasHonore;
+        if (filterValue === 'non_honore') return hasNonHonore;
+        if (filterValue === 'extra')      return hasExtra;
+        return true;
+      }
+
+      /* ── Fetch & render sector table ── */
+      async function loadSectorTable(filters, currentMonth, validationStatus = '', honorStatus = '') {
+        const tbody = document.getElementById('sector-tbody');
+        tbody.innerHTML = '<tr><td colspan="12" class="table-state">Chargement…</td></tr>';
+        try {
+          const qs  = new URLSearchParams(filters).toString();
+          const res = await fetch(`/deplacement/sector-table/${qs ? '?' + qs : ''}`);
+          if (!res.ok) throw new Error();
+          const data = await res.json();
+
+          let filteredData = data;
+
+          if (validationStatus) {
+            filteredData = [];
+            for (const user of data) {
+              const validSectors = user.sectors.filter(s => {
+                // Determine if the sector has at least one valid, honored visit
+                let hasValidDay = false;
+                if (s.category === 'SEMI') {
+                  const entries = (s.plan_dates || []).concat(s.unplanned_dates || []);
+                  hasValidDay = entries.some(e =>
+                    e && e.status !== 'non_honore' &&
+                    e.rapport_status !== 'missing' &&
+                    e.rapport_status !== 'wrong_region'
+                  );
+                } else {
+                  const trips = s.trips || [];
+                  hasValidDay = trips.some(trip =>
+                    trip.length > 0 &&
+                    trip.every(slot =>
+                      slot && slot.status !== 'non_honore' &&
+                      slot.rapport_status !== 'missing' &&
+                      slot.rapport_status !== 'wrong_region'
+                    )
+                  );
+                }
+                // Orphan orders also count as valid activity
+                if (s.orphan_orders) hasValidDay = true;
+
+                if (validationStatus === 'valide_dir')   return s.is_approved_by_dir === true;
+                if (validationStatus === 'valide_sup')   return s.prix_valide !== null && !s.is_approved_by_dir;
+                if (validationStatus === 'en_attente')   return s.prix_valide === null && hasValidDay;
+                if (validationStatus === 'non_conforme') return s.prix_valide === null && !hasValidDay;
+                return true;
+              });
+
+              if (validSectors.length > 0) {
+                filteredData.push({ ...user, sectors: validSectors });
+              }
+            }
+          }
+
+          // ── Honor status filter (Honoré / Non honoré / Extra) ──
+          // ── Honor status filter (Honoré / Non honoré / Extra) ──
+          if (honorStatus) {
+            const filtered2 = [];
+            for (const user of filteredData) {
+              const matchedSectors = [];
+              for (const s of user.sectors) {
+                // Deep clone the sector to filter its internal arrays without mutating cached data
+                const sCopy = JSON.parse(JSON.stringify(s));
+                const maxAllowed = sCopy.times || 1;
+
+                if (sCopy.category === 'SEMI') {
+                  const dates = sCopy.plan_dates || [];
+                  const unplanned = sCopy.unplanned_dates || [];
+                  let vCount = 0;
+
+                  // Tag planned dates
+                  for (let i = 0; i < dates.length; i++) {
+                    const entry = dates[i];
+                    if (!entry || entry.status === 'non_honore' || entry.rapport_status === 'missing' || entry.rapport_status === 'wrong_region') {
+                      if (entry) entry._hStatus = 'non_honore';
+                      else dates[i] = { status: 'non_honore', _hStatus: 'non_honore' };
+                    } else {
+                      vCount++;
+                      entry._hStatus = (vCount <= maxAllowed) ? 'honore' : 'extra';
+                      if (vCount > maxAllowed) entry._isExtra = true;
+                    }
+                  }
+
+                  // Tag unplanned dates
+                  for (const u of unplanned) {
+                    vCount++;
+                    u._hStatus = (vCount <= maxAllowed) ? 'honore' : 'extra';
+                    if (vCount > maxAllowed) u._isExtra = true;
+                  }
+
+                  // Apply deep filter
+                  sCopy.plan_dates = dates.filter(e => e && e._hStatus === honorStatus);
+                  sCopy.unplanned_dates = unplanned.filter(u => u && u._hStatus === honorStatus);
+
+                  // Fix base row structure if plan_dates became empty but unplanned exists
+                  if (sCopy.plan_dates.length === 0 && sCopy.unplanned_dates.length > 0) {
+                    sCopy.plan_dates.push(sCopy.unplanned_dates.shift());
+                  }
+
+                  // Keep the sector if it still has rows, or if it has phone orders and we're looking for 'honore'
+                  if (sCopy.plan_dates.length > 0 || sCopy.unplanned_dates.length > 0) {
+                    matchedSectors.push(sCopy);
+                  } else if (honorStatus === 'honore' && sCopy.orphan_orders) {
+                    matchedSectors.push(sCopy);
+                  }
+
+                } else {
+                  // DEP
+                  const trips = sCopy.trips || [];
+                  let vCount = 0;
+
+                  for (const trip of trips) {
+                    const isTripFullyValid = trip.every(slot => 
+                      slot && slot.status !== 'non_honore' && slot.rapport_status !== 'missing' && slot.rapport_status !== 'wrong_region'
+                    );
+
+                    if (!isTripFullyValid) {
+                      trip._hStatus = 'non_honore';
+                    } else {
+                      vCount++;
+                      trip._hStatus = (vCount <= maxAllowed) ? 'honore' : 'extra';
+                      if (vCount > maxAllowed) trip._isExtra = true;
+                    }
+                  }
+
+                  sCopy.trips = trips.filter(t => t._hStatus === honorStatus);
+
+                  if (sCopy.trips.length > 0) {
+                    matchedSectors.push(sCopy);
+                  } else if (honorStatus === 'honore' && sCopy.orphan_orders) {
+                    matchedSectors.push(sCopy);
+                  }
+                }
+              }
+              if (matchedSectors.length > 0) {
+                filtered2.push({ ...user, sectors: matchedSectors });
+              }
+            }
+            filteredData = filtered2;
+          }
+
+          renderSectorTable(filteredData, tbody, currentMonth);
+        } catch {
+          tbody.innerHTML = '<tr><td colspan="12" class="table-state text-danger">Erreur lors du chargement.</td></tr>';
+        }
+      }
+
+      function typeBadge(cat) {
+        if (cat === 'SEMI') return '<span class="type-badge type-semi">SEMI</span>';
+        if (cat === 'DEP')  return '<span class="type-badge type-dep">DEP</span>';
+        return cat;
+      }
+
+      function sectorSubCount(s) {
+        return s.category === 'DEP' ? s.times * s.days : 1;
+      }
+
+    
+      
+
+      // Builds the "Objectif Visite" cell content from a sector object.
+      function buildObjectif(s) {
+        const parts = [];
+        if (s.medical > 0)    parts.push(`${s.medical} Médical`);
+        if (s.commercial > 0) parts.push(`${s.commercial} Commercial`);
+        return parts.length ? parts.join('<br>') : '—';
+      }
+
+      // Builds the "Planning" cell content from a plan_dates entry
+      const badgeUnplanned = `<div class="cell-error"><span class="fr-text">Planning non conforme</span><span class="ar-text">تخطيط غير مطابق</span></div>`;
+
+      function buildPlanning(s, entry, username = '') {
+        if (entry.status === 'unplanned') {
+          return badgeUnplanned;
+        }
+        const parts = [];
+
+        const medCount = entry.medical || 0;
+        const medObj = s.medical || 0;
+        // Show if they planned some, OR if the objective required some
+        if (medCount > 0 || medObj > 0) {
+          const color = medCount >= medObj ? '#198754' : '#dc3545';
+          parts.push(`<span style="color:${color};font-weight:700;">${medCount} Médical</span>`);
+        }
+
+        const commCount = entry.commercial || 0;
+        const commObj = s.commercial || 0;
+        // Show if they planned some, OR if the objective required some
+        if (commCount > 0 || commObj > 0) {
+          const color = commCount >= commObj ? '#198754' : '#dc3545';
+          parts.push(`<span style="color:${color};font-weight:700;">${commCount} Commercial</span>`);
+        }
+
+        const body = parts.length ? parts.join('<br>') : '—';
+
+        if (entry.date && username) {
+          const planLink = `<a href="/plans/PDF/?min_date=${entry.date}&max_date=${entry.date}&user=${encodeURIComponent(username)}" target="_blank" style="display:inline-block;margin-bottom:5px;font-size:.78rem;color:#0d6efd;font-weight:700;" title="Ouvrir le plan PDF">Plan</a><br>`;
+          return planLink + body;
+        }
+
+        return body;
+      }
+
+      // Builds the "Rapport" cell content and appends Similarity %
+      function buildRapport(s, entry) {
+        if (!entry) return '—';
+        if (entry.rapport_status === 'empty')
+          return `<div class="cell-error"><span class="fr-text">Rapport vide</span><span class="ar-text">تقرير فارغ</span></div>`;
+
+        const parts = [];
+        
+        const rMedCount = entry.rapport_medical || 0;
+        const medObj = s.medical || 0;
+        // Show if they visited some, OR if the objective required some
+        if (rMedCount > 0 || medObj > 0) {
+          const color = rMedCount >= medObj ? '#198754' : '#dc3545';
+          parts.push(`<span style="color:${color};font-weight:700;">${rMedCount} Médical</span>`);
+        }
+
+        const rCommCount = entry.rapport_commercial || 0;
+        const commObj = s.commercial || 0;
+        // Show if they visited some, OR if the objective required some
+        if (rCommCount > 0 || commObj > 0) {
+          const color = rCommCount >= commObj ? '#198754' : '#dc3545';
+          parts.push(`<span style="color:${color};font-weight:700;">${rCommCount} Commercial</span>`);
+        }
+
+        let html = parts.length ? parts.join('<br>') : '—';
+
+        // Add the Similarity Percentage
+        if (entry.status === 'unplanned') {
+          html += `<br><span style="color:#dc3545;font-size:.9rem;font-weight:800;display:inline-block;margin-top:6px;">0% Similarité</span>`;
+        } else if (entry.similarity !== undefined) {
+          let simColor = '#dc3545';
+          if (entry.similarity >= 50) {
+            simColor = '#28a745';
+          } else if (entry.similarity >= 30) {
+            simColor = '#fd7e14';
+          }
+          html += `<br><span style="color:${simColor};font-size:.9rem;font-weight:800;display:inline-block;margin-top:6px;">${entry.similarity}% Similarité</span>`;
+        }
+
+        if (entry.rapport_id) {
+          const rapportLink = `<a href="/rapports/PDF/${entry.rapport_id}" target="_blank" class="rapport-link" style="display:inline-block;margin-bottom:5px;font-size:.78rem;color:#0d6efd;font-weight:700;" title="Ouvrir le rapport PDF">#${entry.rapport_id}</a><br>`;
+          return rapportLink + html;
+        }
+
+        return html;
+      }
+
+      // Builds the "Rendement" cell content (Order IDs + Total Value)
+      function buildRendement(entry) {
+        // Keep the dash for invalid rows since they are usually hidden by colspans anyway
+        if (!entry || entry.status === 'non_honore' || entry.rapport_status === 'missing' || entry.rapport_status === 'wrong_region') {
+          return '—';
+        }
+        
+        const data = entry.rendement_orders;
+
+        // ▼▼▼ NEW: Show styled "0 Bon de commande" instead of '—' ▼▼▼
+        if (!data || !data.ids || data.ids.length === 0) {
+          return `<div class="cell-error"><span class="fr-text">0 Bon de commande</span><span class="ar-text">0 طلبية</span></div>`;
+        }
+        // ▲▲▲ END OF NEW CODE ▲▲▲
+        
+        // List the IDs as clickable links
+        const idsHtml = data.ids.map(id => `<a href="/orders/${id}" target="_blank" class="order-link" title="Ouvrir la commande">#${id}</a>`).join('<br>');
+        
+        // Format the total value and display it in bold green
+        const totalHtml = `<br><span style="color:#28a745;font-weight:700;font-size:.85rem;display:inline-block;margin-top:4px;">${formatPrice(data.total_value)}</span>`;
+        
+        return idsHtml + totalHtml;
+      }
+
+      // Builds the "Prix Prévu" cell content from a sector object.
+      function formatPrice(amount) {
+        const int = Math.round(amount).toString();
+        return int.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0') + ' DA';
+      }
+
+      function buildPrixPrevu(s) {
+        if (s.category === 'SEMI') {
+          return s.value !== null ? formatPrice(s.value) : '—';
+        }
+        // DEP: value + hotel_cost
+        const v = s.value !== null ? s.value : 0;
+        const h = s.hotel_cost !== null ? s.hotel_cost : 0;
+        return (s.value !== null || s.hotel_cost !== null) ? formatPrice(v + h) : '—';
+      }
+
+      // Builds the "Prix Validé" cell: input auto-filled with prix_valide (or prixPrevu),
+      // a green Save button, and — for CountryManagers only — a blue Approve button.
+      // rowspan > 1 is used for DEP trips that span multiple rows.
+      function buildPrixValide(s, currentMonth, rowspan = 1, entry = null, prixPrevu = 0) {
+        const isCommercial    = ['Medico_commercial', 'Commercial'].includes(currentUserRole);
+        const isCountryManager = currentUserRole === 'CountryManager';
+
+        const val         = (s.prix_valide != null) ? s.prix_valide : prixPrevu;
+        const isApproved  = !!s.is_approved_by_dir;
+        const rowspanAttr = rowspan > 1 ? ` rowspan="${rowspan}"` : '';
+
+        // ── 1. COMMERCIAL VIEW — read-only ───────────────────────────────────
+        if (isCommercial) {
+          const displayVal = s.prix_valide != null
+            ? formatPrice(s.prix_valide)
+            : '<span style="color:#6c757d;font-style:italic;font-size:0.8rem;">En attente</span>';
+          const checkIcon = isApproved
+            ? `<svg viewBox="0 0 20 20" style="width:14px;height:14px;fill:#28a745;vertical-align:middle;margin-left:5px;" xmlns="http://www.w3.org/2000/svg"><path d="M16.7 5.3a1 1 0 0 0-1.4 0L8 12.6 4.7 9.3a1 1 0 0 0-1.4 1.4l4 4a1 1 0 0 0 1.4 0l8-8a1 1 0 0 0 0-1.4z"/></svg>`
+            : '';
+          return `<td${rowspanAttr} style="text-align:center;vertical-align:middle;font-weight:bold;">${displayVal}${checkIcon}</td>`;
+        }
+
+        // ── 2. SUPERVISOR / COUNTRY MANAGER VIEW — interactive ───────────────
+        const med    = entry ? (entry.rapport_medical    || 0) : 0;
+        const comm   = entry ? (entry.rapport_commercial || 0) : 0;
+        const orders = entry && entry.rendement_orders
+                         ? (entry.rendement_orders.ids ? entry.rendement_orders.ids.length : 0)
+                         : 0;
+        const disabledAttr = isApproved ? ' disabled' : '';
+
+        const saveBtn = `<button onclick="savePrixValide(this,${s.id},'${currentMonth}','save_price',${med},${comm},${orders})" style="background:#28a745;color:white;border:none;border-radius:4px;padding:3px 9px;cursor:pointer;font-size:.9rem;line-height:1;" title="Sauvegarder le prix validé"${disabledAttr}>&#10003;</button>`;
+
+        const approveBtn = isCountryManager
+          ? `<button onclick="savePrixValide(this,${s.id},'${currentMonth}','approve',${med},${comm},${orders})" style="background:#0d6efd;color:white;border:none;border-radius:4px;padding:3px 9px;cursor:pointer;font-size:.8rem;line-height:1;" title="Approuver définitivement"${disabledAttr}>Approuver</button>`
+          : '';
+
+        return `<td${rowspanAttr} style="text-align:center;vertical-align:middle;min-width:180px;padding:6px 8px;">
+          <div style="display:flex;align-items:center;gap:5px;justify-content:center;flex-wrap:wrap;">
+            <input type="number" step="any" min="0" max="${prixPrevu}" value="${val}"${disabledAttr} style="width:85px;font-size:.8rem;padding:3px 6px;border:1px solid ${isApproved ? '#6c757d' : '#ced4da'};border-radius:4px;text-align:right;${isApproved ? 'background:#e9ecef;color:#6c757d;' : ''}" title="Prix validé (DA)" />
+            ${saveBtn}${approveBtn}
+          </div>
+        </td>`;
+      }
+
+      // Saves or approves a sector's validated price via the unified snapshot API.
+      async function savePrixValide(btn, sectorId, month, action, med, comm, orders) {
+        const input = btn.closest('div').querySelector('input[type="number"]');
+        const value = parseFloat(input.value);
+        if (isNaN(value) || value < 0) {
+          input.style.borderColor = '#dc3545';
+          return;
+        }
+        input.style.borderColor = '#ced4da';
+        const originalHtml = btn.innerHTML;
+        btn.disabled   = true;
+        btn.innerHTML  = '…';
+        try {
+          const res = await fetch('/deplacement/api/validate-sector/', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+            body: JSON.stringify({
+              sector_id: sectorId, month: month, prix_valide: value,
+              medical_visits: med, commercial_visits: comm, order_count: orders,
+              action: action
+            }),
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            if (res.status === 403) {
+              alert(err.error || 'Accès refusé : cette fiche a déjà été approuvée par la Direction.');
+            }
+            throw new Error();
+          }
+          btn.innerHTML        = '✔';
+          btn.style.background = action === 'approve' ? '#0d6efd' : '#198754';
+          if (action === 'approve') {
+            // Lock the entire cell — no further edits allowed
+            input.disabled = true;
+            input.style.background   = '#e9ecef';
+            input.style.color        = '#6c757d';
+            input.style.borderColor  = '#6c757d';
+            btn.closest('div').querySelectorAll('button').forEach(b => { b.disabled = true; });
+          } else {
+            setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; }, 1500);
+          }
+        } catch {
+          btn.innerHTML        = '✗';
+          btn.style.background = '#dc3545';
+          setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; }, 1500);
+        }
+      }
+
+      // Builds the "Commune" cell.
+      // - rapport OK or unplanned → show communes from the actual rapport visits.
+      // - missing / wrong_region / empty → show communes from the planning.
+      function buildCommune(s, entry) {
+        if (!entry || entry.status === 'non_honore') return '—';
+
+        const useRapport =
+          entry.status === 'unplanned' ||        // unplanned: has rapport, no plan
+          !entry.rapport_status ||               // SEMI unplanned entries have no rapport_status
+          entry.rapport_status === 'ok';
+
+        const communes = useRapport
+          ? (entry.rapport_communes || [])
+          : (entry.plan_communes   || []);
+
+        if (!communes.length) return '—';
+        return communes
+          .map(c => `<span style="display:block;font-size:.8rem;">${c}</span>`)
+          .join('');
+      }
+
+      // Returns the 7 cells from Date → Prix Validé.
+      // priceCells = { prevu: string (cell content), valide: string (full <td> element) }
+      function dateCells(s, entry, objectifVisite, priceCells, username = '') {
+        // Catch both null entries (from Python padding) AND injected non_honore status
+        if (!entry || entry.status === 'non_honore') {
+          return `<td colspan="7"><div class="cell-error"><span class="fr-text">Non honoré</span><span class="ar-text">غير منجز</span></div></td>`;
+        }
+
+        const planning = buildPlanning(s, entry, username);
+        const status   = entry.rapport_status;
+
+        if (status === 'missing' || status === 'wrong_region') {
+          const msgFr = status === 'missing' ? 'Rapport manquant' : 'Région planifiée non respectée';
+          const msgAr = status === 'missing' ? 'تقرير مفقود' : 'المنطقة المخطط لها غير محترمة';
+          return `<td>${entry.date}</td><td>${objectifVisite}</td><td>${planning}</td><td colspan="4" class="cell-error"><span class="fr-text">${msgFr}</span><span class="ar-text">${msgAr}</span></td>`;
+        }
+
+        const rapport = buildRapport(s, entry);
+
+        return `<td>${entry.date}</td><td>${objectifVisite}</td><td>${planning}</td><td>${rapport}</td><td>${buildRendement(entry)}</td><td>${priceCells.prevu}</td>${priceCells.valide}`;
+      }
+        
+        
+
+
+      function totalRowsForSector(s) {
+        let count = 0;
+        if (s.category === 'DEP') {
+          // DEP: total rendered rows = sum of day-slot counts across all trips
+          count = (s.trips || []).reduce((acc, trip) => acc + trip.length, 0) || 1;
+        } else {
+          // SEMI: unchanged
+          const dates     = s.plan_dates     || [];
+          const unplanned = s.unplanned_dates || [];
+          count = Math.max(1, dates.length) + unplanned.length;
+        }
+        // Add 1 extra row if there are phone orders
+        if (s.orphan_orders) {
+          count += 1;
+        }
+        return count;
+      }
+
+      function renderSectorTable(data, tbody, currentMonth) {
+        let totalSemiPrevu = 0;
+        let totalDepPrevu = 0;
+
+        if (!data.length) {
+          tbody.innerHTML = '<tr><td colspan="12" class="table-state">Aucun résultat trouvé.</td></tr>';
+          document.getElementById('semi-prevu').textContent = '0 DA';
+          document.getElementById('dep-prevu').textContent = '0 DA';
+          return;
+        }
+
+        // ── Pre-sort: Type first (SEMI block → DEP block), then Wilaya A-Z within each block ──
+        const CATEGORY_ORDER = { 'SEMI': 0, 'DEP': 1 };
+        const rows = [];
+
+        for (const user of data) {
+          const userRowspan = user.sectors.reduce((acc, s) => acc + totalRowsForSector(s), 0);
+          let firstUserRow = true;
+
+          for (const s of user.sectors) {
+
+            // ── Dynamic "Prix Prévu" tracking for this specific sector ──
+            let validCount = 0;
+            // DEP quota is trips * days. SEMI quota is just times.
+            const maxAllowed = s.times || 1;
+
+            // Returns { prevu: <cell content>, valide: <full <td> element> }
+            function getDynamicPrice(entry) {
+              const placeholder = '<td class="td-placeholder">—</td>';
+              if (!entry || entry.status === 'non_honore' || entry.rapport_status === 'missing' || entry.rapport_status === 'wrong_region') {
+                return { prevu: '—', valide: placeholder };
+              }
+              validCount++;
+              
+              // Rely on the injected tag if we deep-filtered, otherwise fallback to standard logic
+              const isActuallyExtra = entry._isExtra !== undefined ? entry._isExtra : (validCount > maxAllowed);
+
+              if (!isActuallyExtra) {
+                const prixPrevuFloat = s.value !== null ? parseFloat(s.value) : 0;
+                totalSemiPrevu += prixPrevuFloat;
+                return { prevu: buildPrixPrevu(s), valide: buildPrixValide(s, currentMonth, 1, entry, prixPrevuFloat) };
+              } else {
+                const ncBadge = `<div class="cell-error"><span class="fr-text">Non Couvert par la société</span><span class="ar-text">غير مغطى من طرف الشركة</span></div>`;
+                return { prevu: ncBadge, valide: placeholder };
+              }
+            }
+
+            if (s.category === 'SEMI') {
+              // ────────────────────────────────────────────────────────────────
+              // SEMI: 1 base row + extras + unplanned
+              // ────────────────────────────────────────────────────────────────
+              const dates     = s.plan_dates     || [];
+              const unplanned = s.unplanned_dates || [];
+              const entry = dates[0] ?? null;
+              const sheetLink = `/deplacement/reimbursement-sheet/${user.user_id}/${currentMonth}/`;
+const userCell = firstUserRow
+  ? `<td class="td-user" rowspan="${userRowspan}" style="padding: 0;">
+       <a href="${sheetLink}" target="_blank" 
+          style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: 40px; color: #1a5c2e; text-decoration: underline; font-weight: bold;" 
+          title="Ouvrir la fiche globale de remboursement">
+         ${user.username}
+       </a>
+     </td>` 
+  : '';
+              const priceCell0 = getDynamicPrice(entry);
+              // 1. Base row
+              rows.push(`<tr class="row-separator">${userCell}<td>${s.wilaya}</td><td>${buildCommune(s, entry)}</td><td>${typeBadge(s.category)}</td>${dateCells(s, entry, buildObjectif(s), priceCell0, user.username)}</tr>`);
+              firstUserRow = false;
+
+              // 2. Padded/extra rows
+              for (let i = 1; i < dates.length; i++) {
+                const e = dates[i] || null;
+                const priceCellE = getDynamicPrice(e);
+                const objHtml = '<span class="td-placeholder">—</span>';
+                rows.push(`<tr><td>${s.wilaya}</td><td>${buildCommune(s, e)}</td><td>${typeBadge(s.category)}</td>${dateCells(s, e, objHtml, priceCellE, user.username)}</tr>`);
+              }
+
+              // 3. Unplanned rows
+              for (const u of unplanned) {
+                const rapportCell = buildRapport(s, u);
+                const priceCellU = getDynamicPrice(u);
+                rows.push(`<tr class="row-separator"><td>${s.wilaya}</td><td>${buildCommune(s, u)}</td><td>${typeBadge(s.category)}</td><td>${u.date}</td><td>${buildObjectif(s)}</td><td>${badgeUnplanned}</td><td>${rapportCell}</td><td>${buildRendement(u)}</td><td>${priceCellU.prevu}</td>${priceCellU.valide}</tr>`);
+              }
+
+            } else {
+              // ────────────────────────────────────────────────────────────────
+              // DEP: iterate over pre-computed trips (sub-row1)
+              // ────────────────────────────────────────────────────────────────
+              const trips = s.trips || [];
+
+              for (const trip of trips) {
+                // A trip is valid ONLY if NO day has an error (non honoré, missing rapport, or wrong region)
+                const isTripFullyValid = trip.every(slot => 
+                  slot && 
+                  slot.status !== 'non_honore' && 
+                  slot.rapport_status !== 'missing' && 
+                  slot.rapport_status !== 'wrong_region'
+                );
+                
+                if (isTripFullyValid) {
+                  validCount++;
+                }
+
+                // Generate the fused price cells ONCE, ONLY if the trip is fully valid
+                let priceCells = '';
+
+                if (isTripFullyValid) {
+                  // Check the array-level tag first
+                  const isActuallyExtra = trip._isExtra !== undefined ? trip._isExtra : (validCount > maxAllowed);
+
+                  if (isActuallyExtra) {
+                    const ncBadge = `<div class="cell-error"><span class="fr-text">Non Couvert par la société</span><span class="ar-text">غير مغطى من طرف الشركة</span></div>`;
+                    priceCells = `<td rowspan="${trip.length}">${ncBadge}</td><td rowspan="${trip.length}" class="td-placeholder">—</td>`;
+                  } else {
+                    const v = s.value !== null ? parseFloat(s.value) : 0;
+                    const h = s.hotel_cost !== null ? parseFloat(s.hotel_cost) : 0;
+                    const tripPrevuFloat = v + h;
+                    totalDepPrevu += tripPrevuFloat;
+
+                    const price = buildPrixPrevu(s);
+                    priceCells = `<td rowspan="${trip.length}">${price}</td>${buildPrixValide(s, currentMonth, trip.length, trip[0], tripPrevuFloat)}`;
+                  }
+                }
+
+                // Render each day (sub-row2) of the trip
+                for (let d = 0; d < trip.length; d++) {
+                  const slot = trip[d];
+
+                  const depSheetLink = `/deplacement/reimbursement-sheet/${user.user_id}/${currentMonth}/`;
+                  const sheetLink = `/deplacement/reimbursement-sheet/${user.user_id}/${currentMonth}/`;
+const userCell = firstUserRow
+  ? `<td class="td-user" rowspan="${userRowspan}" style="padding: 0;">
+       <a href="${sheetLink}" target="_blank" 
+          style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: 40px; color: #1a5c2e; text-decoration: underline; font-weight: bold;" 
+          title="Ouvrir la fiche globale de remboursement">
+         ${user.username}
+       </a>
+     </td>` 
+  : '';
+                  // Wilaya and Type span the full trip; Commune is per-slot (varies day by day)
+                  const wilayaCell = d === 0 ? `<td rowspan="${trip.length}">${s.wilaya}</td>` : '';
+                  const typeCell   = d === 0 ? `<td rowspan="${trip.length}">${typeBadge(s.category)}</td>` : '';
+                  const communeCell = `<td>${buildCommune(s, slot)}</td>`;
+
+                  // Only append the fused price cells on the very first row of the trip, if valid
+                  const tailCells = (isTripFullyValid && d === 0) ? priceCells : '';
+
+                  let dateContent = '';
+
+                  if (slot.status === 'non_honore') {
+                    // Spans all 7 columns to the end
+                    dateContent = `<td colspan="7" class="cell-error"><span class="fr-text">Non honoré</span><span class="ar-text">غير منجز</span></td>`;
+                  } else if (slot.status === 'unplanned') {
+                    const rapportCell = buildRapport(s, slot);
+                    dateContent = `<td>${slot.date}</td><td>${buildObjectif(s)}</td><td>${badgeUnplanned}</td><td>${rapportCell}</td><td>${buildRendement(slot)}</td>`;
+
+                    if (!isTripFullyValid) {
+                      dateContent += `<td class="td-placeholder">—</td><td class="td-placeholder">—</td>`;
+                    }
+                  } else {
+                    const planning = buildPlanning(s, slot, user.username);
+                    const rStatus = slot.rapport_status;
+
+                    if (rStatus === 'missing' || rStatus === 'wrong_region') {
+                      const msgFr = rStatus === 'missing' ? 'Rapport manquant' : 'Région planifiée non respectée';
+                      const msgAr = rStatus === 'missing' ? 'تقرير مفقود' : 'المنطقة المخطط لها غير محترمة';
+                      dateContent = `<td>${slot.date}</td><td>${buildObjectif(s)}</td><td>${planning}</td><td colspan="4" class="cell-error"><span class="fr-text">${msgFr}</span><span class="ar-text">${msgAr}</span></td>`;
+                    } else {
+                      dateContent = `<td>${slot.date}</td><td>${buildObjectif(s)}</td><td>${planning}</td><td>${buildRapport(s, slot)}</td><td>${buildRendement(slot)}</td>`;
+
+                      if (!isTripFullyValid) {
+                        dateContent += `<td class="td-placeholder">—</td><td class="td-placeholder">—</td>`;
+                      }
+                    }
+                  }
+
+                  const trClass = d === 0 ? ' class="row-separator"' : '';
+                  rows.push(`<tr${trClass}>${userCell}${wilayaCell}${communeCell}${typeCell}${dateContent}${tailCells}</tr>`);
+                  firstUserRow = false;
+                }
+              }
+            }
+
+            // ────────────────────────────────────────────────────────────────
+            // HORS VISITE: Render the orphan phone orders row at the bottom
+            // ────────────────────────────────────────────────────────────────
+            if (s.orphan_orders) {
+              const idsText  = s.orphan_orders.ids.map(id => `<a href="/orders/${id}" target="_blank" class="order-link" title="Ouvrir la commande">#${id}</a>`).join(', ');
+              const priceText = formatPrice(s.orphan_orders.total_value);
+
+              const orphanContent = `<td colspan="8" style="background-color:#f8f9fa;text-align:center;vertical-align:middle;">
+                <span style="color:#6c757d;font-weight:700;font-size:.85rem;margin-right:20px;">&#128222; Commandes Hors Visite (Téléphone) :</span>
+                <span style="color:#495057;font-weight:600;font-size:.85rem;margin-right:15px;">${idsText}</span>
+                <span style="color:#28a745;font-weight:700;font-size:.9rem;">${priceText}</span>
+              </td>`;
+
+              // userCell only needed if this is the very first row for the user (edge case)
+              const orphanSheetLink = `/deplacement/reimbursement-sheet/${user.user_id}/${currentMonth}/`;
+              const sheetLink = `/deplacement/reimbursement-sheet/${user.user_id}/${currentMonth}/`;
+const userCell = firstUserRow
+  ? `<td class="td-user" rowspan="${userRowspan}" style="padding: 0;">
+       <a href="${sheetLink}" target="_blank" 
+          style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: 40px; color: #1a5c2e; text-decoration: underline; font-weight: bold;" 
+          title="Ouvrir la fiche globale de remboursement">
+         ${user.username}
+       </a>
+     </td>` 
+  : '';
+              rows.push(`<tr class="row-separator">${userCell}<td>${s.wilaya}</td><td class="td-placeholder">—</td><td>${typeBadge(s.category)}</td>${orphanContent}</tr>`);
+              firstUserRow = false;
+            }
+
+          }
+        }
+
+        tbody.innerHTML = rows.join('');
+
+        // ▼▼▼ NEW: Update the DOM with the final formatted totals ▼▼▼
+        document.getElementById('semi-prevu').textContent = formatPrice(totalSemiPrevu);
+        document.getElementById('dep-prevu').textContent = formatPrice(totalDepPrevu);
+      }
     </script>
   </body>
 </html>

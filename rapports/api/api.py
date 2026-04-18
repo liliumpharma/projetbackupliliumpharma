@@ -1,4 +1,5 @@
 from rapports.models import Rapport, Visite
+from plans.models import PlanTask
 from .serializers import RapportSerializer
 from django.http import Http404
 from rest_framework.views import APIView
@@ -11,6 +12,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from django.core.paginator import Paginator
 from medecins.models import Medecin
+from accounts.models import UserSectorDetail
 
 
 # class RapportAPI(APIView):
@@ -127,9 +129,9 @@ class RapportAPI(APIView):
             rapports_list = rapport_list(request)
             print("---> " + str(rapports_list))
 
-            # Retrieve visits and doctors in one go
+            # Retrieve visits and doctors in one go (single queryset, reuse it)
             visites = Visite.objects.filter(rapport__in=rapports_list)
-            visite_ids = Visite.objects.filter(rapport__in=rapports_list).values_list("id", flat=True)
+            visite_ids = visites.values_list("id", flat=True)
             print("1")
 
             # Count medecins and their specializations
@@ -173,8 +175,86 @@ class RapportAPI(APIView):
                 other_details += f" dont ({prd_visites_count} visites et {prd_medecins_count} medecins) contenant le produit"
             print("5")
 
-            serializer = RapportSerializer(rapports_list, many=True)
+            # Build sector map once for all users — avoids N queries in get_sector_category
+            user_ids = list(rapports_list.values_list('user_id', flat=True).distinct())
+            sector_details = (
+                UserSectorDetail.objects
+                .filter(user_profile__user_id__in=user_ids)
+                .prefetch_related('wilayas')
+                .select_related('user_profile')
+            )
+            sector_map = {}
+            for sd in sector_details:
+                uid = sd.user_profile.user_id
+                wilaya_ids = set(sd.wilayas.values_list('id', flat=True))
+                sector_map.setdefault(uid, []).append((wilaya_ids, sd.category))
 
+            # Prefetch visites, comments, and their users to kill N+1 queries
+            # Prefetch visites with their wilaya chain so get_sector_category uses the cache
+            rapports_list = rapports_list.prefetch_related(
+                'visite_set__medecin__commune__wilaya',
+                'comment_set__user'
+            )
+
+            # --- NEW: Filter by Sector before serializing ---
+            sector_filter = request.GET.get("sector", "").strip()
+            
+            if sector_filter:
+                filtered_rapports = []
+                for rapport in rapports_list:
+                    # Extract wilaya IDs for this specific rapport using the prefetched cache
+                    wilaya_ids = set(v.medecin.commune.wilaya_id for v in rapport.visite_set.all())
+                    
+                    # Determine the category using the same logic as the serializer
+                    categories = set()
+                    for sector_wilaya_ids, category in sector_map.get(rapport.user_id, []):
+                        if sector_wilaya_ids & wilaya_ids:
+                            categories.add(category)
+                    
+                    # Apply hierarchy logic
+                    final_category = None
+                    if 'DEP' in categories:
+                        final_category = 'DEP'
+                    elif 'SEMI' in categories:
+                        final_category = 'SEMI'
+                    elif 'IN' in categories:
+                        final_category = 'IN'
+
+                    # Keep it if it matches the filter
+                    if final_category == sector_filter:
+                        filtered_rapports.append(rapport)
+                
+                rapports_list = filtered_rapports
+            # --- END NEW FILTER ---
+
+            # --- END NEW FILTER ---
+
+            # --- NEW: Pre-fetch tasks to kill N+1 queries ---
+            user_ids_filtered = list(set(r.user_id for r in rapports_list))
+            dates_filtered = list(set(r.added for r in rapports_list))
+            
+            tasks = PlanTask.objects.filter(
+                plan__user_id__in=user_ids_filtered, 
+                plan__day__in=dates_filtered
+            ).select_related('plan')
+            
+            task_map = {}
+            for task in tasks:
+                key = (task.plan.user_id, task.plan.day)
+                task_map.setdefault(key, []).append({
+                    "id": task.id,
+                    "task": task.task,
+                    "completed": task.completed
+                })
+            # --- END TASK PRE-FETCH ---
+
+            # Add task_map to the context
+            serializer = RapportSerializer(rapports_list, many=True, context={
+                'sector_map': sector_map, 
+                'task_map': task_map, 
+                'request': request
+            })
+            
             return Response(
                 {
                     "result": serializer.data,

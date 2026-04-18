@@ -1,0 +1,593 @@
+{% load i18n admin_urls static admin_modify %}
+
+<style>
+    .sector-card { margin-bottom: 15px; padding: 15px; border: 1px solid #ced4da; border-radius: 4px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .sector-card .form-group { margin-bottom: 15px; }
+    .category-section { margin-bottom: 30px; }
+    .category-header { display: flex; justify-content: space-between; align-items: center; background: #f4f6f9; padding: 12px 15px; border-radius: 4px 4px 0 0; border: 1px solid #ced4da; border-bottom: none; }
+    .category-body { border: 1px solid #ced4da; padding: 15px; background: #fafafa; }
+    .category-footer { padding: 10px 15px; border-radius: 0 0 4px 4px; background: #e9ecef; border: 1px solid #ced4da; border-top: none; }
+    .summary-row { background: #e9ecef; padding: 10px 15px; border-radius: 4px; margin-top: 15px; border-left: 4px solid #17a2b8; }
+    .freq-select-wrap select { display: block; width: 100%; padding: .375rem .75rem; font-size: .875rem; line-height: 1.5; color: #495057; background: #fff; border: 1px solid #ced4da; border-radius: .25rem; transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out; }
+
+    /* IN main card — green */
+    #section-IN { border: 2px solid #218c53; border-radius: 6px; }
+    #section-IN > .category-header { background: #218c53; border-color: #218c53; color: #fff; }
+    #section-IN > .category-header h6 { color: #fff; }
+    #section-IN > .category-body { border-color: #218c53; }
+
+    /* SEMI main card — yellow */
+    #section-SEMI { border: 2px solid #cccc00; border-radius: 6px; }
+    #section-SEMI > .category-header { background: #FFFF00; border-color: #cccc00; color: #333; }
+    #section-SEMI > .category-header h6 { color: #333; }
+    #section-SEMI > .category-body { border-color: #cccc00; }
+    #section-SEMI > .category-footer { border-color: #cccc00; background: #fffff0; }
+
+    /* DEP main card — red */
+    #section-DEP { border: 2px solid #ff2c2c; border-radius: 6px; }
+    #section-DEP > .category-header { background: #ff2c2c; border-color: #cc0000; color: #fff; }
+    #section-DEP > .category-header h6 { color: #fff; }
+    #section-DEP > .category-body { border-color: #ff2c2c; }
+    #section-DEP > .category-footer { border-color: #ff2c2c; background: #ffe5e5; }
+</style>
+
+<div class="inline-group" id="{{ inline_admin_formset.formset.prefix }}-group">
+    {{ inline_admin_formset.formset.management_form }}
+    {{ inline_admin_formset.formset.non_form_errors }}
+
+    <!-- Containers -->
+    <div class="category-section" id="section-IN">
+        <div class="category-header">
+            <h6 class="m-0 font-weight-bold">Secteurs IN / قطاعات IN</h6>
+            <button type="button" class="btn btn-sm btn-add-sector" style="background:#145c36;color:#fff;border-color:#0f4227;" data-category="IN">+ Ajouter / أضف</button>
+        </div>
+        <div class="category-body sector-container"></div>
+    </div>
+
+    <div class="category-section" id="section-SEMI">
+        <div class="category-header">
+            <h6 class="m-0 font-weight-bold">Secteurs SEMI / قطاعات SEMI</h6>
+            <button type="button" class="btn btn-sm btn-add-sector" style="background:#b8a000;color:#333;border-color:#998700;" data-category="SEMI">+ Ajouter / أضف</button>
+        </div>
+        <div class="category-body sector-container"></div>
+        <div class="category-footer font-weight-bold text-right">
+            Total SEMI: <span class="text-success h5"><span id="total-semi-value">0.00</span></span>
+        </div>
+    </div>
+
+    <div class="category-section" id="section-DEP">
+        <div class="category-header">
+            <h6 class="m-0 font-weight-bold">Secteurs DEP / قطاعات DEP</h6>
+            <button type="button" class="btn btn-sm btn-add-sector" style="background:#cc0000;color:#fff;border-color:#990000;" data-category="DEP">+ Ajouter / أضف</button>
+        </div>
+        <div class="category-body sector-container"></div>
+        <div class="category-footer font-weight-bold text-right">
+            Total DEP: <span class="text-success h5"><span id="total-dep-value">0.00</span></span>
+        </div>
+    </div>
+
+    <!-- Hidden Raw Forms -->
+    <div id="raw-forms" style="display: none;">
+        {% for inline_admin_form in inline_admin_formset %}
+        <div class="form-row-container" data-prefix="{{ inline_admin_form.form.prefix }}">
+            {% for field in inline_admin_form.form.hidden_fields %}
+                {{ field }}
+            {% endfor %}
+            {% if inline_admin_form.has_auto_field %}{{ inline_admin_form.pk_field.field }}{% endif %}
+            {{ inline_admin_form.fk_field.field }}
+            <div style="display:none;" class="field-category">
+                {{ inline_admin_form.form.category }}
+            </div>
+            
+            <div class="sector-card">
+                <div class="row align-items-center mb-3">
+                    <div class="col-8">
+                        <h5 class="m-0 text-muted category-label-title">Secteur / القطاع</h5>
+                    </div>
+                    <div class="col-4 text-right">
+                        {% if inline_admin_formset.formset.can_delete and inline_admin_form.original %}
+                            <span class="delete-checkbox" style="display:none;">{{ inline_admin_form.deletion_field.field }}</span>
+                        {% endif %}
+                        <button type="button" class="btn btn-danger btn-sm btn-remove-sector"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="fields-row">
+                    <div class="form-group field-wilaya">
+                        <!-- Hidden M2M select — Django reads this on POST -->
+                        <div style="display:none;">{{ inline_admin_form.form.wilayas }}</div>
+                        <!-- Custom UI built by JS (single select for IN/SEMI, dual for DEP) -->
+                        <div class="field-wilaya-ui"></div>
+                        <small class="text-danger">{{ inline_admin_form.form.wilayas.errors }}</small>
+                    </div>
+
+                    <div class="form-group field-communes" style="display:none;">
+                        <!-- Hidden M2M select for communes — Django reads this on POST -->
+                        <div style="display:none;">{{ inline_admin_form.form.communes }}</div>
+                        <!-- Custom multi-select UI populated by JS after wilaya is chosen -->
+                        <div class="field-communes-ui"></div>
+                        <small class="text-danger">{{ inline_admin_form.form.communes.errors }}</small>
+                    </div>
+
+                    <div class="form-group field-times" style="display:none;">
+                        <label class="font-weight-bold">Fois par mois / مرات في الشهر</label>
+                        {{ inline_admin_form.form.times }}
+                        <small class="text-danger">{{ inline_admin_form.form.times.errors }}</small>
+                    </div>
+
+                    <div class="form-group field-days" style="display:none;">
+                        <label class="font-weight-bold">Jour de travail par déplacement / يوم عمل لكل تنقل</label>
+                        {{ inline_admin_form.form.days }}
+                        <small class="text-danger">{{ inline_admin_form.form.days.errors }}</small>
+                    </div>
+
+                    <div class="form-group field-month_frequency" style="display:none;">
+                        <label class="font-weight-bold d-block mb-1">Fréquence mensuelle / التكرار الشهري</label>
+                        <div class="freq-select-wrap">
+                            {{ inline_admin_form.form.month_frequency }}
+                        </div>
+                        <small class="text-danger">{{ inline_admin_form.form.month_frequency.errors }}</small>
+                    </div>
+
+                    <div class="form-group field-nights" style="display:none;">
+                        <label class="font-weight-bold">Nuits / الليالي</label>
+                        {{ inline_admin_form.form.nights }}
+                        <!-- We can make nights readonly via js -->
+                    </div>
+
+                    <div class="form-group field-hotel_cost" style="display:none;">
+                        <label class="font-weight-bold">Coût d'Hôtel / تكلفة الفندق</label>
+                        {{ inline_admin_form.form.hotel_cost }}
+                    </div>
+
+                    <div class="form-group field-value" style="display:none;">
+                        <label class="value-label font-weight-bold">Prime/Valeur / العلاوة/القيمة</label>
+                        {{ inline_admin_form.form.value }}
+                    </div>
+
+                    <div class="form-group field-medical" style="display:none;">
+                        <label class="font-weight-bold">Visites Médical / زيارات طبية</label>
+                        {{ inline_admin_form.form.medical }}
+                        <small class="text-danger">{{ inline_admin_form.form.medical.errors }}</small>
+                    </div>
+
+                    <div class="form-group field-commercial" style="display:none;">
+                        <label class="font-weight-bold">Visites Commercial / زيارات تجارية</label>
+                        {{ inline_admin_form.form.commercial }}
+                        <small class="text-danger">{{ inline_admin_form.form.commercial.errors }}</small>
+                    </div>
+
+                    <div class="form-group field-note" style="display:none;">
+                        <label class="font-weight-bold">Note / ملاحظة</label>
+                        {{ inline_admin_form.form.note }}
+                        <small class="text-danger">{{ inline_admin_form.form.note.errors }}</small>
+                    </div>
+                </div>
+
+                <div class="summary-row field-totals" style="display:none;">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <strong>Coût d'Hôtel / تكلفة الفندق:</strong> <br><span class="calc-hotel h5 text-info">0.00</span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Prime de transport / علاوة النقل:</strong> <br><span class="calc-transport h5 text-info">0.00</span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Valeur totale / القيمة الإجمالية:</strong> <br><span class="calc-total h5 text-success">0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Empty form for cloning -->
+    <div id="empty-form-template" style="display:none;">
+        <div class="form-row-container" data-prefix="{{ inline_admin_formset.formset.empty_form.prefix }}">
+            {{ inline_admin_formset.formset.empty_form.id }}
+            <div style="display:none;" class="field-category">
+                {{ inline_admin_formset.formset.empty_form.category }}
+            </div>
+            <div class="sector-card">
+                <div class="row align-items-center mb-3">
+                    <div class="col-8">
+                        <h5 class="m-0 text-muted category-label-title">Secteur / القطاع</h5>
+                    </div>
+                    <div class="col-4 text-right">
+                        <button type="button" class="btn btn-danger btn-sm btn-remove-sector"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="fields-row">
+                    <div class="form-group field-wilaya">
+                        <!-- Hidden M2M select — Django reads this on POST -->
+                        <div style="display:none;">{{ inline_admin_formset.formset.empty_form.wilayas }}</div>
+                        <!-- Custom UI built by JS -->
+                        <div class="field-wilaya-ui"></div>
+                    </div>
+
+                    <div class="form-group field-communes" style="display:none;">
+                        <div style="display:none;">{{ inline_admin_formset.formset.empty_form.communes }}</div>
+                        <div class="field-communes-ui"></div>
+                    </div>
+
+                    <div class="form-group field-times" style="display:none;">
+                        <label class="font-weight-bold">Fois par mois / مرات في الشهر</label>
+                        {{ inline_admin_formset.formset.empty_form.times }}
+                    </div>
+                    <div class="form-group field-days" style="display:none;">
+                        <label class="font-weight-bold">Jour de travail par déplacement / يوم عمل لكل تنقل</label>
+                        {{ inline_admin_formset.formset.empty_form.days }}
+                    </div>
+
+                    <div class="form-group field-month_frequency" style="display:none;">
+                        <label class="font-weight-bold d-block mb-1">Fréquence mensuelle / التكرار الشهري</label>
+                        <div class="freq-select-wrap">
+                            {{ inline_admin_formset.formset.empty_form.month_frequency }}
+                        </div>
+                    </div>
+
+                    <div class="form-group field-nights" style="display:none;">
+                        <label class="font-weight-bold">Nuits / الليالي</label>
+                        {{ inline_admin_formset.formset.empty_form.nights }}
+                    </div>
+                    <div class="form-group field-hotel_cost" style="display:none;">
+                        <label class="font-weight-bold">Coût d'Hôtel / تكلفة الفندق</label>
+                        {{ inline_admin_formset.formset.empty_form.hotel_cost }}
+                    </div>
+                    <div class="form-group field-value" style="display:none;">
+                        <label class="value-label font-weight-bold">Prime/Valeur / العلاوة/القيمة</label>
+                        {{ inline_admin_formset.formset.empty_form.value }}
+                    </div>
+                    <div class="form-group field-medical" style="display:none;">
+                        <label class="font-weight-bold">Visites Médical / زيارات طبية</label>
+                        {{ inline_admin_formset.formset.empty_form.medical }}
+                    </div>
+                    <div class="form-group field-commercial" style="display:none;">
+                        <label class="font-weight-bold">Visites Commercial / زيارات تجارية</label>
+                        {{ inline_admin_formset.formset.empty_form.commercial }}
+                    </div>
+                    <div class="form-group field-note" style="display:none;">
+                        <label class="font-weight-bold">Note / ملاحظة</label>
+                        {{ inline_admin_formset.formset.empty_form.note }}
+                    </div>
+                </div>
+                <div class="summary-row field-totals" style="display:none;">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <strong>Coût d'Hôtel / تكلفة الفندق:</strong> <br><span class="calc-hotel h5 text-info">0.00</span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Prime de transport / علاوة النقل:</strong> <br><span class="calc-transport h5 text-info">0.00</span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Valeur totale / القيمة الإجمالية:</strong> <br><span class="calc-total h5 text-success">0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var COMMUNES_API_URL = "{% url 'get_communes_by_wilaya' %}";
+
+    django.jQuery(document).ready(function($) {
+        var prefix = "{{ inline_admin_formset.formset.prefix }}";
+        var totalForms = $('#id_' + prefix + '-TOTAL_FORMS');
+        var maxForms   = $('#id_' + prefix + '-MAX_NUM_FORMS');
+
+        // ── Helpers ──────────────────────────────────────────────────────────
+
+        function updateElementIndex(el, prefix, ndx) {
+            var id_regex    = new RegExp('(' + prefix + '-(?:\\d+|__prefix__))');
+            var replacement = prefix + '-' + ndx;
+            if ($(el).attr("for")) $(el).attr("for", $(el).attr("for").replace(id_regex, replacement));
+            if (el.id)   el.id   = el.id.replace(id_regex, replacement);
+            if (el.name) el.name = el.name.replace(id_regex, replacement);
+        }
+
+        function calculateDEP(container) {
+            var hotel_cost = parseFloat(container.find('input[name$="-hotel_cost"]').val()) || 0;
+            var value      = parseFloat(container.find('input[name$="-value"]').val())      || 0;
+            container.find('.calc-hotel').text(hotel_cost.toFixed(2));
+            container.find('.calc-transport').text(value.toFixed(2));
+            container.find('.calc-total').text((value + hotel_cost).toFixed(2));
+            calculateGlobalTotals();
+        }
+
+        function calculateGlobalTotals() {
+            var totalSemi = 0;
+            $('#section-SEMI .form-row-container').each(function() {
+                if ($(this).find('.delete-checkbox input[type="checkbox"]').is(':checked') || $(this).css('display') === 'none') return;
+                var times = parseFloat($(this).find('input[name$="-times"]').val()) || 0;
+                var val   = parseFloat($(this).find('input[name$="-value"]').val()) || 0;
+                totalSemi += times * val;
+            });
+            $('#total-semi-value').text(totalSemi.toFixed(2));
+
+            var totalDep = 0;
+            $('#section-DEP .form-row-container').each(function() {
+                if ($(this).find('.delete-checkbox input[type="checkbox"]').is(':checked') || $(this).css('display') === 'none') return;
+                var times = parseFloat($(this).find('input[name$="-times"]').val())      || 0;
+                var hotel = parseFloat($(this).find('input[name$="-hotel_cost"]').val()) || 0;
+                var val   = parseFloat($(this).find('input[name$="-value"]').val())      || 0;
+                totalDep += (val + hotel) * times;
+            });
+            $('#total-dep-value').text(totalDep.toFixed(2));
+        }
+
+        // ── Wilaya UI ─────────────────────────────────────────────────────────
+        // The actual <select multiple name="…-wilayas"> is kept hidden so Django
+        // can read it on POST.  We build a custom single-select (IN / SEMI) or
+        // dual-select (DEP) on top of it and sync every change back.
+
+        function recheckWilayas() {
+            // Collect IDs already used by IN cards
+            var inWilayas = [];
+            $('#section-IN .wilaya-ui-select').each(function() {
+                var v = $(this).val();
+                if (v) inWilayas.push(String(v));
+            });
+            // Disable those options inside SEMI / DEP UI selects (but never the blank option)
+            $('#section-SEMI .wilaya-ui-select option, #section-DEP .wilaya-ui-select option').each(function() {
+                var v = $(this).val();
+                if (v) $(this).prop('disabled', inWilayas.indexOf(v) !== -1);
+            });
+        }
+
+        function syncToHidden(container) {
+            var hiddenSel = container.find('select[name$="-wilayas"]');
+            var vals = [];
+            container.find('.wilaya-ui-select').each(function() {
+                var v = $(this).val();
+                if (v) vals.push(v);
+            });
+            hiddenSel.find('option').prop('selected', false);
+            vals.forEach(function(v) {
+                hiddenSel.find('option[value="' + v + '"]').prop('selected', true);
+            });
+            recheckWilayas();
+            calculateGlobalTotals();
+        }
+
+        // ── Commune UI (SEMI only) ────────────────────────────────────────────
+
+        function syncCommunesToHidden(container, vals) {
+            var hiddenSel = container.find('select[name$="-communes"]');
+            hiddenSel.find('option').prop('selected', false);
+            (vals || []).forEach(function(v) {
+                hiddenSel.find('option[value="' + v + '"]').prop('selected', true);
+            });
+        }
+
+        function buildCommunesUI(container, wilayaIds) {
+            var uiDiv     = container.find('.field-communes-ui').empty();
+            var hiddenSel = container.find('select[name$="-communes"]');
+            var existing  = hiddenSel.val() || [];   // already-saved commune IDs
+
+            uiDiv.append(
+                '<label class="font-weight-bold mt-2">Communes exceptions (optionnel) / دوائر استثنائية</label>' +
+                '<small class="d-block text-muted mb-1">' +
+                'Laissez vide = toute la wilaya. ' +
+                'Sélectionnez pour restreindre ce secteur à des communes précises.' +
+                '</small>'
+            );
+
+            if (!wilayaIds || !wilayaIds.length) {
+                uiDiv.append('<p class="text-muted small mb-0">Sélectionnez une wilaya d\'abord.</p>');
+                return;
+            }
+
+            var loadingEl = $('<span class="text-muted small">Chargement communes…</span>');
+            uiDiv.append(loadingEl);
+
+            var params = wilayaIds.map(function(id) { return 'wilaya_id=' + id; }).join('&');
+            $.get(COMMUNES_API_URL + '?' + params)
+                .done(function(data) {
+                    loadingEl.remove();
+                    if (!data.length) {
+                        uiDiv.append('<p class="text-muted small mb-0">Aucune commune disponible.</p>');
+                        return;
+                    }
+                    // 1. Standard select without 'multiple' or 'min-height'
+                    var sel = $('<select class="form-control communes-ui-select"></select>');
+                    
+                    // 2. Add a default empty option to match the Wilaya logic
+                    sel.append('<option value="">— Toutes les communes (Général) —</option>');
+
+                    data.forEach(function(c) {
+                        var opt = $('<option>').val(c.id).text(c.nom);
+                        if (existing.indexOf(String(c.id)) !== -1) opt.prop('selected', true);
+                        sel.append(opt);
+                    });
+
+                    sel.on('change', function() {
+                        // 3. Since it's a single select now, val() is a string.
+                        // We wrap it in an array to keep your hidden M2M field happy!
+                        var val = $(this).val();
+                        syncCommunesToHidden(container, val ? [val] : []);
+                    });
+                    
+                    uiDiv.append(sel);
+
+                    // 4. Apply Select2 immediately after injecting it so it looks modern
+                    if ($.fn.select2) {
+                        sel.select2({width: '100%'});
+                    }
+                })
+                .fail(function() {
+                    loadingEl.remove();
+                    uiDiv.append('<p class="text-danger small mb-0">Erreur chargement communes.</p>');
+                });
+        }
+
+        function buildWilayaUI(container, category) {
+            var uiDiv     = container.find('.field-wilaya-ui').empty();
+            var hiddenSel = container.find('select[name$="-wilayas"]');
+            var existing  = hiddenSel.val() || [];   // IDs already stored on this object
+
+            // Build a <select> populated with the same options as the hidden M2M select
+            function makeSelect(placeholder) {
+                var sel = $('<select class="form-control wilaya-ui-select"></select>');
+                sel.append('<option value="">' + placeholder + '</option>');
+                hiddenSel.find('option').each(function() {
+                    sel.append($('<option>').val($(this).val()).text($(this).text()));
+                });
+                return sel;
+            }
+
+            if (category === 'IN' || category === 'SEMI') {
+                // ── Single wilaya per card ──────────────────────────────────
+                uiDiv.append('<label class="font-weight-bold">Wilaya / الولاية</label>');
+                var sel = makeSelect('— Choisir une wilaya —');
+                if (existing.length) sel.val(String(existing[0]));
+                sel.on('change', function() {
+                    syncToHidden(container);
+                    if (category === 'SEMI') {
+                        // Wilaya changed → clear old commune selection then rebuild UI
+                        syncCommunesToHidden(container, []);
+                        var wid = $(this).val();
+                        buildCommunesUI(container, wid ? [wid] : []);
+                    }
+                });
+                uiDiv.append(sel);
+
+                if (category === 'SEMI') {
+                    // Build initial communes UI for the already-selected wilaya
+                    buildCommunesUI(container, existing.length ? [String(existing[0])] : []);
+                }
+
+            } else if (category === 'DEP') {
+                // ── Wilaya 1 (required) + optional Wilaya 2 ──────────────────
+                uiDiv.append('<label class="font-weight-bold">Wilaya 1 (obligatoire) / الولاية 1</label>');
+                var sel1 = makeSelect('— Choisir une wilaya —');
+                if (existing.length >= 1) sel1.val(String(existing[0]));
+                sel1.on('change', function() { syncToHidden(container); });
+                uiDiv.append(sel1);
+
+                var hasW2    = existing.length >= 2;
+                var toggleBtn = $(
+                    '<button type="button" class="btn btn-sm btn-outline-secondary btn-toggle-wilaya2 mt-2">' +
+                    (hasW2 ? '− Retirer 2ème wilaya' : '+ Ajouter 2ème wilaya') +
+                    '</button>'
+                );
+                uiDiv.append(toggleBtn);
+
+                var w2Div = $('<div class="field-wilaya2 mt-2"></div>');
+                w2Div.append('<label class="font-weight-bold">Wilaya 2 (optionnelle) / الولاية 2</label>');
+                var sel2 = makeSelect('— Aucune —');
+                if (hasW2) sel2.val(String(existing[1]));
+                sel2.on('change', function() { syncToHidden(container); });
+                w2Div.append(sel2);
+                w2Div.toggle(hasW2);
+                uiDiv.append(w2Div);
+
+                toggleBtn.on('click', function() {
+                    if (w2Div.is(':visible')) {
+                        sel2.val('');
+                        syncToHidden(container);
+                        w2Div.hide();
+                        toggleBtn.text('+ Ajouter 2ème wilaya');
+                    } else {
+                        w2Div.show();
+                        toggleBtn.text('− Retirer 2ème wilaya');
+                    }
+                });
+            }
+        }
+
+        // ── Category setup ────────────────────────────────────────────────────
+
+        function setupCategoryUI(container, category) {
+            container.find('select[name$="-category"]').val(category);
+            container.find('.category-label-title').text('Secteur ' + category + ' / قطاع ' + category);
+            container.find('input').addClass('form-control');
+
+            if (category === 'SEMI') {
+                container.find('.field-communes, .field-times, .field-value, .field-medical, .field-commercial, .field-note, .field-month_frequency').show();
+                container.find('.value-label').text('Prime de semi-déplacement / علاوة شبه التنقل');
+                container.find('input[name$="-times"], input[name$="-value"]').on('input change', function() {
+                    calculateGlobalTotals();
+                });
+            } else if (category === 'DEP') {
+                container.find('.field-times, .field-days, .field-nights, .field-hotel_cost, .field-value, .field-medical, .field-commercial, .field-note, .field-month_frequency, .field-totals').show();
+                container.find('.value-label').text('Prime de transport / علاوة النقل');
+                container.find('input[name$="-times"]').on('input change', function() {
+                    calculateGlobalTotals();
+                });
+                container.find('input[name$="-days"]').on('input change', function() {
+                    var days = parseFloat($(this).val()) || 0;
+                    container.find('input[name$="-nights"]').val(days > 0 ? days - 1 : 0);
+                    calculateDEP(container);
+                });
+                container.find('input[name$="-nights"], input[name$="-hotel_cost"], input[name$="-value"]').on('input change', function() {
+                    calculateDEP(container);
+                });
+                calculateDEP(container);
+            }
+            // IN: no extra fields shown
+
+            buildWilayaUI(container, category);
+        }
+
+        // ── Init: move existing forms into their section containers ───────────
+
+        $('#raw-forms .form-row-container').each(function() {
+            var category = $(this).find('[name$="-category"]').val();
+            if (category) {
+                $(this).detach().appendTo('#section-' + category + ' .sector-container');
+                setupCategoryUI($(this), category);
+            }
+        });
+
+        // ── Add sector ────────────────────────────────────────────────────────
+
+        $('.btn-add-sector').click(function(e) {
+            e.preventDefault();
+            var category  = $(this).data('category');
+            var formCount = parseInt(totalForms.val());
+
+            if (maxForms.val() !== '' && parseInt(maxForms.val()) - formCount <= 0) {
+                alert('Maximum number of items reached.');
+                return;
+            }
+
+            var template = $('#empty-form-template .form-row-container').clone(true);
+            template.find('*').each(function() { updateElementIndex(this, prefix, formCount); });
+            totalForms.val(formCount + 1);
+
+            // Remove any stale select2 artefacts from the clone
+            template.find('.select2-container').remove();
+            template.find('select').removeClass('select2-hidden-accessible').removeAttr('data-select2-id');
+
+            setupCategoryUI(template, category);
+            $('#section-' + category + ' .sector-container').append(template);
+
+            // Init select2 on non-wilaya selects (category / month_frequency)
+            if ($.fn.select2) {
+                template.find('select:not(.wilaya-ui-select):not([name$="-wilayas"])').select2({width: '100%'});
+            }
+
+            recheckWilayas();
+        });
+
+        // ── Remove sector ─────────────────────────────────────────────────────
+
+        $(document).on('click', '.btn-remove-sector', function() {
+            var container = $(this).closest('.form-row-container');
+            if (container.find('.delete-checkbox').length > 0) {
+                container.find('.delete-checkbox input[type="checkbox"]').prop('checked', true);
+                container.hide();
+            } else {
+                container.remove();
+            }
+            recheckWilayas();
+            calculateGlobalTotals();
+        });
+
+        // ── Init ──────────────────────────────────────────────────────────────
+        recheckWilayas();
+        calculateGlobalTotals();
+    });
+</script>

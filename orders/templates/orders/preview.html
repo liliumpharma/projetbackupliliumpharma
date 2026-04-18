@@ -78,37 +78,46 @@
         }
 
         @media print {
-            body {
-                background: white;
-                margin: 0;
-                padding: 0;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .card {
-                overflow: visible !important;
-                overflow-x: visible !important;
-                box-shadow: none;
-                border: none;
-                padding: 0;
-                break-inside: avoid;
-                page-break-inside: avoid;
-            }
-            .chart-box {
-                page-break-inside: avoid;
-                break-inside: avoid;
-                border: none;
-                background: white;
-            }
-            h2, h3 {
-                page-break-after: avoid;
-                break-after: avoid;
-            }
-            /* Make sure chart containers don't restrict width incorrectly */
-            .chart-container {
-                display: block;
-            }
-        }
+    body {
+        background: white;
+        margin: 0;
+        padding: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .card {
+        overflow: visible !important;
+        overflow-x: visible !important;
+        box-shadow: none;
+        border: none;
+        padding: 0;
+        /* ALLOW the cards to break naturally across pages */
+        page-break-inside: auto;
+        break-inside: auto;
+        margin-bottom: 30px; 
+    }
+    .chart-box {
+        /* ALLOW the chart boxes to break naturally */
+        page-break-inside: auto;
+        break-inside: auto;
+        border: none;
+        background: white;
+    }
+    h2, h3 {
+        page-break-after: avoid;
+        break-after: avoid;
+    }
+    .chart-container {
+        display: block;
+    }
+    #share-fab { display: none !important; }
+}
+
+/* Add this new class to help the Share button capture everything perfectly */
+.exporting-pdf .card {
+    overflow: visible !important;
+    overflow-x: visible !important;
+}
     </style>
 </head>
 <body>
@@ -120,19 +129,22 @@
         Partager
     </button>
 
-    <div style="display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:24px; margin-top:4px;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 64 64" fill="none">
-            <!-- Bars -->
-            <rect x="4" y="34" width="10" height="20" rx="2" fill="#F9A825" stroke="#333" stroke-width="2"/>
-            <rect x="18" y="26" width="10" height="28" rx="2" fill="#E53935" stroke="#333" stroke-width="2"/>
-            <rect x="32" y="18" width="10" height="36" rx="2" fill="#F9A825" stroke="#333" stroke-width="2"/>
-            <rect x="46" y="8" width="10" height="46" rx="2" fill="#2E7D32" stroke="#333" stroke-width="2"/>
-            <!-- Trend line -->
-            <polyline points="9,30 23,20 37,13 51,4" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <!-- Arrow head -->
-            <polyline points="44,2 51,4 49,11" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        </svg>
-        <h1 style="margin:0; font-size:26px; font-weight:700; color:#1B5E20; letter-spacing:0.3px;">Statistique bon de commande</h1>
+    <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:24px; margin-top:4px; gap:6px;">
+        <div style="display:flex; align-items:center; gap:14px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 64 64" fill="none">
+                <!-- Bars -->
+                <rect x="4" y="34" width="10" height="20" rx="2" fill="#F9A825" stroke="#333" stroke-width="2"/>
+                <rect x="18" y="26" width="10" height="28" rx="2" fill="#E53935" stroke="#333" stroke-width="2"/>
+                <rect x="32" y="18" width="10" height="36" rx="2" fill="#F9A825" stroke="#333" stroke-width="2"/>
+                <rect x="46" y="8" width="10" height="46" rx="2" fill="#2E7D32" stroke="#333" stroke-width="2"/>
+                <!-- Trend line -->
+                <polyline points="9,30 23,20 37,13 51,4" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <!-- Arrow head -->
+                <polyline points="44,2 51,4 49,11" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+            <h1 style="margin:0; font-size:26px; font-weight:700; color:#1B5E20; letter-spacing:0.3px;">Statistique bon de commande</h1>
+        </div>
+        <div id="stat-subtitle" style="font-size:18px; font-weight:600; color:#1B5E20; letter-spacing:0.2px; display:none;"></div>
     </div>
 
     <div class="card">
@@ -142,6 +154,9 @@
 
     <div class="card">
         <h2>2. Totaux par type de transaction (Qté)</h2>
+        <p style="font-size:13px; color:#555; margin:6px 0 12px 0; font-style:italic;">
+            Le <strong style="color:#E65100;">Prix Brute</strong> est le montant total obtenu après avoir ajouté les taxes (TVA) et les bénéfices des SuperGrossiste/Grossiste au <strong style="color:#0D47A1;">Prix Net</strong>. 
+        </p>
         <table id="totaux-table">
             <thead><tr id="totaux-headers"></tr></thead>
             <tbody id="totaux-body"></tbody>
@@ -169,6 +184,24 @@
             <div class="chart-box" style="width: 100%;"><canvas id="comValChart"></canvas></div>
         </div>
         <div id="comZeroUsers"></div>
+    </div>
+
+    <div class="card" id="card-details">
+        <h2 style="color:#E65100; border-color:#FF9800;">6. Liste des bons de commande</h2>
+        <table id="details-table">
+            <thead>
+                <tr>
+                    <th style="background-color: #FFF3E0; color: #E65100; text-align: center;">Date</th>
+                    <th style="background-color: #FFF3E0; color: #E65100; text-align: center;">ID du bon</th>
+                    <th style="background-color: #FFF3E0; color: #E65100; text-align: left;">Utilisateur</th>
+                    <th style="background-color: #FFF3E0; color: #E65100; text-align: left;">Client</th>
+                    <th style="background-color: #FFF3E0; color: #E65100; text-align: left;">Fournisseur</th>
+                    <th style="background-color: #FFF3E0; color: #E65100; text-align: left;">Produits</th>
+                </tr>
+            </thead>
+            <tbody id="details-body">
+            </tbody>
+        </table>
     </div>
 
 
@@ -303,7 +336,20 @@
             }
         }
 
-        const currentParams = window.location.search;
+        let currentParams = window.location.search;
+        
+        // Force user to their own if they are Commercial or Superviseur and selected 'tous' or nothing.
+        const urlObj = new URLSearchParams(currentParams);
+        const userRole = "{{ user.userprofile.rolee|default:'' }}";
+        const username = "{{ user.username|escapejs }}";
+        
+        if (userRole === "Commercial" || userRole === "Superviseur") {
+            const userParam = urlObj.get('user');
+            if (!userParam || userParam.toLowerCase() === "tous" || userParam === "") {
+                urlObj.set('user', username);
+                currentParams = "?" + urlObj.toString();
+            }
+        }
         
         // Added headers to ensure Django accepts the request
         fetch('/orders/api/export/preview/' + currentParams, {
@@ -320,6 +366,19 @@
             return response.json();
         })
         .then(data => {
+            // 0. Subtitle
+            const subtitleEl = document.getElementById('stat-subtitle');
+            const userParam = urlObj.get('user');
+            if (userParam && userParam.trim() !== '') {
+                const role = data.single_user && data.single_user.speciality_rolee && data.single_user.speciality_rolee !== '-'
+                    ? data.single_user.speciality_rolee.replace(/_/g, ' ')
+                    : null;
+                subtitleEl.textContent = role ? role + ' : ' + userParam : userParam;
+            } else {
+                subtitleEl.textContent = 'Tous les utilisateurs';
+            }
+            subtitleEl.style.display = 'block';
+
             // 1. Render Filters
             const filtersList = document.getElementById('filters-list');
             for (const [key, value] of Object.entries(data.filters)) {
@@ -427,7 +486,21 @@
                     if (specialRowBg) { cell.style.backgroundColor = specialRowBg; cell.style.color = specialRowColor; }
                     const val = row[colIndex];
                     if (header.toLowerCase() === "valeur total" && colIndex !== 0 && typeof val === 'number') {
-                        cell.textContent = Number(val).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' DA';
+                        const typeName = String(row[0]).toUpperCase();
+                        const fmt = v => Number(v).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' DA';
+                        if (typeName === 'PH_GROS') {
+                            const brute = val * 1.19 * 1.15 * 1.1;
+                            cell.innerHTML =
+                                `<span style="font-size:12px;white-space:nowrap;"><span style="color:#0D47A1;font-weight:bold;">NET&nbsp;:</span> ${fmt(val)}</span>` +
+                                `<span style="font-size:12px;white-space:nowrap;margin-left:12px;padding-left:12px;border-left:2px solid #ccc;"><span style="color:#BF360C;font-weight:bold;">BRUTE&nbsp;:</span> ${fmt(brute)}</span>`;
+                        } else if (typeName === 'GROS_SUPER') {
+                            const brute = val * 1.19 * 1.15;
+                            cell.innerHTML =
+                                `<span style="font-size:12px;white-space:nowrap;"><span style="color:#0D47A1;font-weight:bold;">NET&nbsp;:</span> ${fmt(val)}</span>` +
+                                `<span style="font-size:12px;white-space:nowrap;margin-left:12px;padding-left:12px;border-left:2px solid #ccc;"><span style="color:#BF360C;font-weight:bold;">BRUTE&nbsp;:</span> ${fmt(brute)}</span>`;
+                        } else {
+                            cell.textContent = fmt(val);
+                        }
                     } else {
                         cell.textContent = (val !== null && val !== undefined) ? val : '-';
                     }
@@ -706,6 +779,62 @@
                 renderZeroUsers('comZeroUsers', data.dash_com.zero_users);
             } else {
                 document.getElementById('card-com').style.display = 'none';
+            }
+
+            // 6. Render Détails des bons de commande
+            if (data.single_user && data.sommaire && data.sommaire.rows) {
+                const detailsBody = document.getElementById('details-body');
+                const productHeaders = data.sommaire.headers.slice(6, -1);
+                
+                // Sort rows from oldest to newest (Date is at index 1: 'YYYY-MM-DD')
+                const sortedRows = [...data.sommaire.rows].sort((a, b) => {
+                    return new Date(a[1]) - new Date(b[1]);
+                });
+
+                sortedRows.forEach(row => {
+                    const tr = document.createElement('tr');
+                    
+                    const tdDate = document.createElement('td');
+                    tdDate.textContent = row[1];
+                    tdDate.style.textAlign = 'center';
+                    tr.appendChild(tdDate);
+                    
+                    const tdId = document.createElement('td');
+                    tdId.textContent = row[0];
+                    tdId.style.textAlign = 'center';
+                    tr.appendChild(tdId);
+                    
+                    const tdUser = document.createElement('td');
+                    tdUser.textContent = expandRoleLabel(row[3]);
+                    tdUser.style.textAlign = 'left';
+                    tr.appendChild(tdUser);
+                    
+                    const tdClient = document.createElement('td');
+                    tdClient.textContent = row[4];
+                    tdClient.style.textAlign = 'left';
+                    tr.appendChild(tdClient);
+                    
+                    const tdFournisseur = document.createElement('td');
+                    tdFournisseur.textContent = row[5];
+                    tdFournisseur.style.textAlign = 'left';
+                    tr.appendChild(tdFournisseur);
+                    
+                    const tdProduits = document.createElement('td');
+                    tdProduits.style.textAlign = 'left';
+                    let produitsStr = '';
+                    for(let i = 0; i < productHeaders.length; i++) {
+                        const qtt = row[6 + i];
+                        if (qtt > 0) {
+                            produitsStr += `<div><strong>${productHeaders[i]}</strong> : ${qtt}</div>`;
+                        }
+                    }
+                    tdProduits.innerHTML = produitsStr || '-';
+                    tr.appendChild(tdProduits);
+                    
+                    detailsBody.appendChild(tr);
+                });
+            } else {
+                document.getElementById('card-details').style.display = 'none';
             }
 
             // Signal that data is loaded; pageReady resolves once all chart animations finish

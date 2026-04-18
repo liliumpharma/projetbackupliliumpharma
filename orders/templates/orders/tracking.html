@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Suivi des Transactions | متابعة المعاملات</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+  <style>
+    /* ─────────────── BASE STYLES FROM PREVIEW.HTML ─────────────── */
+    body { font-family: Arial, sans-serif; background: #f4f6f9; padding: 20px; color: #333; margin: 0; min-height: 100vh; }
+    
+    .card { 
+        background: white; 
+        padding: 20px; 
+        margin-bottom: 20px; 
+        border-radius: 8px; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        box-sizing: border-box; 
+        width: 100%;
+        overflow-x: auto;
+    }
+    
+    h2 { color: #1B5E20; border-bottom: 2px solid #2E7D32; padding-bottom: 10px; margin-top: 0; font-size: 1.25rem; font-weight: bold; }
+    h3 { color: #0D47A1; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #E8F5E9; color: #1B5E20; }
+
+    /* ─────────────── CHART CONTAINERS ─────────────── */
+    .chart-container { 
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 20px; 
+        width: 100%;
+        margin-top: 15px;
+    }
+    .chart-box { 
+        width: 100%; 
+        min-height: 350px; 
+        padding: 10px;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        box-sizing: border-box;
+        background: #fafafa;
+        position: relative; 
+    }
+
+    /* ─────────────── FILTERS BAR ─────────────── */
+    .filter-grid { display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; }
+    .filter-item { display: flex; flex-direction: column; gap: 5px; min-width: 150px; }
+    .filter-item label { font-size: 12px; font-weight: bold; color: #555; text-transform: uppercase; }
+    .filter-item input, .filter-item select { border: 1px solid #ccc; border-radius: 4px; padding: 8px; font-size: 14px; }
+    .btn-search { background: #28a745; color: #fff; border: none; border-radius: 4px; padding: 9px 20px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-search:hover { background: #1e7e34; }
+    .btn-search:disabled { background: #ccc; cursor: not-allowed; }
+
+    /* ─────────────── ORGANIGRAM ─────────────── */
+    #org-scroll-wrapper { overflow-x: auto; padding: 10px 10px 40px; flex: 1; -ms-overflow-style: none; scrollbar-width: none; }
+    #org-scroll-wrapper::-webkit-scrollbar { display: none; }
+
+    .org-tree { display: inline-flex; flex-direction: column; align-items: center; min-width: max-content; width: 100%; }
+    .org-solo { display: flex; justify-content: center; }
+    .org-level { display: flex; justify-content: center; align-items: flex-start; }
+    
+    :root { --line-width: 2px; --conn-h: 25px; --line-color: #cbd5e1; }
+    
+    /* ─────────────── ORGANIGRAM BRANCHES ─────────────── */
+    .org-branch, .org-branch-up { 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      position: relative; 
+      padding: 0 10px; /* Restored padding for breathing room between cards */
+    }
+    .org-branch::before, .org-branch-up::after { content: ''; position: absolute; left: 0; right: 0; height: var(--line-width); background: var(--line-color); }
+    .org-branch::before { top: 0; }
+    .org-branch-up::after { bottom: 0; }
+    .org-branch:first-child::before, .org-branch-up:first-child::after { left: 50%; }
+    .org-branch:last-child::before, .org-branch-up:last-child::after { right: 50%; }
+    .org-branch:only-child::before, .org-branch-up:only-child::after { display: none; }
+    .vline { width: var(--line-width); height: var(--conn-h); background: var(--line-color); flex-shrink: 0; }
+
+    /* (Note: The .stagger-down and .stagger-up blocks have been completely removed!) */
+
+    /* ─────────────── NODE CARDS ─────────────── */
+    .org-node { 
+      background: #fff; 
+      border-radius: 8px; 
+      padding: 10px; 
+      min-width: 140px; 
+      max-width: 160px; 
+      text-align: center; 
+      box-shadow: 0 1px 4px rgba(0,0,0,0.15); 
+      cursor: default; 
+      position: relative; 
+      z-index: 2; /* Ensures the card covers the continuous vertical spines cleanly */
+    }
+    .node-badge { display: inline-block; font-size: 10px; font-weight: bold; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin-bottom: 6px; }
+    .node-name { font-size: 13px; font-weight: bold; color: #111; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .node-stats { border-top: 1px solid #f0f0f0; padding-top: 6px; display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: #555; }
+    
+    .node-root { border: 2px solid #28a745; }
+    .node-root .node-badge { background: #dcfce7; color: #1a7a32; }
+    .node-supergros { border: 2px solid #3b82f6; }
+    .node-supergros .node-badge { background: #dbeafe; color: #1d4ed8; }
+    .node-grossiste { border: 2px solid #f97316; }
+    .node-grossiste .node-badge { background: #ffedd5; color: #c2410c; }
+    .node-pharmacie { border: 2px solid #8b5cf6; }
+    .node-pharmacie .node-badge { background: #ede9fe; color: #6d28d9; }
+    
+    .is-root.org-node { min-width: 160px; padding: 12px; }
+    .is-root .node-name { font-size: 14px; }
+    .tier-label { font-size: 10px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: #999; margin-bottom: 2px; text-align: center; }
+
+    .loading-text { text-align: center; color: #666; padding: 40px; font-weight: bold; font-size: 16px; }
+
+    /* ── CARD SPINNER OVERLAY ── */
+    .card-spinner-wrap { position: relative; }
+    .card-spinner-overlay {
+        display: none;
+        position: absolute;
+        inset: 0;
+        background: rgba(255,255,255,0.82);
+        z-index: 10;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 12px;
+        border-radius: 8px;
+    }
+    .card-spinner-overlay.active { display: flex; }
+    .spinner-ring {
+        width: 44px; height: 44px;
+        border: 4px solid #e0e0e0;
+        border-top-color: #2E7D32;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner-label { font-size: 13px; font-weight: 600; color: #555; }
+  </style>
+</head>
+<body>  
+
+  <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:24px; margin-top:4px; gap:6px;">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 64 64" fill="none">
+          <rect x="4" y="34" width="10" height="20" rx="2" fill="#F9A825" stroke="#333" stroke-width="2"/>
+          <rect x="18" y="26" width="10" height="28" rx="2" fill="#E53935" stroke="#333" stroke-width="2"/>
+          <rect x="32" y="18" width="10" height="36" rx="2" fill="#F9A825" stroke="#333" stroke-width="2"/>
+          <rect x="46" y="8" width="10" height="46" rx="2" fill="#2E7D32" stroke="#333" stroke-width="2"/>
+          <polyline points="9,30 23,20 37,13 51,4" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <polyline points="44,2 51,4 49,11" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      </svg>
+      <h1 style="color:#1B5E20; font-weight:700; font-size:28px; margin:0;">Statistique Bon de commande</h1>
+    </div>
+    <div id="stat-subtitle" style="display:none; font-size:18px; font-weight:600; color:#1B5E20; letter-spacing:0.2px;"></div>
+  </div>
+
+  <!-- Applied filters bar -->
+  <div class="card" id="applied-filters-bar" style="display:none;">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;" id="applied-filters-tags"></div>
+      <div id="secondary-filter-container" style="display:none;">
+        <label style="font-size:12px; font-weight:bold; color:#1B5E20; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:5px;">
+          <i class="bi bi-funnel-fill"></i> Région
+        </label>
+        <select id="filter-region" style="border: 2px solid #28a745; background-color: #F1F8E9; color: #1B5E20; font-weight: bold; border-radius:4px; padding:6px 10px;">
+            <option value="">Toutes les régions</option>
+            <option value="Centre">Centre</option>
+            <option value="Sud">Sud</option>
+            <option value="Est">Est</option>
+            <option value="Ouest">Ouest</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden inputs to hold URL params for JS use -->
+  <input type="hidden" id="filter-type" />
+  <input type="hidden" id="filter-entity" />
+  <input type="hidden" id="filter-min-date" />
+  <input type="hidden" id="filter-max-date" />
+
+  <div class="card card-spinner-wrap" id="card-all-supergros" style="display:none;">
+    <div class="card-spinner-overlay" id="spinner-all-supergros">
+        <div class="spinner-ring"></div>
+        <div class="spinner-label">Chargement...</div>
+    </div>
+    <h2 style="color: #1B5E20; border-bottom: 2px solid #2E7D32;">Classement de Tous les SuperGros | ترتيب جميع سوبر غرو</h2>
+    <div id="total-banner-supergros" style="display:none; margin: 0 0 16px; background: linear-gradient(135deg, #1B5E20, #2E7D32); color:#fff; border-radius:10px; padding:12px 20px; font-size:15px; font-weight:600; text-align:center; box-shadow:0 3px 8px rgba(0,0,0,0.15); letter-spacing:0.3px;"></div>
+    <div class="chart-container" style="width: 100%; position: relative;">
+        <canvas id="chart-all-supergros"></canvas>
+    </div>
+  </div>
+
+  <div class="card card-spinner-wrap" id="card-all-grossistes" style="display:none;">
+    <div class="card-spinner-overlay" id="spinner-all-grossistes">
+        <div class="spinner-ring"></div>
+        <div class="spinner-label">Chargement...</div>
+    </div>
+    <h2 style="color: #E65100; border-bottom: 2px solid #F57C00;">Classement de Tous les Grossistes | ترتيب جميع باعة الجملة</h2>
+    <div id="total-banner-grossistes" style="display:none; margin: 0 0 16px; background: linear-gradient(135deg, #BF360C, #E64A19); color:#fff; border-radius:10px; padding:12px 20px; font-size:15px; font-weight:600; text-align:center; box-shadow:0 3px 8px rgba(0,0,0,0.15); letter-spacing:0.3px;"></div>
+    <div class="chart-container" style="width: 100%; position: relative;">
+        <canvas id="chart-all-grossistes"></canvas>
+    </div>
+  </div>
+
+  <div class="card" id="card-org" style="display:none;">
+    <h2>2. Organigramme des Flux | مخطط التدفق</h2>
+
+    <div id="regional-breakdown-bar" style="display:none; flex-wrap: wrap; background: #F1F8E9; border: 1px solid #C8E6C9; border-radius: 8px; margin: 15px auto 25px; padding: 10px; width: 95%;"></div>
+
+    <div id="real-sales-banner" style="display:none; margin: 0 auto 20px; width: 95%; background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%); border-radius: 10px; padding: 14px 20px; color: #fff; font-size: 15px; font-weight: 600; text-align: center; box-shadow: 0 3px 8px rgba(0,0,0,0.18); letter-spacing: 0.3px;"></div>
+
+    <div id="org-scroll-wrapper">
+      <div id="org-container"></div>
+    </div>
+  </div>
+
+  <div class="card" id="card-charts" style="display:none;">
+    <h2>3. Performances des Utilisateurs | أداء المستخدمين</h2>
+    <div class="chart-container" id="charts-wrapper">
+        </div>
+  </div>
+
+  <div class="card" id="card-tables" style="display:none;">
+    <h2 style="color:#E65100; border-color:#FF9800;">4. Détails des Commandes | تفاصيل الطلبيات</h2>
+    <div id="tables-wrapper"></div>
+  </div>
+
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+  <script>
+  (function ($) {
+    "use strict";
+
+    var CFG = { TRACKER_API: "{% url 'transaction-tracker-api' %}" };
+    var SUPER_GROS_LIST = {{ super_gros_json|safe }};
+    var GROSSISTE_LIST  = {{ grossistes_json|safe }};
+    var chartInstances = {};
+
+    function fmt(n) { return Number(n).toLocaleString('fr-DZ', { maximumFractionDigits: 2 }); }
+
+    /* ════════════════ CHART JS LOGIC ════════════════ */
+    function drawUserChart(canvasId, title, dataArray, color) {
+        if (chartInstances[canvasId]) {
+            chartInstances[canvasId].destroy();
+        }
+        var $canvas = $('#' + canvasId);
+        var $container = $canvas.parent();
+        
+        if (!dataArray || dataArray.length === 0) {
+            $container.html('<div style="text-align:center; padding: 50px; color:#999; font-weight:bold;">Aucune donnée | لا توجد بيانات</div>');
+            return;
+        } else {
+            if ($canvas.length === 0) {
+                $container.html('<canvas id="' + canvasId + '"></canvas>');
+                $canvas = $('#' + canvasId);
+            }
+        }
+
+        var labels = dataArray.map(function(d) { return d.username; });
+        var vals   = dataArray.map(function(d) { return d.valeur; });
+        var qtys   = dataArray.map(function(d) { return d.unites; });
+        var bons   = dataArray.map(function(d) { return d.bons; });
+
+        var barHeight = 40;
+        var totalHeight = Math.max(350, (labels.length * barHeight) + 100);
+        $container.css('height', totalHeight + 'px');
+
+        Chart.register(ChartDataLabels);
+        chartInstances[canvasId] = new Chart($canvas[0], {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: title,
+                    data: vals,
+                    backgroundColor: color,
+                    borderWidth: 1,
+                    barThickness: 25,
+                    maxBarThickness: 30
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: title, font: { size: 15 } },
+                    datalabels: {
+                        labels: {
+                            bons: {
+                                color: '#FBC02D', anchor: 'end', align: 'end', offset: 5, font: { weight: 'bold' },
+                                formatter: function(v, ctx) { return bons[ctx.dataIndex] + ' Bons'; }
+                            },
+                            units: {
+                                color: '#1976D2', anchor: 'end', align: 'end',
+                                offset: function(ctx) {
+                                    var text = bons[ctx.dataIndex] + ' Bons';
+                                    ctx.chart.ctx.font = 'bold 12px Arial';
+                                    return 5 + ctx.chart.ctx.measureText(text).width + 12;
+                                },
+                                font: { weight: 'bold' },
+                                formatter: function(v, ctx) { return '/ ' + qtys[ctx.dataIndex] + ' Unités'; }
+                            },
+                            da: {
+                                color: '#2E7D32', anchor: 'end', align: 'end',
+                                offset: function(ctx) {
+                                    var t1 = bons[ctx.dataIndex] + ' Bons';
+                                    var t2 = '/ ' + qtys[ctx.dataIndex] + ' Unités';
+                                    var c = ctx.chart.ctx;
+                                    c.font = 'bold 12px Arial';
+                                    return 5 + c.measureText(t1).width + 12 + c.measureText(t2).width + 12;
+                                },
+                                font: { weight: 'bold' },
+                                formatter: function(v, ctx) { return '/ ' + Number(v).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' DA'; }
+                            }
+                        }
+                    }
+                },
+                scales: { x: { beginAtZero: true, grace: '35%' } },
+                layout: { padding: { right: 320 } }
+            }
+        });
+    }
+
+    /* ════════════════ ALL – SINGLE REGION CHART ════════════════ */
+    var REGION_COLORS = { 'Ouest': '#E53935', 'Centre': '#4CAF50', 'Est': '#03A9F4', 'Sud': '#FFEB3B', 'Vide': '#E0E0E0' };
+
+    function drawAllRegionChart(canvasId, cardId, region, entityData, bannerId) {
+        if (chartInstances[canvasId]) { chartInstances[canvasId].destroy(); }
+
+        var $container = $('#' + cardId + ' .chart-container');
+        var barColor   = REGION_COLORS[region] || '#90A4AE';
+
+        if (!entityData || entityData.length === 0) {
+            $container.html('<div style="text-align:center;padding:50px;color:#999;font-weight:bold;">Aucune donnée pour cette région</div>');
+            $('#' + bannerId).hide();
+            return;
+        }
+
+        // Total banner
+        var totalVal = entityData.reduce(function(sum, d) { return sum + (d.regions[region] || 0); }, 0);
+        $('#' + bannerId).html('Valeur totale – Région <strong>' + region + '</strong> : <strong>' + fmt(totalVal) + ' DA</strong>').show();
+
+        $container.html('<canvas id="' + canvasId + '"></canvas>');
+        var ctx = document.getElementById(canvasId).getContext('2d');
+
+        var labels  = entityData.map(function(d) { return d.name; });
+        var vals    = entityData.map(function(d) { return d.regions[region] || 0; });
+        var bons    = entityData.map(function(d) { return (d.regions_bons && d.regions_bons[region]) || 0; });
+        var unites  = entityData.map(function(d) { return (d.regions_unites && d.regions_unites[region]) || 0; });
+
+        var rowHeight = 40;
+        $container.css('height', Math.max(350, entityData.length * rowHeight + 100) + 'px');
+
+        Chart.register(ChartDataLabels);
+        chartInstances[canvasId] = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{ label: region, data: vals, backgroundColor: barColor, borderWidth: 1, barThickness: 25, maxBarThickness: 30 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false },
+                    title: { display: true, text: 'Classement – Région ' + region, font: { size: 15 } },
+                    datalabels: {
+                        labels: {
+                            bons: {
+                                color: '#FBC02D', anchor: 'end', align: 'end', offset: 5, font: { weight: 'bold' },
+                                formatter: function(v, ctx) { return bons[ctx.dataIndex] + ' Bons'; }
+                            },
+                            units: {
+                                color: '#1976D2', anchor: 'end', align: 'end',
+                                offset: function(ctx) {
+                                    var text = bons[ctx.dataIndex] + ' Bons';
+                                    ctx.chart.ctx.font = 'bold 12px Arial';
+                                    return 5 + ctx.chart.ctx.measureText(text).width + 12;
+                                },
+                                font: { weight: 'bold' },
+                                formatter: function(v, ctx) { return '/ ' + unites[ctx.dataIndex] + ' Unités'; }
+                            },
+                            da: {
+                                color: '#2E7D32', anchor: 'end', align: 'end',
+                                offset: function(ctx) {
+                                    var t1 = bons[ctx.dataIndex] + ' Bons';
+                                    var t2 = '/ ' + unites[ctx.dataIndex] + ' Unités';
+                                    var c = ctx.chart.ctx;
+                                    c.font = 'bold 12px Arial';
+                                    return 5 + c.measureText(t1).width + 12 + c.measureText(t2).width + 12;
+                                },
+                                font: { weight: 'bold' },
+                                formatter: function(v) { return '/ ' + Number(v).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' DA'; }
+                            }
+                        }
+                    }
+                },
+                scales: { x: { beginAtZero: true, grace: '35%' } },
+                layout: { padding: { right: 320 } }
+            }
+        });
+    }
+
+    /* ════════════════ ALL SUPERGROS CHART ════════════════ */
+    function drawAllSuperGrosChart(sgData) {
+        if (chartInstances['chart-all-supergros']) {
+            chartInstances['chart-all-supergros'].destroy();
+        }
+
+        // Total banner
+        var grandTotal = sgData.reduce(function(s, d) { return s + d.total_val; }, 0);
+        $('#total-banner-supergros').html('Valeur totale – Tous les SuperGros : <strong>' + fmt(grandTotal) + ' DA</strong>').show();
+
+        var ctx = document.getElementById('chart-all-supergros').getContext('2d');
+        var labels = sgData.map(function(d) { return d.name + ' (' + fmt(d.total_val) + ' DA)'; });
+
+        var dsOuest  = { label: 'Ouest',        data: [], backgroundColor: '#E53935' };
+        var dsCentre = { label: 'Centre',       data: [], backgroundColor: '#4CAF50' };
+        var dsEst    = { label: 'Est',          data: [], backgroundColor: '#03A9F4' };
+        var dsSud    = { label: 'Sud',          data: [], backgroundColor: '#FFEB3B' };
+        var dsVide   = { label: 'Vide / Autre', data: [], backgroundColor: '#E0E0E0' };
+
+        sgData.forEach(function(d) {
+            dsOuest.data.push(d.regions['Ouest']  || 0);
+            dsCentre.data.push(d.regions['Centre'] || 0);
+            dsEst.data.push(d.regions['Est']      || 0);
+            dsSud.data.push(d.regions['Sud']      || 0);
+            dsVide.data.push(d.regions['Vide']    || 0);
+        });
+
+        var rowHeight = 45;
+        $('#card-all-supergros .chart-container').css('height', Math.max(350, sgData.length * rowHeight + 100) + 'px');
+
+        Chart.register(ChartDataLabels);
+        chartInstances['chart-all-supergros'] = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: labels, datasets: [dsOuest, dsCentre, dsEst, dsSud, dsVide] },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { x: { stacked: true }, y: { stacked: true } },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var val = context.raw;
+                                if (val === 0) return null;
+                                var total = sgData[context.dataIndex].total_val;
+                                var pct = ((val / total) * 100).toFixed(1) + '%';
+                                return context.dataset.label + ': ' + fmt(val) + ' DA (' + pct + ')';
+                            }
+                        }
+                    },
+                    datalabels: {
+                        color: function(context) {
+                            var lbl = context.dataset.label;
+                            return (lbl === 'Sud' || lbl === 'Vide / Autre') ? '#333' : '#fff';
+                        },
+                        font: { weight: 'bold', size: 12 },
+                        formatter: function(value, context) {
+                            if (value === 0) return null;
+                            var total = sgData[context.dataIndex].total_val;
+                            var pct = ((value / total) * 100);
+                            if (pct < 6) return null;
+                            return pct.toFixed(1) + '%';
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /* ════════════════ ALL GROSSISTES CHART ════════════════ */
+    function drawAllGrossistesChart(gData) {
+        if (chartInstances['chart-all-grossistes']) {
+            chartInstances['chart-all-grossistes'].destroy();
+        }
+
+        // Total banner
+        var grandTotal = gData.reduce(function(s, d) { return s + d.total_val; }, 0);
+        $('#total-banner-grossistes').html('Valeur totale – Tous les Grossistes : <strong>' + fmt(grandTotal) + ' DA</strong>').show();
+
+        var ctx = document.getElementById('chart-all-grossistes').getContext('2d');
+        var labels = gData.map(function(d) { return d.name + ' (' + fmt(d.total_val) + ' DA)'; });
+
+        var dsOuest  = { label: 'Ouest',        data: [], backgroundColor: '#E53935' };
+        var dsCentre = { label: 'Centre',       data: [], backgroundColor: '#4CAF50' };
+        var dsEst    = { label: 'Est',          data: [], backgroundColor: '#03A9F4' };
+        var dsSud    = { label: 'Sud',          data: [], backgroundColor: '#FFEB3B' };
+        var dsVide   = { label: 'Vide / Autre', data: [], backgroundColor: '#E0E0E0' }; 
+
+        gData.forEach(function(d) {
+            dsOuest.data.push(d.regions['Ouest']  || 0);
+            dsCentre.data.push(d.regions['Centre'] || 0);
+            dsEst.data.push(d.regions['Est']      || 0);
+            dsSud.data.push(d.regions['Sud']      || 0);
+            dsVide.data.push(d.regions['Vide']    || 0);
+        });
+
+        var rowHeight = 45;
+        $('#card-all-grossistes .chart-container').css('height', Math.max(350, gData.length * rowHeight + 100) + 'px');
+
+        Chart.register(ChartDataLabels);
+        chartInstances['chart-all-grossistes'] = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: labels, datasets: [dsOuest, dsCentre, dsEst, dsSud, dsVide] },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { x: { stacked: true }, y: { stacked: true } },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var val = context.raw;
+                                if (val === 0) return null;
+                                var total = gData[context.dataIndex].total_val;
+                                var pct = ((val / total) * 100).toFixed(1) + '%';
+                                return context.dataset.label + ': ' + fmt(val) + ' DA (' + pct + ')';
+                            }
+                        }
+                    },
+                    datalabels: {
+                        color: function(context) {
+                            var lbl = context.dataset.label;
+                            return (lbl === 'Sud' || lbl === 'Vide / Autre') ? '#333' : '#fff';
+                        },
+                        font: { weight: 'bold', size: 12 },
+                        formatter: function(value, context) {
+                            if (value === 0) return null;
+                            var total = gData[context.dataIndex].total_val;
+                            var pct = ((value / total) * 100);
+                            if (pct < 6) return null;
+                            return pct.toFixed(1) + '%';
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    /* ════════════════ TABLES LOGIC ════════════════ */
+    function buildTables(data) {
+      var root = data.root;
+      var isGrossiste = root.type === 'Grossiste';
+      var html = '';
+
+      // Helper function to sort a product string ("10 FF , 30 FM") to ("30 FM , 10 FF")
+      function sortProduitsStr(str) {
+        if (!str || str === '-') return '-';
+        var arr = str.split(' , ').map(function(pStr) {
+          var match = pStr.trim().match(/^(\d+)\s+(.+)$/);
+          return {
+            qty: match ? parseInt(match[1], 10) : 0,
+            text: pStr.trim()
+          };
+        });
+        arr.sort(function(a, b) { return b.qty - a.qty; });
+        return arr.map(function(x) { return x.text; }).join(' , ');
+      }
+
+      function buildSingleTable(title, entityLabel, rows) {
+        if (!rows || rows.length === 0) return '';
+        
+        // 1. PRE-CALCULATE EACH CLIENT'S TOTAL VALUE & SORT THE MAIN ROWS
+        rows.forEach(function(r) {
+          var rowTotal = 0;
+          var details = r.stats.orders_details || [];
+          details.forEach(function(d) { rowTotal += (d.valeur_brute || 0); });
+          r._totalValue = rowTotal; // Store total temporarily
+        });
+        // Sort clients/fournisseurs from highest total value to lowest
+        rows.sort(function(a, b) { return b._totalValue - a._totalValue; });
+
+
+        // 2. CALCULATE THE GRAND TOTALS FOR THE ENTIRE TABLE
+        var totalValeurBrute = 0;
+        var totalProduits = {};
+        
+        rows.forEach(function(r) {
+          var details = r.stats.orders_details || [];
+          details.forEach(function(d) {
+            totalValeurBrute += (d.valeur_brute || 0);
+            
+            if (d.produits_str && d.produits_str !== '-') {
+              var prods = d.produits_str.split(' , ');
+              prods.forEach(function(pStr) {
+                var match = pStr.trim().match(/^(\d+)\s+(.+)$/);
+                if (match) {
+                  var qty = parseInt(match[1], 10);
+                  var name = match[2].trim();
+                  if (!totalProduits[name]) totalProduits[name] = 0;
+                  totalProduits[name] += qty;
+                }
+              });
+            }
+          });
+        });
+
+        var prodArr = [];
+        for (var pName in totalProduits) {
+            prodArr.push({ name: pName, qty: totalProduits[pName] });
+        }
+        prodArr.sort(function(a, b) { return b.qty - a.qty; }); 
+        
+        var totalProduitsStrArr = prodArr.map(function(p) {
+            return '<strong>' + p.qty + '</strong> ' + p.name;
+        });
+        var totalProduitsStr = totalProduitsStrArr.length > 0 ? totalProduitsStrArr.join(' , ') : '-';
+
+
+        // 3. CONSTRUCT THE HTML
+        var t = '<h3 style="margin-top:20px; margin-bottom:10px; font-size:16px;">' + title + '</h3>';
+        t += '<table>';
+        t += '<thead><tr>';
+        t += '<th style="background-color: #FFF3E0; color: #E65100;">' + entityLabel + '</th>';
+        t += '<th style="background-color: #FFF3E0; color: #E65100;">Date | التاريخ</th>';
+        t += '<th style="background-color: #FFF3E0; color: #E65100;">Utilisateur | المستخدم</th>';
+        t += '<th style="background-color: #FFF3E0; color: #E65100;">Bon N° | رقم الطلبية</th>';
+        t += '<th style="background-color: #FFF3E0; color: #E65100;">Valeur Brute | القيمة الإجمالية</th>';
+        t += '<th style="background-color: #FFF3E0; color: #E65100;">Produits | المنتجات</th>';
+        t += '</tr>';
+
+        t += '<tr style="background-color: #E8F5E9;">'; 
+        t += '<td colspan="4" style="text-align: center; font-weight: bold; color: #2E7D32; font-size: 15px; letter-spacing: 1px;">TOTAL | المجموع</td>';
+        t += '<td style="text-align: right; font-weight: bold; color: #2E7D32; font-size: 15px;">' + fmt(totalValeurBrute) + ' DA</td>';
+        t += '<td style="text-align: left; color: #2E7D32;">' + totalProduitsStr + '</td>';
+        t += '</tr>';
+        
+        t += '</thead><tbody>';
+        
+        // 4. GENERATE THE CLIENT ROWS (Now fully sorted!)
+        rows.forEach(function(r) {
+          var details = r.stats.orders_details || [];
+          
+          details.sort(function(a, b) {
+             return b.valeur_brute - a.valeur_brute;
+          });
+
+          var rowCount = details.length || 1;
+          
+          t += '<tr>';
+          t += '<td rowspan="' + rowCount + '" style="background-color: #fafafa; text-align:left;"><strong>' + r.name + '</strong><br><small style="color:#888;">' + r.type + '</small></td>';
+          
+          if (details.length > 0) {
+            t += '<td style="text-align:center;">' + details[0].date + '</td>';
+            t += '<td style="text-align:left;">' + details[0].user + '</td>';
+            t += '<td style="text-align:center;"><a href="/orders/' + details[0].id + '" target="_blank" style="font-weight:bold; color:#0D47A1; text-decoration:none;">#' + details[0].id + '</a></td>';
+            t += '<td style="text-align:right;"><strong>' + fmt(details[0].valeur_brute) + '</strong> DA</td>';
+            t += '<td style="text-align:left;">' + sortProduitsStr(details[0].produits_str) + '</td>';
+          } else {
+            t += '<td colspan="5" style="text-align:center; color:#999;">Aucune commande | لا توجد طلبيات</td>';
+          }
+          t += '</tr>';
+          
+          for (var i = 1; i < details.length; i++) {
+            t += '<tr>';
+            t += '<td style="text-align:center;">' + details[i].date + '</td>';
+            t += '<td style="text-align:left;">' + details[i].user + '</td>';
+            t += '<td style="text-align:center;"><a href="/orders/' + details[i].id + '" target="_blank" style="font-weight:bold; color:#0D47A1; text-decoration:none;">#' + details[i].id + '</a></td>';
+            t += '<td style="text-align:right;"><strong>' + fmt(details[i].valeur_brute) + '</strong> DA</td>';
+            t += '<td style="text-align:left;">' + sortProduitsStr(details[i].produits_str) + '</td>';
+            t += '</tr>';
+          }
+        });
+        
+        t += '</tbody></table>';
+        return t;
+      }
+
+      if (isGrossiste) {
+        html += buildSingleTable("Fournisseurs de " + root.name , "Fournisseur | المورد", data.fournisseurs);
+        html += buildSingleTable("Clients de " + root.name , "Client | العميل", data.clients);
+      } else {
+        html += buildSingleTable("Les commandes de " + root.name , "Client | العميل", data.clients);
+      }
+      return html;
+    }
+    /* ════════════════ ORGANIGRAM LOGIC ════════════════ */
+    function buildNode(e, isRoot) {
+      var cls = isRoot ? 'root' : (e.type || '').toLowerCase();
+      var lbl = isRoot ? e.type + ' (racine)' : e.type;
+
+      var innerHtml = '<span class="node-badge">' + lbl + '</span>';
+
+      if (isRoot && e.type === 'Grossiste' && e.stats_in && e.stats_out) {
+        innerHtml += '<div class="node-stats" style="border-top:none; border-bottom: 1px solid #f0f0f0; padding-bottom: 6px; margin-bottom: 6px; padding-top: 0;">' +
+                       '<div style="font-size: 9px; color: #888; text-transform: uppercase;">Entrant (SuperGros)</div>' +
+                       '<div><strong>' + e.stats_in.bons + '</strong> Bons</div>' +
+                       '<div><strong>' + fmt(e.stats_in.unites) + '</strong> Unités</div>' +
+                       '<div style="color:#28a745;"><strong>' + fmt(e.stats_in.valeur) + '</strong> DA</div>' +
+                     '</div>';
+        innerHtml += '<div class="node-name" style="margin: 8px 0; font-size: 15px; color: #c2410c;">' + e.name + '</div>';
+        innerHtml += '<div class="node-stats" style="border-top: 1px solid #f0f0f0; padding-top: 6px;">' +
+                       '<div style="font-size: 9px; color: #888; text-transform: uppercase;">Sortant (Pharmacies)</div>' +
+                       '<div><strong>' + e.stats_out.bons + '</strong> Bons</div>' +
+                       '<div><strong>' + fmt(e.stats_out.unites) + '</strong> Unités</div>' +
+                       '<div style="color:#28a745;"><strong>' + fmt(e.stats_out.valeur) + '</strong> DA</div>' +
+                     '</div>';
+      } else {
+        innerHtml += '<div class="node-name">' + e.name + '</div>';
+        innerHtml += '<div class="node-stats">' +
+                       '<div><strong>' + e.stats.bons + '</strong> Bons</div>' +
+                       '<div><strong>' + fmt(e.stats.unites) + '</strong> Unités</div>' +
+                       '<div style="color:#28a745;"><strong>' + fmt(e.stats.valeur) + '</strong> DA</div>' +
+                     '</div>';
+      }
+
+      return '<div class="org-node node-' + cls + (isRoot ? ' is-root' : '') + '">' + innerHtml + '</div>';
+    }
+
+    /* ════════════════ ORGANIGRAM ROW CHUNKING LOGIC ════════════════ */
+    // Helper function to split a massive list of clients into smaller arrays (chunks)
+    function chunkArray(arr, size) {
+        var res = [];
+        for (var i = 0; i < arr.length; i += size) {
+            res.push(arr.slice(i, i + size));
+        }
+        return res;
+    }
+
+    function buildLevelDown(entities) {
+      if (!entities || !entities.length) return '';
+      
+      // Dynamically calculate how many cards safely fit in the window without scrolling
+      var maxFit = Math.max(1, Math.floor((window.innerWidth - 80) / 180));
+      var chunks = chunkArray(entities, maxFit);
+
+      var html = '<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">';
+      
+      for (var i = 0; i < chunks.length; i++) {
+        var isFurthestFromRoot = (i === chunks.length - 1);
+        var margin = isFurthestFromRoot ? '0' : '40px'; // 40px gap between wrapped rows
+
+        html += '<div class="org-level" style="position: relative; margin-bottom: ' + margin + '; width: 100%; justify-content: center;">';
+        
+        // If this isn't the last row, drop a continuous vertical spine down to the next row
+        if (!isFurthestFromRoot) {
+           html += '<div style="position: absolute; top: 0; height: calc(100% + 40px); left: 50%; width: var(--line-width); background: var(--line-color); z-index: 0; margin-left: -1px;"></div>';
+        }
+        
+        html += chunks[i].map(function(e) {
+            return '<div class="org-branch"><div class="vline"></div>' + buildNode(e, false) + '</div>';
+        }).join('');
+        html += '</div>';
+      }
+      
+      html += '</div>';
+      return html;
+    }
+
+    function buildLevelUp(entities) {
+      if (!entities || !entities.length) return '';
+      
+      var maxFit = Math.max(1, Math.floor((window.innerWidth - 80) / 180));
+      var chunks = chunkArray(entities, maxFit);
+
+      var html = '<div style="display: flex; flex-direction: column; align-items: center; width: 100%;">';
+      
+      // For upward branches (Fournisseurs), we print them in reverse so the first chunk is closest to the root
+      for (var i = chunks.length - 1; i >= 0; i--) {
+        var isClosestToRoot = (i === 0);
+        var isFurthestFromRoot = (i === chunks.length - 1);
+        var margin = isClosestToRoot ? '0' : '40px';
+
+        html += '<div class="org-level" style="position: relative; margin-bottom: ' + margin + '; width: 100%; justify-content: center;">';
+        
+        // Shoot a continuous vertical spine UP to the next row
+        if (!isFurthestFromRoot) {
+           html += '<div style="position: absolute; bottom: 0; height: calc(100% + 40px); left: 50%; width: var(--line-width); background: var(--line-color); z-index: 0; margin-left: -1px;"></div>';
+        }
+        
+        html += chunks[i].map(function(e) {
+            return '<div class="org-branch-up">' + buildNode(e, false) + '<div class="vline"></div></div>';
+        }).join('');
+        html += '</div>';
+      }
+      
+      html += '</div>';
+      return html;
+    }
+
+    function renderOrgChart(data) {
+      var root = data.root, isGrossiste = root.type === 'Grossiste';
+      var html = '<div class="org-tree">';
+
+      if (isGrossiste) {
+        if (data.fournisseurs.length) {
+          html += '<div class="tier-label">Fournisseurs (SuperGros) | الموردون (سوبر غرو)</div>' + buildLevelUp(data.fournisseurs) + '<div class="vline" style="margin:0 auto;"></div>';
+        }
+        html += '<div class="tier-label">Entité Sélectionnée | الكيان المحدد</div><div class="org-solo">' + buildNode(root, true) + '</div>';
+        if (data.clients.length) {
+          html += '<div class="vline" style="margin:0 auto;"></div><div class="tier-label">Clients (Pharmacies) | العملاء (صيدليات)</div>' + buildLevelDown(data.clients);
+        }
+      } else {
+        var gClients = data.clients.filter(function(c){ return c.type === 'Grossiste'; });
+        var pClients = data.clients.filter(function(c){ return c.type === 'Pharmacie'; });
+        
+        html += '<div class="tier-label">Entité Sélectionnée | الكيان المحدد</div><div class="org-solo">' + buildNode(root, true) + '</div>';
+        if (gClients.length) html += '<div class="vline" style="margin:0 auto;"></div><div class="tier-label">Grossistes Clients | عملاء الجملة</div>' + buildLevelDown(gClients);
+        if (pClients.length) html += '<div class="vline" style="margin:0 auto;"></div><div class="tier-label">Pharmacies Clients | عملاء الصيدليات</div>' + buildLevelDown(pClients);
+        if (!data.clients.length) html += '<div class="vline" style="margin:0 auto;"></div><div style="text-align:center;color:#999;font-size:12px;padding:15px;">Aucun client trouvé | لا يوجد عملاء</div>';
+      }
+      $('#org-container').html(html + '</div>');
+    }
+
+    /* ════════════════ MASTER RENDER ════════════════ */
+    function fetchDashboardData(params) {
+      var isAllMode = (params.id === 'ALL');
+
+      // Show spinner on the visible ALL card when switching region
+      if (isAllMode) {
+          var spinnerId = (params.type === 'supergros') ? 'spinner-all-supergros' : 'spinner-all-grossistes';
+          $('#' + spinnerId).addClass('active');
+      }
+
+      $('#stat-subtitle, #card-org, #card-charts, #card-tables').hide();
+      if (!isAllMode) {
+          $('#org-container').html('<div class="loading-text">Chargement des données en cours... | جاري تحميل البيانات...</div>');
+          $('#card-org').show();
+      }
+
+      $.get(CFG.TRACKER_API, params).done(function(data) {
+          $('#spinner-all-supergros, #spinner-all-grossistes').removeClass('active');
+          if (!data) return;
+
+          if (data.type === 'ALL_SUPERGROS') {
+              $('#stat-subtitle, #card-org, #card-charts, #card-tables, #regional-breakdown-bar, #real-sales-banner, #card-all-grossistes').hide();
+              $('#stat-subtitle').text('SuperGros – Tous les SuperGros').show();
+              $('#secondary-filter-container').show();
+              $('#card-all-supergros').show();
+              if (params.region) {
+                  drawAllRegionChart('chart-all-supergros', 'card-all-supergros', params.region, data.data, 'total-banner-supergros');
+              } else {
+                  drawAllSuperGrosChart(data.data);
+              }
+              return;
+          }
+
+          if (data.type === 'ALL_GROSSISTES') {
+              $('#stat-subtitle, #card-org, #card-charts, #card-tables, #regional-breakdown-bar, #real-sales-banner, #card-all-supergros').hide();
+              $('#stat-subtitle').text('Grossiste – Tous les Grossistes').show();
+              $('#secondary-filter-container').show();
+              $('#card-all-grossistes').show();
+              if (params.region) {
+                  drawAllRegionChart('chart-all-grossistes', 'card-all-grossistes', params.region, data.data, 'total-banner-grossistes');
+              } else {
+                  drawAllGrossistesChart(data.data);
+              }
+              return;
+          }
+
+          if (!data.root) return;
+          $('#card-all-supergros, #card-all-grossistes').hide();
+
+          // 1. Subtitle: Type – Client name
+          var subtypeLabel = data.root.type === 'SuperGros' ? 'SuperGros' : 'Grossiste';
+          $('#stat-subtitle').text(subtypeLabel + ' – ' + data.root.name).show();
+          $('#secondary-filter-container').show();
+
+          // 2. Organigram
+          renderOrgChart(data);
+
+          // Regional breakdown bar
+          if (params.region === '' && data.regional_stats) {
+              var rHtml = '';
+              var totalVal = data.root.stats.valeur || 0;
+
+              var regions = ['Centre', 'Est', 'Ouest', 'Sud'];
+              regions.forEach(function(reg, index) {
+                  var stats = data.regional_stats[reg];
+                  // Only calculate percentage for the Value (DA) now
+                  var pctVal = totalVal > 0 ? ((stats.valeur / totalVal) * 100).toFixed(1) : 0;
+
+                  var border = index < 3 ? 'border-right: 1px solid #C8E6C9;' : '';
+
+                  rHtml += '<div style="flex: 1; min-width: 180px; text-align: center; padding: 12px 10px; ' + border + '">' +
+                              '<div style="font-weight: bold; color: #1B5E20; font-size: 16px; text-transform: uppercase; margin-bottom: 10px;">' + reg + '</div>' +
+                              '<div style="font-size: 14px; color: #555; margin-bottom: 4px;"><strong>' + stats.bons + '</strong> Bons</div>' +
+                              '<div style="font-size: 14px; color: #555; margin-bottom: 12px;"><strong>' + fmt(stats.unites) + '</strong> Unités</div>' +
+                              '<div style="font-size: 16px; font-weight: bold; color: #2E7D32; display: flex; align-items: center; justify-content: center; gap: 8px;">' +
+                                  fmt(stats.valeur) + ' DA ' +
+                                  '<span style="background: #FF9800; color: #fff; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.15); letter-spacing: 0.5px;">' + pctVal + '%</span>' +
+                              '</div>' +
+                           '</div>';
+              });
+              $('#regional-breakdown-bar').html(rHtml).css('display', 'flex');
+          } else {
+              $('#regional-breakdown-bar').hide();
+          }
+
+          // Real Sales Coverage Banner (only when no region filter and data available)
+          if (data.real_sales_data) {
+              var rs = data.real_sales_data;
+              var bannerHtml = "";
+ 
+                  if (!params.region) {
+                      // NO REGION SELECTED: Show the National Banner
+                      bannerHtml = 'L\'équipe Lilium a destoqué <strong>' + rs.coverage_percentage + '%</strong> des ventes réelles nationales de <strong>' + rs.sg_name + '</strong> (<strong>' + fmt(rs.real_sales_units) + '</strong> Unités / <strong>' + fmt(rs.real_sales_val) + '</strong> DA)';
+                  } else {
+                      // REGION SELECTED: Show the Regional Banner
+                      var regData = rs.regions ? rs.regions[params.region] : null;
+        
+                      if (regData && (regData.units > 0 || regData.val > 0)) {
+                          bannerHtml = 'L\'équipe Lilium a destoqué <strong>' + regData.coverage + '%</strong> des ventes réelles de la région <strong>' + params.region + '</strong> de <strong>' + rs.sg_name + '</strong> (<strong>' + fmt(regData.units) + '</strong> Unités / <strong>' + fmt(regData.val) + '</strong> DA)';
+                      } else {
+                          // Fallback: If the SuperGros reported 0 real sales for this specific region
+                          bannerHtml = 'Aucune vente réelle déclarée par <strong>' + rs.sg_name + '</strong> dans la région <strong>' + params.region + '</strong> pour cette période.';
+                        }
+                    }
+                    $('#real-sales-banner').html(bannerHtml).show();
+                } else {
+                    $('#real-sales-banner').hide();
+                }
+
+          // 3. Charts
+          var cw = $('#charts-wrapper').empty();
+          if (data.root.type === 'SuperGros') {
+              cw.append('<div class="chart-box"><canvas id="chart-ventes"></canvas></div>');
+              drawUserChart('chart-ventes', 'Ventes par Utilisateur (Commandes du SuperGros) | المبيعات حسب المستخدم (طلبيات سوبر غرو)', data.user_stats_ventes, '#4CAF50');
+          } else {
+              cw.append('<div class="chart-box"><canvas id="chart-achats"></canvas></div>');
+              cw.append('<div class="chart-box"><canvas id="chart-ventes"></canvas></div>');
+              drawUserChart('chart-achats', 'Achats par Utilisateur (Grossiste comme Client) | المشتريات حسب المستخدم (تاجر الجملة كعميل)', data.user_stats_achats, '#42A5F5');
+              drawUserChart('chart-ventes', 'Ventes par Utilisateur (Grossiste comme Fournisseur) | المبيعات حسب المستخدم (تاجر الجملة كمورد)', data.user_stats_ventes, '#4CAF50');
+          }
+          $('#card-charts').show();
+
+          // 4. Tables
+          $('#tables-wrapper').html(buildTables(data));
+          $('#card-tables').show();
+
+      }).fail(function() {
+          $('#spinner-all-supergros, #spinner-all-grossistes').removeClass('active');
+          $('#org-container').html('<div class="loading-text" style="color:red;">Erreur lors du chargement des données. | خطأ في تحميل البيانات.</div>');
+      });
+    }
+
+    function doSearch() {
+      var type = $('#filter-type').val(), id = $('#filter-entity').val();
+      if (!type || !id) return;
+      $('#filter-region').val('');
+      var params = { type: type, id: id, min_date: $('#filter-min-date').val(), max_date: $('#filter-max-date').val(), region: '' };
+      fetchDashboardData(params);
+    }
+
+    /* ════════════════ APPLIED FILTERS DISPLAY ════════════════ */
+    function showAppliedFilters(type, id, minDate, maxDate) {
+      var entityName = id;
+      if (id === 'ALL') {
+        entityName = type === 'SuperGros' ? 'Tous les SuperGros' : 'Tous les Grossistes';
+      } else {
+        var list = type === 'SuperGros' ? SUPER_GROS_LIST : GROSSISTE_LIST;
+        var found = list.find(function(x) { return String(x.id) === String(id); });
+        if (found) entityName = found.name;
+      }
+
+      var tags = [
+        { icon: 'bi-layers', label: 'Type', value: type },
+        { icon: 'bi-building', label: 'Entité', value: entityName },
+        { icon: 'bi-calendar-range', label: 'Période', value: minDate + ' → ' + maxDate },
+      ];
+
+      var html = tags.map(function(t) {
+        return '<span style="display:inline-flex; align-items:center; gap:6px; background:#e8f5e9; border:1px solid #c8e6c9; border-radius:20px; padding:4px 12px; font-size:13px; color:#1b5e20; font-weight:600;">' +
+               '<i class="bi ' + t.icon + '" style="font-size:12px;"></i>' +
+               '<span style="font-weight:400; color:#555; font-size:11px; text-transform:uppercase; letter-spacing:0.4px;">' + t.label + ':</span> ' +
+               t.value +
+               '</span>';
+      }).join('');
+
+      $('#applied-filters-tags').html(html);
+      $('#applied-filters-bar').show();
+    }
+
+    /* ════════════════ EVENT BINDINGS ════════════════ */
+    $('#filter-region').on('change', function() {
+      var type = $('#filter-type').val(), id = $('#filter-entity').val();
+      if (!type || !id) return;
+      var params = { type: type, id: id, min_date: $('#filter-min-date').val(), max_date: $('#filter-max-date').val(), region: $(this).val() };
+      fetchDashboardData(params);
+    });
+
+    /* ════════════════ AUTO-TRIGGER FROM URL PARAMS ════════════════ */
+    (function initFromUrl() {
+      var urlParams = new URLSearchParams(window.location.search);
+      var type    = urlParams.get('type')     || '';
+      var id      = urlParams.get('id')       || '';
+      var minDate = urlParams.get('min_date') || '';
+      var maxDate = urlParams.get('max_date') || '';
+      var region  = urlParams.get('region')   || '';
+
+      if (!type || !id) return;
+
+      $('#filter-type').val(type);
+      $('#filter-entity').val(id);
+      $('#filter-min-date').val(minDate);
+      $('#filter-max-date').val(maxDate);
+      if (region) $('#filter-region').val(region);
+
+      showAppliedFilters(type, id, minDate, maxDate);
+
+      var params = { type: type, id: id, min_date: minDate, max_date: maxDate, region: region };
+      fetchDashboardData(params);
+    })();
+
+  }(jQuery));
+  </script>
+</body>
+</html>

@@ -43,7 +43,7 @@ from clients.models import *
 #         u = UserProfile.objects.get(user=user_id)
 #         if u.speciality_rolee == "Office" or u.speciality_rolee == "Admin" or u.speciality_rolee == "CountryManager":
 #             print("yes is super user")
-            
+
 #             pha = Medecin.objects.filter(specialite="Pharmacie")
 #             gro = Medecin.objects.filter(specialite="Grossiste")
 #             sugro = Client.objects.filter(supergro=True)
@@ -51,7 +51,7 @@ from clients.models import *
 #             #pro = UserProduct.objects.filter(user=request.user)
 #             pro = Produit.objects.all()
 #             return render(request, "orders/addorder.html", {'pha':pha, 'gro':gro, 'sugro':sugro, 'pro':pro})
-        
+
 #         if u.speciality_rolee == "Superviseur_regional" or u.speciality_rolee == "Superviseur_national":
 #             usr = User.objects.get(id=user_id)
 #             userpro = UserProfile.objects.get(user=usr)
@@ -63,7 +63,7 @@ from clients.models import *
 #                     all_sectors.update(sectors)
 #                 except UserProfile.DoesNotExist:
 #                     continue  # au cas où un user n'a pas encore de profil
-            
+
 #             meds = Medecin.objects.filter(users=usr)
 #             pha = Medecin.objects.filter(users=usr, specialite="Pharmacie")
 #             gro = Medecin.objects.filter(specialite="Grossiste", wilaya__in=all_sectors)
@@ -71,7 +71,7 @@ from clients.models import *
 #             pro = Produit.objects.all()
 #             #pro = UserProduct.objects.filter(user=request.user)
 #             return render(request, "orders/addorder.html", {'pha':pha, 'gro':gro, 'sugro':sugro, 'pro':pro})
-        
+
 #         print("mobile probleme 2 addorder")
 #         usr = User.objects.get(id=user_id)
 #         userpro = UserProfile.objects.get(user=usr)
@@ -82,7 +82,7 @@ from clients.models import *
 #         pro = Produit.objects.all()
 #         #pro = UserProduct.objects.filter(user=request.user)
 #         return render(request, "orders/addorder.html", {'pha':pha, 'gro':gro, 'sugro':sugro, 'pro':pro})
-    
+
 #     def post(self, request):
 #         user_id=request.session.get('user_id')
 #         if user_id is None:
@@ -100,7 +100,7 @@ from clients.models import *
 #             m = "Veuillez Choisir que deux parmi Pharmacie, Grossiste et SuperGros ou Bien que SuperGros"
 #             if u.speciality_rolee == "Office" or u.speciality_rolee == "Admin" or u.speciality_rolee == "CountryManager":
 #                 print("yes is super user")
-                
+
 #                 pha = Medecin.objects.filter(specialite="Pharmacie")
 #                 gro = Medecin.objects.filter(specialite="Grossiste")
 #                 sugro = Client.objects.filter(supergro=True)
@@ -129,7 +129,7 @@ from clients.models import *
 #             m = "Veuillez Choisir que deux parmi Pharmacie, Grossiste et SuperGros ou Bien que SuperGros Seul"
 #             if u.speciality_rolee == "Office" or u.speciality_rolee == "Admin" or u.speciality_rolee == "CountryManager":
 #                 print("yes is super user")
-                
+
 #                 pha = Medecin.objects.filter(specialite="Pharmacie")
 #                 usr = User.objects.get(id=user_id)
 #                 userpro = UserProfile.objects.get(user=usr)
@@ -152,7 +152,7 @@ from clients.models import *
 #             m = "Veuillez Choisir que deux parmi Pharmacie, Grossiste et SuperGros ou Bien que SuperGros Seul"
 #             if u.speciality_rolee == "Office" or u.speciality_rolee == "Admin" or u.speciality_rolee == "CountryManager":
 #                 print("yes is super user")
-                
+
 #                 pha = Medecin.objects.filter(specialite="Pharmacie")
 #                 gro = Medecin.objects.filter(specialite="Grossiste")
 #                 sugro = Client.objects.filter(supergro=True)
@@ -173,7 +173,7 @@ from clients.models import *
 #             m = "Veuillez Choisir que deux parmi Pharmacie, Grossiste et SuperGros ou Bien que SuperGros Seul, parceque vous avec rien choisir"
 #             if u.speciality_rolee == "Office" or u.speciality_rolee == "Admin" or u.speciality_rolee == "CountryManager":
 #                 print("yes is super user")
-                
+
 #                 pha = Medecin.objects.filter(specialite="Pharmacie")
 #                 gro = Medecin.objects.filter(specialite="Grossiste")
 #                 sugro = Client.objects.filter(supergro=True)
@@ -193,7 +193,7 @@ from clients.models import *
 #         observations = request.POST.get("observations")
 #         image = request.FILES.get('image')
 #         us = User.objects.get(id=user_id)
-        
+
 #         pro = Produit.objects.all()
 #         #pro = UserProduct.objects.filter(user=request.user)
 #         h=0
@@ -206,7 +206,7 @@ from clients.models import *
 #                     m = f"Veuillez Ajoutez un veleur a le produit cocher {itempro.nom}"
 #                     if u.speciality_rolee == "Office" or u.speciality_rolee == "Admin" or u.speciality_rolee == "CountryManager":
 #                         print("yes is super user")
-                        
+
 #                         pha = Medecin.objects.filter(specialite="Pharmacie")
 #                         gro = Medecin.objects.filter(specialite="Grossiste")
 #                         sugro = Client.objects.filter(supergro=True)
@@ -225,7 +225,7 @@ from clients.models import *
 #             m="Veuillez ajouter en moin un produit"
 #             if u.speciality_rolee == "Office" or u.speciality_rolee == "Admin" or u.speciality_rolee == "CountryManager":
 #                 print("yes is super user")
-                        
+
 #                 pha = Medecin.objects.filter(specialite="Pharmacie")
 #                 gro = Medecin.objects.filter(specialite="Grossiste")
 #                 sugro = Client.objects.filter(supergro=True)
@@ -249,7 +249,7 @@ from clients.models import *
 #                     createitemorder = OrderItem.objects.create(order=createorder,produit=itempro, qtt=qtt_value)
 #         if u.speciality_rolee == "Office" or u.speciality_rolee == "Admin" or u.speciality_rolee == "CountryManager":
 #             print("yes is super user")
-            
+
 #             pha = Medecin.objects.filter(specialite="Pharmacie")
 #             gro = Medecin.objects.filter(specialite="Grossiste")
 #             sugro = Client.objects.filter(supergro=True)
@@ -1563,7 +1563,6 @@ class ordersPerUserPerMonth(APIView):
         return Response(data)
 
 
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -1653,3 +1652,837 @@ class OrdersByUserAndDateView(APIView):
 
         except User.DoesNotExist:
             return Response({"error": "User not found."}, status=404)
+
+from collections import defaultdict
+from datetime import datetime, date, timedelta
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+from django.db.models import Q
+
+import calendar as _calendar
+from clients.models import (
+    Client,
+    OrderSource as _OrderSource,
+    Order as _ClientOrder,
+    OrderProduct as _ClientOrderProduct,
+)
+from medecins.models import Medecin
+from .models import Order, OrderItem
+
+
+class TransactionTrackerAPI(APIView):
+    """
+    API Endpoint for the Visual Organigram Dashboard, Tables & User Charts.
+    """
+
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        entity_type = request.GET.get("type", "").lower()
+        entity_id = request.GET.get("id")
+        min_date = request.GET.get("min_date")
+        max_date = request.GET.get("max_date")
+
+        if not entity_type or not entity_id:
+            return Response({"error": "Paramètres 'type' et 'id' requis."}, status=400)
+
+        def parse_date(d_str, default_date):
+            if d_str:
+                try:
+                    return datetime.strptime(d_str, "%Y-%m-%d").date()
+                except Exception:
+                    pass
+            return default_date
+
+        today = date.today()
+        d_max = parse_date(max_date, today)
+        d_min = parse_date(min_date, today - timedelta(days=30))
+
+        if d_min > d_max:
+            d_min, d_max = d_max, d_min
+
+        clients_agg = defaultdict(
+            lambda: {
+                "bons": set(),
+                "unites": 0,
+                "valeur": 0.0,
+                "produits": defaultdict(int),
+                "orders_details": [],
+            }
+        )
+        fournisseurs_agg = defaultdict(
+            lambda: {
+                "bons": set(),
+                "unites": 0,
+                "valeur": 0.0,
+                "produits": defaultdict(int),
+                "orders_details": [],
+            }
+        )
+
+        # New dicts for the User Charts
+        user_stats_ventes = defaultdict(
+            lambda: {"bons": set(), "unites": 0, "valeur": 0.0}
+        )
+        user_stats_achats = defaultdict(
+            lambda: {"bons": set(), "unites": 0, "valeur": 0.0}
+        )
+
+        root_stats = {"bons": set(), "unites": 0, "valeur": 0.0, "valeur_brute": 0.0}
+        root_name = ""
+
+        region = request.GET.get("region")
+
+        orders_qs = Order.objects.filter(added__date__gte=d_min, added__date__lte=d_max)
+
+        # ── User scoping ──
+        try:
+            _req_up = request.user.userprofile
+            _req_spec = getattr(_req_up, "speciality_rolee", "")
+        except Exception:
+            _req_up = None
+            _req_spec = ""
+
+        _TRACKER_RESTRICTED = {"Commercial", "Medico_commercial"}
+        _TRACKER_FULL = {"CountryManager", "Admin"}
+
+        if not request.user.is_superuser and _req_spec not in _TRACKER_FULL:
+            if _req_spec in _TRACKER_RESTRICTED:
+                orders_qs = orders_qs.filter(
+                    Q(user=request.user) | Q(touser=request.user)
+                ).distinct()
+            elif _req_spec == "Superviseur_national" and _req_up is not None:
+                orders_qs = orders_qs.filter(
+                    Q(user=request.user)
+                    | Q(touser=request.user)
+                    | Q(user__in=_req_up.usersunder.all())
+                    | Q(touser__in=_req_up.usersunder.all())
+                ).distinct()
+        # ────────────────────────────────────────────────────────────────────────────
+
+        # ── ALL SUPERGROS RANKING BLOCK (before region filter — sees all regions) ──
+        if entity_type == "supergros" and entity_id == "ALL":
+            orders = orders_qs.filter(super_gros__isnull=False).filter(Q(gros__isnull=False) | Q(pharmacy__isnull=False)).select_related("super_gros", "user", "user__userprofile")
+
+            order_map = {o.id: o for o in orders}
+            order_ids = list(order_map.keys())
+            items = OrderItem.objects.filter(order_id__in=order_ids).select_related("produit")
+
+            sg_stats = {}
+            for it in items:
+                o = order_map[it.order_id]
+                sg_id = o.super_gros_id
+
+                if sg_id not in sg_stats:
+                    sg_stats[sg_id] = {
+                        "name": o.super_gros.name if o.super_gros else "Inconnu",
+                        "total_val": 0.0,
+                        "regions": {"Ouest": 0.0, "Centre": 0.0, "Est": 0.0, "Sud": 0.0, "Vide": 0.0},
+                        "regions_bons": {"Ouest": set(), "Centre": set(), "Est": set(), "Sud": set(), "Vide": set()},
+                        "regions_unites": {"Ouest": 0, "Centre": 0, "Est": 0, "Sud": 0, "Vide": 0},
+                    }
+
+                val = float(it.qtt or 0) * float(it.produit.price or 0)
+                qtt = int(it.qtt or 0)
+
+                try:
+                    reg = o.user.userprofile.region if getattr(o, "user", None) and hasattr(o.user, "userprofile") else None
+                except Exception:
+                    reg = None
+
+                reg_key = reg if reg in ["Ouest", "Centre", "Est", "Sud"] else "Vide"
+                sg_stats[sg_id]["total_val"] += val
+                sg_stats[sg_id]["regions"][reg_key] += val
+                sg_stats[sg_id]["regions_bons"][reg_key].add(o.id)
+                sg_stats[sg_id]["regions_unites"][reg_key] += qtt
+
+            for s in sg_stats.values():
+                s["regions_bons"] = {k: len(v) for k, v in s["regions_bons"].items()}
+
+            if region:
+                target_reg = region if region in ["Ouest", "Centre", "Est", "Sud"] else "Vide"
+                sorted_sg = sorted(
+                    [s for s in sg_stats.values() if s["regions"].get(target_reg, 0) > 0],
+                    key=lambda x: x["regions"].get(target_reg, 0),
+                    reverse=True
+                )
+            else:
+                sorted_sg = sorted(
+                    [s for s in sg_stats.values() if s["total_val"] > 0],
+                    key=lambda x: x["total_val"],
+                    reverse=True
+                )
+
+            return Response({"type": "ALL_SUPERGROS", "data": sorted_sg})
+        # ────────────────────────────────────────────────────────────────────────────
+
+        # ── ALL GROSSISTES RANKING BLOCK ──
+        elif entity_type == "grossiste" and entity_id == "ALL":
+            # Grossiste is the fournisseur when there is a Pharmacy attached
+            orders = orders_qs.filter(
+                gros__isnull=False, pharmacy__isnull=False
+            ).select_related("gros", "user", "user__userprofile")
+
+            order_map = {o.id: o for o in orders}
+            order_ids = list(order_map.keys())
+            items = OrderItem.objects.filter(order_id__in=order_ids).select_related(
+                "produit"
+            )
+
+            g_stats = {}
+            for it in items:
+                o = order_map[it.order_id]
+                g_id = o.gros_id
+
+                if g_id not in g_stats:
+                    g_stats[g_id] = {
+                        "name": o.gros.nom if o.gros else "Inconnu",
+                        "total_val": 0.0,
+                        "regions": {"Ouest": 0.0, "Centre": 0.0, "Est": 0.0, "Sud": 0.0, "Vide": 0.0},
+                        "regions_bons": {"Ouest": set(), "Centre": set(), "Est": set(), "Sud": set(), "Vide": set()},
+                        "regions_unites": {"Ouest": 0, "Centre": 0, "Est": 0, "Sud": 0, "Vide": 0},
+                    }
+
+                val = float(it.qtt or 0) * float(it.produit.price or 0)
+                qtt = int(it.qtt or 0)
+
+                try:
+                    reg = (
+                        o.user.userprofile.region
+                        if getattr(o, "user", None) and hasattr(o.user, "userprofile")
+                        else None
+                    )
+                except Exception:
+                    reg = None
+
+                reg_key = reg if reg in ["Ouest", "Centre", "Est", "Sud"] else "Vide"
+                g_stats[g_id]["total_val"] += val
+                g_stats[g_id]["regions"][reg_key] += val
+                g_stats[g_id]["regions_bons"][reg_key].add(o.id)
+                g_stats[g_id]["regions_unites"][reg_key] += qtt
+
+            for s in g_stats.values():
+                s["regions_bons"] = {k: len(v) for k, v in s["regions_bons"].items()}
+
+            if region:
+                target_reg = (
+                    region if region in ["Ouest", "Centre", "Est", "Sud"] else "Vide"
+                )
+                sorted_g = sorted(
+                    [
+                        s
+                        for s in g_stats.values()
+                        if s["regions"].get(target_reg, 0) > 0
+                    ],
+                    key=lambda x: x["regions"].get(target_reg, 0),
+                    reverse=True,
+                )
+            else:
+                sorted_g = sorted(
+                    [s for s in g_stats.values() if s["total_val"] > 0],
+                    key=lambda x: x["total_val"],
+                    reverse=True,
+                )
+
+            return Response({"type": "ALL_GROSSISTES", "data": sorted_g})
+        # ─────────────────────────────────────────────────────────
+
+        if region:
+            orders_qs = orders_qs.filter(user__userprofile__region=region)
+
+        regional_stats = {
+            "Centre": {"bons": set(), "unites": 0, "valeur": 0.0},
+            "Est": {"bons": set(), "unites": 0, "valeur": 0.0},
+            "Ouest": {"bons": set(), "unites": 0, "valeur": 0.0},
+            "Sud": {"bons": set(), "unites": 0, "valeur": 0.0},
+        }
+
+        if entity_type == "supergros":
+            try:
+                sg = Client.objects.get(id=entity_id, supergro=True)
+                root_name = sg.name
+            except Client.DoesNotExist:
+                return Response({"error": "SuperGros introuvable."}, status=404)
+
+            orders = (
+                orders_qs.filter(super_gros_id=entity_id)
+                .filter(Q(gros__isnull=False) | Q(pharmacy__isnull=False))
+                .select_related("pharmacy", "gros", "user", "super_gros", "user__userprofile")
+            )
+
+            order_map = {o.id: o for o in orders}
+            order_ids = list(order_map.keys())
+            items = OrderItem.objects.filter(order_id__in=order_ids).select_related(
+                "produit"
+            )
+
+            order_stats = defaultdict(lambda: {"qty": 0, "val": 0.0})
+            order_items_map = defaultdict(list)
+            order_brute_map = defaultdict(float)
+
+            for it in items:
+                it.order = order_map[it.order_id]
+                qty = it.qtt or 0
+                val = float(qty) * float(it.produit.price or 0)
+
+                order_stats[it.order_id]["qty"] += qty
+                order_stats[it.order_id]["val"] += val
+                order_items_map[it.order_id].append(it)
+                order_brute_map[it.order_id] += float(it.line_total_ttc)
+
+            for o in orders:
+                qty = order_stats[o.id]["qty"]
+                val = order_stats[o.id]["val"]
+                val_brute = order_brute_map[o.id]
+
+                root_stats["bons"].add(o.id)
+                root_stats["unites"] += qty
+                root_stats["valeur"] += val
+                root_stats["valeur_brute"] += val_brute
+
+                try:
+                    reg = o.user.userprofile.region if getattr(o, "user", None) and hasattr(o.user, "userprofile") else None
+                except Exception:
+                    reg = None
+
+                if reg in regional_stats:
+                    regional_stats[reg]["bons"].add(o.id)
+                    regional_stats[reg]["unites"] += qty
+                    regional_stats[reg]["valeur"] += val
+
+                # Track User Ventes (SuperGros selling outwards)
+                uname = (
+                    getattr(o.user, "username", "Inconnu")
+                    if getattr(o, "user", None)
+                    else "Inconnu"
+                )
+                user_stats_ventes[uname]["bons"].add(o.id)
+                user_stats_ventes[uname]["unites"] += qty
+                user_stats_ventes[uname]["valeur"] += val_brute
+
+                if o.gros_id and o.gros:
+                    key = (o.gros_id, "Grossiste", getattr(o.gros, "nom", "Inconnu"))
+                elif o.pharmacy_id and o.pharmacy:
+                    key = (
+                        o.pharmacy_id,
+                        "Pharmacie",
+                        getattr(o.pharmacy, "nom", "Inconnu"),
+                    )
+                else:
+                    continue
+
+                clients_agg[key]["bons"].add(o.id)
+                clients_agg[key]["unites"] += qty
+                clients_agg[key]["valeur"] += val
+
+                o_prods = []
+                for it in order_items_map[o.id]:
+                    clients_agg[key]["produits"][it.produit.nom] += it.qtt or 0
+                    if it.qtt and it.qtt > 0:
+                        o_prods.append(f"{it.qtt} {it.produit.nom}")
+
+                clients_agg[key]["orders_details"].append(
+                    {
+                        "id": o.id,
+                        "date": o.added.strftime("%Y-%m-%d"),
+                        "user": uname,
+                        "valeur_brute": round(val_brute, 2),
+                        "produits_str": " , ".join(o_prods) if o_prods else "-",
+                    }
+                )
+
+        elif entity_type == "grossiste":
+            try:
+                gr = Medecin.objects.get(id=entity_id, specialite="Grossiste")
+                root_name = gr.nom
+            except Medecin.DoesNotExist:
+                return Response({"error": "Grossiste introuvable."}, status=404)
+
+            orders = orders_qs.filter(gros_id=entity_id).select_related(
+                "pharmacy", "super_gros", "user", "gros", "user__userprofile"
+            )
+
+            order_map = {o.id: o for o in orders}
+            order_ids = list(order_map.keys())
+            items = OrderItem.objects.filter(order_id__in=order_ids).select_related(
+                "produit"
+            )
+
+            order_stats = defaultdict(lambda: {"qty": 0, "val": 0.0})
+            order_items_map = defaultdict(list)
+            order_brute_map = defaultdict(float)
+            root_stats_in = {"bons": set(), "unites": 0, "valeur": 0.0}
+            root_stats_out = {"bons": set(), "unites": 0, "valeur": 0.0}
+
+            for it in items:
+                it.order = order_map[it.order_id]
+                qty = it.qtt or 0
+                val = float(qty) * float(it.produit.price or 0)
+
+                order_stats[it.order_id]["qty"] += qty
+                order_stats[it.order_id]["val"] += val
+                order_items_map[it.order_id].append(it)
+                order_brute_map[it.order_id] += float(it.line_total_ttc)
+
+            for o in orders:
+                qty = order_stats[o.id]["qty"]
+                val = order_stats[o.id]["val"]
+                val_brute = order_brute_map[o.id]
+
+                root_stats["bons"].add(o.id)
+                root_stats["unites"] += qty
+                root_stats["valeur"] += val
+
+                try:
+                    reg = o.user.userprofile.region if getattr(o, "user", None) and hasattr(o.user, "userprofile") else None
+                except Exception:
+                    reg = None
+
+                if reg in regional_stats:
+                    regional_stats[reg]["bons"].add(o.id)
+                    regional_stats[reg]["unites"] += qty
+                    regional_stats[reg]["valeur"] += val
+
+                uname = (
+                    getattr(o.user, "username", "Inconnu")
+                    if getattr(o, "user", None)
+                    else "Inconnu"
+                )
+
+                if o.super_gros_id and o.super_gros:
+                    # Track incoming stats
+                    root_stats_in["bons"].add(o.id)
+                    root_stats_in["unites"] += qty
+                    root_stats_in["valeur"] += val
+                    # User Achats (Grossiste buying from SuperGros)
+                    user_stats_achats[uname]["bons"].add(o.id)
+                    user_stats_achats[uname]["unites"] += qty
+                    user_stats_achats[uname]["valeur"] += val_brute
+
+                    key = (
+                        o.super_gros_id,
+                        "SuperGros",
+                        getattr(o.super_gros, "name", "Inconnu"),
+                    )
+                    fournisseurs_agg[key]["bons"].add(o.id)
+                    fournisseurs_agg[key]["unites"] += qty
+                    fournisseurs_agg[key]["valeur"] += val
+
+                    o_prods = []
+                    for it in order_items_map[o.id]:
+                        fournisseurs_agg[key]["produits"][it.produit.nom] += it.qtt or 0
+                        if it.qtt and it.qtt > 0:
+                            o_prods.append(f"{it.qtt} {it.produit.nom}")
+
+                    fournisseurs_agg[key]["orders_details"].append(
+                        {
+                            "id": o.id,
+                            "date": o.added.strftime("%Y-%m-%d"),
+                            "user": uname,
+                            "valeur_brute": round(val_brute, 2),
+                            "produits_str": " , ".join(o_prods) if o_prods else "-",
+                        }
+                    )
+
+                if o.pharmacy_id and o.pharmacy:
+                    # Track outgoing stats
+                    root_stats_out["bons"].add(o.id)
+                    root_stats_out["unites"] += qty
+                    root_stats_out["valeur"] += val
+                    # User Ventes (Grossiste selling to Pharmacie)
+                    user_stats_ventes[uname]["bons"].add(o.id)
+                    user_stats_ventes[uname]["unites"] += qty
+                    user_stats_ventes[uname]["valeur"] += val_brute
+
+                    key = (
+                        o.pharmacy_id,
+                        "Pharmacie",
+                        getattr(o.pharmacy, "nom", "Inconnu"),
+                    )
+                    clients_agg[key]["bons"].add(o.id)
+                    clients_agg[key]["unites"] += qty
+                    clients_agg[key]["valeur"] += val
+
+                    o_prods = []
+                    for it in order_items_map[o.id]:
+                        clients_agg[key]["produits"][it.produit.nom] += it.qtt or 0
+                        if it.qtt and it.qtt > 0:
+                            o_prods.append(f"{it.qtt} {it.produit.nom}")
+
+                    clients_agg[key]["orders_details"].append(
+                        {
+                            "id": o.id,
+                            "date": o.added.strftime("%Y-%m-%d"),
+                            "user": uname,
+                            "valeur_brute": round(val_brute, 2),
+                            "produits_str": " , ".join(o_prods) if o_prods else "-",
+                        }
+                    )
+
+        else:
+            return Response({"error": "Type invalide."}, status=400)
+
+        def format_nodes(agg_dict):
+            res = []
+            for (nid, ntype, nname), stats in agg_dict.items():
+                prod_list = [f"{q} {n}" for n, q in stats["produits"].items() if q > 0]
+                prod_str = " , ".join(prod_list) if prod_list else "-"
+                sorted_orders = sorted(
+                    stats["orders_details"], key=lambda x: x["id"], reverse=True
+                )
+                res.append(
+                    {
+                        "id": nid,
+                        "name": nname,
+                        "type": ntype,
+                        "stats": {
+                            "bons": len(stats["bons"]),
+                            "unites": stats["unites"],
+                            "valeur": round(stats["valeur"], 2),
+                            "produits_str": prod_str,
+                            "orders_details": sorted_orders,
+                        },
+                    }
+                )
+            res.sort(
+                key=lambda x: (
+                    (
+                        1
+                        if x["type"] == "SuperGros"
+                        else (2 if x["type"] == "Grossiste" else 3)
+                    ),
+                    -x["stats"]["valeur"],
+                )
+            )
+            return res
+
+        def format_user_stats(stats_dict):
+            res = [
+                {
+                    "username": u,
+                    "bons": len(s["bons"]),
+                    "unites": s["unites"],
+                    "valeur": round(s["valeur"], 2),
+                }
+                for u, s in stats_dict.items()
+            ]
+            res.sort(key=lambda x: x["valeur"], reverse=True)
+            return res
+
+        payload = {
+            "period": {
+                "min_date": d_min.strftime("%Y-%m-%d"),
+                "max_date": d_max.strftime("%Y-%m-%d"),
+            },
+            "root": {
+                "id": int(entity_id),
+                "name": root_name,
+                "type": "SuperGros" if entity_type == "supergros" else "Grossiste",
+                "stats": {
+                    "bons": len(root_stats["bons"]),
+                    "unites": root_stats["unites"],
+                    "valeur": round(root_stats["valeur"], 2),
+                },
+            },
+            "fournisseurs": format_nodes(fournisseurs_agg),
+            "clients": format_nodes(clients_agg),
+            "user_stats_ventes": format_user_stats(user_stats_ventes),
+            "user_stats_achats": format_user_stats(user_stats_achats),
+        }
+
+        payload["regional_stats"] = {
+            r: {
+                "bons": len(d["bons"]),
+                "unites": d["unites"],
+                "valeur": round(d["valeur"], 2)
+            } for r, d in regional_stats.items()
+        }
+
+        if entity_type == "grossiste":
+            payload["root"]["stats_in"] = {
+                "bons": len(root_stats_in["bons"]),
+                "unites": root_stats_in["unites"],
+                "valeur": round(root_stats_in["valeur"], 2),
+            }
+            payload["root"]["stats_out"] = {
+                "bons": len(root_stats_out["bons"]),
+                "unites": root_stats_out["unites"],
+                "valeur": round(root_stats_out["valeur"], 2),
+            }
+
+        # ── Real Sales Coverage (SuperGros + full calendar month only) ──
+        payload["real_sales_data"] = None
+        if entity_type == "supergros":
+            if (
+                d_min.day == 1
+                and d_min.year == d_max.year
+                and d_min.month == d_max.month
+            ):
+                last_day = _calendar.monthrange(d_min.year, d_min.month)[1]
+                if d_max.day == last_day:
+                    # Note: Added .order_by('-id') here just in case of multiple uploads!
+                    os_obj = (
+                        _OrderSource.objects.filter(
+                            source_id=entity_id,
+                            date__year=d_min.year,
+                            date__month=d_min.month,
+                        )
+                        .order_by("-id")
+                        .first()
+                    )
+
+                    if os_obj is not None:
+                        # 1. Grab the Client's Wilaya and Region
+                        ops = _ClientOrderProduct.objects.filter(
+                            order__source=os_obj
+                        ).select_related("produit", "order__client__wilaya__region")
+
+                        real_units = 0
+                        real_val = 0
+
+                        regions_data = {
+                            "Centre": {"units": 0, "val": 0, "coverage": 0},
+                            "Est": {"units": 0, "val": 0, "coverage": 0},
+                            "Ouest": {"units": 0, "val": 0, "coverage": 0},
+                            "Sud": {"units": 0, "val": 0, "coverage": 0},
+                        }
+
+                        for op in ops:
+                            qty = op.qtt or 0
+                            val = (
+                                float(qty) * float(op.produit.price or 0) * 1.19 * 1.15
+                            )
+
+                            real_units += qty
+                            real_val += val
+
+                            # 2. Extract Region from the Client's Wilaya!
+                            # 2. Extract Region directly from Wilaya Name (Bypassing DB Region Table)
+                            try:
+                                wilaya_obj = op.order.client.wilaya
+
+                                if wilaya_obj and wilaya_obj.nom:
+                                    # Force lowercase, remove dashes, and strip spaces
+                                    w_nom = (
+                                        str(wilaya_obj.nom)
+                                        .lower()
+                                        .replace("-", " ")
+                                        .strip()
+                                    )
+
+                                    # --- MASTER MAPPING DICTIONARY ---
+                                    centre = [
+                                        "alger",
+                                        "blida",
+                                        "boumerdes",
+                                        "tipaza",
+                                        "tizi ouzou",
+                                        "bejaia",
+                                        "bouira",
+                                        "medea",
+                                        "chlef",
+                                        "ain defla",
+                                    ]
+
+                                    est = [
+                                        "setif",
+                                        "constantine",
+                                        "batna",
+                                        "annaba",
+                                        "skikda",
+                                        "jijel",
+                                        "mila",
+                                        "oum el bouaghi",
+                                        "tebessa",
+                                        "guelma",
+                                        "khenchela",
+                                        "souk ahras",
+                                        "bordj bou arreridj",
+                                        "el tarf",
+                                        "msila",
+                                        "m'sila",
+                                    ]
+
+                                    ouest = [
+                                        "oran",
+                                        "tlemcen",
+                                        "sidi bel abbes",
+                                        "mostaganem",
+                                        "mascara",
+                                        "relizane",
+                                        "tiaret",
+                                        "saida",
+                                        "ain temouchent",
+                                        "tissemsilt",
+                                    ]
+
+                                    sud = [
+                                        "ouargla",
+                                        "biskra",
+                                        "el oued",
+                                        "ghardaia",
+                                        "laghouat",
+                                        "djelfa",
+                                        "bechar",
+                                        "adrar",
+                                        "tamanrasset",
+                                        "illizi",
+                                        "tindouf",
+                                        "el bayadh",
+                                        "naama",
+                                        "touggourt",
+                                        "el meniaa",
+                                        "ouled djellal",
+                                        "beni abbes",
+                                        "in salah",
+                                        "in guezzam",
+                                        "djanet",
+                                        "bordj badji mokhtar",
+                                    ]
+
+                                    # Match the wilaya to its region
+                                    if w_nom in centre:
+                                        reg = "Centre"
+                                    elif w_nom in est:
+                                        reg = "Est"
+                                    elif w_nom in ouest:
+                                        reg = "Ouest"
+                                    elif w_nom in sud:
+                                        reg = "Sud"
+                                    else:
+                                        reg = None
+                                else:
+                                    reg = None
+                            except Exception:
+                                reg = None
+                            if reg in regions_data:
+                                regions_data[reg]["units"] += qty
+                                regions_data[reg]["val"] += val
+
+                        # Calculate National Coverage
+                        total_order_brute = root_stats.get("valeur_brute", 0)
+                        coverage_pct = (
+                            round((total_order_brute / real_val) * 100, 1)
+                            if real_val > 0
+                            else 0
+                        )
+
+                        # 3. Calculate Regional Coverage
+                        for reg in regions_data:
+                            # regional_stats['valeur'] is HT. We must multiply by taxes to match the SuperGros TTC!
+                            lilium_reg_val_ht = regional_stats.get(reg, {}).get(
+                                "valeur", 0
+                            )
+                            lilium_reg_val_ttc = lilium_reg_val_ht * 1.19 * 1.15
+
+                            reg_real_val = regions_data[reg]["val"]
+
+                            if reg_real_val > 0:
+                                regions_data[reg]["coverage"] = round(
+                                    (lilium_reg_val_ttc / reg_real_val) * 100, 1
+                                )
+
+                        # Attach to payload
+                        payload["real_sales_data"] = {
+                            "real_sales_val": round(real_val, 2),
+                            "real_sales_units": real_units,
+                            "coverage_percentage": coverage_pct,
+                            "sg_name": root_name,
+                            "regions": regions_data,
+                        }
+        # ────────────────────────────────────────────────────────────────
+
+        return Response(payload)
+
+
+import json as _json
+from django.contrib.auth.decorators import login_required as _login_required
+
+
+@_login_required
+def transaction_tracker_front(request):
+    """
+    Renders the supply-chain transaction tracker organigram page.
+
+    Passes pre-loaded entity lists as JSON so the template avoids
+    an extra authenticated round-trip for the filter dropdowns.
+
+    Context variables:
+      super_gros_json  – JSON array of {id, name} for SuperGros entities
+      grossistes_json  – JSON array of {id, name} for Grossiste entities
+    """
+    from clients.models import Client
+    from medecins.models import Medecin
+
+    super_gros_list = list(
+        Client.objects.filter(supergro=True).values("id", "name").order_by("name")
+    )
+    grossiste_list = list(
+        Medecin.objects.filter(specialite="Grossiste")
+        .values("id", "nom")
+        .order_by("nom")
+    )
+    # Normalise field name to "name" for the template
+    grossiste_list = [{"id": g["id"], "name": g["nom"]} for g in grossiste_list]
+
+    return render(
+        request,
+        "orders/tracking.html",
+        {
+            "super_gros_json": _json.dumps(super_gros_list),
+            "grossistes_json": _json.dumps(grossiste_list),
+        },
+    )
+
+
+@_login_required
+def orders_stats_view(request):
+    import json as _json2
+    from clients.models import Client as _Client
+
+    try:
+        _up = request.user.userprofile
+        _spec = getattr(_up, "speciality_rolee", "")
+    except Exception:
+        _up = None
+        _spec = ""
+
+    _RESTRICTED = {"Commercial", "Medico_commercial"}
+    _FULL_ACCESS = {"CountryManager", "Admin"}
+
+    _ALLOWED_ROLES = {"Commercial", "Medico_commercial", "Superviseur_national", "Superviseur", "Superviseur_regional", "CountryManager"}
+
+    if request.user.is_superuser or _spec in _FULL_ACCESS:
+        users = UserProfile.objects.filter(is_human=True, user__is_active=True, speciality_rolee__in=_ALLOWED_ROLES).select_related("user").order_by("user__username")
+        is_restricted = False
+    elif _spec == "Superviseur_national" and _up is not None:
+        users = UserProfile.objects.filter(
+            Q(user=request.user) | Q(user__in=_up.usersunder.all()),
+            is_human=True, user__is_active=True, speciality_rolee__in=_ALLOWED_ROLES,
+        ).select_related("user").order_by("user__username")
+        is_restricted = False
+    elif _spec in _RESTRICTED and _up is not None:
+        users = UserProfile.objects.filter(user=request.user, is_human=True, user__is_active=True, speciality_rolee__in=_ALLOWED_ROLES).select_related("user")
+        is_restricted = True
+    else:
+        users = UserProfile.objects.filter(is_human=True, user__is_active=True, speciality_rolee__in=_ALLOWED_ROLES).select_related("user").order_by("user__username")
+        is_restricted = False
+
+    from medecins.models import Medecin as _Medecin
+    super_gros = list(_Client.objects.filter(supergro=True).values("id", "name").order_by("name"))
+    grossistes = [
+        {"id": g["id"], "name": g["nom"]}
+        for g in _Medecin.objects.filter(specialite="Grossiste").values("id", "nom").order_by("nom")
+    ]
+    users_list = [{"value": up.user.username, "label": up.user.username, "region": up.region or "", "role": up.speciality_rolee or ""} for up in users]
+    restricted_user = users_list[0] if is_restricted and users_list else None
+    return render(request, "orders/stats_dashboard.html", {
+        "users_json": _json2.dumps(users_list),
+        "restricted_user": _json2.dumps(restricted_user),
+        "super_gros_json": _json2.dumps(super_gros),
+        "grossistes_json": _json2.dumps(grossistes),
+        "is_restricted": is_restricted,
+    })

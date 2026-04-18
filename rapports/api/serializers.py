@@ -50,10 +50,50 @@ class RapportSerializer(serializers.ModelSerializer):
     comments=serializers.SerializerMethodField()
     is_updatable=serializers.SerializerMethodField()
     tasks=serializers.SerializerMethodField()
-    
+    sector_category=serializers.SerializerMethodField()
+
+    def get_sector_category(self, obj):
+        # Use prefetched visite_set if available (set by API view), else fallback to DB query
+        try:
+            visites = obj.visite_set.all()  # uses prefetch cache — no extra query
+            wilaya_ids = set(v.medecin.commune.wilaya_id for v in visites)
+        except Exception:
+            from rapports.models import Visite as VisiteModel
+            wilaya_ids = set(
+                VisiteModel.objects.filter(rapport=obj)
+                .values_list('medecin__commune__wilaya_id', flat=True)
+            )
+        if not wilaya_ids:
+            return None
+
+        sector_map = self.context.get('sector_map')
+        if sector_map is not None:
+            # Fast path: use the pre-loaded map (no extra DB queries)
+            categories = set()
+            for sector_wilaya_ids, category in sector_map.get(obj.user_id, []):
+                if sector_wilaya_ids & wilaya_ids:
+                    categories.add(category)
+        else:
+            # Fallback: query DB (used when serializer is called without context)
+            from accounts.models import UserSectorDetail
+            categories = set(
+                UserSectorDetail.objects.filter(
+                    user_profile__user=obj.user,
+                    wilayas__id__in=wilaya_ids
+                ).values_list('category', flat=True).distinct()
+            )
+
+        if 'DEP' in categories:
+            return 'DEP'
+        if 'SEMI' in categories:
+            return 'SEMI'
+        if 'IN' in categories:
+            return 'IN'
+        return None
+
     def get_comments(self, obj):
-        # Get all comments related to the given rapport
-        comments = Comment.objects.filter(rapport=obj)
+        # Use obj.comment_set.all() to take advantage of the prefetch_related cache in api.py
+        comments = obj.comment_set.all()
         
         # Serialize the comments
         serialized_comments = CommentSerializer(comments, many=True).data
@@ -67,15 +107,23 @@ class RapportSerializer(serializers.ModelSerializer):
     def get_is_updatable(self,obj):
         return obj.is_updatable()
 
-    def get_tasks(self,obj):
-        return [
-            {
-                "id": task.id,
-                "task":task.task,
-                "completed":task.completed
-            }
-            for task in PlanTask.objects.filter(plan__day=obj.added,plan__user=obj.user)
-        ]
+    def get_tasks(self, obj):
+        # Grab the pre-loaded task map from the context to avoid hitting the DB
+        task_map = self.context.get('task_map')
+        
+        if task_map is not None:
+            # Fast path: O(1) dictionary lookup
+            return task_map.get((obj.user_id, obj.added), [])
+        else:
+            # Fallback if context is missing
+            return [
+                {
+                    "id": task.id,
+                    "task": task.task,
+                    "completed": task.completed
+                }
+                for task in PlanTask.objects.filter(plan__day=obj.added, plan__user=obj.user)
+            ]
 
 
 

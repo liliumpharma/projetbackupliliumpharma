@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiche de Frais de Déplacement - {{ month_display }}</title>
+    <style>
+        /* ── Configuration de la page pour l'impression ── */
+        @page {
+            size: A4;
+            margin: 15mm 15mm;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 11pt;
+            color: #333;
+            background-color: #fff;
+            margin: 0;
+            padding: 0;
+            line-height: 1.4;
+        }
+
+        .document {
+            max-width: 210mm; /* A4 width */
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+        }
+
+        /* ── En-tête (Header) ── */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #1a5c2e; /* Vert Lilium */
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .logo-box {
+            width: 150px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .company-info {
+            text-align: right;
+        }
+
+        .company-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1a5c2e;
+            margin: 0;
+        }
+
+        .document-title {
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 25px;
+            color: #222;
+        }
+
+        /* ── Informations de l'employé ── */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+            background-color: #f4f8f4;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #d4e3d4;
+        }
+
+        .info-item {
+            display: flex;
+        }
+
+        .info-label {
+            font-weight: bold;
+            width: 140px;
+            color: #1a5c2e;
+        }
+
+        .info-value {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        /* ── Table des frais ── */
+        .expense-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .expense-table th, .expense-table td {
+            border: 1px solid #ccc;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .expense-table th {
+            background-color: #1a5c2e;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .expense-table td {
+            vertical-align: middle;
+        }
+
+        .expense-table td.text-center { text-align: center; }
+        .expense-table td.text-right { text-align: right; font-weight: bold; }
+
+        .type-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .type-semi { background: #ffc107; color: #000; }
+        .type-dep  { background: #dc3545; color: #fff; }
+
+        /* ── Section Total ── */
+        .total-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 40px;
+        }
+
+        .total-box {
+            border: 2px solid #1a5c2e;
+            padding: 10px 20px;
+            border-radius: 4px;
+            background-color: #f4f8f4;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .total-label {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #1a5c2e;
+        }
+
+        .total-amount {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #222;
+        }
+
+        /* ── Signatures ── */
+        .signatures-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 50px;
+            page-break-inside: avoid;
+        }
+
+        .signature-box {
+            border-top: 1px solid #333;
+            padding-top: 10px;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        .sig-role {
+            font-weight: bold;
+            color: #1a5c2e;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+
+        .sig-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .sig-space {
+            height: 60px; /* Espace pour signer au stylo */
+        }
+
+        /* ── Icône de validation (Checkmark) ── */
+        .action-icon-container {
+            height: 35px; /* Garde l'espace pour ne pas faire sauter le texte */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .btn-check {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            display: inline-flex;
+            transition: transform 0.2s;
+        }
+
+        .btn-check svg {
+            width: 32px;
+            height: 32px;
+            fill: #dee2e6; /* Gris clair par défaut (indique qu'on peut cliquer) */
+            transition: fill 0.2s;
+        }
+
+        .btn-check:hover:not(.validated) svg {
+            fill: #28a745; /* Devient vert au survol */
+            transform: scale(1.1);
+        }
+
+        .btn-check.validated svg {
+            fill: #28a745; /* Reste vert et fixe quand c'est validé */
+        }
+
+        .btn-check.validated {
+            cursor: default; /* Enlève la petite main si c'est déjà validé */
+        }
+
+        /* ── Utilitaires d'impression ── */
+        @media print {
+            body { background-color: white; }
+            .document { padding: 0; margin: 0; width: 100%; box-shadow: none; }
+            /* À l'impression, on cache le bouton s'il n'est pas validé, mais on garde le check vert s'il l'est ! */
+            .btn-check:not(.validated) { display: none; } 
+        }
+    </style>
+</head>
+<body>
+
+    <div class="document">
+
+        <div class="header">
+            <div class="logo-box">
+                <img src="/media/companys/logo22.png" alt="Lilium Pharma">
+            </div>
+            <div class="company-info">
+                <h1 class="company-name">LILIUM PHARMA</h1>
+                <div>Département Finance</div>
+            </div>
+        </div>
+
+        <div class="document-title">
+            Fiche de Remboursement des Frais de Déplacement
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Délégué(e) :</div>
+                <div class="info-value">{{ commercial_user.get_full_name|default:commercial_user.username }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Mois / Année :</div>
+                <div class="info-value">{{ month_display }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Région :</div>
+                <div class="info-value">{{ commercial_user.userprofile.region }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Date d'édition :</div>
+                <div class="info-value">{% now "d/m/Y" %}</div>
+            </div>
+        </div>
+
+        <table class="expense-table">
+            <thead>
+                <tr>
+                    <th style="width: 12%;">Date</th>
+                    <th style="width: 20%;">Wilaya / Commune</th>
+                    <th style="width: 15%;">Type</th>
+                    <th style="width: 28%;">Détails (Rapports validés)</th>
+                    <th style="width: 25%;">Montant Validé (DA)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for day in validated_days %}
+                <tr>
+                    <td class="text-center">{{ day.date }}</td>
+                    <td>{{ day.wilaya_nom }}<br><small style="color:#666;">{{ day.communes_list }}</small></td>
+                    <td class="text-center">
+                        {% if day.type == 'SEMI' %}
+                            <span class="type-badge type-semi">SEMI</span>
+                        {% else %}
+                            <span class="type-badge type-dep">DEP</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <small>{{ day.medical_count }} Médical, {{ day.commercial_count }} Commercial</small>
+                        {% if day.order_count %}
+                            <br><small style="color:#28a745; font-weight:bold;">{{ day.order_count }} commande{% if day.order_count > 1 %}s{% endif %} ({{ day.order_value|floatformat:2 }} DA)</small>
+                        {% endif %}
+                    </td>
+                    <td class="text-right">
+                        <span style="color:#1a5c2e; font-weight:bold;">
+                            {{ day.prix_valide|floatformat:2 }} DA
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="total-section">
+            <div class="total-box">
+                <div class="total-label">Total Net à Rembourser :</div>
+                <div class="total-amount">{{ total_valide|floatformat:2|default:"10 500,00" }} DA</div>
+            </div>
+        </div>
+
+        <div class="signatures-container">
+            <div class="signature-box">
+                <div class="action-icon-container">
+                    <button class="btn-check validated">
+                        <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M16.7 5.3a1 1 0 0 0-1.4 0L8 12.6 4.7 9.3a1 1 0 0 0-1.4 1.4l4 4a1 1 0 0 0 1.4 0l8-8a1 1 0 0 0 0-1.4z"/></svg>
+                    </button>
+                </div>
+                <div class="sig-role">Validé par le Superviseur</div>
+                <div class="sig-name">{{ supervisor_name|default:"Superviseur" }}</div>
+                <div class="sig-space"></div>
+            </div>
+
+            <div class="signature-box">
+                <div class="action-icon-container">
+                    <button class="btn-check validated">
+                        <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M16.7 5.3a1 1 0 0 0-1.4 0L8 12.6 4.7 9.3a1 1 0 0 0-1.4 1.4l4 4a1 1 0 0 0 1.4 0l8-8a1 1 0 0 0 0-1.4z"/></svg>
+                    </button>
+                </div>
+                <div class="sig-role">Approuvé par la Direction</div>
+                <div class="sig-name">Merieme Rimouch</div>
+                <div class="sig-space"></div>
+            </div>
+
+            <div class="signature-box">
+                <div class="action-icon-container"></div>
+                <div class="sig-role">Signature DG</div>
+                <div class="sig-name">Directeur Général</div>
+                <div class="sig-space"></div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

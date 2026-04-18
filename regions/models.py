@@ -1,6 +1,27 @@
 from django.db import models
 
 
+REGION_CHOICES = [
+    ("Centre", "Centre"),
+    ("Sud", "Sud"),
+    ("Est", "Est"),
+    ("Ouest", "Ouest"),
+    ("Vide", "Vide"),
+]
+
+
+class Region(models.Model):
+    name = models.CharField(max_length=10, choices=REGION_CHOICES, unique=True)
+
+    class Meta:
+        db_table = "regions_region"
+        verbose_name = "Région"
+        verbose_name_plural = "Régions"
+
+    def __str__(self):
+        return self.name
+
+
 MEDICAL = [
     "Généraliste",
     "Diabetologue",
@@ -43,6 +64,13 @@ class Wilaya(models.Model):
     nom = models.CharField(max_length=255)
     code_name = models.CharField(max_length=10, null=True, blank=True)
     pays = models.ForeignKey(Pays, on_delete=models.CASCADE)
+    region = models.ForeignKey(
+        Region,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="wilayas",
+    )
 
     def __str__(self):
         return self.nom

@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Cibles - Desktop</title>
+    <style>
+        :root {
+            --bg-color: #111;
+            --card-bg: #1a1a1a;
+            --text-main: #fff;
+            --text-muted: #aaa;
+            --accent: #007bff;
+            --accent-hover: #0056b3;
+            --border-color: #333;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 30px;
+        }
+
+        h1 { text-align: center; margin-bottom: 30px; }
+
+        /* --- FILTERS (MODERN CHIPS) --- */
+        .filter-section {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            
+            /* Not sticky — scrolls with the page */
+        }
+
+        .filter-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Each label+control pair stays glued together and wraps as one unit */
+        .filter-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: nowrap;   /* label & select NEVER split across lines */
+            flex-shrink: 0;      /* the pair shrinks as a unit, not individually */
+        }
+
+        .filter-label {
+            font-weight: bold;
+            color: var(--text-muted);
+            white-space: nowrap; /* label text itself never wraps */
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 768px) {
+            body { padding: 15px; }
+
+            .filter-section { padding: 15px; }
+
+            .filter-row { gap: 8px; }
+
+            .chip { padding: 6px 12px; font-size: 13px; }
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 20px; }
+
+            .filter-section {
+                padding: 12px;
+                border-radius: 8px;
+            }
+
+            .month-row {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: flex-start !important;
+            }
+        }
+
+        .chip {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .chip:hover { border-color: var(--accent); }
+        .chip.active {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            color: white;
+            font-weight: bold;
+        }
+
+        /* --- THE CSS GRID (TABLE-LIKE CARDS) --- */
+        /* This forces the layout to have 6 distinct columns */
+        /* --- THE CSS GRID (TABLE-LIKE CARDS) --- */
+        .grid-layout {
+            display: grid;
+            /* Now 8 columns, slightly adjusted to fit everything cleanly */
+            grid-template-columns: 2fr 1.2fr 1fr 1.2fr 1.2fr 0.8fr 0.9fr 0.9fr;
+            gap: 15px;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .grid-header {
+            font-weight: bold;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 12px;
+            margin-bottom: 15px;
+            position: sticky;
+            top: var(--grid-header-top, 0px); /* Dynamically set by JS */
+            background-color: var(--bg-color);
+            padding-top: 10px;
+            padding-bottom: 10px;
+            z-index: 90;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* --- SORTABLE COLUMN HEADERS --- */
+        .sort-col {
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            transition: color 0.2s ease;
+        }
+        .sort-col:hover {
+            color: var(--accent);
+        }
+        .sort-col.sort-active {
+            color: var(--accent);
+        }
+        .sort-arrow {
+            display: inline-block;
+            margin-left: 4px;
+            font-size: 11px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            vertical-align: middle;
+        }
+        .sort-col.sort-active .sort-arrow {
+            opacity: 1;
+        }
+
+        .user-card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .user-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.2);
+        }
+
+        .meriem-card {
+            border: 1px solid #ffd700; /* Gold border for the Boss */
+            background: linear-gradient(145deg, #1a1a1a, #2a2510);
+            margin-bottom: 30px;
+        }
+
+        .value-target { font-weight: bold; }
+        .value-achieved { color: #28a745; font-weight: bold; } /* Green */
+        .badge-role {
+            background-color: #333;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        #loading-spinner {
+            text-align: center;
+            padding: 50px;
+            color: var(--accent);
+            font-style: italic;
+        }
+
+        /* --- FILTER DROPDOWNS --- */
+        .filter-select {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 7px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            min-width: 130px;
+            appearance: auto;
+        }
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .filter-select option {
+            background-color: #1a1a1a;
+            color: var(--text-main);
+        }
+
+        /* --- MONTH CHIP ROW --- */
+        .month-row {
+            justify-content: center;
+            margin-bottom: 0;
+        }
+
+        /* --- BILINGUAL GRID HEADERS --- */
+        .header-ar {
+            display: block;
+            font-size: 10px;
+            color: #666;
+            font-weight: normal;
+            direction: rtl;
+            margin-top: 3px;
+            letter-spacing: 0;
+        }
+
+        /* --- STICKY MERIEM CONTAINER --- */
+        #meriem-container {
+            position: sticky;
+            top: var(--meriem-top, 40px);
+            z-index: 80;
+            background-color: var(--bg-color);
+            padding-bottom: 4px;
+        }
+
+        /* --- SECTION / SUBGROUP WRAPPERS --- */
+        .subgroup-wrapper { margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <form id="detailForm" action="/clients/target_user/" method="post" target="_blank" style="display: none;">
+        {% csrf_token %}
+        <input type="hidden" name="users" id="form_user_id" value="">
+        <input type="hidden" name="years" id="form_year" value="">
+        <div id="form_months_container"></div>
+    </form>
+
+    <h1>Dashboard des vente/target</h1>
+
+    <div class="filter-section">
+        <!-- Top Row: all dropdown filters -->
+        <div class="filter-row">
+            <div class="filter-group">
+                <div class="filter-label">Année</div>
+                <select id="year-select" class="filter-select"></select>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-label">Utilisateur</div>
+                <select id="filter-user" class="filter-select">
+                    <option value="">Tous</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-label">Famille</div>
+                <select id="filter-family" class="filter-select">
+                    <option value="">Tous</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-label">Région</div>
+                <select id="filter-region" class="filter-select">
+                    <option value="">Tous</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-label">Rôle</div>
+                <select id="filter-role" class="filter-select">
+                    <option value="">Tous</option>
+                    <option value="Superviseur_national">Superviseur national</option>
+                    <option value="Superviseur_regional">Superviseur régional</option>
+                    <option value="Superviseur">Superviseur</option>
+                    <option value="Medico_commercial">Médico-commercial</option>
+                    <option value="Commercial">Commercial</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-label">Performance</div>
+                <select id="filter-performance" class="filter-select">
+                    <option value="">Tous</option>
+                    <option value="gte100">&ge; 100% (Objectif Atteint)</option>
+                    <option value="lt100">&lt; 100% (Objectif Non Atteint)</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <div class="filter-label">Produit</div>
+                <select id="filter-produit" class="filter-select">
+                    <option value="">Tous les produits</option>
+                    {% for p in produits %}
+                    <option value="{{ p.id }}">{{ p.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Bottom Row: month chips, centred -->
+        <div class="filter-row month-row">
+            <div class="filter-label" style="width:auto;">Mois</div>
+            <div class="chip month-chip" data-val="1">Jan</div>
+            <div class="chip month-chip" data-val="2">Fév</div>
+            <div class="chip month-chip" data-val="3">Mar</div>
+            <div class="chip month-chip" data-val="4">Avr</div>
+            <div class="chip month-chip" data-val="5">Mai</div>
+            <div class="chip month-chip" data-val="6">Juin</div>
+            <div class="chip month-chip" data-val="7">Juil</div>
+            <div class="chip month-chip" data-val="8">Aoû</div>
+            <div class="chip month-chip" data-val="9">Sep</div>
+            <div class="chip month-chip" data-val="10">Oct</div>
+            <div class="chip month-chip" data-val="11">Nov</div>
+            <div class="chip month-chip" data-val="12">Déc</div>
+        </div>
+
+        <!-- Action Row: navigation button -->
+        <div class="filter-row" style="justify-content:flex-end; margin-bottom:0; margin-top:10px;">
+            <button id="btn-visualisation" style="
+                background: linear-gradient(135deg, #007bff, #0056b3);
+                color: #fff;
+                border: none;
+                padding: 9px 20px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: opacity 0.2s ease, transform 0.15s ease;
+                letter-spacing: 0.3px;
+            "
+            onmouseover="this.style.opacity='0.85';this.style.transform='translateY(-1px)';"
+            onmouseout="this.style.opacity='1';this.style.transform='translateY(0)';"
+            >📊 Visualisation des Ventes</button>
+        </div>
+    </div>
+
+    <div class="grid-layout grid-header">
+        <div>Utilisateur<span class="header-ar">المستخدم</span></div>
+        <div>Rôle<span class="header-ar">الدور</span></div>
+        <div>Région<span class="header-ar">المنطقة</span></div>
+        <div class="sort-col" data-sort="target_total" onclick="sortHeaderClick(this)" id="sort-target_total">OBJECTIF<span class="sort-arrow">↓</span><span class="header-ar">الهدف (DA)</span></div>
+        <div class="sort-col" data-sort="achieved_total" onclick="sortHeaderClick(this)" id="sort-achieved_total">RÉALISÉ<span class="sort-arrow">↓</span><span class="header-ar">المحقق (DA)</span></div>
+        <div class="sort-col" data-sort="personal_percentage" onclick="sortHeaderClick(this)" id="sort-personal_percentage">ATTEINT<span class="sort-arrow">↓</span><span class="header-ar">الإنجاز</span></div>
+        <div class="sort-col" data-sort="global_achieved_percentage" onclick="sortHeaderClick(this)" id="sort-global_achieved_percentage">PART DU CA<span class="sort-arrow">↓</span><span class="header-ar">حصة المبيعات</span></div>
+        <div class="sort-col" data-sort="global_percentage" onclick="sortHeaderClick(this)" id="sort-global_percentage">% OBJ.GLOBAL<span class="sort-arrow">↓</span><span class="header-ar">الهدف العام</span></div>
+    </div>
+
+    <div id="loading-spinner">Chargement des données...</div>
+
+    <div id="no-selection-msg" style="display: none; text-align: center; padding: 60px 20px; color: var(--text-muted); font-style: italic; font-size: 16px;">
+        Sélectionnez au moins un mois pour afficher le dashboard.
+    </div>
+
+    <div id="dashboard-content" style="display: none;">
+
+        <!-- CountryManager — always visible, sticky below grid-header -->
+        <div id="meriem-container"></div>
+
+        <!-- ═══ SUPERVISEURS section ═══ -->
+        <div id="section-superviseurs">
+            <h3 style="color: var(--text-muted); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; margin-top: 40px;">Superviseurs</h3>
+
+            <div id="subgroup-sup-med" class="subgroup-wrapper">
+                <div class="grid-layout" style="margin-bottom: 5px; font-size: 13px;">
+                    <div style="grid-column: 1 / 4;"><h4 style="color: var(--text-muted); padding-left: 10px; border-left: 3px solid #17a2b8; margin: 0;">Médical</h4></div>
+                    <div class="value-target" id="obj-sup-med">0 DA</div>
+                    <div class="value-achieved" id="rea-sup-med">0 DA</div>
+                    <div><strong id="att-sup-med">0%</strong></div>
+                    <div><strong style="color: var(--accent);" id="pca-sup-med">0%</strong></div>
+                    <div><strong style="color: #17a2b8;" id="glo-sup-med">0%</strong></div>
+                </div>
+                <div id="supervisors-medical-container"></div>
+            </div>
+
+            <div id="subgroup-sup-com" class="subgroup-wrapper">
+                <div class="grid-layout" style="margin-bottom: 5px; font-size: 13px;">
+                    <div style="grid-column: 1 / 4;"><h4 style="color: var(--text-muted); padding-left: 10px; border-left: 3px solid #28a745; margin: 0;">Commercial</h4></div>
+                    <div class="value-target" id="obj-sup-com">0 DA</div>
+                    <div class="value-achieved" id="rea-sup-com">0 DA</div>
+                    <div><strong id="att-sup-com">0%</strong></div>
+                    <div><strong style="color: var(--accent);" id="pca-sup-com">0%</strong></div>
+                    <div><strong style="color: #17a2b8;" id="glo-sup-com">0%</strong></div>
+                </div>
+                <div id="supervisors-commercial-container"></div>
+            </div>
+        </div>
+
+        <!-- ═══ DÉLÉGUÉS section ═══ -->
+        <div id="section-delegues">
+            <h3 style="color: var(--text-muted); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; margin-top: 40px;">Délégués</h3>
+
+            <div id="subgroup-del-med" class="subgroup-wrapper">
+                <div class="grid-layout" style="margin-bottom: 5px; font-size: 13px;">
+                    <div style="grid-column: 1 / 4;"><h4 style="color: var(--text-muted); padding-left: 10px; border-left: 3px solid #17a2b8; margin: 0;">Médical</h4></div>
+                    <div class="value-target" id="obj-del-med">0 DA</div>
+                    <div class="value-achieved" id="rea-del-med">0 DA</div>
+                    <div><strong id="att-del-med">0%</strong></div>
+                    <div><strong style="color: var(--accent);" id="pca-del-med">0%</strong></div>
+                    <div><strong style="color: #17a2b8;" id="glo-del-med">0%</strong></div>
+                </div>
+                <div id="commercials-medical-container"></div>
+            </div>
+
+            <div id="subgroup-del-com" class="subgroup-wrapper">
+                <div class="grid-layout" style="margin-bottom: 5px; font-size: 13px;">
+                    <div style="grid-column: 1 / 4;"><h4 style="color: var(--text-muted); padding-left: 10px; border-left: 3px solid #28a745; margin: 0;">Commercial</h4></div>
+                    <div class="value-target" id="obj-del-com">0 DA</div>
+                    <div class="value-achieved" id="rea-del-com">0 DA</div>
+                    <div><strong id="att-del-com">0%</strong></div>
+                    <div><strong style="color: var(--accent);" id="pca-del-com">0%</strong></div>
+                    <div><strong style="color: #17a2b8;" id="glo-del-com">0%</strong></div>
+                </div>
+                <div id="commercials-commercial-container"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ── Global state ────────────────────────────────────────────────────────
+        const _now        = new Date();
+        const _currentYear = _now.getFullYear().toString();
+
+        let selectedYear   = _currentYear;
+        let selectedMonths = [];   // empty → showEmptyState() on load
+        let allUsersData   = [];   // cache of the last successful API payload
+        let activeSortKey  = null; // currently active column sort key
+
+        // ── Build year <select> dynamically ─────────────────────────────────────
+        (function buildYearSelect() {
+            const sel   = document.getElementById('year-select');
+            const start = 2024;
+            const end   = _now.getFullYear() + 1;
+            for (let y = end; y >= start; y--) {
+                const opt = document.createElement('option');
+                opt.value       = y;
+                opt.textContent = y;
+                if (y.toString() === _currentYear) opt.selected = true;
+                sel.appendChild(opt);
+            }
+        })();
+
+        // ── Year select listener ─────────────────────────────────────────────────
+        document.getElementById('year-select').addEventListener('change', function () {
+            selectedYear = this.value;
+            fetchDashboardData();
+            updateStickyOffset();
+        });
+
+        // ── Month chip listeners ─────────────────────────────────────────────────
+        document.querySelectorAll('.month-chip').forEach(chip => {
+            chip.addEventListener('click', function () {
+                this.classList.toggle('active');
+                selectedMonths = Array.from(
+                    document.querySelectorAll('.month-chip.active')
+                ).map(c => c.dataset.val);
+                fetchDashboardData();
+                updateStickyOffset();
+            });
+        });
+
+        // ── Secondary filter listeners (no new API call – just re-filter) ────────
+        // filter-produit is now local too: it reads product_breakdown from allUsersData
+        ['filter-user', 'filter-family', 'filter-region', 'filter-role', 'filter-performance', 'filter-produit']
+            .forEach(id => {
+                document.getElementById(id).addEventListener('change', applyFilters);
+            });
+
+        // ── Helpers ─────────────────────────────────────────────────────────────
+        function formatDA(number) {
+            return new Intl.NumberFormat('fr-DZ', {
+                style: 'decimal',
+                minimumFractionDigits: 2
+            }).format(number) + ' DA';
+        }
+
+        function showEmptyState() {
+            document.getElementById('loading-spinner').style.display   = 'none';
+            document.getElementById('dashboard-content').style.display  = 'none';
+            document.getElementById('no-selection-msg').style.display   = 'block';
+        }
+
+        function hideEmptyState() {
+            document.getElementById('no-selection-msg').style.display = 'none';
+        }
+
+        // ── Populate dynamic dropdowns from fetched payload ──────────────────────
+        function populateDynamicFilters(users) {
+            const uniqueVals = (key) => [...new Set(
+                users.map(u => u[key]).filter(v => v != null && v !== '')
+            )].sort();
+
+            const rebuild = (selectId, values) => {
+                const sel = document.getElementById(selectId);
+                const current = sel.value;
+                // keep only the "Tous" sentinel (first option)
+                while (sel.options.length > 1) sel.remove(1);
+                values.forEach(v => {
+                    const opt = new Option(v, v);
+                    sel.add(opt);
+                });
+                // restore previous selection if still valid
+                if (values.includes(current)) sel.value = current;
+            };
+
+            rebuild('filter-user',   users.map(u => u.name).filter(Boolean).sort()
+                                          .filter((v, i, a) => a.indexOf(v) === i));
+            rebuild('filter-family', uniqueVals('family'));
+            rebuild('filter-region', uniqueVals('region'));
+        }
+
+        // ── Apply all secondary filters against cached allUsersData ─────────────
+        function applyFilters() {
+            if (allUsersData.length === 0) return;
+
+            const fUser    = document.getElementById('filter-user').value;
+            const fFamily  = document.getElementById('filter-family').value;
+            const fRegion  = document.getElementById('filter-region').value;
+            const fRole    = document.getElementById('filter-role').value;
+            const fPerf    = document.getElementById('filter-performance').value;
+            const fProduit = document.getElementById('filter-produit').value;
+
+            const filtered = allUsersData
+                // ── Step 1: inclusion filter ──────────────────────────────────
+                .filter(u => {
+                    if (u.role === 'CountryManager') return true; // always visible
+
+                    if (fUser   && u.name   !== fUser)   return false;
+                    if (fFamily && u.family !== fFamily) return false;
+                    if (fRegion && u.region !== fRegion) return false;
+                    if (fRole   && u.role   !== fRole)   return false;
+                    if (fPerf === 'gte100' && parseFloat(u.personal_percentage) < 100)  return false;
+                    if (fPerf === 'lt100'  && parseFloat(u.personal_percentage) >= 100) return false;
+
+                    // Product filter: exclude users who have no entry for this product
+                    if (fProduit) {
+                        const entry = (u.product_breakdown || []).find(
+                            p => String(p.product_id) === fProduit
+                        );
+                        if (!entry) return false;
+                    }
+                    return true;
+                })
+                // ── Step 2: value substitution for product filter ─────────────
+                .map(u => {
+                    // No product selected → original totals for everyone
+                    if (!fProduit) return u;
+
+                    const entry = (u.product_breakdown || []).find(
+                        p => String(p.product_id) === fProduit
+                    );
+                    if (!entry) return u;
+
+                    const newTarget   = entry.target_value;
+                    const newAchieved = entry.achieved_value;
+                    const newPerc     = newTarget > 0
+                        ? Math.round(newAchieved / newTarget * 10000) / 100
+                        : 0;
+
+                    // Shallow-clone so allUsersData originals are never mutated
+                    return Object.assign({}, u, {
+                        target_total:        newTarget,
+                        achieved_total:      newAchieved,
+                        personal_percentage: newPerc,
+                    });
+                });
+
+            renderCards(filtered, selectedMonths.length);
+        }
+
+        // ── Fetch ───────────────────────────────────────────────────────────────
+        async function fetchDashboardData() {
+            // No months selected → show the placeholder, skip the API call entirely
+            if (selectedMonths.length === 0) {
+                allUsersData = [];
+                showEmptyState();
+                return;
+            }
+
+            hideEmptyState();
+            document.getElementById('loading-spinner').style.display  = 'block';
+            document.getElementById('dashboard-content').style.display = 'none';
+
+            let url = `/clients/api/dashboard-data/?year=${selectedYear}`;
+            selectedMonths.forEach(m => { url += `&months[]=${m}`; });
+
+            try {
+                const response = await fetch(url);
+                const data     = await response.json();
+                allUsersData   = data.users;
+                populateDynamicFilters(allUsersData);
+                applyFilters();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('loading-spinner').innerHTML =
+                    "<span style='color:red;'>Erreur de chargement. Veuillez rafraîchir la page.</span>";
+            }
+        }
+
+        // ── Sort header click handler ────────────────────────────────────────────
+        function sortHeaderClick(el) {
+            const key = el.dataset.sort;
+            // Toggle off if already active, otherwise set new key
+            if (activeSortKey === key) {
+                activeSortKey = null;
+            } else {
+                activeSortKey = key;
+            }
+            // Update visual state on all sort columns
+            document.querySelectorAll('.sort-col').forEach(col => {
+                col.classList.toggle('sort-active', col.dataset.sort === activeSortKey);
+            });
+            applyFilters();
+        }
+
+        function renderCards(users, monthCount) {
+            const meriemContainer = document.getElementById('meriem-container');
+            const supMedContainer = document.getElementById('supervisors-medical-container');
+            const supComContainer = document.getElementById('supervisors-commercial-container');
+            const delMedContainer = document.getElementById('commercials-medical-container');
+            const delComContainer = document.getElementById('commercials-commercial-container');
+
+            meriemContainer.innerHTML = '';
+            supMedContainer.innerHTML = '';
+            supComContainer.innerHTML = '';
+            delMedContainer.innerHTML = '';
+            delComContainer.innerHTML = '';
+
+            // 1. Math Trackers (obj, rea, pca, glo)
+            let stats = {
+                supMed: { obj: 0, rea: 0, pca: 0, glo: 0 },
+                supCom: { obj: 0, rea: 0, pca: 0, glo: 0 },
+                delMed: { obj: 0, rea: 0, pca: 0, glo: 0 },
+                delCom: { obj: 0, rea: 0, pca: 0, glo: 0 }
+            };
+
+            const pctLabel = monthCount > 1 ? '% Moy.' : '%';
+
+            // Helper to build a single card's HTML
+            const buildCardHTML = (user, isMeriem) => `
+                <div class="user-card grid-layout ${isMeriem ? 'meriem-card' : ''}"
+                     onclick="goToDetail(${user.id})">
+                    <div>
+                        <strong>${user.name}</strong><br>
+                        <span style="font-size:11px;color:var(--text-muted);">${user.family || ''}</span>
+                    </div>
+                    <div><span class="badge-role">${user.role.replace('_', ' ')}</span></div>
+                    <div style="font-size:13px;">${user.region}</div>
+                    <div class="value-target">${formatDA(user.target_total)}</div>
+                    <div class="value-achieved">${formatDA(user.achieved_total)}</div>
+                    <div>
+                        <strong style="color:${user.personal_percentage >= 100 ? '#28a745' : '#ffc107'};">
+                            ${user.personal_percentage}${pctLabel}
+                        </strong>
+                    </div>
+                    <div>
+                        <strong style="color: var(--accent);">
+                            ${isMeriem ? '100%' : user.global_achieved_percentage + '%'}
+                        </strong>
+                    </div>
+                    <div>
+                        <strong style="color: #17a2b8;">
+                            ${user.global_percentage}%
+                        </strong>
+                    </div>
+                </div>
+            `;
+
+            // Helper to sort an array of users by activeSortKey (high→low)
+            const sortGroup = (arr) => {
+                if (!activeSortKey) return arr;
+                return [...arr].sort((a, b) =>
+                    parseFloat(b[activeSortKey]) - parseFloat(a[activeSortKey])
+                );
+            };
+
+            // 2. Bucket users into their subgroup arrays
+            const buckets = { meriem: [], supMed: [], supCom: [], delMed: [], delCom: [] };
+
+            users.forEach(user => {
+                const isMeriem = user.role === 'CountryManager';
+                const isSup    = user.role.includes('Superviseur');
+
+                if (isMeriem) {
+                    buckets.meriem.push(user);
+                } else if (isSup) {
+                    if (user.work_as_commercial) buckets.supCom.push(user);
+                    else                         buckets.supMed.push(user);
+                } else {
+                    if (user.role === 'Commercial') buckets.delCom.push(user);
+                    else                            buckets.delMed.push(user);
+                }
+            });
+
+            // 3. Sort each non-meriem bucket, then render + accumulate
+            const renderBucket = (arr, container, groupStats) => {
+                sortGroup(arr).forEach(user => {
+                    container.innerHTML += buildCardHTML(user, false);
+                    groupStats.obj += parseFloat(user.target_total);
+                    groupStats.rea += parseFloat(user.achieved_total);
+                    groupStats.pca += parseFloat(user.global_achieved_percentage);
+                    groupStats.glo += parseFloat(user.global_percentage);
+                });
+            };
+
+            buckets.meriem.forEach(user => {
+                meriemContainer.innerHTML += buildCardHTML(user, true);
+            });
+            renderBucket(buckets.supMed, supMedContainer, stats.supMed);
+            renderBucket(buckets.supCom, supComContainer, stats.supCom);
+            renderBucket(buckets.delMed, delMedContainer, stats.delMed);
+            renderBucket(buckets.delCom, delComContainer, stats.delCom);
+
+            // 3. Helper to inject stats into the DOM
+            const updateHeaderStats = (prefix, data) => {
+                // Calculate weighted % Atteint for the group
+                const att = data.obj > 0 ? (data.rea / data.obj * 100) : 0;
+                
+                document.getElementById(`obj-${prefix}`).innerText = formatDA(data.obj);
+                document.getElementById(`rea-${prefix}`).innerText = formatDA(data.rea);
+                
+                const attEl = document.getElementById(`att-${prefix}`);
+                attEl.innerText = att.toFixed(2) + pctLabel;
+                attEl.style.color = att >= 100 ? '#28a745' : '#ffc107';
+
+                document.getElementById(`pca-${prefix}`).innerText = data.pca.toFixed(2) + '%';
+                document.getElementById(`glo-${prefix}`).innerText = data.glo.toFixed(2) + '%';
+            };
+
+            // 4. Update all 4 headers
+            updateHeaderStats('sup-med', stats.supMed);
+            updateHeaderStats('sup-com', stats.supCom);
+            updateHeaderStats('del-med', stats.delMed);
+            updateHeaderStats('del-com', stats.delCom);
+
+            // 5. Hide subgroups / sections that are empty after filtering
+            const supMedEmpty = supMedContainer.innerHTML.trim() === '';
+            const supComEmpty = supComContainer.innerHTML.trim() === '';
+            const delMedEmpty = delMedContainer.innerHTML.trim() === '';
+            const delComEmpty = delComContainer.innerHTML.trim() === '';
+
+            document.getElementById('subgroup-sup-med').style.display    = supMedEmpty ? 'none' : '';
+            document.getElementById('subgroup-sup-com').style.display    = supComEmpty ? 'none' : '';
+            document.getElementById('subgroup-del-med').style.display    = delMedEmpty ? 'none' : '';
+            document.getElementById('subgroup-del-com').style.display    = delComEmpty ? 'none' : '';
+            document.getElementById('section-superviseurs').style.display = (supMedEmpty && supComEmpty) ? 'none' : '';
+            document.getElementById('section-delegues').style.display    = (delMedEmpty && delComEmpty) ? 'none' : '';
+
+            document.getElementById('loading-spinner').style.display  = 'none';
+            document.getElementById('dashboard-content').style.display = 'block';
+        }
+
+        
+        // ── Click-to-detail ─────────────────────────────────────────────────────
+        function goToDetail(userId) {
+            document.getElementById('form_user_id').value = userId;
+            document.getElementById('form_year').value    = selectedYear;
+
+            const monthsContainer = document.getElementById('form_months_container');
+            monthsContainer.innerHTML = '';
+
+            // selectedMonths is always non-empty here (cards are only visible when
+            // at least one month is selected), but guard defensively anyway.
+            const monthsToSend = selectedMonths.length > 0
+                ? selectedMonths
+                : ['1','2','3','4','5','6','7','8','9','10','11','12'];
+
+            monthsToSend.forEach(m => {
+                monthsContainer.innerHTML +=
+                    `<input type="hidden" name="months" value="${m}">`;
+            });
+
+            document.getElementById('detailForm').submit();
+        }
+
+        // ── Sticky header offset ────────────────────────────────────────────────
+        function updateStickyOffset() {
+            // Filter section is no longer sticky, so the grid-header sticks at the
+            // very top of the viewport (top: 0).
+            const gridHeaderTop = 0;
+            document.documentElement.style.setProperty('--grid-header-top', gridHeaderTop + 'px');
+
+            // meriem card sticks just below the grid-header row
+            const gridHeader       = document.querySelector('.grid-header');
+            const gridHeaderHeight = gridHeader ? gridHeader.offsetHeight : 40;
+            const meriemTop        = gridHeaderTop + gridHeaderHeight;
+            document.documentElement.style.setProperty('--meriem-top', meriemTop + 'px');
+        }
+
+        // ── Bootstrap ───────────────────────────────────────────────────────────
+        fetchDashboardData();
+        updateStickyOffset();
+        window.addEventListener('resize', updateStickyOffset);
+
+        // ── Visualisation des Ventes button ─────────────────────────────────────
+        document.getElementById('btn-visualisation').addEventListener('click', function () {
+            const params = new URLSearchParams();
+
+            // Year
+            const year = document.getElementById('year-select').value;
+            if (year) params.set('year', year);
+
+            // Months (multi-value)
+            const activeMonths = Array.from(
+                document.querySelectorAll('.month-chip.active')
+            ).map(c => c.dataset.val);
+            activeMonths.forEach(m => params.append('months[]', m));
+
+            // Single-value dropdowns
+            const fUser    = document.getElementById('filter-user').value;
+            const fFamily  = document.getElementById('filter-family').value;
+            const fRegion  = document.getElementById('filter-region').value;
+            const fRole    = document.getElementById('filter-role').value;
+            const fPerf    = document.getElementById('filter-performance').value;
+            const fProduit = document.getElementById('filter-produit').value;
+
+            if (fUser)    params.set('user',    fUser);
+            if (fFamily)  params.set('family',  fFamily);
+            if (fRegion)  params.set('region',  fRegion);
+            if (fRole)    params.set('role',    fRole);
+            if (fPerf)    params.set('perf',    fPerf);
+            if (fProduit) params.set('produit', fProduit);
+
+            window.location.href = `/clients/visualisation-ventes/?${params.toString()}`;
+        });
+
+    </script>
+</body>
+</html>

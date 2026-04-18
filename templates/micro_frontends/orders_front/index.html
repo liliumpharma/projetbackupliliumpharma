@@ -8,6 +8,25 @@
     <meta name="theme-color" content="#000000" />
     <title>React App</title>
     <link href="{% static 'micro_frontends/orders_front/build/static/css/main.0c5a7728.css' %}" rel="stylesheet">
+    <style>
+@media (max-width: 768px) {
+  /* Target the parent container seen in your second screenshot */
+  div.flex.items-center.gap-1.py-1 {
+    flex-wrap: wrap !important;
+    justify-content: flex-start; /* Keeps items aligned to the left */
+  }
+
+  /* Target the specific wrapper with the 3 checkboxes */
+  #custom-filter-wrapper {
+    margin-left: 0 !important; /* Remove the left margin so it doesn't push off-screen */
+    margin-top: 10px !important; /* Add some space above it when it drops down */
+    transform: none !important; /* Remove the Y translation to avoid overlap */
+    width: 100%; /* Forces it to take its own line */
+    display: flex !important;
+    justify-content: flex-start;
+  }
+}
+</style>
 </head>
 
 <body><noscript>You need to enable JavaScript to run this app.</noscript>
@@ -22,6 +41,7 @@
     <script defer="defer" src="{% static 'micro_frontends/orders_front/custom/custom_filters.js' %}"></script>
     <!-- <script defer="defer" src="{% static 'micro_frontends/orders_front/custom/autres_button.js' %}"></script> -->
     <script defer="defer" src="{% static 'micro_frontends/orders_front/custom/preview_button.js' %}"></script>
+    <script defer="defer" src="{% static 'micro_frontends/orders_front/custom/addorder.js' %}"></script>
     <script defer="defer" src="{% static 'micro_frontends/orders_front/custom/valeurs_card.js' %}"></script>
 
 </html>

@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Visualisation DEP/SEMI</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 12.5px;
+            margin: 0;
+            padding: 28px 32px;
+            color: #1e293b;
+            background-color: #f1f5f9;
+        }
+
+        /* ── Section headers ─────────────────────────── */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 40px 0 14px;
+            padding: 14px 20px;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        .section-header:first-of-type { margin-top: 0; }
+
+        .section-header-semi {
+            background: linear-gradient(135deg, #166534 0%, #218c53 60%, #16a34a 100%);
+            box-shadow: 0 4px 14px rgba(22, 101, 52, 0.30);
+        }
+        .section-header-dep {
+            background: linear-gradient(135deg, #78350f 0%, #b45309 60%, #d97706 100%);
+            box-shadow: 0 4px 14px rgba(120, 53, 15, 0.30);
+        }
+
+        /* decorative circle behind title */
+        .section-header::before {
+            content: '';
+            position: absolute;
+            right: -30px;
+            top: -30px;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+        }
+        .section-header::after {
+            content: '';
+            position: absolute;
+            right: 60px;
+            bottom: -40px;
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.04);
+        }
+
+        .section-badge {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 6px;
+            flex-shrink: 0;
+            z-index: 1;
+        }
+        .badge-semi {
+            background: rgba(255,255,255,0.18);
+            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.30);
+        }
+        .badge-dep {
+            background: rgba(255,255,255,0.18);
+            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.30);
+        }
+
+        .section-title-block { z-index: 1; }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            margin: 0 0 2px;
+            line-height: 1.2;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        }
+        .section-title-ar {
+            font-size: 13px;
+            font-weight: 400;
+            color: rgba(255,255,255,0.72);
+            letter-spacing: 0.2px;
+            display: block;
+        }
+
+        .section-divider {
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.20);
+            z-index: 1;
+        }
+
+        /* ── Table card ──────────────────────────────── */
+        .table-wrapper {
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.05);
+            margin-bottom: 36px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            page-break-inside: auto;
+        }
+        tr { page-break-inside: avoid; page-break-after: auto; }
+
+        /* ── Header ──────────────────────────────────── */
+        thead th {
+            padding: 11px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            text-align: center;
+            vertical-align: middle;
+            border-bottom: 2px solid rgba(0,0,0,0.08);
+            border-right: 1px solid rgba(255,255,255,0.15);
+            line-height: 1.3;
+        }
+        thead th:last-child { border-right: none; }
+
+        thead.header-semi th {
+            background: linear-gradient(135deg, #166534 0%, #218c53 100%);
+            color: #ffffff;
+        }
+        thead.header-dep th {
+            background: linear-gradient(135deg, #92400e 0%, #d97706 100%);
+            color: #ffffff;
+        }
+
+        .ar-title {
+            display: block;
+            font-size: 10px;
+            font-weight: 500;
+            opacity: 0.82;
+            margin-top: 3px;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        /* ── Body cells ──────────────────────────────── */
+        td {
+            border: 1px solid #e8edf2;
+            padding: 9px 8px;
+            text-align: center;
+            vertical-align: middle;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        tbody tr { transition: background 0.1s; }
+        tbody tr:nth-child(even) td { background-color: #f8fafc; }
+        tbody tr:hover td { background-color: #eef6ff; }
+
+        /* rowspan identity cells */
+        td[rowspan] {
+            background-color: #ffffff;
+            font-weight: 600;
+            border-right: 2px solid #cbd5e1;
+            color: #1e293b;
+        }
+
+        /* ── Region divider rows ─────────────────────── */
+        .region-first-row td { border-top: 2px solid #94a3b8; }
+
+        /* ── Values ──────────────────────────────────── */
+        .val-blue { color: #1d6fc4 !important; font-weight: 700; }
+        .val-red  { color: #dc2626 !important; font-weight: 700; }
+
+        /* ── Portfolio ───────────────────────────────── */
+        .portfolio-col {
+            font-size: 11.5px;
+            text-align: center;
+            line-height: 1.55;
+            color: #475569;
+            padding: 6px 8px;
+        }
+        .portfolio-summary {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            user-select: none;
+            list-style: none;
+        }
+        .portfolio-summary::-webkit-details-marker { display: none; }
+        .p-med {
+            font-weight: 700;
+            font-size: 12px;
+            color: #15803d;
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            border-radius: 5px;
+            padding: 2px 8px;
+            white-space: nowrap;
+        }
+        .p-com {
+            font-weight: 700;
+            font-size: 12px;
+            color: #1d4ed8;
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            border-radius: 5px;
+            padding: 2px 8px;
+            white-space: nowrap;
+        }
+        .portfolio-detail-text {
+            margin-top: 6px;
+            font-size: 10.5px;
+            color: #64748b;
+            text-align: left;
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 5px;
+            line-height: 1.6;
+        }
+        details[open] .portfolio-summary { margin-bottom: 2px; }
+
+        /* ── ODD / EVEN badge ────────────────────────── */
+        .freq-badge {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+        .freq-odd  { background: #ede9fe; color: #5b21b6; }
+        .freq-even { background: #dbeafe; color: #1e40af; }
+
+        /* ── Region colors (applied to Région cell + Total Région cell) ── */
+        /* Ouest → Red */
+        .region-ouest  { background-color: #fecdd3 !important; color: #9f1239 !important; }
+        /* Centre → Green */
+        .region-centre { background-color: #bbf7d0 !important; color: #14532d !important; }
+        /* Est → Blue */
+        .region-est    { background-color: #bfdbfe !important; color: #1e3a8a !important; }
+        /* Sud → Amber */
+        .region-sud    { background-color: #fde68a !important; color: #78350f !important; }
+
+        /* ── Region total cell extra styling ─────────── */
+        .region-total {
+            font-weight: 800;
+            font-size: 13px;
+            letter-spacing: -0.2px;
+        }
+
+        /* ── Grand-total footer ──────────────────────── */
+        tfoot tr td {
+            background: #0f172a !important;
+            color: #f8fafc !important;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 11px 10px;
+            border-top: 3px solid #334155;
+            border-color: #334155;
+        }
+        tfoot tr td:last-child {
+            color: #fbbf24 !important;
+            font-size: 14px;
+            letter-spacing: -0.3px;
+        }
+        /* ── Section Header ALERT (>50k) ──────────────── */
+        .section-header-alert {
+            background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 60%, #ef4444 100%);
+            box-shadow: 0 4px 14px rgba(185, 28, 28, 0.30);
+        }
+        .badge-alert {
+            background: rgba(255,255,255,0.18);
+            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.30);
+        }
+        thead.header-alert th {
+            background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 100%);
+            color: #ffffff;
+        }
+
+        /* ── Sub-row Type Formatting ──────────────────── */
+        .type-semi {
+            background-color: #f0fdf4 !important;
+            color: #166534;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+        .type-dep {
+            background-color: #fffbeb !important;
+            color: #92400e;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+        .empty-sector {
+            color: #94a3b8;
+            font-style: italic;
+            background-color: #f8fafc !important;
+        }
+        .user-border-top td {
+            border-top: 3px solid #cbd5e1;
+        }
+
+        /* ── Print pages ─────────────────────────────── */
+        .print-page + .print-page { margin-top: 40px; }
+
+        /* ── Print ───────────────────────────────────── */
+        @media print {
+            @page { size: A4 landscape; margin: 4mm; }
+
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+            body { margin: 0; padding: 0; background: #fff; font-size: 8px; }
+
+            /* Each section fills exactly one page */
+            .print-page {
+                page-break-inside: avoid;
+                page-break-after: always;
+                display: block;
+            }
+            .print-page:last-child { page-break-after: avoid; }
+
+            /* Section header — minimal strip */
+            .section-header {
+                padding: 5px 10px;
+                margin: 0 0 5px;
+                border-radius: 3px;
+                box-shadow: none;
+                gap: 10px;
+            }
+            .section-title     { font-size: 11px; margin-bottom: 0; line-height: 1.1; }
+            .section-title-ar  { font-size: 8px; }
+            .section-badge     { font-size: 7px; padding: 2px 6px; }
+            .section-divider   { height: 1px; }
+
+            /* Table card */
+            .table-wrapper {
+                box-shadow: none;
+                border: 1px solid #bbb;
+                border-radius: 0;
+                overflow: visible;
+                margin-bottom: 0;
+            }
+
+            table { width: 100%; table-layout: fixed; }
+
+            /* Header cells — hide Arabic subtitle to save a full line of height */
+            thead th {
+                padding: 4px 3px;
+                font-size: 7px;
+                letter-spacing: 0;
+                line-height: 1.2;
+            }
+            .ar-title { display: none; }
+
+            /* Body cells */
+            td { padding: 2px 3px; font-size: 7.5px; line-height: 1.25; }
+
+            /* Portfolio — show pills only, hide dropdown */
+            .portfolio-col { padding: 2px 2px; }
+            .portfolio-summary { gap: 3px; pointer-events: none; }
+            .p-med, .p-com { font-size: 7px; padding: 1px 3px; }
+            .portfolio-detail-text { display: none !important; }
+            details > summary { list-style: none; }
+            details > summary::marker,
+            details > summary::-webkit-details-marker { display: none; }
+
+            /* Frequency badges */
+            .freq-badge { font-size: 6.5px; padding: 1px 2px; margin-left: 1px; }
+
+            /* Value cells */
+            .val-blue, .val-red { font-size: 7.5px; }
+
+            /* Region total */
+            .region-total { font-size: 8px; }
+
+            /* Footer — prevent repetition on multi-page tables, show only on last page */
+            tfoot { display: table-row-group; }
+            tfoot tr td { padding: 4px 4px; font-size: 8.5px; }
+            tfoot tr td:last-child { font-size: 9px; }
+
+            /* Rowspan cells */
+            td[rowspan] { border-right: 1px solid #bbb; }
+
+            /* Region divider */
+            .region-first-row td { border-top: 1px solid #94a3b8; }
+
+            /* Suppress hover */
+            tbody tr:hover td { background: inherit !important; }
+
+            /* Hide screen-only page-break div */
+            .page-break { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ════════════════════════════════════════════════
+         SEMI-DÉPLACEMENTS
+    ═════════════════════════════════════════════════ -->
+    <div class="print-page">
+    <div class="section-header section-header-semi">
+        <span class="section-badge badge-semi">SEMI</span>
+        <div class="section-title-block">
+            <h2 class="section-title">Semi-Déplacements</h2>
+            <span class="section-title-ar">أنصاف التنقلات</span>
+        </div>
+        <div class="section-divider"></div>
+    </div>
+
+    <div class="table-wrapper">
+    <table>
+        <thead class="header-semi">
+            <tr>
+                <th style="width:3%">N°<span class="ar-title">رقم</span></th>
+                <th style="width:8%">Username<span class="ar-title">المستخدم</span></th>
+                <th style="width:5%">Région<span class="ar-title">المنطقة</span></th>
+                <th style="width:7%">Spécialité<span class="ar-title">التخصص</span></th>
+                <th style="width:6%">Famille<span class="ar-title">العائلة</span></th>
+                <th style="width:9%">Objectif<span class="ar-title">الهدف</span></th>
+                <th style="width:8%">Secteur<span class="ar-title">القطاع</span></th>
+                <th style="width:26%">Portfolio<span class="ar-title">العملاء</span></th>
+                <th style="width:5%">Fois/mois<span class="ar-title">مرات/شهر</span></th>
+                <th style="width:6%">Prime Transp.<span class="ar-title">منحة النقل</span></th>
+                <th style="width:7%">Total Mens.<span class="ar-title">الإجمالي الشهري</span></th>
+                <th style="width:9%">Total Région<span class="ar-title">إجمالي المنطقة</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for region in semi_data.regions %}
+                {% for user in region.users %}
+                    {% for sector in user.sectors %}
+                        <tr{% if forloop.parentloop.first and forloop.first %} class="region-first-row"{% endif %}>
+                            {% if forloop.first %}
+                                <td rowspan="{{ user.rowspan }}">{{ user.user_num }}</td>
+                                <td rowspan="{{ user.rowspan }}"><b>{{ user.username }}</b></td>
+                                <td rowspan="{{ user.rowspan }}" class="{% if user.region == 'Ouest' %}region-ouest{% elif user.region == 'Centre' %}region-centre{% elif user.region == 'Est' %}region-est{% elif user.region == 'Sud' %}region-sud{% endif %}">{{ user.region }}</td>
+                                <td rowspan="{{ user.rowspan }}">{{ user.speciality }}</td>
+                                <td rowspan="{{ user.rowspan }}">{{ user.family }}</td>
+                                <td rowspan="{{ user.rowspan }}">{{ user.objectif }}</td>
+                            {% endif %}
+                            <td>{{ sector.name }}</td>
+                            <td class="portfolio-col">
+                                <details>
+                                    <summary class="portfolio-summary">
+                                        <span class="p-med">{{ sector.portfolio_medical }} Méd</span>
+                                        <span class="p-com">{{ sector.portfolio_commercial }} Com</span>
+                                    </summary>
+                                    {% if sector.portfolio_detail %}
+                                    <div class="portfolio-detail-text">{{ sector.portfolio_detail }}</div>
+                                    {% endif %}
+                                </details>
+                            </td>
+                            <td>{{ sector.times }}</td>
+                            <td>{{ sector.prime|floatformat:0 }}</td>
+                            <td class="val-red">{{ sector.total_mensuel|floatformat:0 }}</td>
+                            {% if forloop.parentloop.first and forloop.first %}
+                                <td rowspan="{{ region.rowspan }}" class="region-total {% if region.name == 'Ouest' %}region-ouest{% elif region.name == 'Centre' %}region-centre{% elif region.name == 'Est' %}region-est{% elif region.name == 'Sud' %}region-sud{% endif %}">
+                                    {{ region.total|floatformat:0 }}
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            {% empty %}
+                <tr>
+                    <td colspan="12" style="padding:30px; color:#94a3b8; font-style:italic;">
+                        Aucune donnée correspondante &nbsp;|&nbsp; لا توجد بيانات مطابقة
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="11" style="text-align:right; padding-right:18px; letter-spacing:0.3px;">
+                    Total Général &nbsp;|&nbsp; الإجمالي العام
+                </td>
+                <td>{{ semi_data.grand_total|floatformat:0 }}</td>
+            </tr>
+        </tfoot>
+    </table>
+    </div>
+    </div><!-- /print-page semi -->
+
+    <!-- ════════════════════════════════════════════════
+         DÉPLACEMENTS
+    ═════════════════════════════════════════════════ -->
+    <div class="print-page">
+    <div class="section-header section-header-dep">
+        <span class="section-badge badge-dep">DEP</span>
+        <div class="section-title-block">
+            <h2 class="section-title">Déplacements</h2>
+            <span class="section-title-ar">التنقلات</span>
+        </div>
+        <div class="section-divider"></div>
+    </div>
+
+    <div class="table-wrapper">
+    <table>
+        <thead class="header-dep">
+            <tr>
+                <th style="width:3%">N°<span class="ar-title">رقم</span></th>
+                <th style="width:6%">Username<span class="ar-title">المستخدم</span></th>
+                <th style="width:4%">Région<span class="ar-title">المنطقة</span></th>
+                <th style="width:6%">Spécialité<span class="ar-title">التخصص</span></th>
+                <th style="width:5%">Famille<span class="ar-title">العائلة</span></th>
+                <th style="width:8%">Objectif<span class="ar-title">الهدف</span></th>
+                <th style="width:7%">Secteur<span class="ar-title">القطاع</span></th>
+                <th style="width:21%">Portfolio<span class="ar-title">العملاء</span></th>
+                <th style="width:4%">Fois/mois<span class="ar-title">مرات/شهر</span></th>
+                <th style="width:4%">Jours<span class="ar-title">الأيام</span></th>
+                <th style="width:4%">Nuits<span class="ar-title">الليالي</span></th>
+                <th style="width:5%">Coût Hôtel<span class="ar-title">تكلفة الفندق</span></th>
+                <th style="width:5%">Prime Transp.<span class="ar-title">منحة النقل</span></th>
+                <th style="width:6%">Total Dép.<span class="ar-title">إجمالي التنقل</span></th>
+                <th style="width:6%">Total Mens.<span class="ar-title">الإجمالي الشهري</span></th>
+                <th style="width:8%">Total Région<span class="ar-title">إجمالي المنطقة</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for region in dep_data.regions %}
+                {% for user in region.users %}
+                    {% for sector in user.sectors %}
+                        <tr{% if forloop.parentloop.first and forloop.first %} class="region-first-row"{% endif %}>
+                            {% if forloop.first %}
+                                <td rowspan="{{ user.rowspan }}">{{ user.user_num }}</td>
+                                <td rowspan="{{ user.rowspan }}">{{ user.username }}</td>
+                                <td rowspan="{{ user.rowspan }}" class="{% if user.region == 'Ouest' %}region-ouest{% elif user.region == 'Centre' %}region-centre{% elif user.region == 'Est' %}region-est{% elif user.region == 'Sud' %}region-sud{% endif %}">{{ user.region }}</td>
+                                <td rowspan="{{ user.rowspan }}">{{ user.speciality }}</td>
+                                <td rowspan="{{ user.rowspan }}">{{ user.family }}</td>
+                                <td rowspan="{{ user.rowspan }}">{{ user.objectif }}</td>
+                            {% endif %}
+                            <td>
+                                {{ sector.name }}
+                                {% if sector.month_freq == "ODD" %}
+                                    <span class="freq-badge freq-odd">Mois impairs</span>
+                                {% elif sector.month_freq == "EVEN" %}
+                                    <span class="freq-badge freq-even">Mois pairs</span>
+                                {% endif %}
+                            </td>
+                            <td class="portfolio-col">
+                                <details>
+                                    <summary class="portfolio-summary">
+                                        <span class="p-med">{{ sector.portfolio_medical }} Méd</span>
+                                        <span class="p-com">{{ sector.portfolio_commercial }} Com</span>
+                                    </summary>
+                                    {% if sector.portfolio_detail %}
+                                    <div class="portfolio-detail-text">{{ sector.portfolio_detail }}</div>
+                                    {% endif %}
+                                </details>
+                            </td>
+                            <td>{{ sector.times }}</td>
+                            <td>{{ sector.days }}</td>
+                            <td>{{ sector.nights }}</td>
+                            <td>{{ sector.hotel_cost|floatformat:0 }}</td>
+                            <td>{{ sector.prime|floatformat:0 }}</td>
+                            <td class="val-blue">{{ sector.total_dep|floatformat:0 }}</td>
+                            <td class="val-red">{{ sector.total_mensuel|floatformat:0 }}</td>
+                            {% if forloop.parentloop.first and forloop.first %}
+                                <td rowspan="{{ region.rowspan }}" class="region-total {% if region.name == 'Ouest' %}region-ouest{% elif region.name == 'Centre' %}region-centre{% elif region.name == 'Est' %}region-est{% elif region.name == 'Sud' %}region-sud{% endif %}">
+                                    {{ region.total|floatformat:0 }}
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            {% empty %}
+                <tr>
+                    <td colspan="16" style="padding:30px; color:#94a3b8; font-style:italic;">
+                        Aucune donnée correspondante &nbsp;|&nbsp; لا توجد بيانات مطابقة
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="15" style="text-align:right; padding-right:18px; letter-spacing:0.3px;">
+                    Total Général &nbsp;|&nbsp; الإجمالي العام
+                </td>
+                <td>{{ dep_data.grand_total|floatformat:0 }}</td>
+            </tr>
+        </tfoot>
+    </table>
+    </div>
+    </div><!-- /print-page dep -->
+
+    <div class="print-page">
+    <div class="section-header section-header-alert">
+        <span class="section-badge badge-alert">ALERT</span>
+        <div class="section-title-block">
+            <h2 class="section-title">Dépassement de 50,000 DA</h2>
+            <span class="section-title-ar">تجاوز 50,000 دينار</span>
+        </div>
+        <div class="section-divider"></div>
+    </div>
+
+    <div class="table-wrapper">
+    <table>
+        <thead class="header-alert">
+            <tr>
+                <th style="width:10%">Username<span class="ar-title">المستخدم</span></th>
+                <th style="width:7%">Région<span class="ar-title">المنطقة</span></th>
+                <th style="width:6%">Type<span class="ar-title">النوع</span></th>
+                <th style="width:12%">Secteur (Wilaya)<span class="ar-title">القطاع</span></th>
+                <th style="width:12%">Commune<span class="ar-title">البلدية</span></th>
+                <th style="width:5%">Fois/mois<span class="ar-title">مرات/شهر</span></th>
+                <th style="width:5%">Jours<span class="ar-title">الأيام</span></th>
+                <th style="width:5%">Nuits<span class="ar-title">الليالي</span></th>
+                <th style="width:7%">Coût Hôtel<span class="ar-title">تكلفة الفندق</span></th>
+                <th style="width:7%">Prime Transp.<span class="ar-title">منحة النقل</span></th>
+                <th style="width:8%">Total Mensuel<span class="ar-title">الإجمالي الشهري</span></th>
+                <th style="width:8%">Total / Type<span class="ar-title">إجمالي النوع</span></th>
+                <th style="width:8%">Grand Total<span class="ar-title">الإجمالي العام</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in high_cost_users %}
+                
+                {% for sector in u.semi_sectors %}
+                    <tr {% if forloop.first %}class="user-border-top"{% endif %}>
+                        
+                        {% if forloop.first %}
+                            <td rowspan="{{ u.total_rows }}"><b>{{ u.username }}</b></td>
+                            <td rowspan="{{ u.total_rows }}" class="{% if u.region == 'Ouest' %}region-ouest{% elif u.region == 'Centre' %}region-centre{% elif u.region == 'Est' %}region-est{% elif u.region == 'Sud' %}region-sud{% endif %}">
+                                {{ u.region }}
+                            </td>
+                            <td rowspan="{{ u.semi_count }}" class="type-semi">SEMI</td>
+                        {% endif %}
+
+                        {% if sector.is_empty %}
+                            <td colspan="8" class="empty-sector">Aucun secteur SEMI &nbsp;|&nbsp; لا يوجد قطاع</td>
+                        {% else %}
+                            <td>{{ sector.wilaya }}</td>
+                            <td>{{ sector.commune }}</td>
+                            <td>{{ sector.times }}</td>
+                            <td style="color:#cbd5e1;">{{ sector.days }}</td>
+                            <td style="color:#cbd5e1;">{{ sector.nights }}</td>
+                            <td style="color:#cbd5e1;">{{ sector.hotel_cost }}</td>
+                            <td>{{ sector.prime|floatformat:0 }}</td>
+                            <td>{{ sector.total_mensuel|floatformat:0 }}</td>
+                        {% endif %}
+
+                        {% if forloop.first %}
+                            <td rowspan="{{ u.semi_count }}" class="type-semi">{{ u.total_semi|floatformat:0 }}</td>
+                            <td rowspan="{{ u.total_rows }}" class="val-red" style="font-size:14px; background-color:#fef2f2 !important;">
+                                {{ u.grand_total|floatformat:0 }}
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+
+                {% for sector in u.dep_sectors %}
+                    <tr>
+                        {% if forloop.first %}
+                            <td rowspan="{{ u.dep_count }}" class="type-dep">DEP</td>
+                        {% endif %}
+
+                        {% if sector.is_empty %}
+                            <td colspan="8" class="empty-sector">Aucun secteur DEP &nbsp;|&nbsp; لا يوجد قطاع</td>
+                        {% else %}
+                            <td>{{ sector.wilaya }}</td>
+                            <td>{{ sector.commune }}</td>
+                            <td>{{ sector.times }}</td>
+                            <td>{{ sector.days }}</td>
+                            <td>{{ sector.nights }}</td>
+                            <td>{{ sector.hotel_cost|floatformat:0 }}</td>
+                            <td>{{ sector.prime|floatformat:0 }}</td>
+                            <td>
+                                {% if sector.total_mensuel == 0 %}
+                                    <span style="color:#94a3b8; text-decoration:line-through;">{{ sector.prime|add:sector.hotel_cost|floatformat:0 }}</span> 0
+                                {% else %}
+                                    {{ sector.total_mensuel|floatformat:0 }}
+                                {% endif %}
+                                
+                                {% if sector.freq == 'EVEN' %}
+                                    <br><span class="freq-badge freq-even" style="margin-top:2px;">Pairs</span>
+                                {% elif sector.freq == 'ODD' %}
+                                    <br><span class="freq-badge freq-odd" style="margin-top:2px;">Impairs</span>
+                                {% endif %}
+                            </td>
+                        {% endif %}
+
+                        {% if forloop.first %}
+                            <td rowspan="{{ u.dep_count }}" class="type-dep">{{ u.total_dep|floatformat:0 }}</td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+
+            {% empty %}
+                <tr>
+                    <td colspan="13" style="padding:30px; color:#94a3b8; font-style:italic; text-align:center;">
+                        Aucun utilisateur ne dépasse 50,000 DA ce mois-ci &nbsp;|&nbsp; لا يوجد مستخدم يتجاوز 50,000 دينار هذا الشهر
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    </div>```
+
+</body>
+</html>

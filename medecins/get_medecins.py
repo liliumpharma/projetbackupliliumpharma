@@ -27,10 +27,10 @@ def get_medecinsss(request):
     def _extract_username(raw):
         if not raw:
             return ""
-        raw = str(raw).strip()
+        raw = str(raw)
         if " - " in raw:
             return raw.split(" - ")[0].strip()
-        return raw
+        return raw.strip()
 
     def _norm_speciality_rolee(u):
         try:
@@ -61,19 +61,16 @@ def get_medecinsss(request):
         else:
             filters["nom__icontains"] = request.GET.get("medecin").lower()
 
-    if request.GET.get("specialite") and request.GET.get("specialite") != "":
-        if request.GET.get("specialite") == "commerciale":
-            filters["specialite__in"] = ["Pharmacie", "Grossiste", "SuperGros"]
-        elif request.GET.get("specialite") == "medicale":
-            filters["specialite__in"] = [
-                "Generaliste", "Généraliste", "Diabetologue", "Neurologue", "Interniste",
-                "Psychologue", "Gynecologue", "Gynécologue", "Rumathologue", "Allergologue",
-                "Phtisio", "Cardiologue", "Urologue", "Hematologue", "Orthopedie",
-                "Nutritionist", "Dermatologue", "Gastrologue", "Endocrinologue", "Dentiste",
-                "ORL", "Maxilo facial",
-            ]
+    COMMERCIAL_SPECIALITES = ["Pharmacie", "Grossiste", "SuperGros"]
+    specialite_param = request.GET.get("specialite")
+    exclude_commercial = False
+    if specialite_param and specialite_param != "":
+        if specialite_param == "commerciale":
+            filters["specialite__in"] = COMMERCIAL_SPECIALITES
+        elif specialite_param == "medicale":
+            exclude_commercial = True  # applied after queryset is built
         else:
-            filters["specialite__in"] = request.GET.get("specialite").split(",")
+            filters["specialite__in"] = specialite_param.split(",")
 
     if request.GET.get("classification"):
         filters["classification__in"] = request.GET.get("classification").split(",")
@@ -112,6 +109,9 @@ def get_medecinsss(request):
         .exclude(users__in=[medecin_recycle_bin_user, pharmacie_recycle_bin_user])
         .order_by("nom")
     )
+
+    if exclude_commercial:
+        medecins_list = medecins_list.exclude(specialite__in=COMMERCIAL_SPECIALITES)
 
     if q:
         medecins_list = medecins_list.filter(q)

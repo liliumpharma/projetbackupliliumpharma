@@ -32,8 +32,15 @@
 
     <style>
       .d-none {
-      display: none !important;
-    }
+        display: none !important;
+      }
+      @keyframes sector-blink {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0; }
+      }
+      .sector-blink {
+        animation: sector-blink 1s step-start infinite;
+      }
     </style>
   </head>
 
@@ -276,14 +283,12 @@
               </script>
               
               <div class="flex-column col-12 col-md-3">
-                <label for="note_filter">Daily evaluation</label>
-                <select name="note_filter" id="note_filter" class="form-control">
-                    <option value="">None</option>
-                    <option value="1">★</option>
-                    <option value="2">★★</option>
-                    <option value="3">★★★</option>
-                    <option value="4">★★★★</option>
-                    <option value="5">★★★★★</option>
+                <label for="sector_filter">Secteur</label>
+                <select name="sector_filter" id="sector_filter" class="form-control">
+                    <option value="TOUS">Tous</option>
+                    <option value="IN">IN</option>
+                    <option value="SEMI">SEMI</option>
+                    <option value="DEP">DEP</option>
                 </select>
             </div>
             
@@ -306,22 +311,22 @@
               // Récupérer les valeurs des filtres
               const commercial = document.getElementById("search_user").value;
               const family = document.getElementById("family_filter").value;
-              const note = document.getElementById("note_filter").value;
+              const sectorFilter = document.getElementById("sector_filter").value;
               const country = document.getElementById("county_filter").value;
               const mindate = document.getElementById("date_debut").value;
               const maxdate = document.getElementById("date_fin").value;
               const total = document.getElementById("total");
 
               const recap = document.getElementById("recap");
-          
+
               // Créer un objet contenant les filtres
               const params = new URLSearchParams({
                 commercial: commercial !== '-1' ? commercial : '',
                 family: family !== '-1' ? family : '',
-                note: note !== '-1' ? note : '',
                 country: country !== '-1' ? country : '',
                 mindate: mindate || '',
-                maxdate: maxdate || ''
+                maxdate: maxdate || '',
+                sector: sectorFilter !== 'TOUS' ? sectorFilter : '' // <--- Added this line
               });
           
               function getDayOfWeek(dateString) {
@@ -377,75 +382,35 @@
     return; // on arrête ici
   }
                   const itemsToDisplay2 = data.result || [];
-                  document.getElementById('id_empty_recap').innerHTML = '';  // Vider les liens
-                  document.getElementById('total2').textContent = ''; 
+                  document.getElementById('id_empty_recap').innerHTML = '';
+                  document.getElementById('total2').textContent = '';
 
-                      // Exclure les éléments ayant tasks.length > 0
-                      const filteredItems = itemsToDisplay2.filter(item => item.tasks.length === 0);
+                  // Rapports vides: no tasks and fewer than 6 visites
+                  const filteredItems = itemsToDisplay2.filter(item => item.tasks.length === 0);
+                  const rapportsWithLessThanFourVisites = filteredItems.filter(rapport => rapport.visites.length < 6);
 
-                      //  Vérifier si aucun rapport
-    
-
-                      filteredItems.forEach((item) => {
-                      
-                        // Filtrer les rapports avec moins de 4 visites
-                        const rapportsWithLessThanFourVisites = filteredItems.filter(rapport => rapport.visites.length < 6);
-                        // Récupérer des dates distinctes de `added`
-                        const distinctAddedDates = [...new Set(rapportsWithLessThanFourVisites.map(rapport => rapport.added))];
-
-                        // Créer des liens cliquables pour chaque date distincte `added`
-                        const rapportLinks = [];
-let done = 0;
-
-rapportsWithLessThanFourVisites.forEach(rapport => {
-  fetch(`https://app.liliumpharma.com/rapports/api/user/${rapport.user}/`, {
-    method: 'GET',
-    credentials: 'same-origin',
-    headers: {
-      'X-Requested-With': 'XMLHttpRequest'
-    }
-  })
-    .then(res => res.json())
-    .then(data => {
-      const nomComplet = `${data.last_name} ${data.first_name}`;
-      const lien = `<a href="#card_${rapport.id}" style="color: green; text-decoration: underline; font-size: 13px">
-        ${rapport.added} (${nomComplet})
-      </a>`;
-      rapportLinks.push(lien);
-    })
-    .catch(() => {
-      const lien = `<a href="#card_${rapport.id}" style="color: green; text-decoration: underline; font-size: 13px">
-        ${rapport.id} (Inconnu)
-      </a>`;
-      rapportLinks.push(lien);
-    })
-    .finally(() => {
-      done++;
-      if (done === rapportsWithLessThanFourVisites.length) {
-
-        
-        // Tous les fetchs sont terminés
-        document.getElementById('id_empty_recap').innerHTML = rapportLinks.join(' - ') || '-';
-        document.getElementById('total2').textContent = rapportsWithLessThanFourVisites.length;
-        total2.textContent = rapportsWithLessThanFourVisites.length;
-      }
-      
-    });
- 
-});
-
-                        
-
-                        
-                      });
+                  // Build links using the name already available in rapport.commercial.nom — no extra HTTP requests
+                  const rapportLinks = rapportsWithLessThanFourVisites.map(rapport =>
+                    `<a href="#card_${rapport.id}" style="color: green; text-decoration: underline; font-size: 13px">
+                      ${rapport.added} (${rapport.commercial.nom || 'Inconnu'})
+                    </a>`
+                  );
+                  document.getElementById('id_empty_recap').innerHTML = rapportLinks.join(' - ') || '-';
+                  document.getElementById('total2').textContent = rapportsWithLessThanFourVisites.length;
 
 
                   
                   total.textContent = data.length
                   recap.textContent = data.other
                   const container = document.getElementById('parentElementId');
-                  const itemsToDisplay = data.result || [];
-          
+                  const allItems = data.result || [];
+
+                  const itemsToDisplay = allItems.filter(item => {
+                    if (sectorFilter === 'TOUS') return true;
+                    if (sectorFilter === 'IN') return item.sector_category !== 'SEMI' && item.sector_category !== 'DEP';
+                    return item.sector_category === sectorFilter;
+                  });
+
                   itemsToDisplay.forEach((item) => {
                     const dayOfWeek = getDayOfWeek(item.added);
           
@@ -458,28 +423,35 @@ rapportsWithLessThanFourVisites.forEach(rapport => {
                     card.style.marginBottom = '10px';
                     card.id = `card_${item.id}`;
                     card.style.padding = '10px';
+
+                    const headerColor = item.sector_category === 'DEP' ? '#dc3545'
+                                      : item.sector_category === 'SEMI' ? '#ffc107'
+                                      : '#228B22';
           
+                    // DECLARE rating and helper for sanitizing XSS!
+                    let rating = item.note || 0; 
+                    const escapeHTML = (str) => str ? str.toString().replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag)) : '';
+
                     // Créer les étoiles pour la note
                     let stars = '';
                     for (let i = 1; i <= 5; i++) {
-                      stars += `<span class="fa fa-star ${i <= item.note ? 'checked' : ''}" data-value="${i}" data-id="${item.id}" style="color: ${i <= item.note ? 'gold' : 'gray'}; cursor: pointer;"></span>`;
-                      rating = item.note
-
+                      stars += `<span class="fa fa-star ${i <= rating ? 'checked' : ''}" data-value="${i}" data-id="${item.id}" style="color: ${i <= rating ? 'gold' : 'gray'}; cursor: pointer;"></span>`;
                     }
           
                     const attachementLink = item.attachement !== "null"
                       ? `<a href="${item.url}" target="_blank">Voir l'attachement</a>`
                       :  '<span style="color: red;">Aucun attachement</span>';
 
-                    const noteText = rating < 1 ? '<b class="clignote">Note:</b>' : 'Note 1 :';
-                    const noteText2 = rating < 1 ? '<b class="clignote">Note:</b>' : 'Daily evaluation :';
-
+                    // FIX: Changed "clignote" to "blinking" to match your CSS animation
+                    const noteText = rating < 1 ? '<b class="blinking">Note:</b>' : 'Note 1 :';
+                    const noteText2 = rating < 1 ? '<b class="blinking">Note:</b>' : 'Daily evaluation :';
 
                     let commentsHTML = '';
                     if (item.comments && item.comments.length > 0) {
+                        commentsHTML += '<div><h6 class="text-left"><strong>Commentaires :</strong></h6><ul>';
                         commentsHTML += item.comments.map(comment => `
                             <li>
-                              <strong>${comment.user.username}</strong>: ${comment.comment} <span style="font-size:8px">(Ajouté le: ${new Date(comment.added).toLocaleDateString()})</span>
+                              <strong>${escapeHTML(comment.user?.username)}</strong>: ${escapeHTML(comment.comment)} <span style="font-size:8px">(Ajouté le: ${new Date(comment.added).toLocaleDateString()})</span>
                             </li>
                         `).join('');
                         commentsHTML += '</ul></div>';
@@ -502,13 +474,15 @@ rapportsWithLessThanFourVisites.forEach(rapport => {
                         image1HTML = `<img class="blinking" src="https://app.liliumpharma.com/static/img/croix-rouge.jpg" alt="Default Image 1" style="display: block; width: 150px; height: 150px; border: 1px solid black; cursor: pointer;">`;
                     }
 
+                    // FIX: Explicitly declare image2HTML
+                    let image2HTML = '';
                     if (item.image2) {
                       image2HTML = `<img src="${item.image2}" alt="Image 2" style="display: block; width: 150px; height: 150px; border: 1px solid black; cursor: pointer;">`;
-                  } else if (item.tasks.length > 0) {
+                    } else if (item.tasks && item.tasks.length > 0) {
                       image2HTML = ``;
-                  } else {
+                    } else {
                       image2HTML = `<img class="blinking" src="https://app.liliumpharma.com/static/img/croix-rouge.jpg" alt="Default Image 1" style="display: block; width: 150px; height: 150px; border: 1px solid black; cursor: pointer;">`;
-                  }
+                    }
                     
                     // Créer l'HTML de la carte
                     card.innerHTML = `
@@ -524,17 +498,20 @@ rapportsWithLessThanFourVisites.forEach(rapport => {
                         </div>
                         <div class="col-md-10" style="margin-top: 10px; margin-bottom: 10px; margin-left:100px">
                           <div class="card">
-                            <div class="card-header d-flex justify-content-between" style="background-color: #228B22;">
-                              <h6 class="text-left font-weight-bold" style="color:white;">
-                                <a href="https://app.liliumpharma.com/admin/rapports/rapport/${item.id}/change/" style="color:blue; font-size:10px; " target="_blank" style="color:blue; text-decoration: none;"> ID: <span id="id_spend_${item.id}">${item.id}</span> </a> |
-                                <strong> Nom: <span id="id_spend_${item.commercial.nom}">${item.commercial.nom}</span> </strong> |
-                                <strong> Date: <span id="id_spend_${item.added}">${dayOfWeek}, ${item.added}</span> </strong>
+                            <div class="card-header d-flex justify-content-between align-items-center" style="background-color: ${headerColor};">
+                              <h6 class="text-left font-weight-bold mb-0" style="color:white;">
+                                <a href="https://app.liliumpharma.com/admin/rapports/rapport/${item.id}/change/" style="color:blue; font-size:10px;" target="_blank"> ID: <span id="id_spend_${item.id}">${item.id}</span> </a> |
+                                <strong> Nom: <span>${item.commercial.nom}</span> </strong> |
+                                <strong> Date: <span>${dayOfWeek}, ${item.added}</span> </strong>
                               </h6>
+                              ${item.sector_category === 'SEMI' || item.sector_category === 'DEP' ? `
+                                <strong class="sector-blink" style="color:white; font-size:1rem; letter-spacing:2px;">${item.sector_category}</strong>
+                              ` : ''}
                             </div>
                             <div class="card-body">
                               <div style="display: flex; justify-content: space-between;">
                                 <div>
-                                  <h6 class="text-left"><span id="card_date">${item.details}</span></h6>
+                                  <h6 class="text-left"><span id="card_date_${item.id}">${item.details}</span></h6>
                                 </div>
                                 <a href="https://app.liliumpharma.com/rapports/PDF/${item.id}" target="_blank">
                                   <img src="/static/img/printer.png" alt="Print" style="color: white" width="25px" height="25px">
@@ -578,11 +555,10 @@ rapportsWithLessThanFourVisites.forEach(rapport => {
                                   <div class="star-rating">${stars}</div>
                                 </div>
                               </div>
-                              <div id="administration_comment_${item.id}"></div>
-                                        ${commentsHTML} <!-- Display comments here -->
+                              <div id="administration_comment_${item.id}">${commentsHTML}</div>
 
                                 <div class="d-flex">
-                                  <textarea class="form-control" id="comment_${item.id}" rows="1"></textarea>
+                                  <textarea class="form-control" id="comment_${item.id}" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();add_comment(${item.id});}"></textarea>
                                   <button id="send_comment_${item.id}" class="btn send-comment-button" style="background-color: transparent; border: none" onclick="add_comment(${item.id})">
                                     <img src="/static/img/icons/envoyer.png" width="20px" height="20px" alt="send button">
                                   </button>
@@ -655,60 +631,63 @@ rapportsWithLessThanFourVisites.forEach(rapport => {
 
           <script>
             function add_comment(rapportId) {
-              // Capture the comment and other necessary data
-              const comment = document.getElementById(`comment_${rapportId}`).value;
+              const commentInput = document.getElementById(`comment_${rapportId}`);
+              const comment = commentInput.value.trim();
+              if (!comment) return; // Don't submit empty comments
+              
               const administrationCommentDiv = document.getElementById(`administration_comment_${rapportId}`);
-              // Get the CSRF token from the meta tag
               const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-              const token = localStorage.getItem('authToken');  // Assuming the token is stored in localStorage
+              
+              // Prevent XSS locally before sending
+              const escapeHTML = (str) => str ? str.toString().replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag)) : '';
           
-              // Get the current date
               const currentDate = new Date();
-              const year = currentDate.getFullYear();
-              const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-              const day = String(currentDate.getDate()).padStart(2, '0');
-              const formattedDate = `${year}-${month}-${day}`;
+              const formattedDate = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
           
-              // Prepare the data for the request
-              const formData = {
-                csrfmiddlewaretoken: csrfToken,  // Add your CSRF token
-                rapport: rapportId,
-                comment: comment
-              };
-            
-              // Send the comment to the server using AJAX
-              $.ajax({
-                url: '/rapports/comment/api',  // Ensure this matches your API URL
-                type: 'POST',
-                data: formData,
-                success: function (response) {
-                  // Create the new comment element
-                  const commentHTML = `
-                    <li>
-                      <strong>${response.user.username}</strong>: ${response.comment} <span style="font-size:10px">(Ajouté le: ${formattedDate})</span>
-                    </li>
-                  `;
-                  
-                  // Check if there are existing comments
-                  const existingComments = administrationCommentDiv.querySelector('ul');
-                  
-                  if (existingComments) {
-                    // Append the new comment to the existing list
-                    existingComments.innerHTML += commentHTML;
-                  } else {
-                    // If no existing comments, create the list and add the first comment
-                    const commentsHTML = `<div><h6 class="text-left"><strong>Nouveau Commentaires :</strong></h6><ul>${commentHTML}</ul></div>`;
-                    administrationCommentDiv.innerHTML = commentsHTML;
-                  }
-            
-                  // Clear the comment input field after successful submission
-                  document.getElementById(`comment_${rapportId}`).value = '';
-            
-                  // Success message
-                  vanillaToast.success('Votre commentaire a été enregistré avec succès.');
-                },
-                error: function (xhr, status, error) {
-                  vanillaToast.error("Erreur lors de l'enregistrement du commentaire.");
+              const formData = new URLSearchParams();
+              formData.append('csrfmiddlewaretoken', csrfToken);
+              formData.append('rapport', rapportId);
+              formData.append('comment', comment);
+          
+              // FIX: Replaced jQuery $.ajax with Vanilla JS fetch
+              fetch('/rapports/comment/api', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'X-CSRFToken': csrfToken // <-- ADD THIS LINE
+        },
+        body: formData.toString()
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.json();
+      })
+              .then(response => {
+                const safeUsername = escapeHTML(response.user?.username || 'Utilisateur');
+                const safeComment = escapeHTML(response.comment);
+                
+                const commentHTML = `
+                  <li>
+                    <strong>${safeUsername}</strong>: ${safeComment} <span style="font-size:10px">(Ajouté le: ${formattedDate})</span>
+                  </li>
+                `;
+                
+                let existingComments = administrationCommentDiv.querySelector('ul');
+                if (existingComments) {
+                  existingComments.insertAdjacentHTML('beforeend', commentHTML);
+                } else {
+                  administrationCommentDiv.innerHTML = `<div><h6 class="text-left"><strong>Nouveau Commentaires :</strong></h6><ul>${commentHTML}</ul></div>`;
+                }
+          
+                commentInput.value = '';
+                if(typeof vanillaToast !== 'undefined') {
+                    vanillaToast.success('Votre commentaire a été enregistré avec succès.');
+                }
+              })
+              .catch(error => {
+                console.error("Error:", error);
+                if(typeof vanillaToast !== 'undefined') {
+                    vanillaToast.error("Erreur lors de l'enregistrement du commentaire.");
                 }
               });
             }

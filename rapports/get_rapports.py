@@ -503,39 +503,16 @@ def rapport_list(request, imp=0):
     
     print("ls rapport ")
 
-    # Add speciality filters
+    # Add speciality and note filters, then build the queryset once
     filters = add_speciality_filter(request, filters)
-    rapports_list = Rapport.objects.filter(**filters).order_by("-added").distinct()
-    print("je suis la 22222222222222")
-    print(rapports_list)
-    # Add Note filters
     filters = add_note_filter(request, filters)
+
     rapports_list = Rapport.objects.filter(**filters).order_by("-added").distinct()
-    print("je suis la 333333333333")
-    print(rapports_list)
-    # Add commercial filters
-    #filters = add_commercial_filter(request, filters)
-    
-    # Retrieve the filtered rapports
-    rapports_list = Rapport.objects.filter(**filters).order_by("-added").distinct()
-    print("je suis la 1111111111111111")
-    print(rapports_list)
+
     # Apply user-specific filtering
     rapports_list = apply_user_specific_filters(user, user_profile, rapports_list)
-    print(str(rapports_list.count()))
 
-    # Append the visit count to each rapport
-    rapport_visit_counts = []
-    for rapport in rapports_list:
-        visit_count = Visite.objects.filter(rapport=rapport).count()  # Count the number of visits for each rapport
-        rapport_visit_counts.append({
-            "rapport_id": rapport.id,
-            "visit_count": visit_count
-        })
-        # print(f"Rapport ID: {rapport.id}, Visit Count: {visit_count}")
-
-    # You can return both rapports and the visit counts if needed
-    return rapports_list  # Return the queryset of rapports and visit counts
+    return rapports_list
 
 
 

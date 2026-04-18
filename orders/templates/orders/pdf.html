@@ -142,25 +142,44 @@
               <tr class="text-center">
                 <th>Produit <div class=""></div> </th>
                 <th>Quantité <div class=""></div> </th>
-                <!-- <th>prix <div class="bottom-night"></div> </th> -->
+                <th>Prix Unitaire <div class=""></div> </th>
+                {% if order.super_gros and not order.gros %}
+                  <th>Prix NET <div class=""></div> </th>
+                 {% endif %}
+                <th>Prix TTC <div class=""></div> </th>
               </tr>
-  
+
             </thead>
             <tbody>
                 {% for item in order.orderitem_set.all %}
               <tr class="text-center">
                 <td>{{item.produit.fname}}</td>
                 <td>{{item.qtt}}</td>
-                <!-- <td>{{item.price}}</td> -->
+                <td>{{item.prix_unitaire|floatformat:"0"}} DZD</td>
+                {% if order.super_gros and not order.gros %}
+                  <td>{{item.line_total_net|floatformat:2}} DZD</td>
+                 {% endif %}
+                <td>{{item.line_total_ttc|floatformat:2}} DZD</td>
               </tr>
               {%endfor%}
             </tbody>
+            <tfoot>
+              <tr class="text-center font-weight-bold">
+                <td colspan="3">Total</td>
+                {% if order.super_gros and not order.gros %}
+                  <td>{{order.valeur_net|floatformat:2}} DZD</td>
+                 {% endif %}                
+                <td>{{order.valeur_brute|floatformat:2}} DZD</td>
+              </tr>
+            </tfoot>
           </table>
           <br>
 
           <br>
           <p>
-            {{order.observation}}
+            {% if order.observation and order.observation != "undefined" %}
+              <p><strong>Observation:</strong> {{ order.observation }}</p>
+             {% endif %}
           </p>
 
         <!-- <div class="row font-weight-bold px-5 mx-5">

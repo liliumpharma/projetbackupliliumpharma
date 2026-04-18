@@ -1,6 +1,6 @@
 (function () {
   // ===== CONFIG =====
-  const TARGET_URL = "/orders/export/preview/";
+  const TARGET_URL = "/orders/statistics/";
   const ARIA_LABEL = "statistique des Commandes";
   // ==================
 

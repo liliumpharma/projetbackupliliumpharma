@@ -102,6 +102,10 @@ class family(models.TextChoices):
     lilium_Pharma = "lilium Pharma"
     lilium1 = "Lilium1"
     lilium2 = "Lilium2"
+    lilium3 = "Lilium3"
+    lilium1_2 = "Lilium1+2"
+    lilium1_2_3 = "Lilium1+2+3"
+    ALL_LINES = "ALL LINES"
     orient = "orient Bio"
     aniya_pharm = "Aniya_Pharm"
     production = "production"
@@ -638,6 +642,62 @@ class UserProfile(models.Model):
 # post_save.connect(create_profile, sender=User)
 
 
+class SectorCategory(models.TextChoices):
+    IN = "IN", "Inside"
+    SEMI = "SEMI", "Semi-Déplacement"
+    DEP = "DEP", "Déplacement"
+
+
+class UserSectorDetail(models.Model):
+    user_profile = models.ForeignKey(
+        UserProfile, on_delete=models.CASCADE, related_name="sector_details"
+    )
+    wilayas = models.ManyToManyField(
+        Wilaya, related_name="wilaya_sector_details", blank=True
+    )
+    communes = models.ManyToManyField(
+        'regions.Commune', blank=True, related_name='commune_sector_details',
+        help_text="Leave empty = entire wilaya. Select specific communes to restrict this sector.",
+    )
+    category = models.CharField(max_length=10, choices=SectorCategory.choices)
+
+    # Semi / Dep common fields
+    times = models.IntegerField(null=True, blank=True, help_text="Number of times per month")
+    value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    # Dep specific fields
+    days = models.IntegerField(null=True, blank=True, help_text="Working days")
+    nights = models.IntegerField(null=True, blank=True, help_text="Nights in hotel")
+    hotel_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    # Required visites
+    medical = models.IntegerField(null=True, blank=True, help_text="Visites Medical")
+    commercial = models.IntegerField(null=True, blank=True, help_text="Visites Commercial")
+
+    # Note field for SEMI and DEP
+    note = models.CharField(max_length=255, null=True, blank=True, help_text="Note pour le secteur")
+    class MonthFrequency(models.TextChoices):
+        ALL = "ALL", "Tous les mois"
+        EVEN = "EVEN", "Mois pairs"
+        ODD = "ODD", "Mois impairs"
+
+    month_frequency = models.CharField(
+        max_length=4,
+        choices=MonthFrequency.choices,
+        default=MonthFrequency.ALL,
+        help_text="Fréquence d'activité de ce secteur",
+    )
+
+    class Meta:
+        verbose_name = "Sector Detail"
+        verbose_name_plural = "Sector Details"
+
+    def __str__(self):
+        # Avoid querying M2M relations here — Django's error-display calls __str__
+        # during exception handling, causing infinite recursion if a DB query fails.
+        return f"SectorDetail #{self.pk} ({self.category}) — user_profile_id={self.user_profile_id}"
+
+
 class UserProduct(models.Model):
     user = models.ForeignKey(to=User, on_delete=models.CASCADE)
     product = models.ForeignKey(to=Produit, on_delete=models.CASCADE)
@@ -719,4 +779,3 @@ class PersonalInfo(models.Model):
 
     def __str__(self):
         return f"{self.nom} {self.prénom}'s Personal Info"
-

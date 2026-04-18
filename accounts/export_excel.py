@@ -141,3 +141,249 @@ class AllExportExcel(APIView):
 
         workbook.close()
         return response
+
+from django.shortcuts import render
+from datetime import datetime
+
+class ExportDepSemiExcel(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        def build_data(category_name, is_dep=False):
+            details = UserSectorDetail.objects.filter(category=category_name).select_related("user_profile", "user_profile__user").prefetch_related("wilayas", "communes", "communes__wilaya").order_by("user_profile__region", "user_profile__user__username")
+            
+            from collections import defaultdict
+            grouped = defaultdict(list)
+            for d in details:
+                grouped[d.user_profile].append(d)
+
+            data_list = []
+            for profile, user_details in grouped.items():
+                username = profile.user.username if profile.user else ""
+                region = profile.get_region_display() if profile.region else ""
+                speciality = profile.speciality_rolee
+                
+                objectif = ""
+                if profile.rolee == "Superviseur":
+                    has_medico = False
+                    for u in profile.usersunder.all():
+                        if hasattr(u, "userprofile") and u.userprofile.speciality_rolee == "Medico_commercial":
+                            has_medico = True
+                            break
+                    if has_medico:
+                        objectif = "12 Medical + 4 Commercial"
+                    else:
+                        objectif = "14 Commercial"
+                elif speciality == "Medico_commercial":
+                    objectif = "12 Medical + 4 Commercial"
+                elif speciality == "Commercial":
+                    objectif = "14 Commercial"
+
+                sectors_list = []
+                for d in user_details:
+                    sector_wilayas = d.wilayas.all()
+                    sector_communes = d.communes.all()
+
+                    if sector_communes:
+                        # Show wilaya / commune for each commune
+                        sector_name = ", ".join(
+                            f"{c.wilaya.nom} / {c.nom}" for c in sector_communes
+                        )
+                    else:
+                        sector_name = ", ".join(w.nom for w in sector_wilayas) or ""
+
+                    month_freq = d.month_frequency if d.month_frequency in ("ODD", "EVEN") else ""
+
+                    portfolio_qs = list(Medecin.objects.filter(users=profile.user, wilaya__in=sector_wilayas).values('specialite').annotate(count=Count('id')))
+                    commercial_count = sum(item['count'] for item in portfolio_qs if item['specialite'] in ["Pharmacie", "Grossiste", "SuperGros"])
+                    medical_count = sum(item['count'] for item in portfolio_qs if item['specialite'] not in ["Pharmacie", "Grossiste", "SuperGros"])
+                    
+                    portfolio_detail = ", ".join(f"{item['count']} {item['specialite']}" for item in portfolio_qs)
+
+                    times = d.times or 0
+                    base_val = float(d.value or 0)
+
+                    sector_info = {
+                        "name": sector_name,
+                        "month_freq": month_freq,
+                        "portfolio_medical": medical_count,
+                        "portfolio_commercial": commercial_count,
+                        "portfolio_detail": portfolio_detail,
+                        "times": times,
+                        "prime": base_val,
+                        "note": d.note or "",
+                    }
+
+                    if is_dep:
+                        days = d.days or 0
+                        nights = d.nights or 0
+                        hotel_cost = float(d.hotel_cost or 0)
+                        total_dep = base_val + hotel_cost
+                        total_mensuel = total_dep * float(times)
+                        
+                        sector_info.update({
+                            "days": days,
+                            "nights": nights,
+                            "hotel_cost": hotel_cost,
+                            "total_dep": total_dep,
+                            "total_mensuel": total_mensuel
+                        })
+                    else:
+                        total_dep = base_val
+                        total_mensuel = total_dep * float(times)
+                        
+                        sector_info.update({
+                            "total_dep": total_dep,
+                            "total_mensuel": total_mensuel
+                        })
+                    
+                    sectors_list.append(sector_info)
+
+                data_list.append({
+                    "rowspan": len(user_details),
+                    "username": username,
+                    "region": region,
+                    "speciality": speciality,
+                    "family": profile.family,
+                    "objectif": objectif,
+                    "sectors": sectors_list
+                })
+            return data_list
+
+        def group_by_region(data_list):
+            from itertools import groupby as _groupby
+            regions = []
+            grand_total = 0.0
+            user_counter = 0
+            for region_name, users_iter in _groupby(data_list, key=lambda x: x["region"]):
+                users = list(users_iter)
+                region_rowspan = sum(u["rowspan"] for u in users)
+                region_total = sum(
+                    sector["total_mensuel"] for u in users for sector in u["sectors"]
+                )
+                grand_total += region_total
+                for u in users:
+                    user_counter += 1
+                    u["user_num"] = user_counter
+                regions.append({
+                    "name": region_name,
+                    "total": region_total,
+                    "rowspan": region_rowspan,
+                    "users": users,
+                })
+            return {"regions": regions, "grand_total": grand_total}
+
+        # ── 1. ADD THIS NEW FUNCTION HERE ──
+        def build_high_cost_data():
+            current_month = datetime.now().month
+            is_even_month = (current_month % 2 == 0)
+
+            high_cost_users = []
+            
+            # Fetch users and prefetch to avoid N+1 query performance issues
+            users = UserProfile.objects.prefetch_related(
+                'user', 
+                'sector_details', 
+                'sector_details__wilayas', 
+                'sector_details__communes'
+            ).all()
+
+            for profile in users:
+                semi_sectors = []
+                dep_sectors = []
+                total_semi = 0.0
+                total_dep = 0.0
+
+                for sector in profile.sector_details.all():
+                    # Format wilayas and communes
+                    wilayas_list = [w.nom for w in sector.wilayas.all()]
+                    wilaya_str = ", ".join(wilayas_list) if wilayas_list else "-"
+
+                    communes_list = [c.nom for c in sector.communes.all()]
+                    commune_str = ", ".join(communes_list) if communes_list else "-"
+
+                    # Safely fetch numeric values
+                    times = float(sector.times or 0)
+                    prime = float(sector.value or 0)
+                    hotel_cost = float(sector.hotel_cost or 0)
+                    days = sector.days or '-'
+                    nights = sector.nights or '-'
+
+                    if sector.category == "DEP":
+                        freq = sector.month_frequency
+                        sector_total = (prime + hotel_cost) * times
+                        
+                        # Zero out if frequency doesn't match the current month
+                        if (freq == "EVEN" and not is_even_month) or (freq == "ODD" and is_even_month):
+                            sector_total = 0.0
+
+                        dep_sectors.append({
+                            'wilaya': wilaya_str,
+                            'commune': commune_str,
+                            'times': int(times),
+                            'days': days,
+                            'nights': nights,
+                            'hotel_cost': hotel_cost,
+                            'prime': prime,
+                            'total_mensuel': sector_total,
+                            'freq': freq
+                        })
+                        total_dep += sector_total
+
+                    elif sector.category == "SEMI":
+                        sector_total = prime * times
+                        semi_sectors.append({
+                            'wilaya': wilaya_str,
+                            'commune': commune_str,
+                            'times': int(times),
+                            'days': '-',
+                            'nights': '-',
+                            'hotel_cost': '-',
+                            'prime': prime,
+                            'total_mensuel': sector_total,
+                        })
+                        total_semi += sector_total
+
+                grand_total = total_semi + total_dep
+
+                # ── 2. FILTER: ONLY KEEP IF > 50,000 DA ──
+                if grand_total > 50000.0:
+                    # Add empty rows to keep the HTML rowspan formatting intact if a user has one type but not the other
+                    if not semi_sectors:
+                        semi_sectors.append({'is_empty': True})
+                    if not dep_sectors:
+                        dep_sectors.append({'is_empty': True})
+                        
+                    semi_count = len(semi_sectors)
+                    dep_count = len(dep_sectors)
+                    total_rows = semi_count + dep_count
+
+                    high_cost_users.append({
+                        'username': profile.user.username if profile.user else "",
+                        'region': profile.get_region_display() if profile.region else "",
+                        'semi_sectors': semi_sectors,
+                        'dep_sectors': dep_sectors,
+                        'total_semi': total_semi,
+                        'total_dep': total_dep,
+                        'grand_total': grand_total,
+                        'total_rows': total_rows,
+                        'semi_count': semi_count,
+                        'dep_count': dep_count
+                    })
+
+            return high_cost_users
+
+        # ── 3. CALL YOUR FUNCTIONS ──
+        semi_data = group_by_region(build_data("SEMI", is_dep=False))
+        dep_data = group_by_region(build_data("DEP", is_dep=True))
+        high_cost_data = build_high_cost_data() # Call the new function
+
+        # ── 4. UPDATE THE CONTEXT DICTIONARY ──
+        context = {
+            "semi_data": semi_data,
+            "dep_data": dep_data,
+            "high_cost_users": high_cost_data, # Pass it to the template here
+            "title": "Visualisation DEP/SEMI"
+        }
+        return render(request, "admin/accounts/userprofile/view_dep_semi.html", context)

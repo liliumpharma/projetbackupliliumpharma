@@ -1880,6 +1880,37 @@ def PlanPDF(request):
                     "pharmacies": pharmacie_count,
                 }
 
+    # Build plan → sector category mapping (SEMI / DEP) for PDF colour coding
+    from accounts.models import UserSectorDetail, SectorCategory
+
+    user_sectors = (
+        UserSectorDetail.objects
+        .filter(user_profile__user=user)
+        .exclude(category=SectorCategory.IN)
+        .prefetch_related('communes', 'wilayas')
+    )
+
+    commune_sector_map = {}   # commune_id  -> category
+    wilaya_sector_map  = {}   # wilaya_id   -> category
+    for sec in user_sectors:
+        specific_commune_ids = list(sec.communes.values_list('id', flat=True))
+        if specific_commune_ids:
+            for cid in specific_commune_ids:
+                commune_sector_map[cid] = sec.category
+        else:
+            for wid in sec.wilayas.values_list('id', flat=True):
+                wilaya_sector_map[wid] = sec.category
+
+    plan_to_sector = {}
+    for p in plans:
+        for commune in p.communes.select_related('wilaya').all():
+            cat = commune_sector_map.get(commune.id)
+            if not cat:
+                cat = wilaya_sector_map.get(commune.wilaya_id)
+            if cat:
+                plan_to_sector[p.id] = cat
+                break
+
     # Regrouper les plans par tranche de 5
     plans = [plans[i : i + 5] for i in range(0, len(plans), 5)]
     all_plans.append(plans)
@@ -1892,10 +1923,9 @@ def PlanPDF(request):
             "user": usern,
             "from_to": from_to,
             "periode": today,
-            "non_visite_communes": non_visite_communes,  # Retourne uniquement les communes non visitées avec les comptes
-            "visited_commune_medecin_count": dict(
-                visited_commune_medecin_count
-            ),  # Nombre de médecins par commune visitée
+            "non_visite_communes": non_visite_communes,
+            "visited_commune_medecin_count": dict(visited_commune_medecin_count),
+            "plan_to_sector": plan_to_sector,
         },
     )
 

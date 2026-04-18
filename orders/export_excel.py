@@ -648,6 +648,18 @@ class OrdersExportExcel(APIView):
             resolved_users = self._resolve_requested_users(request)
             if resolved_users:
                 filters["user__username__in"] = resolved_users
+        elif request.GET.get("user_region"):
+            # No specific user selected — scope to all active users in the chosen region
+            from accounts.models import UserProfile as _UP
+            region_usernames = list(
+                _UP.objects.filter(
+                    region=request.GET.get("user_region"),
+                    is_human=True,
+                    user__is_active=True,
+                ).values_list("user__username", flat=True)
+            )
+            if region_usernames:
+                filters["user__username__in"] = region_usernames
 
         if request.GET.get("source"):
             sources = {"Pharmacie": "pharmacy__isnull", "Gros": "gros__isnull", "Supergros": "super_gros__isnull"}
@@ -714,15 +726,11 @@ class OrdersExportExcel(APIView):
             orders = orders
 
         if spec in ["Superviseur_national"]:
-            from django.contrib.auth import get_user_model
-            UserModel = get_user_model()
-            users = UserModel.objects.filter(userprofile__work_as_commercial=True)
             orders = orders.filter(
                 Q(user=request.user)
-                | Q(user__in=users)
                 | Q(touser=request.user)
-                | Q(touser__in=users)
                 | Q(user__in=up.usersunder.all())
+                | Q(touser__in=up.usersunder.all())
                 | Q(user__username__in=["MeriemDZ", "ibtissemdz"])
             ).distinct()
 
@@ -1455,6 +1463,17 @@ class OrdersPreviewAPI(OrdersExportExcel):
         ).distinct()
         orders_all = list(orders_qs)
 
+        # Exclude OFFICE-type orders (super_gros only, no pharmacy/gros — direct company
+        # orders where the fournisseur would be "Office - Lilium") AND orders whose
+        # super_gros is "LILIUM PHARMA ALG".  These must not appear in the sommaire table
+        # nor affect any chart or aggregate.
+        _EXCLUDED_SUPERGROS = {"LILIUM PHARMA ALG"}
+        orders_all = [
+            o for o in orders_all
+            if self._order_type(o) != "OFFICE"
+            and getattr(getattr(o, "super_gros", None), "name", None) not in _EXCLUDED_SUPERGROS
+        ]
+
         # 2. Extract Data (similar to your Excel logic)
         items_qs = OrderItem.objects.filter(order__in=orders_all).select_related("produit")
         items_by_order = defaultdict(list)
@@ -1580,10 +1599,28 @@ class OrdersPreviewAPI(OrdersExportExcel):
         day_labels = [d.strftime("%d/%m") for d in working_days]
         day_label_set = set(day_labels)
 
+        def get_effective_working_date(dt):
+            d = dt.date() if hasattr(dt, 'date') else dt
+            wd = d.weekday()
+            if wd not in (4, 5):
+                return d
+            if wd == 4:  # Friday
+                next_sun = d + timedelta(days=2)
+                prev_thu = d - timedelta(days=1)
+            else:        # Saturday
+                next_sun = d + timedelta(days=1)
+                prev_thu = d - timedelta(days=2)
+            
+            if next_sun.month == d.month:
+                return next_sun
+            else:
+                return prev_thu
+
         for o in orders_all:
             oid = o.id
             t = order_type_map.get(oid)
-            ds = o.added.strftime("%d/%m")
+            eff_date = get_effective_working_date(o.added)
+            ds = eff_date.strftime("%d/%m")
             if ds not in day_label_set:
                 continue
             qty = order_total_qty.get(oid, 0)
@@ -1661,12 +1698,13 @@ class OrdersPreviewAPI(OrdersExportExcel):
             "missing_products": missing_products,
             "filters": {
                 "Utilisateur(s)": request.GET.get("user") or "Tous",
+                **( {"Région": request.GET.get("user_region")} if request.GET.get("user_region") and not request.GET.get("user") else {} ),
                 "Du (min_date)": eff_min.strftime("%Y-%m-%d"),
                 "Au (max_date)": eff_max.strftime("%Y-%m-%d"),
                 "Nombre de commandes": len(orders_all),
             },
             "totaux_type": {
-                "headers": ["Type"] + product_headers_unique + ["Totale", "Valeur total"],
+                "headers": ["Type"] + product_headers_unique + ["Total", "Valeur total"],
                 "rows": []
             },
             "sommaire": {

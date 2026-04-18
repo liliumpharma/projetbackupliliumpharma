@@ -277,3 +277,151 @@ def notify_on_create(sender, instance, **kwargs):
     )
     # notification.send()
 
+
+from django.db.models import Sum
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+
+
+# We listen for both saves (updates/creates) and deletes
+@receiver(post_save, sender=UserTargetMonthProduct)
+@receiver(post_delete, sender=UserTargetMonthProduct)
+def auto_fill_supervisor_targets(sender, instance, **kwargs):
+    # Import UserProfile here to avoid circular import issues
+    from accounts.models import UserProfile
+
+    # 1. Identify the user whose target was just saved/deleted
+    try:
+        profile = instance.usermonth.user.userprofile
+    except UserProfile.DoesNotExist:
+        return
+
+    role = profile.speciality_rolee
+
+    # 2. INFINITE LOOP PROTECTION: Only run if a Délégué's target is changed.
+    if role not in ["Commercial", "Medico_commercial"]:
+        return
+
+    target_date = instance.usermonth.date
+    product = instance.product
+    region = getattr(profile, "region", None)
+
+    # =================================================================
+    # PART A: UPDATE LOCAL SUPERVISORS (Based on Region)
+    # =================================================================
+    if region:
+        # Sum of all 'Commercial' users in this specific region
+        commercial_sum = (
+            UserTargetMonthProduct.objects.filter(
+                usermonth__date__year=target_date.year,
+                usermonth__date__month=target_date.month,
+                product=product,
+                usermonth__user__userprofile__region=region,
+                usermonth__user__userprofile__speciality_rolee="Commercial",
+            ).aggregate(total=Sum("quantity"))["total"]
+            or 0
+        )
+
+        # Sum of all 'Medico_commercial' users in this specific region
+        medico_sum = (
+            UserTargetMonthProduct.objects.filter(
+                usermonth__date__year=target_date.year,
+                usermonth__date__month=target_date.month,
+                product=product,
+                usermonth__user__userprofile__region=region,
+                usermonth__user__userprofile__speciality_rolee="Medico_commercial",
+            ).aggregate(total=Sum("quantity"))["total"]
+            or 0
+        )
+
+        # Find all Supervisors in the SAME region
+        supervisors_in_region = UserProfile.objects.filter(
+            region=region,
+            speciality_rolee__in=[
+                "Superviseur_national",
+                "Superviseur_regional",
+                "Superviseur",
+            ],
+        )
+
+        for sup in supervisors_in_region:
+            sup_role = sup.speciality_rolee
+            work_as_com = getattr(sup, "work_as_commercial", False)
+
+            target_to_assign = None
+
+            # Rule: Any supervisor working as commercial gets the Commercial Sum
+            if work_as_com:
+                target_to_assign = commercial_sum
+
+            # Rule: Superviseur_national (and regional) NOT working as commercial get Medico Sum
+            elif not work_as_com and sup_role in [
+                "Superviseur_national",
+                "Superviseur_regional",
+            ]:
+                target_to_assign = medico_sum
+
+            # Overwrite / Create the Supervisor's Target
+            if target_to_assign is not None:
+                sup_usermonth, _ = UserTargetMonth.objects.get_or_create(
+                    user=sup.user, date=target_date
+                )
+                sup_target_product, tp_created = (
+                    UserTargetMonthProduct.objects.get_or_create(
+                        usermonth=sup_usermonth,
+                        product=product,
+                        defaults={"quantity": target_to_assign},
+                    )
+                )
+                if not tp_created:
+                    sup_target_product.quantity = target_to_assign
+                    sup_target_product.save()
+
+    # =================================================================
+    # PART B: UPDATE COUNTRY MANAGER (Medical All + Commercial Special)
+    # =================================================================
+
+    # 1. The CountryManager ALWAYS gets the sum of Medico_commercials
+    medico_global_sum = (
+        UserTargetMonthProduct.objects.filter(
+            usermonth__date__year=target_date.year,
+            usermonth__date__month=target_date.month,
+            product=product,
+            usermonth__user__userprofile__speciality_rolee="Medico_commercial",
+        ).aggregate(total=Sum("quantity"))["total"]
+        or 0
+    )
+
+    # 2. They ONLY get the Commercial sum if the product is one of the Special 4
+    special_products = ["ADVAGEN", "HAIRVOL", "GOLD MAG", "SLEEP ALAISE"]
+    commercial_global_sum = 0
+
+    if product.nom.upper() in special_products:
+        commercial_global_sum = (
+            UserTargetMonthProduct.objects.filter(
+                usermonth__date__year=target_date.year,
+                usermonth__date__month=target_date.month,
+                product=product,
+                usermonth__user__userprofile__speciality_rolee="Commercial",
+            ).aggregate(total=Sum("quantity"))["total"]
+            or 0
+        )
+
+    # 3. Combine them for the final CountryManager target
+    global_delegues_sum = medico_global_sum + commercial_global_sum
+
+    # Find the CountryManager(s) and overwrite their target
+    country_managers = UserProfile.objects.filter(speciality_rolee="CountryManager")
+
+    for cm in country_managers:
+        cm_usermonth, _ = UserTargetMonth.objects.get_or_create(
+            user=cm.user, date=target_date
+        )
+        cm_target_product, cm_created = UserTargetMonthProduct.objects.get_or_create(
+            usermonth=cm_usermonth,
+            product=product,
+            defaults={"quantity": global_delegues_sum},
+        )
+        if not cm_created:
+            cm_target_product.quantity = global_delegues_sum
+            cm_target_product.save()

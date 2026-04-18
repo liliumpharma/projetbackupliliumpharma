@@ -56,6 +56,18 @@
     .no-visits {
         font-size: 0.9em;
     }
+
+    .sector-semi th.sector-header,
+    .sector-semi td.sector-region {
+        background-color: #ffc107 !important;
+        color: #212529 !important;
+    }
+
+    .sector-dep th.sector-header,
+    .sector-dep td.sector-region {
+        background-color: #dc3545 !important;
+        color: white !important;
+    }
   </style>
 
   {% for plans in all_plans %}
@@ -102,19 +114,26 @@
           <thead>
               <tr>
                   {% for single in plan %}
-                      <th class="text-left">{{ single.get_date }}</th>
+                      {% with cat=plan_to_sector|get_item:single.id %}
+                      <th class="text-left sector-header{% if cat == 'SEMI' %} sector-semi-header{% elif cat == 'DEP' %} sector-dep-header{% endif %}"
+                          {% if cat == 'SEMI' %}style="background-color:#ffc107;color:#212529;"{% elif cat == 'DEP' %}style="background-color:#dc3545;color:white;"{% endif %}>
+                          {{ single.get_date }}
+                      </th>
+                      {% endwith %}
                   {% endfor %}
               </tr>
           </thead>
           <tbody>
               <tr>
                   {% for single in plan %}
-                      <td>
+                      {% with cat=plan_to_sector|get_item:single.id %}
+                      <td {% if cat == 'SEMI' %}style="background-color:#ffc107;color:#212529;"{% elif cat == 'DEP' %}style="background-color:#dc3545;color:white;"{% endif %}>
                           <small><b>Régions:</b></small><br/>
                           {% for commune in single.communes.all %}
                           <small>{{ commune }} <b style="color: red;">({{ single.clients.count }})</b> sur ({{ visited_commune_medecin_count|get_item:commune }})</small><br/>
                           {% endfor %}
                       </td>
+                      {% endwith %}
                   {% endfor %}
               </tr>
               <tr>

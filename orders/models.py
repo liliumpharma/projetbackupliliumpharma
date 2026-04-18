@@ -44,19 +44,7 @@ class Order(models.Model):
 
     @property
     def valeur_brute(self):
-        """Applique les multiplicateurs selon le type de client sélectionné."""
-        net = self.valeur_net
-        # 1. Si une Pharmacie est sélectionnée
-        if self.pharmacy:
-            return net * 1.19 * 1.15 * 1.1
-        # 2. Si un Super Grossiste ET un Grossiste sont sélectionnés
-        elif self.super_gros and self.gros:
-            return net * 1.19 * 1.15
-        # 3. Si uniquement un Super Grossiste est sélectionné
-        elif self.super_gros:
-            return net * 1.19
-        # Par défaut (si rien n'est sélectionné ou autre cas)
-        return net
+        return sum(item.line_total_ttc for item in self.orderitem_set.all())
     # ---------------------------
 
     def save(self, *args, **kwargs):
@@ -80,6 +68,33 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.produit.nom}--{self.qtt}"
+        
+    @property
+    def prix_unitaire(self):
+        import decimal
+        base_price = float(self.produit.price)
+        
+        def normal_round(n):
+            return float(decimal.Decimal(str(n)).quantize(decimal.Decimal('1'), rounding=decimal.ROUND_HALF_UP))
+            
+        # 1. Si une Pharmacie est sélectionnée
+        if self.order.pharmacy:
+            return normal_round(base_price * 1.19) * 1.15 * 1.1
+        # 2. Si un Super Grossiste ET un Grossiste sont sélectionnés
+        elif self.order.super_gros and self.order.gros:
+            return normal_round(base_price * 1.19) * 1.15
+        # 3. Si uniquement un Super Grossiste est sélectionné
+        elif self.order.super_gros:
+            return normal_round(base_price * 1.19)
+        return base_price
+
+    @property
+    def line_total_net(self):
+        return self.produit.price * self.qtt
+        
+    @property
+    def line_total_ttc(self):
+        return self.prix_unitaire * self.qtt
 
 
 class ExitOrder(models.Model):
