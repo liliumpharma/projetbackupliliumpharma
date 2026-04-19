@@ -56,6 +56,17 @@ class ProductFamily(models.TextChoices):
     lilium_Pharma = 'lilium pharma'
     orient_bio = 'orient bio'
     aniya_pharm = 'aniya pharma'
+    lilium1 = "Lilium1"
+    lilium2 = "Lilium2"
+    lilium3 = "Lilium3"
+    lilium1_2 = "Lilium1+2"
+    lilium1_2_3 = "Lilium1+2+3"
+
+class LineChoices(models.TextChoices):
+    L1 = "L1", "L1"
+    L2 = "L2", "L2"
+    L3 = "L3", "L3"
+    COM = "COM", "COM"
 
 class ProducerFamily(models.TextChoices):
     lilium_Pharma = 'lilium pharma'
@@ -84,6 +95,13 @@ class Produit(models.Model):
     pdf_2 = models.FileField(upload_to="products", max_length=255, null=True, blank=True)
     image=models.ImageField(null=True,blank=True)
 
+    line = models.CharField(
+        max_length=10,
+        choices=LineChoices.choices,
+        null=True,
+        blank=True,
+        verbose_name="Line",
+    )
 
     
     class Meta:

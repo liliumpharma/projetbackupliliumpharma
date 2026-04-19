@@ -10,7 +10,7 @@ from django.http import HttpResponseRedirect
 @admin.register(Monthly_Evaluation)
 class Monthly_Evaluation(admin.ModelAdmin):
     list_display=['id',"user",'added_date',"sup_evaluation","user_sup_evaluation","_print"]
-    list_filter = ['added', "user", "user__userprofile__family","sup_evaluation","user_sup_evaluation"]
+    list_filter = ['added', "user", "user__userprofile__lines","sup_evaluation","user_sup_evaluation"]
     date_hierarchy = 'added'
 
 
@@ -36,7 +36,7 @@ class Monthly_Evaluation(admin.ModelAdmin):
 @admin.register(SupEvaluation)
 class SupEvaluation(admin.ModelAdmin):
     list_display=['added_date',"user",]
-    list_filter = ['added', "user", "user__userprofile__family"]
+    list_filter = ['added', "user", "user__userprofile__lines"]
     date_hierarchy = 'added'
 
 

@@ -505,14 +505,17 @@ def duplicate_for_next_month(modeladmin, request, queryset):
 @admin.register(UserTargetMonth)
 class UserTargetMonthAdmin(admin.ModelAdmin):
     inlines = (UserTargetMonthProductInLine,)
-    list_filter = ["user", "user__userprofile__family", "user__userprofile__region", "user__userprofile__speciality_rolee"]
+    list_filter = ["user", "user__userprofile__lines", "user__userprofile__region", "user__userprofile__speciality_rolee"]
     list_display = [
         "user",
         "role",
         "mois",
-        *[p.nom.replace(" ", "_") for p in Produit.objects.all()],
         "print_button",
     ]
+
+    def get_list_display(self, request):
+        product_fields = [p.nom.replace(" ", "_") for p in Produit.objects.all()]
+        return ["user", "role", "mois", *product_fields, "print_button"]
     date_hierarchy = "date"
     actions = [duplicate_for_next_month]
 
@@ -644,3 +647,160 @@ class SourceAdmin(admin.ModelAdmin):
         "excel_file",
         "date",
     ]
+
+
+from django.contrib import admin
+from django.urls import path
+from django.shortcuts import redirect
+from django.contrib import messages
+from .models import BISnapshot, OrderSource
+from clients.api.functions import get_visualisation_data, get_target_all_users
+
+@admin.register(BISnapshot)
+class BISnapshotAdmin(admin.ModelAdmin):
+    list_display = ('year', 'month', 'user_name', 'wilaya', 'product_name', 'qty', 'value')
+    list_filter = ('year', 'month', 'role', 'region')
+    change_list_template = "admin/clients/bisnapshot_changelist.html"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path('refresh-bi-data/', self.admin_site.admin_view(self.refresh_bi_data), name='refresh_bi_data'),
+        ]
+        return custom_urls + urls
+
+    def refresh_bi_data(self, request):
+        """
+        Smart Delta Update : Ne recalcule et ne remplace que les 3 DERNIERS MOIS COMPLETS.
+        (Exclut le mois en cours).
+        """
+        import datetime
+        from dateutil.relativedelta import relativedelta
+        from django.db.models import Q
+
+        # 1. Définir la fenêtre temporelle dynamique (M-1, M-2, M-3)
+        today = datetime.date.today()
+        target_dates = [
+            today - relativedelta(months=1), # Le mois dernier
+            today - relativedelta(months=2), # Il y a 2 mois
+            today - relativedelta(months=3)  # Il y a 3 mois
+        ]
+        
+        # Créer une liste de tuples (année, mois)
+        periods_to_process = [(d.year, d.month) for d in target_dates]
+
+        # Construire une requête OR pour cibler exactement ces 3 mois
+        query = Q()
+        for y, m in periods_to_process:
+            query |= Q(year=y, month=m)
+
+        # 2. Supprimer UNIQUEMENT les anciennes données de ces 3 mois spécifiques
+        BISnapshot.objects.filter(query).delete()
+        DashboardSnapshot.objects.filter(query).delete()
+        SupergrosSalesSnapshot.objects.filter(query).delete()
+
+        total_created = 0
+
+        # 3. Boucler uniquement sur ces 3 mois pour générer les nouvelles données
+        for y, m in periods_to_process:
+            # S'il n'y a pas du tout de données de vente pour ce mois, on passe
+            if not OrderSource.objects.filter(date__year=y, date__month=m).exists():
+                continue
+                
+            monthly_params = {'years': [y], 'months': [m]}
+            
+            # ── 3A. CALCULATE & SAVE BI SNAPSHOTS ──
+            monthly_data = get_visualisation_data(monthly_params, request_user=None).get("raw_data", [])
+            
+            snapshots = [
+                BISnapshot(
+                    year=y, month=m,
+                    user_id=row['user_id'], user_name=row['user_name'],
+                    role=row['role'], lines=row.get('lines', ''),
+                    sector_category=row.get('sector', 'IN'), region=row['region'],
+                    wilaya=row['wilaya'], supergros_name=row['supergros_name'],
+                    product_id=row['product_id'], product_name=row['product_name'],
+                    qty=row['qty'], value=row['value']
+                ) for row in monthly_data
+            ]
+            BISnapshot.objects.bulk_create(snapshots)
+            total_created += len(snapshots)
+
+            # ── 3B. CALCULATE & SAVE DASHBOARD SNAPSHOTS ──
+            dash_data = get_target_all_users(years=[y], months=[m])
+            dash_snapshots_to_create = []
+            
+            for user_row in dash_data:
+                uid = user_row.get("user_id")
+                uname = user_row.get("user")
+                role = user_row.get("role")
+                lines_val = user_row.get('lines', '')
+                region = user_row.get("region")
+                wac = user_row.get("work_as_commercial", False)
+                pb = user_row.get("product_breakdown", [])
+                sector_val = user_row.get('sector', 'IN')
+
+                if pb:
+                    for prod in pb:
+                        dash_snapshots_to_create.append(
+                            DashboardSnapshot(
+                                year=y, month=m,
+                                user_id=uid, user_name=uname,
+                                role=role, lines=lines_val,
+                                sector_category=sector_val,
+                                region=region, work_as_commercial=wac,
+                                product_id=prod.get("product_id") or 0,
+                                product_name=prod.get("product_name") or "Inconnu",
+                                target_value=prod.get("target_value", 0.0),
+                                achieved_value=prod.get("achieved_value", 0.0)
+                            )
+                        )
+                else:
+                    dash_snapshots_to_create.append(
+                        DashboardSnapshot(
+                            year=y, month=m, user_id=uid, user_name=uname,
+                            role=role, lines=lines_val, sector_category=sector_val,
+                            region=region, work_as_commercial=wac,
+                            product_id=0, product_name="Aucun",
+                            target_value=0.0, achieved_value=0.0
+                        )
+                    )
+            DashboardSnapshot.objects.bulk_create(dash_snapshots_to_create)
+
+            # ── 3C. CALCULATE & SAVE SUPERGROS SNAPSHOTS ──
+            sales_snapshots_to_create = []
+            from produits.models import Produit as ProduitModel
+            from django.db.models import Sum as DSum
+            
+            prod_map = {p.id: getattr(p, 'line', 'N/A') for p in ProduitModel.objects.all()}
+
+            ops = OrderProduct.objects.filter(
+                order__source__date__year=y,
+                order__source__date__month=m
+            ).values(
+                'order__client__wilaya__nom',
+                'order__source__source__name',
+                'produit__id',
+                'produit__nom',
+                'produit__price'
+            ).annotate(total_qtt=DSum('qtt'))
+
+            for op in ops:
+                pid = op['produit__id']
+                qty = op['total_qtt']
+                if not qty:
+                    continue
+                sales_snapshots_to_create.append(
+                    SupergrosSalesSnapshot(
+                        year=y, month=m,
+                        wilaya=op['order__client__wilaya__nom'] or 'Inconnue',
+                        supergros_name=op['order__source__source__name'] or 'Inconnu',
+                        product_id=pid, product_name=op['produit__nom'],
+                        lines=prod_map.get(pid, 'N/A'),
+                        qty=qty, value=round(qty * (op['produit__price'] or 0), 2)
+                    )
+                )
+            SupergrosSalesSnapshot.objects.bulk_create(sales_snapshots_to_create)
+
+        messages.success(request, f"⚡ Succès ! Les données BI des 3 derniers mois ont été actualisées très rapidement ({total_created} lignes BI). Vos données historiques sont préservées.")
+        return redirect('admin:clients_bisnapshot_changelist')

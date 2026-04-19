@@ -6,13 +6,17 @@
     <title>Dashboard Cibles - Desktop</title>
     <style>
         :root {
-            --bg-color: #111;
-            --card-bg: #1a1a1a;
-            --text-main: #fff;
-            --text-muted: #aaa;
-            --accent: #007bff;
-            --accent-hover: #0056b3;
-            --border-color: #333;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --card-bg2: #fafafa;
+            --text-main: #333333;
+            --text-muted: #555555;
+            --accent: #1B5E20;
+            --accent-hover: #2E7D32;
+            --border-color: #e0e0e0;
+            --green: #28a745;
+            --teal: #17a2b8;
+            --gold: #ffc107;
         }
 
         body {
@@ -159,14 +163,14 @@
         }
 
         .user-card {
-            background-color: var(--card-bg);
+            background-color: #ffffff;
             border-radius: 8px;
             padding: 15px 20px;
             margin-bottom: 10px;
-            border: 1px solid transparent;
+            border: 1px solid #eef2f5;
             cursor: pointer;
             transition: all 0.2s ease;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
         }
 
         .user-card:hover {
@@ -176,18 +180,22 @@
         }
 
         .meriem-card {
-            border: 1px solid #ffd700; /* Gold border for the Boss */
-            background: linear-gradient(145deg, #1a1a1a, #2a2510);
+            border: 2px solid #ffc107; /* Gold border for the Boss */
+            background: linear-gradient(145deg, #fffdf5, #fff8dc);
             margin-bottom: 30px;
+            box-shadow: 0 4px 10px rgba(255, 193, 7, 0.15);
         }
 
         .value-target { font-weight: bold; }
         .value-achieved { color: #28a745; font-weight: bold; } /* Green */
         .badge-role {
-            background-color: #333;
-            padding: 4px 8px;
-            border-radius: 4px;
+            background-color: #e9ecef;
+            color: #495057;
+            border: 1px solid #ced4da;
+            padding: 4px 10px;
+            border-radius: 6px;
             font-size: 12px;
+            font-weight: bold;
             display: inline-block;
         }
 
@@ -215,15 +223,37 @@
             border-color: var(--accent);
         }
         .filter-select option {
-            background-color: #1a1a1a;
-            color: var(--text-main);
+            background-color: #fff;
+            color: #333;
         }
 
-        /* --- MONTH CHIP ROW --- */
-        .month-row {
-            justify-content: center;
-            margin-bottom: 0;
+        /* --- CUSTOM MULTI-SELECT --- */
+        .ms-wrapper { position: relative; min-width: 140px; }
+        .ms-display {
+            background-color: var(--bg-color); color: var(--text-main);
+            border: 1px solid var(--border-color); padding: 7px 12px;
+            border-radius: 6px; cursor: pointer; font-size: 14px;
+            display: flex; justify-content: space-between; align-items: center;
+            user-select: none;
         }
+        .ms-display:hover { border-color: var(--accent); }
+        .ms-dropdown {
+            display: none; position: absolute; top: 100%; left: 0; right: 0;
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 999; margin-top: 4px; padding: 8px; flex-direction: column; gap: 6px;
+        }
+        .ms-dropdown.show { display: flex; }
+        .ms-label {
+            display: flex; align-items: center; gap: 8px; cursor: pointer;
+            font-size: 13px; color: var(--text-main); padding: 4px 6px;
+            border-radius: 4px; transition: background 0.1s; margin:0;
+        }
+        .ms-label:hover { background: rgba(0, 123, 255, 0.1); }
+        .ms-checkbox { cursor: pointer; }
+
+        /* --- MONTH CHIP ROW --- */
+        month-row { justify-content: center; margin: 10px;}
 
         /* --- BILINGUAL GRID HEADERS --- */
         .header-ar {
@@ -261,7 +291,24 @@
     <h1>Dashboard des vente/target</h1>
 
     <div class="filter-section">
-        <!-- Top Row: all dropdown filters -->
+        <!-- Top Row: month chips -->
+        <div class="filter-row month-row">
+            <div class="filter-label" style="width:auto;">Mois</div>
+            <div class="chip month-chip" data-val="1">Jan</div>
+            <div class="chip month-chip" data-val="2">Fév</div>
+            <div class="chip month-chip" data-val="3">Mar</div>
+            <div class="chip month-chip" data-val="4">Avr</div>
+            <div class="chip month-chip" data-val="5">Mai</div>
+            <div class="chip month-chip" data-val="6">Juin</div>
+            <div class="chip month-chip" data-val="7">Juil</div>
+            <div class="chip month-chip" data-val="8">Aoû</div>
+            <div class="chip month-chip" data-val="9">Sep</div>
+            <div class="chip month-chip" data-val="10">Oct</div>
+            <div class="chip month-chip" data-val="11">Nov</div>
+            <div class="chip month-chip" data-val="12">Déc</div>
+        </div>
+
+        <!-- Bottom Row: all dropdown filters -->
         <div class="filter-row">
             <div class="filter-group">
                 <div class="filter-label">Année</div>
@@ -276,9 +323,34 @@
             </div>
 
             <div class="filter-group">
-                <div class="filter-label">Famille</div>
-                <select id="filter-family" class="filter-select">
+                <div class="filter-label">Ligne</div>
+
+                <select id="filter-line" multiple style="display: none;">
+                    <option value="L1">L1</option>
+                    <option value="L2">L2</option>
+                    <option value="L3">L3</option>
+                    <option value="COM">COM</option>
+                </select>
+
+                <div class="ms-wrapper" id="line-ms-wrapper">
+                    <div class="ms-display" id="line-ms-display">
+                        <span id="line-ms-text" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:90px;">Toutes</span>
+                        <span style="font-size: 10px; margin-left:8px;">▼</span>
+                    </div>
+                    <div class="ms-dropdown" id="line-ms-dropdown">
+                        <label class="ms-label"><input type="checkbox" value="L1" class="ms-checkbox line-cb"> L1</label>
+                        <label class="ms-label"><input type="checkbox" value="L2" class="ms-checkbox line-cb"> L2</label>
+                        <label class="ms-label"><input type="checkbox" value="L3" class="ms-checkbox line-cb"> L3</label>
+                        <label class="ms-label"><input type="checkbox" value="COM" class="ms-checkbox line-cb"> COM</label>
+                    </div>
+                </div>
+            </div>
+            <div class="filter-group">
+                <div class="filter-label">Secteur</div>
+                <select id="filter-sector" class="filter-select">
                     <option value="">Tous</option>
+                    <option value="SEMI">Semi-Déplacement (SEMI)</option>
+                    <option value="DEP">Déplacement (DEP)</option>
                 </select>
             </div>
 
@@ -294,8 +366,6 @@
                 <select id="filter-role" class="filter-select">
                     <option value="">Tous</option>
                     <option value="Superviseur_national">Superviseur national</option>
-                    <option value="Superviseur_regional">Superviseur régional</option>
-                    <option value="Superviseur">Superviseur</option>
                     <option value="Medico_commercial">Médico-commercial</option>
                     <option value="Commercial">Commercial</option>
                 </select>
@@ -315,31 +385,32 @@
                 <select id="filter-produit" class="filter-select">
                     <option value="">Tous les produits</option>
                     {% for p in produits %}
-                    <option value="{{ p.id }}">{{ p.nom }}</option>
+                    <option value="{{ p.id }}" data-line="{{ p.line|default:'' }}">{{ p.nom }}</option>
                     {% endfor %}
                 </select>
             </div>
         </div>
 
-        <!-- Bottom Row: month chips, centred -->
-        <div class="filter-row month-row">
-            <div class="filter-label" style="width:auto;">Mois</div>
-            <div class="chip month-chip" data-val="1">Jan</div>
-            <div class="chip month-chip" data-val="2">Fév</div>
-            <div class="chip month-chip" data-val="3">Mar</div>
-            <div class="chip month-chip" data-val="4">Avr</div>
-            <div class="chip month-chip" data-val="5">Mai</div>
-            <div class="chip month-chip" data-val="6">Juin</div>
-            <div class="chip month-chip" data-val="7">Juil</div>
-            <div class="chip month-chip" data-val="8">Aoû</div>
-            <div class="chip month-chip" data-val="9">Sep</div>
-            <div class="chip month-chip" data-val="10">Oct</div>
-            <div class="chip month-chip" data-val="11">Nov</div>
-            <div class="chip month-chip" data-val="12">Déc</div>
-        </div>
+
 
         <!-- Action Row: navigation button -->
-        <div class="filter-row" style="justify-content:flex-end; margin-bottom:0; margin-top:10px;">
+        <div class="filter-row" style="justify-content: center; gap: 15px; margin-bottom:0; margin-top:10px;">
+            <button id="btn-search" style="
+                background: #28a745;
+                color: #fff;
+                border: none;
+                padding: 9px 20px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: opacity 0.2s ease, transform 0.15s ease;
+                letter-spacing: 0.3px;
+                margin-right: 15px;
+            "
+            onmouseover="this.style.opacity='0.85';this.style.transform='translateY(-1px)';"
+            onmouseout="this.style.opacity='1';this.style.transform='translateY(0)';"
+            >🔍 Rechercher</button>
             <button id="btn-visualisation" style="
                 background: linear-gradient(135deg, #007bff, #0056b3);
                 color: #fff;
@@ -385,8 +456,8 @@
             <h3 style="color: var(--text-muted); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; margin-top: 40px;">Superviseurs</h3>
 
             <div id="subgroup-sup-med" class="subgroup-wrapper">
-                <div class="grid-layout" style="margin-bottom: 5px; font-size: 13px;">
-                    <div style="grid-column: 1 / 4;"><h4 style="color: var(--text-muted); padding-left: 10px; border-left: 3px solid #17a2b8; margin: 0;">Médical</h4></div>
+                <div class="grid-layout" style="margin-bottom: 5px; font-size: 13px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding-top: 12px; padding-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="grid-column: 1 / 4;"><h4 style="font-size: 16px; font-weight: bold; color: #333; padding-left: 10px; border-left: 3px solid #17a2b8; margin: 0;">Médical</h4></div>
                     <div class="value-target" id="obj-sup-med">0 DA</div>
                     <div class="value-achieved" id="rea-sup-med">0 DA</div>
                     <div><strong id="att-sup-med">0%</strong></div>
@@ -397,8 +468,8 @@
             </div>
 
             <div id="subgroup-sup-com" class="subgroup-wrapper">
-                <div class="grid-layout" style="margin-bottom: 5px; font-size: 13px;">
-                    <div style="grid-column: 1 / 4;"><h4 style="color: var(--text-muted); padding-left: 10px; border-left: 3px solid #28a745; margin: 0;">Commercial</h4></div>
+                <div class="grid-layout" style="margin-bottom: 5px; font-size: 13px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding-top: 12px; padding-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="grid-column: 1 / 4;"><h4 style="font-size: 16px; font-weight: bold; color: #333; padding-left: 10px; border-left: 3px solid #28a745; margin: 0;">Commercial</h4></div>
                     <div class="value-target" id="obj-sup-com">0 DA</div>
                     <div class="value-achieved" id="rea-sup-com">0 DA</div>
                     <div><strong id="att-sup-com">0%</strong></div>
@@ -414,8 +485,8 @@
             <h3 style="color: var(--text-muted); border-bottom: 1px solid var(--border-color); padding-bottom: 5px; margin-top: 40px;">Délégués</h3>
 
             <div id="subgroup-del-med" class="subgroup-wrapper">
-                <div class="grid-layout" style="margin-bottom: 5px; font-size: 13px;">
-                    <div style="grid-column: 1 / 4;"><h4 style="color: var(--text-muted); padding-left: 10px; border-left: 3px solid #17a2b8; margin: 0;">Médical</h4></div>
+                <div class="grid-layout" style="margin-bottom: 5px; font-size: 13px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding-top: 12px; padding-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="grid-column: 1 / 4;"><h4 style="font-size: 16px; font-weight: bold; color: #333; padding-left: 10px; border-left: 3px solid #17a2b8; margin: 0;">Médical</h4></div>
                     <div class="value-target" id="obj-del-med">0 DA</div>
                     <div class="value-achieved" id="rea-del-med">0 DA</div>
                     <div><strong id="att-del-med">0%</strong></div>
@@ -426,8 +497,8 @@
             </div>
 
             <div id="subgroup-del-com" class="subgroup-wrapper">
-                <div class="grid-layout" style="margin-bottom: 5px; font-size: 13px;">
-                    <div style="grid-column: 1 / 4;"><h4 style="color: var(--text-muted); padding-left: 10px; border-left: 3px solid #28a745; margin: 0;">Commercial</h4></div>
+                <div class="grid-layout" style="margin-bottom: 5px; font-size: 13px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding-top: 12px; padding-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="grid-column: 1 / 4;"><h4 style="font-size: 16px; font-weight: bold; color: #333; padding-left: 10px; border-left: 3px solid #28a745; margin: 0;">Commercial</h4></div>
                     <div class="value-target" id="obj-del-com">0 DA</div>
                     <div class="value-achieved" id="rea-del-com">0 DA</div>
                     <div><strong id="att-del-com">0%</strong></div>
@@ -478,17 +549,28 @@
                 selectedMonths = Array.from(
                     document.querySelectorAll('.month-chip.active')
                 ).map(c => c.dataset.val);
-                fetchDashboardData();
-                updateStickyOffset();
             });
         });
 
-        // ── Secondary filter listeners (no new API call – just re-filter) ────────
-        // filter-produit is now local too: it reads product_breakdown from allUsersData
-        ['filter-user', 'filter-family', 'filter-region', 'filter-role', 'filter-performance', 'filter-produit']
-            .forEach(id => {
-                document.getElementById(id).addEventListener('change', applyFilters);
-            });
+        // ── Search listener ──────────────────────────────────────────────────────
+        document.getElementById('btn-search').addEventListener('click', function() {
+            fetchDashboardData();
+            updateStickyOffset();
+        });
+
+        // ── Cascade filter listeners ──────────────────────────────────────────────
+        // filter-line changes are handled by .line-cb checkboxes in the custom multi-select IIFE
+        document.getElementById('filter-sector').addEventListener('change', function() {
+            applyCascadeLogic();
+            applyFilters();
+        });
+        document.getElementById('filter-region').addEventListener('change', function() {
+            applyCascadeLogic();
+            applyFilters();
+        });
+        ['filter-user', 'filter-role', 'filter-performance', 'filter-produit'].forEach(id => {
+            document.getElementById(id).addEventListener('change', applyFilters);
+        });
 
         // ── Helpers ─────────────────────────────────────────────────────────────
         function formatDA(number) {
@@ -527,10 +609,50 @@
                 if (values.includes(current)) sel.value = current;
             };
 
-            rebuild('filter-user',   users.map(u => u.name).filter(Boolean).sort()
-                                          .filter((v, i, a) => a.indexOf(v) === i));
-            rebuild('filter-family', uniqueVals('family'));
+            // Rebuild region from all available values; user list is managed by cascade
             rebuild('filter-region', uniqueVals('region'));
+            // Seed user list with all names — applyCascadeLogic will narrow it
+            rebuild('filter-user', users.map(u => u.name).filter(Boolean).sort()
+                                        .filter((v, i, a) => a.indexOf(v) === i));
+            // Apply cascade rules to filter user list, product options, and sector state
+            applyCascadeLogic();
+        }
+
+        // ── Cascade Filter Engine ─────────────────────────────────────────────────
+        function applyCascadeLogic() {
+            const fLines  = Array.from(document.getElementById('filter-line').selectedOptions).map(opt => opt.value);
+            const fSector = document.getElementById('filter-sector').value;
+            const fRegion = document.getElementById('filter-region').value;
+
+            // Rule 2: Show/hide Produit options whose data-line is included in selected Lignes
+            const produitSel   = document.getElementById('filter-produit');
+            const currentProd  = produitSel.value;
+            Array.from(produitSel.options).forEach(opt => {
+                if (!opt.value) return; // always keep "Tous les produits"
+                const optLine = opt.getAttribute('data-line') || '';
+                opt.style.display = (fLines.length === 0 || fLines.includes(optLine) || optLine === '') ? '' : 'none';
+            });
+            // If current selection is now hidden, reset it
+            const selProdOpt = produitSel.querySelector(`option[value="${currentProd}"]`);
+            if (selProdOpt && selProdOpt.style.display === 'none') produitSel.value = '';
+
+            // Rule 3: Rebuild #filter-user from allUsersData filtered by Lignes (AND), Secteur, Région
+            if (allUsersData.length === 0) return;
+            const userSel    = document.getElementById('filter-user');
+            const currentUser = userSel.value;
+            while (userSel.options.length > 1) userSel.remove(1);
+            const matchingUsers = allUsersData.filter(u => {
+                if (fLines.length > 0) {
+                    const userLines = u.lines ? u.lines.split(',') : [];
+                    if (!fLines.every(sel => userLines.includes(sel))) return false;
+                }
+                if (fSector && !u.sector.includes(fSector))  return false;
+                if (fRegion && u.region !== fRegion)         return false;
+                return true;
+            });
+            const uniqueNames = [...new Set(matchingUsers.map(u => u.name).filter(Boolean))].sort();
+            uniqueNames.forEach(name => userSel.add(new Option(name, name)));
+            if (uniqueNames.includes(currentUser)) userSel.value = currentUser;
         }
 
         // ── Apply all secondary filters against cached allUsersData ─────────────
@@ -538,7 +660,8 @@
             if (allUsersData.length === 0) return;
 
             const fUser    = document.getElementById('filter-user').value;
-            const fFamily  = document.getElementById('filter-family').value;
+            const fLines   = Array.from(document.getElementById('filter-line').selectedOptions).map(opt => opt.value);
+            const fSector  = document.getElementById('filter-sector').value;
             const fRegion  = document.getElementById('filter-region').value;
             const fRole    = document.getElementById('filter-role').value;
             const fPerf    = document.getElementById('filter-performance').value;
@@ -549,8 +672,12 @@
                 .filter(u => {
                     if (u.role === 'CountryManager') return true; // always visible
 
-                    if (fUser   && u.name   !== fUser)   return false;
-                    if (fFamily && u.family !== fFamily) return false;
+                    if (fUser && u.name !== fUser) return false;
+                    if (fLines.length > 0) {
+                        const userLines = u.lines ? u.lines.split(',') : [];
+                        if (!fLines.every(sel => userLines.includes(sel))) return false;
+                    }
+                    if (fSector && !u.sector.includes(fSector)) return false;
                     if (fRegion && u.region !== fRegion) return false;
                     if (fRole   && u.role   !== fRole)   return false;
                     if (fPerf === 'gte100' && parseFloat(u.personal_percentage) < 100)  return false;
@@ -669,7 +796,7 @@
                         <span style="font-size:11px;color:var(--text-muted);">${user.family || ''}</span>
                     </div>
                     <div><span class="badge-role">${user.role.replace('_', ' ')}</span></div>
-                    <div style="font-size:13px;">${user.region}</div>
+                    <div style="font-size:13px;">${isMeriem ? 'ALGERIE' : user.region}</div>
                     <div class="value-target">${formatDA(user.target_total)}</div>
                     <div class="value-achieved">${formatDA(user.achieved_total)}</div>
                     <div>
@@ -679,12 +806,12 @@
                     </div>
                     <div>
                         <strong style="color: var(--accent);">
-                            ${isMeriem ? '100%' : user.global_achieved_percentage + '%'}
+                            ${isMeriem ? '-' : user.global_achieved_percentage + '%'}
                         </strong>
                     </div>
                     <div>
                         <strong style="color: #17a2b8;">
-                            ${user.global_percentage}%
+                            ${isMeriem ? '-' : user.global_percentage + '%'}
                         </strong>
                     </div>
                 </div>
@@ -811,6 +938,43 @@
             document.documentElement.style.setProperty('--meriem-top', meriemTop + 'px');
         }
 
+        // ════════════════ CUSTOM MULTI-SELECT LOGIC ════════════════
+        (function() {
+            const msDisplay = document.getElementById('line-ms-display');
+            const msDropdown = document.getElementById('line-ms-dropdown');
+            const msText = document.getElementById('line-ms-text');
+            const hiddenSelect = document.getElementById('filter-line');
+
+            msDisplay.addEventListener('click', (e) => {
+                e.stopPropagation();
+                msDropdown.classList.toggle('show');
+            });
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#line-ms-wrapper')) {
+                    msDropdown.classList.remove('show');
+                }
+            });
+            document.querySelectorAll('.line-cb').forEach(cb => {
+                cb.addEventListener('change', function() {
+                    const option = hiddenSelect.querySelector(`option[value="${this.value}"]`);
+                    if (option) option.selected = this.checked;
+                    const checkedVals = Array.from(document.querySelectorAll('.line-cb:checked')).map(c => c.value);
+                    msText.textContent = checkedVals.length ? checkedVals.join(', ') : 'Toutes';
+                    msText.title = checkedVals.join(', ');
+                    if (typeof applyCascadeLogic === 'function') applyCascadeLogic();
+                    if (typeof applyFilters === 'function') applyFilters();
+                });
+            });
+            window.syncLineUI = function() {
+                const checkedVals = Array.from(hiddenSelect.selectedOptions).map(opt => opt.value);
+                document.querySelectorAll('.line-cb').forEach(cb => {
+                    cb.checked = checkedVals.includes(cb.value);
+                });
+                msText.textContent = checkedVals.length ? checkedVals.join(', ') : 'Toutes';
+            };
+            window.addEventListener('DOMContentLoaded', () => { setTimeout(syncLineUI, 50); });
+        })();
+
         // ── Bootstrap ───────────────────────────────────────────────────────────
         fetchDashboardData();
         updateStickyOffset();
@@ -832,14 +996,16 @@
 
             // Single-value dropdowns
             const fUser    = document.getElementById('filter-user').value;
-            const fFamily  = document.getElementById('filter-family').value;
+            const fLines   = Array.from(document.getElementById('filter-line').selectedOptions).map(opt => opt.value);
+            const fSector  = document.getElementById('filter-sector').value;
             const fRegion  = document.getElementById('filter-region').value;
             const fRole    = document.getElementById('filter-role').value;
             const fPerf    = document.getElementById('filter-performance').value;
             const fProduit = document.getElementById('filter-produit').value;
 
             if (fUser)    params.set('user',    fUser);
-            if (fFamily)  params.set('family',  fFamily);
+            fLines.forEach(l => params.append('lines[]', l));
+            if (fSector)  params.set('sector',  fSector);
             if (fRegion)  params.set('region',  fRegion);
             if (fRole)    params.set('role',    fRole);
             if (fPerf)    params.set('perf',    fPerf);

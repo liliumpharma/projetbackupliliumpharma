@@ -15,7 +15,7 @@ from rapports.models import *
 from produits.models import Produit
 from plans.models import Plan
 from django.db.models import Count
-from produits.models import Produit, ProduitVisite
+from produits.models import Produit, ProduitVisite, LineChoices
 import datetime
 import calendar
 from django.core.validators import RegexValidator
@@ -105,7 +105,7 @@ class family(models.TextChoices):
     lilium3 = "Lilium3"
     lilium1_2 = "Lilium1+2"
     lilium1_2_3 = "Lilium1+2+3"
-    ALL_LINES = "ALL LINES"
+    All_LINES = "ALL LINES"
     orient = "orient Bio"
     aniya_pharm = "Aniya_Pharm"
     production = "production"
@@ -143,8 +143,11 @@ class UserProfile(models.Model):
         default=Company.lilium_Pharma,
         verbose_name="Employee of",
     )
-    family = models.CharField(
-        max_length=40, choices=family.choices, default=family.lilium1
+    lines = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Comma-separated line codes, e.g. 'L1,L2'. Valid values: L1, L2, L3, COM.",
     )
     speciality_rolee = models.CharField(
         max_length=35,
@@ -648,6 +651,7 @@ class SectorCategory(models.TextChoices):
     DEP = "DEP", "Déplacement"
 
 
+
 class UserSectorDetail(models.Model):
     user_profile = models.ForeignKey(
         UserProfile, on_delete=models.CASCADE, related_name="sector_details"
@@ -676,6 +680,7 @@ class UserSectorDetail(models.Model):
 
     # Note field for SEMI and DEP
     note = models.CharField(max_length=255, null=True, blank=True, help_text="Note pour le secteur")
+
     class MonthFrequency(models.TextChoices):
         ALL = "ALL", "Tous les mois"
         EVEN = "EVEN", "Mois pairs"
@@ -779,3 +784,4 @@ class PersonalInfo(models.Model):
 
     def __str__(self):
         return f"{self.nom} {self.prénom}'s Personal Info"
+

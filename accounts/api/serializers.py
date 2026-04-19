@@ -39,28 +39,11 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.userprofile.commune.wilaya.pays.id
 
     def get_username(self, obj):
-        # Map family choices to their respective abbreviations
-        family_abbreviation = {
-            "lilium Pharma": "LP",
-            "Lilium1": "L1",
-            "Lilium2": "L2",
-            "Lilium3": "L3",
-            "Lilium1+2": "L1+2",
-            "Lilium1+2+3": "L1+2+3",
-            "ALL LINES": "ALL",
-            "orient Bio": "ORI",
-            "Aniya_Pharm": "AN",
-            "production": "PROD",
-        }
-
-        # Get the abbreviation based on the family value
-        family_value = obj.userprofile.family
-        abbreviation = family_abbreviation.get(
-            family_value, ""
-        )  # Default to an empty string if no match
-
-        # Return the desired username format with the abbreviation
-        return f"{obj.username} - {abbreviation}"
+        lines_raw = getattr(obj.userprofile, 'lines', None) or ''
+        lines = [l.strip() for l in lines_raw.split(',') if l.strip()]
+        if lines:
+            return f"{obj.username} - {' - '.join(lines)}"
+        return obj.username
 
     class Meta:
         model = User

@@ -94,7 +94,7 @@ class AllExportExcel(APIView):
             worksheet.write(row, 6, user.adresse)
             worksheet.write(row, 7, user.commune.nom if user.commune else "")
             worksheet.write(row, 8, user.telephone)
-            worksheet.write(row, 9, user.family)
+            worksheet.write(row, 9, user.lines or "")
             worksheet.write(row, 10, user.bank_account)
             worksheet.write(row, 11, user.bank_name)
             worksheet.write(row, 12, user.job_name)
@@ -245,7 +245,7 @@ class ExportDepSemiExcel(APIView):
                     "username": username,
                     "region": region,
                     "speciality": speciality,
-                    "family": profile.family,
+                    "family": profile.lines or "",
                     "objectif": objectif,
                     "sectors": sectors_list
                 })

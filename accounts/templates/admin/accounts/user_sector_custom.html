@@ -161,6 +161,8 @@
                         {{ inline_admin_form.form.note }}
                         <small class="text-danger">{{ inline_admin_form.form.note.errors }}</small>
                     </div>
+
+                    
                 </div>
 
                 <div class="summary-row field-totals" style="display:none;">
@@ -250,6 +252,8 @@
                         <label class="font-weight-bold">Note / ملاحظة</label>
                         {{ inline_admin_formset.formset.empty_form.note }}
                     </div>
+
+                    
                 </div>
                 <div class="summary-row field-totals" style="display:none;">
                     <div class="row text-center">
@@ -504,6 +508,8 @@
             container.find('.category-label-title').text('Secteur ' + category + ' / قطاع ' + category);
             container.find('input').addClass('form-control');
 
+            
+
             if (category === 'SEMI') {
                 container.find('.field-communes, .field-times, .field-value, .field-medical, .field-commercial, .field-note, .field-month_frequency').show();
                 container.find('.value-label').text('Prime de semi-déplacement / علاوة شبه التنقل');
@@ -526,7 +532,7 @@
                 });
                 calculateDEP(container);
             }
-            // IN: no extra fields shown
+            
 
             buildWilayaUI(container, category);
         }

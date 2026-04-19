@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from accounts.models import UserProfile
 from produits.models import Produit
-from .models import UserTargetMonth
+from .models import UserTargetMonth, BISnapshot
 from clients.api.functions import (
     get_target_per_user,
     get_target_all_users,
@@ -411,120 +411,94 @@ class DashboardDataAPI(APIView):
     }
 
     def get(self, request):
-        # --- Access control ---
+        # --- Authentication & Role Checks ---
         if request.user.is_authenticated:
             user_id = request.user.id
         else:
             user_id = request.session.get("user_id")
 
-        if not user_id:
-            return JsonResponse({"error": "Non authentifié."}, status=401)
-
+        if not user_id: return JsonResponse({"error": "Non authentifié."}, status=401)
         try:
             profile = UserProfile.objects.get(user=user_id)
         except UserProfile.DoesNotExist:
             return JsonResponse({"error": "Profil introuvable."}, status=403)
-
         if profile.speciality_rolee not in self._ALLOWED_ROLES:
-            return JsonResponse(
-                {"error": "Accès refusé. Rôle insuffisant."}, status=403
-            )
+            return JsonResponse({"error": "Accès refusé."}, status=403)
 
         # --- Parameter parsing ---
         year = request.GET.get("year")
-        months = request.GET.getlist("months[]")
-        if not months:
-            months = request.GET.getlist("months")
+        months = request.GET.getlist("months[]") or request.GET.getlist("months")
 
-        params = {}
-        if year:
-            params["years"] = [int(year)]
+        years_filter = [int(year)] if year else []
+        months_filter = [int(m) for m in months] if months else list(range(1, 13))
 
-        if months:
-            params["months"] = [int(m) for m in months]
-        else:
-            # "No months selected" means "Tous les mois" — pass all 12 explicitly
-            # so the backend never silently defaults to the current month only.
-            params["months"] = list(range(1, 13))
+        # --- 0ms Database Read ---
+        from .models import DashboardSnapshot
+        snapshots = DashboardSnapshot.objects.filter(year__in=years_filter, month__in=months_filter)
 
-        # Product filtering is now handled client-side using product_breakdown;
-        # the server always returns the full dataset so the cache stays generic.
-        # (Keep parsing product_id so old bookmarked URLs don't 400.)
-        product_id = request.GET.get("product") or None  # noqa – client-side only
+        # Apply visibility rules for Supervisors
+        if profile.speciality_rolee in ["Superviseur_regional", "Superviseur_national", "Superviseur"]:
+            users_under_ids = list(profile.usersunder.all().values_list('user__id', flat=True))
+            snapshots = snapshots.filter(user_id__in=users_under_ids)
 
-        # --- Cache key: year + sorted months (product is filtered in JS) ---
-        _year_key   = params.get("years",  [0])[0]
-        _months_key = sorted(params.get("months", []))
-        cache_key   = "dashboard_v2_{}_{}".format(
-            _year_key, "_".join(str(m) for m in _months_key)
-        )
+        # --- Instant Python Aggregation ---
+        users_map = {}
+        meriem_total_target = 0.0
+        meriem_total_achieved = 0.0
 
-        cached_data = cache.get(cache_key)
-        if cached_data:
-            return JsonResponse(cached_data)
-
-        # Cache miss → run the heavy computation
-        raw_data = get_target_all_users(**params)
-
-        cards_data = []
-        meriem_total_target = 0
-        meriem_total_achieved = 0
-
-        # 2. Loop directly through the clean list
-        for item in raw_data:
-            role = item.get("role", "")
-            target_val = item.get("raw_target", 0.0)
-            achieved_val = item.get("raw_achieved", 0.0)
-            personal_perc = item.get("percentage_reached", 0.0)
-
-            # Capture BOTH the target and the achieved values for the Boss
-            if role == "CountryManager":
-                meriem_total_target = target_val
-                meriem_total_achieved = achieved_val
-
-            # Skip fully empty cards (0 target, 0 achieved) unless they are supervisors/boss
-            if (
-                target_val > 0
-                or achieved_val > 0
-                or role
-                in ["CountryManager", "Superviseur_national", "Superviseur_regional"]
-            ):
-                cards_data.append(
-                    {
-                        "id": item.get("user_id"),
-                        "name": item.get("user"),
-                        "role": role,
-                        "family": item.get("family", "N/A"),
-                        "region": item.get("region", "N/A"),
-                        "work_as_commercial": item.get("work_as_commercial", False),
-                        "product_breakdown": item.get("product_breakdown", []),
-                        "target_total": target_val,
-                        "achieved_total": achieved_val,
-                        "personal_percentage": personal_perc,
+        for s in snapshots:
+            uid = s.user_id
+            if uid not in users_map:
+                users_map[uid] = {
+                    "id": uid, "name": s.user_name, "role": s.role,
+                    "lines": s.lines or "",
+                    "sector": s.sector_category or "N/A",
+                    "region": s.region or "N/A",
+                    "work_as_commercial": s.work_as_commercial,
+                    "target_total": 0.0, "achieved_total": 0.0,
+                    "product_breakdown_map": {}
+                }
+            
+            u = users_map[uid]
+            u["target_total"] += s.target_value
+            u["achieved_total"] += s.achieved_value
+            
+            pid = s.product_id
+            if pid != 0:
+                if pid not in u["product_breakdown_map"]:
+                    u["product_breakdown_map"][pid] = {
+                        "product_id": pid, "product_name": s.product_name,
+                        "target_value": 0.0, "achieved_value": 0.0
                     }
-                )
+                u["product_breakdown_map"][pid]["target_value"] += s.target_value
+                u["product_breakdown_map"][pid]["achieved_value"] += s.achieved_value
 
-        # 3. Calculate % of Global Target AND % of Global Achieved
-        for card in cards_data:
-            # Existing: % of the Global Target
-            global_perc = (
-                (card["achieved_total"] / meriem_total_target * 100)
-                if meriem_total_target > 0
-                else 0
-            )
-            card["global_percentage"] = round(global_perc, 2)
+            if s.role == "CountryManager":
+                meriem_total_target += s.target_value
+                meriem_total_achieved += s.achieved_value
 
-            # NEW: % of the Global Achieved (Company CA Poids)
-            global_achieved_perc = (
-                (card["achieved_total"] / meriem_total_achieved * 100)
-                if meriem_total_achieved > 0
-                else 0
-            )
-            card["global_achieved_percentage"] = round(global_achieved_perc, 2)
+        # --- Final Formatting ---
+        cards_data = []
+        for u in users_map.values():
+            u["product_breakdown"] = list(u["product_breakdown_map"].values())
+            del u["product_breakdown_map"]
+            
+            # Percentages
+            u["personal_percentage"] = round((u["achieved_total"] / u["target_total"] * 100), 2) if u["target_total"] > 0 else 0.0
+            u["global_percentage"] = round((u["achieved_total"] / meriem_total_target * 100), 2) if meriem_total_target > 0 else 0.0
+            u["global_achieved_percentage"] = round((u["achieved_total"] / meriem_total_achieved * 100), 2) if meriem_total_achieved > 0 else 0.0
+            
+            if u["target_total"] > 0 or u["achieved_total"] > 0 or u["role"] in ["CountryManager", "Superviseur_national", "Superviseur_regional"]:
+                cards_data.append(u)
 
-        final_dict = {"meriem_total_target": meriem_total_target, "users": cards_data}
-        cache.set(cache_key, final_dict, 600)   # 10-minute TTL
-        return JsonResponse(final_dict)
+        # Also return raw targets so frontend can calculate per-month percentages
+        dash_raw = list(snapshots.values("month", "user_id", "user_name", "product_id", "lines", "target_value"))
+
+        return JsonResponse({
+            "meriem_total_target": meriem_total_target,
+            "users": cards_data,
+            "dash_raw": dash_raw
+        })
 
 
 class VisualisationVenteView(APIView):
@@ -547,29 +521,10 @@ class VisualisationVenteView(APIView):
 
 class VisualisationDataAPI(APIView):
     """
-    JSON endpoint that returns all 5 chart datasets for the Visualisation page.
-
-    GET params (mirrors DashboardDataAPI):
-        year        – int
-        months[]    – list[int]
-        user        – str  (user full-name filter, maps to UserProfile lookup)
-        family      – str
-        region      – str
-        role        – str
-        perf        – str  (ignored at data level; kept for cache key parity)
-        produit     – int  (Produit.id)
-
-    Response (cached 10 min):
-        {
-          "graph_medical":    [...],
-          "graph_commercial": [...],
-          "graph_wilayas":    [...],
-          "graph_products":   [...],
-          "graph_supergros":  [...],
-        }
+    JSON endpoint that returns the FLAT raw data for the Visualisation page.
+    This now reads directly from the lightning-fast BISnapshot table.
     """
 
-    # Same role guard as DashboardDataAPI
     _ALLOWED_ROLES = {
         "CountryManager",
         "Admin",
@@ -579,8 +534,6 @@ class VisualisationDataAPI(APIView):
     }
 
     def get(self, request):
-        from clients.api.functions import get_visualisation_data
-
         # ── Auth ──────────────────────────────────────────────────────────────
         if request.user.is_authenticated:
             user_id = request.user.id
@@ -604,33 +557,77 @@ class VisualisationDataAPI(APIView):
         year   = request.GET.get("year")
         months = request.GET.getlist("months[]") or request.GET.getlist("months")
 
-        params = {}
-        if year:
-            params["years"] = [int(year)]
-        if months:
-            params["months"] = [int(m) for m in months]
-        else:
-            params["months"] = list(range(1, 13))
+        years_filter = [int(year)] if year else []
+        months_filter = [int(m) for m in months] if months else list(range(1, 13))
 
-        # ── Cache ──────────────────────────────────────────────────────────────
-        _year_key   = params.get("years",  [0])[0]
-        _months_key = sorted(params.get("months", []))
+        # ── Fetch from Flat Snapshot Table (0.05ms load time) ──────────────────
+        snapshots = BISnapshot.objects.all()
         
-        cache_key = "vis_raw_v1_{}_{}_usr{}".format(
-            _year_key,
-            "_".join(str(m) for m in _months_key),
-            user_id
-        )
+        if years_filter:
+            snapshots = snapshots.filter(year__in=years_filter)
+        if months_filter:
+            snapshots = snapshots.filter(month__in=months_filter)
 
-        cached = cache.get(cache_key)
-        if cached:
-            return JsonResponse(cached)
+        # Apply visibility rules for Supervisors
+        users_under_ids = None
+        if profile.speciality_rolee in ["Superviseur_regional", "Superviseur_national", "Superviseur"]:
+            users_under_ids = list(profile.usersunder.all().values_list('user__id', flat=True))
+            snapshots = snapshots.filter(user_id__in=users_under_ids)
 
-        # ── Compute ────────────────────────────────────────────────────────────
-        try:
-            data = get_visualisation_data(params, request_user=user_id)
-        except Exception as exc:
-            return JsonResponse({"error": str(exc)}, status=500)
+        # Instantly dump the flat data to a list of dicts
+        raw_data = list(snapshots.values(
+            'month', 'user_id', 'user_name', 'role', 'lines',
+            'sector_category',
+            'region', 'wilaya', 'supergros_name',
+            'product_id', 'product_name', 'qty', 'value'
+        ))
 
-        cache.set(cache_key, data, 600)   # 10-minute TTL (matches DashboardDataAPI)
-        return JsonResponse(data)
+        # Normalise key name so the frontend always reads 'sector'
+        for row in raw_data:
+            row['sector'] = row.pop('sector_category', 'IN')
+
+        from .models import SupergrosSalesSnapshot
+        sales_snaps = SupergrosSalesSnapshot.objects.all()
+        if years_filter:
+            sales_snaps = sales_snaps.filter(year__in=years_filter)
+        if months_filter:
+            sales_snaps = sales_snaps.filter(month__in=months_filter)
+
+        raw_sales_data = list(sales_snaps.values(
+            'month', 'wilaya', 'supergros_name', 'product_id', 'product_name', 'lines', 'qty', 'value'
+        ))
+
+        # ── Calculate Sector Costs (SEMI/DEP) dynamically ──
+        from accounts.models import UserSectorDetail
+        sector_costs = {}
+
+        usd_qs = UserSectorDetail.objects.exclude(category='IN').prefetch_related('wilayas')
+
+        if users_under_ids is not None:
+            usd_qs = usd_qs.filter(user_profile__user__id__in=users_under_ids)
+
+        for usd in usd_qs:
+            cost = float(usd.value or 0)
+            if usd.category == 'DEP':
+                cost += float(usd.hotel_cost or 0)
+
+            if cost <= 0:
+                continue
+
+            for w in usd.wilayas.all():
+                w_name = w.nom
+                if w_name not in sector_costs:
+                    sector_costs[w_name] = {'DEP': {}, 'SEMI': {}}
+
+                for m in range(1, 13):
+                    if usd.month_frequency == 'EVEN' and m % 2 != 0:
+                        continue
+                    if usd.month_frequency == 'ODD' and m % 2 == 0:
+                        continue
+
+                    m_str = str(m)
+                    sector_costs[w_name][usd.category][m_str] = (
+                        sector_costs[w_name][usd.category].get(m_str, 0) + cost
+                    )
+
+        return JsonResponse({"raw_data": raw_data, "raw_sales_data": raw_sales_data, "sector_costs": sector_costs})

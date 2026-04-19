@@ -176,7 +176,7 @@ class Medecin(models.Model):
         return "  -  ".join(
             [
                 f"{usr.first_name} {usr.last_name}"
-                for usr in self.users.filter(userprofile__family="Lilium1")
+                for usr in self.users.filter(userprofile__lines__contains="L1")
             ]
         )
 
@@ -185,16 +185,25 @@ class Medecin(models.Model):
         return "  -  ".join(
             [
                 f"{usr.first_name} {usr.last_name}"
-                for usr in self.users.filter(userprofile__family="Lilium2")
+                for usr in self.users.filter(userprofile__lines__contains="L2")
             ]
         )
 
     @property
-    def medecin_commercial_aniya(self):
+    def medecin_commercial_l3(self):
         return "  -  ".join(
             [
                 f"{usr.first_name} {usr.last_name}"
-                for usr in self.users.filter(userprofile__family="Aniya_Pharm")
+                for usr in self.users.filter(userprofile__lines__contains="L3")
+            ]
+        )
+
+    @property
+    def medecin_commercial_com(self):
+        return "  -  ".join(
+            [
+                f"{usr.first_name} {usr.last_name}"
+                for usr in self.users.filter(userprofile__lines__contains="COM")
             ]
         )
 

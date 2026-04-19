@@ -10,16 +10,16 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
     <style>
-        /* ── Design tokens (dark mode, matches taruser_desktop.html) ── */
+        /* ── Design tokens (light mode) ── */
         :root {
-            --bg-color:     #111;
-            --card-bg:      #1a1a1a;
-            --card-bg2:     #202020;
-            --text-main:    #fff;
-            --text-muted:   #aaa;
-            --accent:       #007bff;
-            --accent-hover: #0056b3;
-            --border-color: #333;
+            --bg-color:     #f4f6f9;
+            --card-bg:      #ffffff;
+            --card-bg2:     #fafafa;
+            --text-main:    #333333;
+            --text-muted:   #555555;
+            --accent:       #1B5E20;
+            --accent-hover: #2E7D32;
+            --border-color: #e0e0e0;
             --green:        #28a745;
             --teal:         #17a2b8;
             --gold:         #ffc107;
@@ -75,6 +75,16 @@
         }
         .back-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+        /* ── Meriem Card Styles ── */
+        .grid-layout { display: grid; grid-template-columns: 2fr 1.2fr 1fr 1.2fr 1.2fr 0.8fr 0.9fr 0.9fr; gap: 15px; align-items: center; padding: 0 20px; }
+        .user-card { border: 1px solid #eef2f5; box-shadow: 0 2px 6px rgba(0,0,0,0.04); background-color: #ffffff; border-radius: 8px; padding: 15px 20px; transition: all 0.2s ease; font-size: 14px;}
+        .meriem-card { background: linear-gradient(145deg, #fffdf5, #fff8dc); border: 2px solid #ffc107; box-shadow: 0 4px 10px rgba(255, 193, 7, 0.15); margin-top: 5px; }
+        .value-target { font-weight: bold; }
+        .value-achieved { color: #28a745; font-weight: bold; }
+        .badge-role { background-color: #e9ecef; color: #495057; border: 1px solid #ced4da; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; }
+        .header-ar { display: block; font-size: 10px; color: #666; font-weight: normal; direction: rtl; margin-top: 3px; }
+        .grid-header { font-weight: bold; color: var(--text-muted); text-transform: uppercase; font-size: 12px; padding: 10px 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 5px; }
+
         /* ── Filter section (exact mirror of taruser_desktop.html) ── */
         .filter-section {
             background-color: var(--card-bg);
@@ -114,7 +124,32 @@
             min-width: 130px;
         }
         .filter-select:focus { outline: none; border-color: var(--accent); }
-        .filter-select option { background-color: #1a1a1a; color: var(--text-main); }
+        .filter-select option { background-color: #fff; color: #333; }
+
+        /* --- CUSTOM MULTI-SELECT --- */
+        .ms-wrapper { position: relative; min-width: 140px; }
+        .ms-display {
+            background-color: var(--bg-color); color: var(--text-main);
+            border: 1px solid var(--border-color); padding: 7px 12px;
+            border-radius: 6px; cursor: pointer; font-size: 14px;
+            display: flex; justify-content: space-between; align-items: center;
+            user-select: none;
+        }
+        .ms-display:hover { border-color: var(--accent); }
+        .ms-dropdown {
+            display: none; position: absolute; top: 100%; left: 0; right: 0;
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 999; margin-top: 4px; padding: 8px; flex-direction: column; gap: 6px;
+        }
+        .ms-dropdown.show { display: flex; }
+        .ms-label {
+            display: flex; align-items: center; gap: 8px; cursor: pointer;
+            font-size: 13px; color: var(--text-main); padding: 4px 6px;
+            border-radius: 4px; transition: background 0.1s; margin:0;
+        }
+        .ms-label:hover { background: rgba(0, 123, 255, 0.1); }
+        .ms-checkbox { cursor: pointer; }
 
         .chip {
             background-color: var(--bg-color);
@@ -133,7 +168,7 @@
             color: white;
             font-weight: bold;
         }
-        .month-row { justify-content: center; margin-bottom: 0; }
+        .month-row { justify-content: center; margin: 10px;}
 
         /* ── Fetch button ── */
         #btn-fetch {
@@ -230,9 +265,9 @@
             width: 100%;
             min-height: 50px;
             padding: 10px;
-            border: 1px solid #2a2a2a;
+            border: 1px solid #e0e0e0;
             border-radius: 8px;
-            background: #141414;
+            background: #ffffff;
             position: relative;
         }
 
@@ -259,7 +294,6 @@
 </head>
 <body>
 
-<a href="/clients/target/front/" class="back-btn" id="btn-back">← Retour au Dashboard</a>
 
 <div class="page-header" style="justify-content:center; flex-direction:column; align-items:center; margin-bottom:6px;">
     <h1>📊 Visualisation des Ventes</h1>
@@ -268,7 +302,24 @@
 
 <!-- ════════════════ FILTER SECTION ════════════════ -->
 <div class="filter-section">
-    <!-- Top Row -->
+    <!-- Top Row: months -->
+    <div class="filter-row month-row">
+        <div class="filter-label" style="width:auto;">Mois</div>
+        <div class="chip month-chip" data-val="1">Jan</div>
+        <div class="chip month-chip" data-val="2">Fév</div>
+        <div class="chip month-chip" data-val="3">Mar</div>
+        <div class="chip month-chip" data-val="4">Avr</div>
+        <div class="chip month-chip" data-val="5">Mai</div>
+        <div class="chip month-chip" data-val="6">Juin</div>
+        <div class="chip month-chip" data-val="7">Juil</div>
+        <div class="chip month-chip" data-val="8">Aoû</div>
+        <div class="chip month-chip" data-val="9">Sep</div>
+        <div class="chip month-chip" data-val="10">Oct</div>
+        <div class="chip month-chip" data-val="11">Nov</div>
+        <div class="chip month-chip" data-val="12">Déc</div>
+    </div>
+
+    <!-- Bottom Row -->
     <div class="filter-row">
         <div class="filter-group">
             <div class="filter-label">Année</div>
@@ -279,20 +330,49 @@
             <select id="filter-user" class="filter-select"><option value="">Tous</option></select>
         </div>
         <div class="filter-group">
-            <div class="filter-label">Famille</div>
-            <select id="filter-family" class="filter-select"><option value="">Tous</option></select>
+            <div class="filter-label">Ligne</div>
+            <select id="filter-line" multiple style="display: none;">
+                <option value="L1">L1</option>
+                <option value="L2">L2</option>
+                <option value="L3">L3</option>
+                <option value="COM">COM</option>
+            </select>
+            <div class="ms-wrapper" id="line-ms-wrapper">
+                <div class="ms-display" id="line-ms-display">
+                    <span id="line-ms-text" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:90px;">Toutes</span>
+                    <span style="font-size: 10px; margin-left:8px;">▼</span>
+                </div>
+                <div class="ms-dropdown" id="line-ms-dropdown">
+                    <label class="ms-label"><input type="checkbox" value="L1" class="ms-checkbox line-cb"> L1</label>
+                    <label class="ms-label"><input type="checkbox" value="L2" class="ms-checkbox line-cb"> L2</label>
+                    <label class="ms-label"><input type="checkbox" value="L3" class="ms-checkbox line-cb"> L3</label>
+                    <label class="ms-label"><input type="checkbox" value="COM" class="ms-checkbox line-cb"> COM</label>
+                </div>
+            </div>
+        </div>
+        <div class="filter-group">
+            <div class="filter-label">Secteur</div>
+            <select id="filter-sector" class="filter-select">
+                <option value="">Tous</option>
+                <option value="SEMI">Semi-Déplacement (SEMI)</option>
+                <option value="DEP">Déplacement (DEP)</option>
+            </select>
         </div>
         <div class="filter-group">
             <div class="filter-label">Région</div>
-            <select id="filter-region" class="filter-select"><option value="">Tous</option></select>
+            <select id="filter-region" class="filter-select">
+                <option value="">Tous</option>
+                <option value="Centre">Centre</option>
+                <option value="Est">Est</option>
+                <option value="Ouest">Ouest</option>
+                <option value="Sud">Sud</option>
+            </select>
         </div>
         <div class="filter-group">
             <div class="filter-label">Rôle</div>
             <select id="filter-role" class="filter-select">
                 <option value="">Tous</option>
                 <option value="Superviseur_national">Superviseur national</option>
-                <option value="Superviseur_regional">Superviseur régional</option>
-                <option value="Superviseur">Superviseur</option>
                 <option value="Medico_commercial">Médico-commercial</option>
                 <option value="Commercial">Commercial</option>
             </select>
@@ -310,28 +390,13 @@
             <select id="filter-produit" class="filter-select">
                 <option value="">Tous les produits</option>
                 {% for p in produits %}
-                <option value="{{ p.id }}">{{ p.nom }}</option>
+                <option value="{{ p.id }}" data-line="{{ p.line|default:'' }}">{{ p.nom }}</option>
                 {% endfor %}
             </select>
         </div>
     </div>
 
-    <!-- Bottom Row: months -->
-    <div class="filter-row month-row">
-        <div class="filter-label" style="width:auto;">Mois</div>
-        <div class="chip month-chip" data-val="1">Jan</div>
-        <div class="chip month-chip" data-val="2">Fév</div>
-        <div class="chip month-chip" data-val="3">Mar</div>
-        <div class="chip month-chip" data-val="4">Avr</div>
-        <div class="chip month-chip" data-val="5">Mai</div>
-        <div class="chip month-chip" data-val="6">Juin</div>
-        <div class="chip month-chip" data-val="7">Juil</div>
-        <div class="chip month-chip" data-val="8">Aoû</div>
-        <div class="chip month-chip" data-val="9">Sep</div>
-        <div class="chip month-chip" data-val="10">Oct</div>
-        <div class="chip month-chip" data-val="11">Nov</div>
-        <div class="chip month-chip" data-val="12">Déc</div>
-    </div>
+
 
     <!-- Action row -->
     <div class="filter-row" style="justify-content:flex-end; margin-bottom:0; margin-top:12px;">
@@ -341,6 +406,21 @@
 
 <!-- Active-filter badge strip -->
 <div id="active-filters-bar"></div>
+
+<!-- Meriem (CountryManager) summary card -->
+<div id="meriem-card-wrapper" style="display: none; margin-bottom: 24px;">
+    <div class="grid-layout grid-header">
+        <div>Utilisateur<span class="header-ar">المستخدم</span></div>
+        <div>Rôle<span class="header-ar">الدور</span></div>
+        <div>Région<span class="header-ar">المنطقة</span></div>
+        <div>OBJECTIF<span class="header-ar">الهدف (DA)</span></div>
+        <div>RÉALISÉ<span class="header-ar">المحقق (DA)</span></div>
+        <div>ATTEINT<span class="header-ar">الإنجاز</span></div>
+        <div>PART DU CA<span class="header-ar">حصة المبيعات</span></div>
+        <div>% OBJ.GLOBAL<span class="header-ar">الهدف العام</span></div>
+    </div>
+    <div id="meriem-card-content"></div>
+</div>
 
 <!-- Global loading spinner -->
 <div id="global-spinner">⏳ Chargement des données de visualisation…</div>
@@ -410,6 +490,8 @@
 
 </div><!-- /charts-wrapper -->
 
+<div id="sector-charts-wrapper" style="display:none; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 24px; margin-bottom: 24px;">
+</div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -453,25 +535,73 @@ function colorForLabel(label) {
 const chartInstances = {};
 
 // ═══════════════════════════════════════════════════════════════════════════════
-//  CORE CHART DRAWING — Floating Bar "sorted segments" trick
+//  BRACKET TOTALS PLUGIN — draws ] and grand total on the right side
 // ═══════════════════════════════════════════════════════════════════════════════
-/**
- * drawSortedHorizontalBar(canvasId, title, apiData, boxId, bannerId)
- *
- * apiData: array of  { label, total_value, total_units, segments: [{label, value, units}] }
- *   • bars are already sorted high → low by the backend
- *   • each bar's segments are already sorted low → high by the backend
- *
- * Technique: We use Chart.js FLOATING BARS [start, end] so that each segment
- * inside a bar can be sorted independently, overcoming the standard stacked-bar
- * limitation (which forces the same dataset order for every row).
- *
- * One dataset = one unique segment label (one "layer").
- * For rows that don't have this segment, we push [0,0] (invisible).
- */
-function drawSortedHorizontalBar(canvasId, title, apiData, boxId, bannerId) {
+const bracketTotalsPlugin = {
+    id: 'bracketTotals',
+    afterDatasetsDraw(chart, args, options) {
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
 
-    // 1. Destroy previous instance
+        const rowTotals = options.rowTotals || [];
+        const yAxis = chart.scales.y;
+
+        // Draw the brackets fixed on the right side
+        const bracketX = chart.width - 240;
+
+        const isUserGraph = options.isUserGraph;
+        for (let i = 0; i < yAxis.ticks.length; i++) {
+            const yCenter = yAxis.getPixelForTick(i);
+            const gTotal = rowTotals[i];
+            if (!gTotal || gTotal.val === 0) continue;
+
+            ctx.font = 'bold 13px Arial';
+            if (isUserGraph) {
+                const uName = chart.data.labels[i];
+                let totalTarget = 0;
+                if (window.currentTargetMap && window.currentTargetMap[uName]) {
+                    Object.values(window.currentTargetMap[uName]).forEach(t => totalTarget += t);
+                }
+                const pct = totalTarget > 0 ? ((gTotal.val / totalTarget) * 100).toFixed(1) : '0.0';
+
+                const txt1 = `${fmtDA(gTotal.val)} DA`;
+                ctx.fillStyle = '#28a745';
+                ctx.fillText(txt1, bracketX + 15, yCenter);
+                const w1 = ctx.measureText(txt1).width;
+
+                ctx.fillStyle = (Number(pct) >= 100) ? '#28a745' : '#ff9800';
+                ctx.fillText(`  /  ${pct}%`, bracketX + 15 + w1, yCenter);
+            } else {
+                const unitsText = ` ${fmtUnits(gTotal.units)} Unités  /  `;
+                ctx.fillStyle = '#007bff';
+                ctx.fillText(unitsText, bracketX + 15, yCenter);
+                const unitsWidth = ctx.measureText(unitsText).width;
+                ctx.fillStyle = '#28a745';
+                ctx.fillText(`${fmtDA(gTotal.val)} DA`, bracketX + 15 + unitsWidth, yCenter);
+            }
+
+            // Draw Vertical Bracket ]
+            const bracketHeight = options.isMultiMonth ? 20 : 10;
+            ctx.beginPath();
+            ctx.moveTo(bracketX - 6, yCenter - bracketHeight);
+            ctx.lineTo(bracketX, yCenter - bracketHeight);
+            ctx.lineTo(bracketX, yCenter + bracketHeight);
+            ctx.lineTo(bracketX - 6, yCenter + bracketHeight);
+            ctx.strokeStyle = '#888';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  CORE CHART DRAWING — Multi-Month Grouped Floating Bars
+// ═══════════════════════════════════════════════════════════════════════════════
+function drawSortedHorizontalBar(canvasId, title, apiData, boxId, bannerId, isUserGraph = false) {
+
     if (chartInstances[canvasId]) {
         chartInstances[canvasId].destroy();
         delete chartInstances[canvasId];
@@ -481,208 +611,185 @@ function drawSortedHorizontalBar(canvasId, title, apiData, boxId, bannerId) {
 
     if (!apiData || apiData.length === 0) {
         box.innerHTML = '<div class="empty-state">Aucune donnée disponible pour ces filtres.</div>';
-        box.style.minHeight = 'auto'; // Minimize height for empty state
+        box.style.minHeight = 'auto';
         if (bannerId) document.getElementById(bannerId).style.display = 'none';
         return;
     } else {
         if (bannerId) document.getElementById(bannerId).style.display = 'block';
     }
 
-    // Restore canvas if it was replaced by an empty-state div
-    if (!box.querySelector('canvas')) {
-        box.innerHTML = `<canvas id="${canvasId}"></canvas>`;
-    }
+    if (!box.querySelector('canvas')) box.innerHTML = `<canvas id="${canvasId}"></canvas>`;
 
-    // 2. Row labels (Y axis)
-    const rowLabels   = apiData.map(d => d.label);
-    const rowTotalsV  = apiData.map(d => d.total_value);
-    const rowTotalsU  = apiData.map(d => d.total_units);
+    // Extract active months from the currently filtered data
+    const activeMonthsSet = new Set();
+    apiData.forEach(row => Object.keys(row.months).forEach(m => activeMonthsSet.add(m)));
+    const activeMonths = Array.from(activeMonthsSet).sort((a, b) => Number(a) - Number(b));
+    const isMultiMonth = activeMonths.length > 1;
 
-    // 3. Grand total for the banner
-    const grandTotalV = rowTotalsV.reduce((s, v) => s + v, 0);
-    const grandTotalU = rowTotalsU.reduce((s, v) => s + v, 0);
+    const rowLabels = apiData.map(d => d.label);
+    const rowTotals = apiData.map(d => ({ val: d.grand_total_val, units: d.grand_total_units }));
+
     if (bannerId) {
-        document.getElementById(bannerId).textContent =
-            `Total : ${fmtUnits(grandTotalU)} Unités  /  ${fmtDA(grandTotalV)} DA`;
+        const grandV = rowTotals.reduce((s, v) => s + v.val, 0);
+        const grandU = rowTotals.reduce((s, v) => s + v.units, 0);
+        document.getElementById(bannerId).textContent = `Total : ${fmtUnits(grandU)} Unités  /  ${fmtDA(grandV)} DA`;
     }
 
-    // 4. Collect every unique segment label (union across all rows)
-    //    Preserve the insertion-order (sorted low→high from backend)
-    const allSegLabels = [];
-    const seenSeg = new Set();
-    apiData.forEach(row => {
-        (row.segments || []).forEach(s => {
-            if (!seenSeg.has(s.label)) { seenSeg.add(s.label); allSegLabels.push(s.label); }
-        });
-    });
+    const datasets = [];
+    const MONTH_NAMES = {'1':'Jan','2':'Fév','3':'Mar','4':'Avr','5':'Mai','6':'Juin','7':'Juil','8':'Aoû','9':'Sep','10':'Oct','11':'Nov','12':'Déc'};
 
-    // 5. Build one dataset per segment label using floating bars [start, end]
-    //    For each row, find where this segment sits after sorting low→high
-    const datasets = allSegLabels.map(segLabel => {
-        const floatingData = apiData.map(row => {
-            // row.segments is already sorted low → high from the backend
-            const segs = row.segments || [];
-            let cursor = 0;
-            let segStart = null, segEnd = null;
-            for (const seg of segs) {
-                const segVal = seg.value || 0;
-                if (seg.label === segLabel) {
-                    segStart = cursor;
-                    segEnd   = cursor + segVal;
-                    break;
-                }
-                cursor += segVal;
+    // For each month, build the segment datasets and the dummy total dataset
+    activeMonths.forEach(monthStr => {
+        const mLabel = MONTH_NAMES[monthStr] || monthStr;
+
+        // Find all unique segment labels for THIS month
+        const segLabels = new Set();
+        apiData.forEach(row => {
+            const mData = row.months[monthStr];
+            if (mData && mData.segments) {
+                mData.segments.forEach(s => segLabels.add(s.label));
             }
-            if (segStart === null) return null; // <--- CHANGE [0,0] to null
-            return [segStart, segEnd];
         });
 
-        return {
-            label:           segLabel,
-            data:            floatingData,
-            backgroundColor: colorForLabel(segLabel),
-            borderColor:     'rgba(0,0,0,0.15)',
-            borderWidth:     1,
-            barThickness:    28,
-            maxBarThickness: 34,
-            // Disable datalabels on all segment datasets — we use a dummy dataset for row totals
-            datalabels: { display: false },
-        };
-    });
-
-    // 6. Dummy dataset at the END of every bar — carries total datalabel only
-    const dummyData = apiData.map(row => {
-        const total = row.total_value || 0;
-        return [total, total]; // zero-width segment at the very end
-    });
-    datasets.push({
-        label:           '__total_label__',
-        data:            dummyData,
-        backgroundColor: 'transparent',
-        borderWidth:     0,
-        barThickness:    28,
-        maxBarThickness: 34,
-        datalabels: {
-            display: true,
-            labels: {
-                units: {
-                    anchor: 'end',
-                    align: 'end',
-                    offset: 6,
-                    color: '#007bff', // Blue
-                    font: { weight: 'bold', size: 12, family: 'Arial' },
-                    formatter: function(value, ctx) {
-                        const rowIdx = ctx.dataIndex;
-                        const units  = rowTotalsU[rowIdx];
-                        return `${fmtUnits(units)} Unités / `;
+        // Build floating bar datasets for this month
+        Array.from(segLabels).forEach(segLabel => {
+            const floatingData = apiData.map(row => {
+                const mData = row.months[monthStr];
+                if (!mData || !mData.segments) return null;
+                let cursor = 0, segStart = null, segEnd = null;
+                for (const seg of mData.segments) {
+                    const segVal = seg.value || 0;
+                    if (seg.label === segLabel) {
+                        segStart = cursor; segEnd = cursor + segVal; break;
                     }
-                },
-                da: {
-                    anchor: 'end',
-                    align: 'end',
-                    color: '#28a745', // Green
-                    font: { weight: 'bold', size: 12, family: 'Arial' },
-                    offset: function(ctx) {
-                        // Dynamically calculate the width of the blue text to push the green text
-                        const rowIdx = ctx.dataIndex;
-                        const units  = rowTotalsU[rowIdx];
-                        const text   = `${fmtUnits(units)} Unités / `;
-                        
-                        ctx.chart.ctx.font = 'bold 12px Arial';
-                        const textWidth = ctx.chart.ctx.measureText(text).width;
-                        
-                        return 6 + textWidth + 4; // Base offset + Blue Text Width + 4px gap
+                    cursor += segVal;
+                }
+                return segStart === null ? null : [segStart, segEnd];
+            });
+
+            datasets.push({
+                label: segLabel,
+                stack: monthStr, // Groups datasets by month!
+                data: floatingData,
+                backgroundColor: colorForLabel(segLabel),
+                borderColor: 'rgba(0,0,0,0.1)',
+                borderWidth: 1,
+                barThickness: isMultiMonth ? 16 : 28,
+                datalabels: { display: false }
+            });
+        });
+
+        // Dummy dataset for the individual month's total label
+        const dummyData = apiData.map(row => {
+            const mData = row.months[monthStr];
+            const total = mData ? mData.total_val : 0;
+            return total > 0 ? [total, total] : null;
+        });
+
+        datasets.push({
+            label: `__total_${monthStr}__`,
+            stack: monthStr,
+            data: dummyData,
+            backgroundColor: 'transparent',
+            barThickness: isMultiMonth ? 16 : 28,
+            datalabels: {
+                display: true,
+                labels: {
+                    val1: {
+                        anchor: 'end', align: 'end', offset: 6,
+                        color: isUserGraph ? '#28a745' : '#007bff',
+                        font: { weight: 'bold', size: 11, family: 'Arial' },
+                        formatter: function(value, ctx) {
+                            const rowIdx = ctx.dataIndex;
+                            const mData = apiData[rowIdx].months[monthStr];
+                            if (!mData || mData.total_val === 0) return null;
+                            const pre = isMultiMonth ? `[${mLabel}] ` : '';
+                            return isUserGraph ? `${pre}${fmtDA(mData.total_val)} DA` : `${pre}${fmtUnits(mData.total_units)} Unités  /  `;
+                        }
                     },
-                    formatter: function(value, ctx) {
-                        const rowIdx = ctx.dataIndex;
-                        const valDA  = rowTotalsV[rowIdx];
-                        return `${fmtDA(valDA)} DA`;
+                    val2: {
+                        anchor: 'end', align: 'end',
+                        color: function(ctx) {
+                            if (!isUserGraph) return '#28a745';
+                            const rowIdx = ctx.dataIndex;
+                            const mData = apiData[rowIdx]?.months[monthStr];
+                            if (!mData) return '#555';
+                            const uName = rowLabels[rowIdx];
+                            const target = (window.currentTargetMap && window.currentTargetMap[uName] && window.currentTargetMap[uName][monthStr]) ? window.currentTargetMap[uName][monthStr] : 0;
+                            return (target > 0 && ((mData.total_val / target) * 100) >= 100) ? '#28a745' : '#ff9800';
+                        },
+                        font: { weight: 'bold', size: 11, family: 'Arial' },
+                        offset: function(ctx) {
+                            const rowIdx = ctx.dataIndex;
+                            const mData = apiData[rowIdx].months[monthStr];
+                            if (!mData || mData.total_val === 0) return 6;
+                            const pre = isMultiMonth ? `[${mLabel}] ` : '';
+                            ctx.chart.ctx.font = 'bold 11px Arial';
+                            const txt1 = isUserGraph ? `${pre}${fmtDA(mData.total_val)} DA` : `${pre}${fmtUnits(mData.total_units)} Unités  /  `;
+                            return 6 + ctx.chart.ctx.measureText(txt1).width;
+                        },
+                        formatter: function(value, ctx) {
+                            const rowIdx = ctx.dataIndex;
+                            const mData = apiData[rowIdx].months[monthStr];
+                            if (!mData || mData.total_val === 0) return null;
+                            if (isUserGraph) {
+                                const uName = rowLabels[rowIdx];
+                                const target = (window.currentTargetMap && window.currentTargetMap[uName] && window.currentTargetMap[uName][monthStr]) ? window.currentTargetMap[uName][monthStr] : 0;
+                                const pct = target > 0 ? ((mData.total_val / target) * 100).toFixed(1) : '0.0';
+                                return `  /  ${pct}%`;
+                            } else {
+                                return `${fmtDA(mData.total_val)} DA`;
+                            }
+                        }
                     }
                 }
             }
-        },
+        });
     });
 
-    // 7. Dynamic canvas height
-    const rowH = 46;
+    const rowH = isMultiMonth ? 70 : 46;
     const canvasH = Math.max(350, apiData.length * rowH + 110);
     box.style.minHeight = canvasH + 'px';
 
-    // 8. Draw the chart
     const ctx = document.getElementById(canvasId).getContext('2d');
     chartInstances[canvasId] = new Chart(ctx, {
         type: 'bar',
         data: { labels: rowLabels, datasets },
+        plugins: [bracketTotalsPlugin],
         options: {
             indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             animation: { duration: 600 },
             scales: {
-                x: {
-                    stacked: false,        // Keep this FALSE so math doesn't add up
-                    beginAtZero: true,
-                    grace: '30%',
-                    grid:  { color: 'rgba(255,255,255,0.05)' },
-                    ticks: {
-                        color: '#aaa',
-                        callback: v => fmtDA(v) + ' DA',
-                    },
-                },
-                y: {
-                    stacked: true,         // <--- CHANGE THIS TO TRUE
-                    grid:  { display: false },
-                    ticks: {
-                        color: '#ddd',
-                        font:  { size: 12, weight: 'bold' },
-                    },
-                },
+                x: { stacked: false, beginAtZero: true, grace: '40%', grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { color: '#555', callback: v => fmtDA(v) + ' DA' } },
+                y: { stacked: true, grid: { display: false }, ticks: { color: '#444', font: { size: 12, weight: 'bold' } } },
             },
             plugins: {
+                bracketTotals: { rowTotals, isMultiMonth, isUserGraph },
                 legend: {
-                    display: true,
-                    position: 'bottom',
-                    labels: {
-                        color: '#aaa',
-                        font:  { size: 11 },
-                        // Hide the dummy dataset from the legend
-                        filter: item => item.text !== '__total_label__',
-                    },
+                    display: true, position: 'bottom',
+                    labels: { color: '#555', font: { size: 11 }, filter: item => !item.text.startsWith('__total_') }
                 },
-                title: {
-                    display: true,
-                    text: title,
-                    color: '#fff',
-                    font: { size: 15, weight: 'bold' },
-                    padding: { bottom: 16 },
-                },
+                title: { display: true, text: title, color: '#333', font: { size: 15, weight: 'bold' }, padding: { bottom: 16 } },
                 tooltip: {
                     callbacks: {
-                        // Filter out the dummy dataset tooltip
-                        beforeTitle: function(items) {
-                            return items.filter(i => i.dataset.label !== '__total_label__');
-                        },
+                        beforeTitle: items => items.filter(i => !i.dataset.label.startsWith('__total_')),
                         label: function(context) {
-                            if (context.dataset.label === '__total_label__') return null;
-                            const raw = context.raw; // [start, end]
+                            if (context.dataset.label.startsWith('__total_')) return null;
+                            const raw = context.raw;
                             if (!Array.isArray(raw)) return null;
-                            const segVal  = raw[1] - raw[0];
+                            const segVal = raw[1] - raw[0];
                             if (segVal === 0) return null;
 
-                            const rowIdx   = context.dataIndex;
-                            const rowTotal = rowTotalsV[rowIdx];
-                            const pct      = rowTotal > 0 ? ((segVal / rowTotal) * 100).toFixed(1) : '0.0';
-
-                            // Find units for this segment
-                            const row      = apiData[rowIdx];
-                            const seg      = (row.segments || []).find(s => s.label === context.dataset.label);
-                            const units    = seg ? seg.units : 0;
+                            const mData = apiData[context.dataIndex].months[context.dataset.stack];
+                            const pct = mData && mData.total_val > 0 ? ((segVal / mData.total_val) * 100).toFixed(1) : '0.0';
+                            const seg = (mData.segments || []).find(s => s.label === context.dataset.label);
 
                             return [
                                 `${context.dataset.label}`,
                                 `  Valeur : ${fmtDA(segVal)} DA`,
-                                `  Unités : ${fmtUnits(units)}`,
-                                `  % du total : ${pct}%`,
+                                `  Unités : ${seg ? fmtUnits(seg.units) : 0}`,
+                                `  % du mois : ${pct}%`,
                             ];
                         },
                         labelColor: function(context) {
@@ -690,24 +797,17 @@ function drawSortedHorizontalBar(canvasId, title, apiData, boxId, bannerId) {
                                 borderColor: context.dataset.backgroundColor,
                                 backgroundColor: context.dataset.backgroundColor,
                             };
-                        },
+                        }
                     },
-                    backgroundColor: 'rgba(20,20,20,0.95)',
-                    titleColor: '#fff',
-                    bodyColor:  '#ccc',
-                    borderColor: '#444',
-                    borderWidth: 1,
-                    padding: 12,
+                    backgroundColor: 'rgba(255,255,255,0.95)', titleColor: '#333', bodyColor: '#555', borderColor: '#ccc', borderWidth: 1, padding: 12
                 },
-                datalabels: {
-                    // Default = hidden; the dummy dataset overrides per-dataset above
-                    display: false,
-                },
+                datalabels: { display: false }
             },
-            layout: { padding: { right: 250 } },
+            layout: { padding: { right: 300 } },
         },
     });
 }
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  FILTER HYDRATION  (reads URLSearchParams on page load)
@@ -739,7 +839,7 @@ function initFilters() {
     // Restore dropdowns
     const map = {
         user:    'filter-user',
-        family:  'filter-family',
+        sector:  'filter-sector',
         region:  'filter-region',
         role:    'filter-role',
         perf:    'filter-performance',
@@ -749,6 +849,13 @@ function initFilters() {
         const v = params.get(pk);
         const el = document.getElementById(eid);
         if (v && el) el.value = v;
+    });
+
+    // Restore multi-select Ligne
+    const activeLines = params.getAll('lines[]');
+    const lineSel = document.getElementById('filter-line');
+    Array.from(lineSel.options).forEach(opt => {
+        opt.selected = activeLines.includes(opt.value);
     });
 
     // Render badge strip
@@ -766,10 +873,12 @@ function renderFilterBadges(params) {
     if (months.length) {
         bar.appendChild(makeBadge('Mois : ' + months.map(m=>MONTH_NAMES[m]||m).join(', ')));
     }
-    ['year','user','family','region','role','perf','produit'].forEach(k => {
+    ['year','user','sector','region','role','perf','produit'].forEach(k => {
         const v = params.get(k);
         if (v) bar.appendChild(makeBadge(`${k.charAt(0).toUpperCase()+k.slice(1)} : ${v}`));
     });
+    const linesParam = params.getAll('lines[]');
+    if (linesParam.length) bar.appendChild(makeBadge('Lignes : ' + linesParam.join(', ')));
     if (!bar.innerHTML) {
         const b = makeBadge('Aucun filtre actif'); b.style.opacity = '0.4'; bar.appendChild(b);
     }
@@ -789,11 +898,12 @@ function applyFrontendFiltersAndGraph() {
     
     // Read current filter values
     const fUser   = document.getElementById('filter-user').value;
-    const fFamily = document.getElementById('filter-family').value;
+    const fLines  = Array.from(document.getElementById('filter-line').selectedOptions).map(opt => opt.value);
+    const fSector = document.getElementById('filter-sector').value;
     const fRegion = document.getElementById('filter-region').value;
     const fRole   = document.getElementById('filter-role').value;
     const fProd   = document.getElementById('filter-produit').value;
-    
+
     const year = document.getElementById('year-select').value;
     const activeMonths = Array.from(document.querySelectorAll('.month-chip.active')).map(c => c.dataset.val);
 
@@ -802,43 +912,92 @@ function applyFrontendFiltersAndGraph() {
     params.set('year', year || '');
     params.delete('months[]');
     activeMonths.forEach(m => params.append('months[]', m));
-    fUser ? params.set('user', fUser) : params.delete('user');
-    fFamily ? params.set('family', fFamily) : params.delete('family');
+    fUser   ? params.set('user',   fUser)   : params.delete('user');
+    params.delete('lines[]');
+    fLines.forEach(l => params.append('lines[]', l));
+    fSector ? params.set('sector', fSector) : params.delete('sector');
     fRegion ? params.set('region', fRegion) : params.delete('region');
-    fRole ? params.set('role', fRole) : params.delete('role');
-    fProd ? params.set('produit', fProd) : params.delete('produit');
-    
+    fRole   ? params.set('role',   fRole)   : params.delete('role');
+    fProd   ? params.set('produit', fProd)  : params.delete('produit');
+
     window.history.replaceState({}, '', window.location.pathname + '?' + params.toString());
     renderFilterBadges(params);
 
     // Step A: Filter raw data
     let filtered_data = window.globalRawData.filter(item => {
-        // user dropdown may use name or id depending on how it's populated. 
-        if (fUser && item.user_id != fUser && item.user_name != fUser) return false;
-        if (fFamily && item.family !== fFamily) return false;
+        if (fUser   && item.user_id != fUser && item.user_name != fUser) return false;
+        if (fLines.length > 0) {
+            const userLines = item.lines ? item.lines.split(',') : [];
+            if (!fLines.every(sel => userLines.includes(sel))) return false;
+        }
+        if (fSector && item.sector !== fSector) return false;
         if (fRegion && item.region !== fRegion) return false;
-        if (fRole && item.role !== fRole) return false;
+        if (fRole   && item.role   !== fRole)   return false;
+        if (fProd   && item.product_id != fProd) return false;
+        return true;
+    });
+
+    // Step A.2: Filter pure sales data (respects Lines, Produit, and Region via wilaya lookup)
+    const regionWilayas = fRegion
+        ? new Set(window.globalRawData.filter(i => i.region === fRegion).map(i => i.wilaya).filter(Boolean))
+        : null;
+
+    let filtered_sales_data = (window.globalSalesData || []).filter(item => {
+        if (fLines.length > 0) {
+            const itemLines = item.lines ? item.lines.split(',') : [];
+            if (!fLines.every(sel => itemLines.includes(sel))) return false;
+        }
+        if (fProd && item.product_id != fProd) return false;
+        if (regionWilayas && !regionWilayas.has(item.wilaya)) return false;
+        return true;
+    });
+
+    // ── TARGET PERCENTAGE CALCULATION ──
+    let filtered_targets = (window.globalDashRaw || []).filter(item => {
+        if (fLines.length > 0) {
+            const itemLines = item.lines ? item.lines.split(',') : [];
+            if (!fLines.every(sel => itemLines.includes(sel))) return false;
+        }
         if (fProd && item.product_id != fProd) return false;
         return true;
     });
 
-    // Step B: Aggregate helper
+    const targetMap = {};
+    filtered_targets.forEach(t => {
+        const u = t.user_name;
+        const m = String(t.month);
+        if (!targetMap[u]) targetMap[u] = {};
+        if (!targetMap[u][m]) targetMap[u][m] = 0;
+        targetMap[u][m] += t.target_value;
+    });
+    window.currentTargetMap = targetMap;
+
+    // Step B: Multi-Month Aggregate helper
     function pivot(items, filterFn, groupKeyFn, segKeyFn) {
         const groups = {};
         for (const item of items) {
             if (filterFn && !filterFn(item)) continue;
-            
+
             const groupKey = groupKeyFn(item);
             const segKey = segKeyFn(item);
+            const monthStr = String(item.month);
             if (!groupKey) continue;
-            
+
             if (!groups[groupKey]) {
-                groups[groupKey] = { label: groupKey, total_value: 0, total_units: 0, segmentsMap: {} };
+                groups[groupKey] = { label: groupKey, grand_total_val: 0, grand_total_units: 0, months: {} };
             }
-            groups[groupKey].total_value += item.value;
-            groups[groupKey].total_units += item.qty;
-            
-            const segs = groups[groupKey].segmentsMap;
+
+            groups[groupKey].grand_total_val += item.value;
+            groups[groupKey].grand_total_units += item.qty;
+
+            const m = groups[groupKey].months;
+            if (!m[monthStr]) {
+                m[monthStr] = { total_val: 0, total_units: 0, segmentsMap: {} };
+            }
+            m[monthStr].total_val += item.value;
+            m[monthStr].total_units += item.qty;
+
+            const segs = m[monthStr].segmentsMap;
             if (!segs[segKey]) {
                 segs[segKey] = { label: segKey, value: 0, units: 0 };
             }
@@ -848,16 +1007,16 @@ function applyFrontendFiltersAndGraph() {
 
         const result = [];
         for (const g of Object.values(groups)) {
-            const segArray = Object.values(g.segmentsMap);
-            segArray.sort((a, b) => a.value - b.value);
-            result.push({
-                label: g.label,
-                total_value: g.total_value,
-                total_units: g.total_units,
-                segments: segArray
-            });
+            // Sort segments inside each month low->high
+            for (const mKey of Object.keys(g.months)) {
+                const segArray = Object.values(g.months[mKey].segmentsMap);
+                segArray.sort((a, b) => a.value - b.value);
+                g.months[mKey].segments = segArray;
+            }
+            result.push(g);
         }
-        result.sort((a, b) => b.total_value - a.total_value);
+        // Sort rows high->low by grand total
+        result.sort((a, b) => b.grand_total_val - a.grand_total_val);
         return result;
     }
 
@@ -875,38 +1034,248 @@ function applyFrontendFiltersAndGraph() {
         i => i.wilaya || 'N/A'
     );
     const graph_wilayas = pivot(
-        filtered_data, 
-        null, 
-        i => i.wilaya || 'N/A', 
+        filtered_sales_data,
+        null,
+        i => i.wilaya || 'N/A',
         i => i.product_name || 'N/A'
     );
     const graph_products = pivot(
-        filtered_data, 
-        null, 
-        i => i.product_name || 'N/A', 
+        filtered_sales_data,
+        null,
+        i => i.product_name || 'N/A',
         i => i.wilaya || 'N/A'
     );
-    
-    // Supergros orders ONLY when item.supergros_name is set
     const graph_supergros = pivot(
-        filtered_data, 
-        i => !!i.supergros_name, 
-        i => i.supergros_name, 
+        filtered_sales_data,
+        null,
+        i => i.supergros_name || 'N/A',
         i => i.product_name || 'N/A'
     );
 
     // Determine period label
+    const MONTH_NAMES_ARR = ['','Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
     const monthsLabel = activeMonths.length
-        ? activeMonths.map(m => ['','Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'][+m]).join(', ')
+        ? activeMonths.map(m => MONTH_NAMES_ARR[+m]).join(', ')
         : 'Tous les mois';
     const periodLabel = `${monthsLabel} ${year}`;
 
-    // Step C: Render Series
-    drawSortedHorizontalBar('chart-medical-users', `🩺 Performance Médicaux — ${periodLabel}`, graph_medical, 'box-medical', 'banner-medical');
-    drawSortedHorizontalBar('chart-commercial-users', `💼 Performance Commerciaux — ${periodLabel}`, graph_commercial, 'box-commercial', 'banner-commercial');
-    drawSortedHorizontalBar('chart-wilayas', `🗺️ CA par Wilaya — ${periodLabel}`, graph_wilayas, 'box-wilayas', 'banner-wilayas');
-    drawSortedHorizontalBar('chart-products', `💊 CA par Produit — ${periodLabel}`, graph_products, 'box-products', 'banner-products');
-    drawSortedHorizontalBar('chart-supergros', `🏭 Supergros — ${periodLabel}`, graph_supergros, 'box-supergros', 'banner-supergros');
+    // ── VIEW SWITCHING LOGIC ──
+    const standardWrapper = document.getElementById('charts-wrapper');
+    const sectorWrapper   = document.getElementById('sector-charts-wrapper');
+
+    if (fSector === 'SEMI' || fSector === 'DEP') {
+        // MODE 2: SECTOR TREND LINES
+        standardWrapper.style.display = 'none';
+        sectorWrapper.style.display   = 'grid';
+        sectorWrapper.innerHTML       = ''; // Clear old graphs
+
+        // Destroy any lingering sector chart instances
+        Object.keys(chartInstances).forEach(id => {
+            if (id.startsWith('canvas-sector-')) {
+                chartInstances[id].destroy();
+                delete chartInstances[id];
+            }
+        });
+
+        // 1. Group data by Wilaya -> User -> Month
+        const wilayaData = {};
+        filtered_data.forEach(item => {
+            const w = item.wilaya || 'Inconnue';
+            const u = item.user_name || 'Inconnu';
+            const m = String(item.month);
+            if (!wilayaData[w]) wilayaData[w] = {};
+            if (!wilayaData[w][u]) wilayaData[w][u] = {};
+            if (!wilayaData[w][u][m]) wilayaData[w][u][m] = 0;
+            wilayaData[w][u][m] += item.value;
+        });
+
+        // Custom sort: If early months (1-3) and late months (10-12) are selected together,
+        // treat late months as negative (previous year) for visual sorting.
+        const activeMonthsSorted = activeMonths.slice().sort((a, b) => {
+            const na = Number(a); const nb = Number(b);
+            const hasEarly = activeMonths.some(m => Number(m) <= 3);
+            const hasLate  = activeMonths.some(m => Number(m) >= 10);
+
+            if (hasEarly && hasLate) {
+                const adjA = na >= 10 ? na - 12 : na;
+                const adjB = nb >= 10 ? nb - 12 : nb;
+                return adjA - adjB;
+            }
+            return na - nb;
+        });
+        const MONTH_NAMES = {'1':'Jan','2':'Fév','3':'Mar','4':'Avr','5':'Mai','6':'Juin','7':'Juil','8':'Aoû','9':'Sep','10':'Oct','11':'Nov','12':'Déc'};
+        const xLabels = activeMonthsSorted.map(m => MONTH_NAMES[m]);
+
+        // 2. Generate a card and chart for each Wilaya
+        Object.keys(wilayaData).sort().forEach((wilaya, index) => {
+            const users = wilayaData[wilaya];
+            const datasets = [];
+
+            Object.keys(users).forEach(user => {
+                const dataPoints = activeMonthsSorted.map(m => users[user][m] || 0);
+                if (dataPoints.some(v => v > 0)) {
+                    datasets.push({
+                        label: user,
+                        data: dataPoints,
+                        borderColor: colorForLabel(user),
+                        backgroundColor: colorForLabel(user),
+                        tension: 0.3,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        datalabels: { display: false }
+                    });
+                }
+            });
+
+            // Add the "Coût Total" curve for this Wilaya and Sector
+            const wCosts = window.globalSectorCosts[wilaya];
+            if (wCosts && wCosts[fSector]) {
+                const costDataPoints = activeMonthsSorted.map(m => wCosts[fSector][m] || 0);
+                if (costDataPoints.some(v => v > 0)) {
+                    datasets.push({
+                        label: `Coût Total Investi (${fSector})`,
+                        data: costDataPoints,
+                        borderColor: '#FF9800',
+                        backgroundColor: '#FF9800',
+                        borderDash: [6, 6],
+                        tension: 0.1,
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointStyle: 'rectRot',
+                        datalabels: { display: false }
+                    });
+                }
+            }
+
+            if (datasets.length === 0) return;
+
+            const canvasId = `canvas-sector-${index}`;
+            sectorWrapper.insertAdjacentHTML('beforeend', `
+                <div class="vis-card" style="margin-bottom: 0;">
+                    <div class="vis-card-title">📍 ${wilaya}</div>
+                    <div class="vis-card-subtitle">Évolution ${fSector} par utilisateur</div>
+                    <div class="chart-container" style="height: 300px;">
+                        <div class="chart-box" style="height: 100%;"><canvas id="${canvasId}"></canvas></div>
+                    </div>
+                </div>
+            `);
+
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            chartInstances[canvasId] = new Chart(ctx, {
+                type: 'line',
+                data: { labels: xLabels, datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { callback: v => fmtDA(v) } }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true } },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `${ctx.dataset.label}: ${fmtDA(ctx.raw)} DA`
+                            }
+                        },
+                        datalabels: { display: false }
+                    }
+                }
+            });
+        });
+
+        if (sectorWrapper.innerHTML === '') {
+            sectorWrapper.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">Aucune donnée de déplacement trouvée pour ces filtres.</div>';
+        }
+
+    } else {
+        // MODE 1: STANDARD DASHBOARD
+        sectorWrapper.style.display   = 'none';
+        standardWrapper.style.display = 'block';
+
+        drawSortedHorizontalBar('chart-medical-users', `🩺 Performance Médicaux — ${periodLabel}`, graph_medical, 'box-medical', 'banner-medical', true);
+        drawSortedHorizontalBar('chart-commercial-users', `💼 Performance Commerciaux — ${periodLabel}`, graph_commercial, 'box-commercial', 'banner-commercial', true);
+        drawSortedHorizontalBar('chart-wilayas', `🗺️ CA par Wilaya — ${periodLabel}`, graph_wilayas, 'box-wilayas', 'banner-wilayas', false);
+        drawSortedHorizontalBar('chart-products', `💊 CA par Produit — ${periodLabel}`, graph_products, 'box-products', 'banner-products', false);
+        drawSortedHorizontalBar('chart-supergros', `🏭 Supergros — ${periodLabel}`, graph_supergros, 'box-supergros', 'banner-supergros', false);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  MERIEM CARD RENDERER
+// ═══════════════════════════════════════════════════════════════════════════════
+function renderMeriemCard(dashData) {
+    const wrapper = document.getElementById('meriem-card-wrapper');
+    const content = document.getElementById('meriem-card-content');
+
+    if (!dashData || !dashData.users) {
+        wrapper.style.display = 'none'; return;
+    }
+
+    const meriem = dashData.users.find(u => u.role === 'CountryManager');
+    if (!meriem) {
+        wrapper.style.display = 'none'; return;
+    }
+
+    content.innerHTML = `
+        <div class="user-card grid-layout meriem-card">
+            <div>
+                <strong>${meriem.name}</strong><br>
+                <span style="font-size:11px;color:var(--text-muted);">${meriem.family || ''}</span>
+            </div>
+            <div><span class="badge-role">${meriem.role.replace('_', ' ')}</span></div>
+            <div style="font-size:13px;">ALGERIE</div>
+            <div class="value-target">${fmtDA(meriem.target_total)} DA</div>
+            <div class="value-achieved">${fmtDA(meriem.achieved_total)} DA</div>
+            <div>
+                <strong style="color:${meriem.personal_percentage >= 100 ? '#28a745' : '#ffc107'};">
+                    ${meriem.personal_percentage}%
+                </strong>
+            </div>
+            <div><strong style="color: var(--accent);">-</strong></div>
+            <div><strong style="color: #17a2b8;">-</strong></div>
+        </div>
+    `;
+    wrapper.style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+//  CASCADE FILTER ENGINE
+// ═══════════════════════════════════════════════════════════════════════════════
+function applyCascadeLogic() {
+    const fLines  = Array.from(document.getElementById('filter-line').selectedOptions).map(opt => opt.value);
+    const fSector = document.getElementById('filter-sector').value;
+    const fRegion = document.getElementById('filter-region').value;
+
+    // Rule 2: Show/hide Produit options whose data-line is included in selected Lignes
+    const produitSel  = document.getElementById('filter-produit');
+    const currentProd = produitSel.value;
+    Array.from(produitSel.options).forEach(opt => {
+        if (!opt.value) return; // always keep "Tous les produits"
+        const optLine = opt.getAttribute('data-line') || '';
+        opt.style.display = (fLines.length === 0 || fLines.includes(optLine) || optLine === '') ? '' : 'none';
+    });
+    const selProdOpt = produitSel.querySelector(`option[value="${currentProd}"]`);
+    if (selProdOpt && selProdOpt.style.display === 'none') produitSel.value = '';
+
+    // Rule 3: Rebuild #filter-user from globalRawData filtered by Lignes, Secteur, Région
+    if (!window.globalRawData || window.globalRawData.length === 0) return;
+    const userSel     = document.getElementById('filter-user');
+    const currentUser = userSel.value;
+    while (userSel.options.length > 1) userSel.remove(1);
+    const matched = window.globalRawData.filter(item => {
+        if (fLines.length > 0) {
+            const userLines = item.lines ? item.lines.split(',') : [];
+            if (!fLines.every(sel => userLines.includes(sel))) return false;
+        }
+        if (fSector && item.sector !== fSector) return false;
+        if (fRegion && item.region !== fRegion) return false;
+        return true;
+    });
+    const uniqueUsers = [...new Map(matched.map(i => [i.user_id, i.user_name])).entries()];
+    uniqueUsers.sort((a, b) => (a[1] || '').localeCompare(b[1] || ''));
+    uniqueUsers.forEach(([uid, uname]) => userSel.add(new Option(uname, uid)));
+    const stillValid = uniqueUsers.some(([uid]) => String(uid) === String(currentUser));
+    if (stillValid) userSel.value = currentUser;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -942,26 +1311,30 @@ async function fetchAndRender() {
     wrapper.style.display  = 'none';
 
     try {
-        const resp = await fetch(`/clients/api/visualisation-data/?${currentQuery}`);
-        if (!resp.ok) throw new Error(`Erreur serveur : ${resp.status}`);
-        const data = await resp.json();
+        // Fetch both the heavy BI data and the lightweight Dashboard data concurrently
+        const visPromise  = fetch(`/clients/api/visualisation-data/?${currentQuery}`).then(r => r.json());
+        const dashPromise = fetch(`/clients/api/dashboard-data/?${currentQuery}`).then(r => r.json());
+
+        const [data, dashData] = await Promise.all([visPromise, dashPromise]);
 
         if (data.error) {
             spinner.innerHTML = `<span style="color:#e74c3c;">❌ ${data.error}</span>`;
             return;
         }
-        
+
         // Store into global memory
-        window.globalRawData = data.raw_data || [];
+        window.globalRawData     = data.raw_data       || [];
+        window.globalSalesData   = data.raw_sales_data || [];
+        window.globalSectorCosts = data.sector_costs   || {};
+        window.globalDashRaw     = dashData.dash_raw   || [];
         lastFetchQuery = currentQuery;
 
-        // Extract available unique Users/Families/Regions dynamically to populate dropdowns?
-        // Let's rely on standard hardcoded filter inputs if there are no generated values.
-        // We will call the aggregator to render the initial state.
-        
         spinner.style.display = 'none';
         wrapper.style.display = 'block';
 
+        renderMeriemCard(dashData);
+        // Initialize cascade states before rendering graphs
+        applyCascadeLogic();
         applyFrontendFiltersAndGraph();
 
     } catch (err) {
@@ -984,19 +1357,81 @@ document.querySelectorAll('.month-chip').forEach(chip => {
 
 document.getElementById('btn-fetch').addEventListener('click', fetchAndRender);
 
-// Attach 'change' event to all dropdown selects
-// Instantly applies the frontend logic without talking to the backend
-const selectsToWatch = ['filter-user', 'filter-family', 'filter-region', 'filter-role', 'filter-produit', 'filter-performance'];
-selectsToWatch.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-        el.addEventListener('change', () => {
-            if (window.globalRawData) {
-                applyFrontendFiltersAndGraph();
-            }
+// ════════════════ CUSTOM MULTI-SELECT LOGIC ════════════════
+(function() {
+    const msDisplay = document.getElementById('line-ms-display');
+    const msDropdown = document.getElementById('line-ms-dropdown');
+    const msText = document.getElementById('line-ms-text');
+    const hiddenSelect = document.getElementById('filter-line');
+
+    msDisplay.addEventListener('click', (e) => {
+        e.stopPropagation();
+        msDropdown.classList.toggle('show');
+    });
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('#line-ms-wrapper')) {
+            msDropdown.classList.remove('show');
+        }
+    });
+    document.querySelectorAll('.line-cb').forEach(cb => {
+        cb.addEventListener('change', function() {
+            const option = hiddenSelect.querySelector(`option[value="${this.value}"]`);
+            if (option) option.selected = this.checked;
+            const checkedVals = Array.from(document.querySelectorAll('.line-cb:checked')).map(c => c.value);
+            msText.textContent = checkedVals.length ? checkedVals.join(', ') : 'Toutes';
+            msText.title = checkedVals.join(', ');
+            applyCascadeLogic();
+            applyFrontendFiltersAndGraph();
         });
+    });
+    window.syncLineUI = function() {
+        const checkedVals = Array.from(hiddenSelect.selectedOptions).map(opt => opt.value);
+        document.querySelectorAll('.line-cb').forEach(cb => {
+            cb.checked = checkedVals.includes(cb.value);
+        });
+        msText.textContent = checkedVals.length ? checkedVals.join(', ') : 'Toutes';
+    };
+    window.addEventListener('DOMContentLoaded', () => { setTimeout(syncLineUI, 50); });
+})();
+
+// Cascade listeners: Ligne/Secteur/Région narrow the user list in real time
+// (filter-line changes are handled by .line-cb checkboxes above)
+document.getElementById('filter-sector').addEventListener('change', function() {
+    // SMART 3-MONTH LOGIC:
+    if (this.value === 'SEMI' || this.value === 'DEP') {
+        const activeChips = Array.from(document.querySelectorAll('.month-chip.active'));
+        if (activeChips.length === 1) {
+            let m = parseInt(activeChips[0].dataset.val);
+            let m1, m2, m3;
+
+            // Prevent crossing into the previous year to avoid API year-mismatches
+            if (m === 1)      { m1 = 1; m2 = 2; m3 = 3; }
+            else if (m === 2) { m1 = 1; m2 = 2; m3 = 3; }
+            else              { m1 = m - 2; m2 = m - 1; m3 = m; }
+
+            document.querySelectorAll('.month-chip').forEach(chip => {
+                let val = parseInt(chip.dataset.val);
+                if (val === m1 || val === m2 || val === m3) {
+                    chip.classList.add('active');
+                }
+            });
+
+            fetchAndRender();
+            return;
+        }
     }
+    applyCascadeLogic();
+    applyFrontendFiltersAndGraph();
 });
+document.getElementById('filter-region').addEventListener('change', function() {
+    applyCascadeLogic();
+    applyFrontendFiltersAndGraph();
+});
+['filter-user', 'filter-role', 'filter-performance', 'filter-produit'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', applyFrontendFiltersAndGraph);
+});
+
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  BOOT

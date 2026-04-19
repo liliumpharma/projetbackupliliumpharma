@@ -1025,10 +1025,15 @@ def get_target_all_users(month=None, year=None, months=None, years=None, product
         except Exception as e:
             print(f"Error fetching data for {user_profile.user.username}: {e}")
 
-        # Safely grab Region and Family (fallback to "N/A" if missing)
+        # Safely grab Region and Lines
         region_val = getattr(user_profile, "region", "N/A")
-        family_val = getattr(user_profile, "family", "N/A")
+        lines_val = getattr(user_profile, "lines", None) or ""
         work_as_commercial_val = getattr(user_profile, "work_as_commercial", False)
+
+        from accounts.models import UserSectorDetail
+        user_sectors_qs = UserSectorDetail.objects.filter(user_profile=user_profile)
+        sector_categories = list(set(user_sectors_qs.values_list('category', flat=True)))
+        sector_val = ",".join(sector_categories) if sector_categories else "IN"
 
         data.append(
             {
@@ -1036,7 +1041,8 @@ def get_target_all_users(month=None, year=None, months=None, years=None, product
                 "user_id": user_profile.user.id,
                 "role": user_profile.speciality_rolee,
                 "region": region_val,
-                "family": family_val,
+                "lines": lines_val,
+                "sector": sector_val,
                 "work_as_commercial": work_as_commercial_val,
                 "has_product_target": has_product_target,
                 "product_breakdown": product_breakdown,
@@ -1136,15 +1142,28 @@ def get_targets_by_order_source(order_source):
 def get_visualisation_data(params, request_user=None):
     from django.db.models import Sum
     from collections import defaultdict
+    from accounts.models import UserSectorDetail
     
     years   = params.get("years",  [])
     months  = params.get("months", [])
 
     # 1. Resolve active delegates based on requester's visibility
     delegates = UserProfile.objects.filter(
-        speciality_rolee__in=["Medico_commercial", "Commercial"],
+        speciality_rolee__in=[
+            "Medico_commercial",
+            "Commercial",
+            "Superviseur",
+            "Superviseur_regional",
+            "Superviseur_national",
+        ],
         hidden=False,
     ).select_related("user").prefetch_related("sectors")
+
+    user_sector_map = {}
+    usds = UserSectorDetail.objects.filter(user_profile__in=delegates).prefetch_related('wilayas')
+    for usd in usds:
+        for w in usd.wilayas.all():
+            user_sector_map[(usd.user_profile.user_id, w.id)] = usd.category
 
     if request_user:
         try:
@@ -1250,7 +1269,8 @@ def get_visualisation_data(params, request_user=None):
                         "user_id": uid,
                         "user_name": f"{d.user.last_name} {d.user.first_name}".strip(),
                         "role": role,
-                        "family": d.family or 'N/A',
+                        "lines": d.lines or '',
+                        "sector": user_sector_map.get((uid, w_id), "IN"),
                         "region": d.region or 'N/A',
                         "wilaya": w_name,
                         "supergros_name": sr['order__source__source__name'],

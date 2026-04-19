@@ -93,8 +93,8 @@
         {% if non_visite_communes %}
             <p>
                 {% for commune, counts in non_visite_communes.items %}
-                <strong>{{ commune.nom }}</strong> 
-                ({{ counts.medecins }} médecin{% if counts.medecins > 1 %}s{% endif %}, 
+                <strong>{{ commune.nom }}</strong>
+                ({{ counts.medecins }} médecin{% if counts.medecins > 1 %}s{% endif %},
                     {{ counts.pharmacies }} pharmacie{% if counts.pharmacies > 1 %}s{% endif %}){% if not forloop.last %}, {% endif %}
                 {% endfor %}
             </p>
@@ -102,6 +102,32 @@
             <p>Aucune commune non visitée.</p>
         {% endif %}
     </div>
+
+    {% if non_visite_communes_semi %}
+    <h4 class="section-title" style="color:#856404;">Secteurs Semi-Déplacement non planifiés</h4>
+    <div class="no-visits" style="background-color:#ffc107;padding:8px;border-radius:4px;">
+        <p>
+            {% for commune, counts in non_visite_communes_semi.items %}
+            <strong>{{ commune.nom }}</strong>
+            ({{ counts.medecins }} médecin{% if counts.medecins > 1 %}s{% endif %},
+            {{ counts.pharmacies }} pharmacie{% if counts.pharmacies > 1 %}s{% endif %}){% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </p>
+    </div>
+    {% endif %}
+
+    {% if non_visite_communes_dep %}
+    <h4 class="section-title" style="color:#dc3545;">Secteurs Déplacement non planifiés</h4>
+    <div class="no-visits" style="background-color:#dc3545;color:#fff;padding:8px;border-radius:4px;">
+        <p>
+            {% for commune, counts in non_visite_communes_dep.items %}
+            <strong>{{ commune.nom }}</strong>
+            ({{ counts.medecins }} médecin{% if counts.medecins > 1 %}s{% endif %},
+            {{ counts.pharmacies }} pharmacie{% if counts.pharmacies > 1 %}s{% endif %}){% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </p>
+    </div>
+    {% endif %}
 </div>
 
     

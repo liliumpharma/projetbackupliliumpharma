@@ -128,9 +128,9 @@ class ProductProductionFullProcessStepInline(admin.StackedInline):
     ordering = ['step_number']
 
 class ProduitAdmin(admin.ModelAdmin):
-    list_display = ('id','get_company_family', 'nom',"_print", "_print_datasheet","_print_productdata")
+    list_display = ('id','get_company_family', 'nom', 'line', "_print", "_print_datasheet","_print_productdata")
     search_fields = ["nom"]
-    list_filter = ['productcompany__family']
+    list_filter = ['productcompany__family', 'line']
     inlines = [ProductCompanyInline, ProductInformationsInline, ProductActiveIngredientsInline, ProductInactiveIngredientsInline, ProductNoteInline, ProductFileInline, ProductProductionInfosInline, ProductProductionPremixStepInline, ProductProductionFullProcessStepInline]
 
     def get_company_family(self, obj):

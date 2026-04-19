@@ -9,14 +9,14 @@ admin.site.register(Occasion)
 @admin.register(Absence)
 class AbsencesAdmin(admin.ModelAdmin):
     list_display = ["date", "user", "approved"]
-    list_filter = ["user", "user__userprofile__family"]
+    list_filter = ["user", "user__userprofile__lines"]
     date_hierarchy = "added"
 
 
 @admin.register(Leave)
 class LeavesAdmin(admin.ModelAdmin):
     list_display = ["id", "start_date", "end_date", "user", "approved"]
-    list_filter = ["user", "user__userprofile__family"]
+    list_filter = ["user", "user__userprofile__lines"]
     date_hierarchy = "added"
 
     class Media:

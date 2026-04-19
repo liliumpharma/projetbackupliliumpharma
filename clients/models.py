@@ -425,3 +425,87 @@ def auto_fill_supervisor_targets(sender, instance, **kwargs):
         if not cm_created:
             cm_target_product.quantity = global_delegues_sum
             cm_target_product.save()
+
+
+class BISnapshot(models.Model):
+    """
+    Flat Data Warehouse table for the Business Intelligence Dashboard.
+    Populated manually via the Admin panel to prevent server overload.
+    """
+    year = models.IntegerField()
+    month = models.IntegerField()
+    
+    user_id = models.IntegerField()
+    user_name = models.CharField(max_length=255)
+    role = models.CharField(max_length=100)
+    lines = models.CharField(max_length=100, null=True, blank=True)
+    sector_category = models.CharField(max_length=50, null=True, blank=True)
+    region = models.CharField(max_length=100, null=True, blank=True)
+
+    wilaya = models.CharField(max_length=100)
+    supergros_name = models.CharField(max_length=255, null=True, blank=True)
+    
+    product_id = models.IntegerField()
+    product_name = models.CharField(max_length=255)
+    
+    qty = models.FloatField(default=0.0)
+    value = models.FloatField(default=0.0)
+
+    class Meta:
+        verbose_name = "BI Snapshot"
+        verbose_name_plural = "BI Snapshots"
+        # Indexing these fields makes frontend filtering lightning fast
+        indexes = [
+            models.Index(fields=['year', 'month']),
+            models.Index(fields=['user_id']),
+            models.Index(fields=['product_id']),
+        ]
+
+    def __str__(self):
+        return f"{self.month}/{self.year} - {self.user_name} - {self.product_name}"
+    
+class SupergrosSalesSnapshot(models.Model):
+    """Pure, unallocated sales data straight from the SuperGros reports."""
+    year = models.IntegerField()
+    month = models.IntegerField()
+
+    wilaya = models.CharField(max_length=100)
+    supergros_name = models.CharField(max_length=255)
+
+    product_id = models.IntegerField()
+    product_name = models.CharField(max_length=255)
+    lines = models.CharField(max_length=100, null=True, blank=True)
+
+    qty = models.FloatField(default=0.0)
+    value = models.FloatField(default=0.0)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['year', 'month']),
+        ]
+
+
+class DashboardSnapshot(models.Model):
+    """Flat table specifically for taruser_desktop.html zero-second load times."""
+    year = models.IntegerField()
+    month = models.IntegerField()
+    
+    user_id = models.IntegerField()
+    user_name = models.CharField(max_length=255)
+    role = models.CharField(max_length=100)
+    lines = models.CharField(max_length=100, null=True, blank=True)
+    sector_category = models.CharField(max_length=50, null=True, blank=True)
+    region = models.CharField(max_length=100, null=True, blank=True)
+    work_as_commercial = models.BooleanField(default=False)
+    
+    product_id = models.IntegerField(default=0)
+    product_name = models.CharField(max_length=255, default="Aucun")
+    
+    target_value = models.FloatField(default=0.0)
+    achieved_value = models.FloatField(default=0.0)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['year', 'month']),
+            models.Index(fields=['user_id']),
+        ]

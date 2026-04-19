@@ -1,0 +1,89 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+   
+        <a href="{% url 'admin:refresh_bi_data' %}" 
+           onclick="showLoader(event, this.href);"
+           style="background-color: #28a745; color: white; font-weight: bold; cursor: pointer;padding: 20px;border-radius: 7px;">
+            📊 Actualiser les données BI 
+        </a>
+    
+    {{ block.super }}
+
+    <style>
+    .bi-wave {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 25px;
+        height: 60px;
+    }
+    .bi-wave-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        animation: wave-bounce 1.4s infinite ease-in-out both;
+    }
+    /* Stagger the animations and give them a gradient of colors */
+    .bi-wave-dot:nth-child(1) { 
+        background-color: #28a745; 
+        animation-delay: -0.32s; 
+    }
+    .bi-wave-dot:nth-child(2) { 
+        background-color: #20c997; 
+        animation-delay: -0.16s; 
+    }
+    .bi-wave-dot:nth-child(3) { 
+        background-color: #17a2b8; 
+        animation-delay: 0s; 
+    }
+
+    @keyframes wave-bounce {
+        0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+        40% { transform: scale(1); opacity: 1; }
+    }
+
+    .bi-pulse-text {
+        animation: bi-pulse 2s infinite ease-in-out;
+    }
+    @keyframes bi-pulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+</style>
+
+    <div id="bi-loader-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: white; font-family: Arial, sans-serif;">
+        
+        <div class="bi-wave">
+    <div class="bi-wave-dot"></div>
+    <div class="bi-wave-dot"></div>
+    <div class="bi-wave-dot"></div>
+</div>
+        
+        <h2 style="color: #fff; margin-bottom: 12px; font-size: 24px; text-align: center;">
+            Calcul approfondi en cours...
+        </h2>
+        
+        <p class="bi-pulse-text" style="color: #bbb; font-size: 15px; max-width: 500px; text-align: center; line-height: 1.5;">
+            Le serveur traite actuellement des milliers d'entrées. <br>
+            <strong>Cette opération peut prendre plusieurs minutes.</strong><br>
+            Veuillez ne pas fermer ni rafraîchir cette page.
+        </p>
+
+    </div>
+
+    <script>
+        function showLoader(event, url) {
+            // Empêche le clic direct
+            event.preventDefault();
+
+            // Affiche l'overlay de chargement infini
+            document.getElementById('bi-loader-overlay').style.display = 'flex';
+
+            // Lance la requête. Le navigateur "tournera" en arrière-plan
+            // jusqu'à ce que le serveur réponde avec la nouvelle page.
+            window.location.href = url;
+        }
+    </script>
+{% endblock %}

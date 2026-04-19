@@ -1,7 +1,9 @@
 from django.contrib import admin
+from django import forms
 from .models import UserProfile, PersonalInfo, UserProduct, UserNotificationPermissions, UserSectorDetail
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
+from produits.models import LineChoices
 from plans.models import Plan
 import datetime
 import subprocess
@@ -63,8 +65,31 @@ def not_recive_mail(modeladmin, request, queryset):
 not_recive_mail.short_description = "Ne pas recevoir les emails"
 
 
+class UserProfileAdminForm(forms.ModelForm):
+    lines = forms.MultipleChoiceField(
+        choices=LineChoices.choices,
+        required=False,
+        widget=forms.SelectMultiple(attrs={'style': 'min-height: 120px;'}),
+        help_text="Maintenez 'Ctrl' (ou 'Cmd' sur Mac) pour sélectionner plusieurs lignes."
+    )
+
+    class Meta:
+        model = UserProfile
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk and getattr(self.instance, 'lines', None):
+            self.initial['lines'] = [x.strip() for x in self.instance.lines.split(',')]
+
+    def clean_lines(self):
+        data = self.cleaned_data.get('lines', [])
+        return ",".join(data)
+
+
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
+    form = UserProfileAdminForm
     can_delete = False
 
 
@@ -95,7 +120,7 @@ class CustomUserAdmin(UserAdmin):
         "userprofile__work_as_commercial",
         "userprofile__hidden",
         "userprofile__rolee",
-        "userprofile__family",
+        "userprofile__lines",
         "userprofile__speciality_rolee",
         "is_superuser",
         "userprofile__region",
@@ -143,10 +168,10 @@ class CustomUserAdmin(UserAdmin):
 
     def user_family(self, obj):
         if hasattr(obj, "userprofile"):
-            return obj.userprofile.get_family_display()
+            return obj.userprofile.lines or "-"
         return "-"
 
-    user_family.short_description = "family"
+    user_family.short_description = "Lignes"
 
     def user_is_superuser(self, obj):
         return obj.is_superuser
@@ -198,6 +223,7 @@ from django.urls import path
 from .export_excel import ExportDepSemiExcel
 
 class UserProfileAdmin(admin.ModelAdmin):
+    form = UserProfileAdminForm
     list_display = ("user", "display_superusers")
     inlines = [UserSectorDetailInline]
     change_list_template = "admin/accounts/userprofile/change_list.html"

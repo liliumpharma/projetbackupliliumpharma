@@ -1911,6 +1911,19 @@ def PlanPDF(request):
                 plan_to_sector[p.id] = cat
                 break
 
+    # Split non_visite_communes by sector category
+    non_visite_communes_in = {}
+    non_visite_communes_semi = {}
+    non_visite_communes_dep = {}
+    for commune, counts in non_visite_communes.items():
+        cat = commune_sector_map.get(commune.id) or wilaya_sector_map.get(commune.wilaya_id)
+        if cat == "SEMI":
+            non_visite_communes_semi[commune] = counts
+        elif cat == "DEP":
+            non_visite_communes_dep[commune] = counts
+        else:
+            non_visite_communes_in[commune] = counts
+
     # Regrouper les plans par tranche de 5
     plans = [plans[i : i + 5] for i in range(0, len(plans), 5)]
     all_plans.append(plans)
@@ -1923,7 +1936,9 @@ def PlanPDF(request):
             "user": usern,
             "from_to": from_to,
             "periode": today,
-            "non_visite_communes": non_visite_communes,
+            "non_visite_communes": non_visite_communes_in,
+            "non_visite_communes_semi": non_visite_communes_semi,
+            "non_visite_communes_dep": non_visite_communes_dep,
             "visited_commune_medecin_count": dict(visited_commune_medecin_count),
             "plan_to_sector": plan_to_sector,
         },

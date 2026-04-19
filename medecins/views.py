@@ -529,6 +529,33 @@ class MedecinListPDF(LoginRequiredMixin, TemplateView):
             item["commune__nom"]: item["nbr_contacts"] for item in commune_counts
         }
 
+        # Build sector colour lookup from the selected user's SEMI / DEP sectors
+        # Keys: (wilaya_nom, commune_nom) or (wilaya_nom, None) for whole-wilaya sectors
+        semi_pairs = set()
+        dep_pairs = set()
+        if user:
+            try:
+                for sd in user.userprofile.sector_details.filter(
+                    category__in=["SEMI", "DEP"]
+                ).prefetch_related("wilayas", "communes"):
+                    target = dep_pairs if sd.category == "DEP" else semi_pairs
+                    for w in sd.wilayas.all():
+                        commune_qs = sd.communes.all()
+                        if commune_qs.exists():
+                            for c in commune_qs:
+                                target.add((w.nom, c.nom))
+                        else:
+                            target.add((w.nom, None))
+            except Exception:
+                pass
+
+        def row_bg(wilaya_nom, commune_nom):
+            if (wilaya_nom, commune_nom) in dep_pairs or (wilaya_nom, None) in dep_pairs:
+                return "background-color:#dc3545;color:#fff;"
+            if (wilaya_nom, commune_nom) in semi_pairs or (wilaya_nom, None) in semi_pairs:
+                return "background-color:#ffc107;"
+            return ""
+
         # Remplir les tableaux
         speciality_table_rows_1 = []  # Lignes du premier tableau
         speciality_table_rows_2 = []  # Lignes du second tableau
@@ -544,7 +571,8 @@ class MedecinListPDF(LoginRequiredMixin, TemplateView):
                     commune, 0
                 )  # Par défaut, 0 si non trouvé
 
-                row = f"<tr><td>{index}</td><td><b>{wilaya}</b></td><td>{commune} <span style='color: red; font-weight: bold;'>({nbr_de_contact})</span></td><td>{specialites_str}</td></tr>"
+                bg = row_bg(wilaya, commune)
+                row = f"<tr style='{bg}'><td>{index}</td><td><b>{wilaya}</b></td><td>{commune} <span style='color: red; font-weight: bold;'>({nbr_de_contact})</span></td><td>{specialites_str}</td></tr>"
 
                 # Si l'index est inférieur ou égal au point de division, on ajoute au premier tableau
                 if index <= split_point:
