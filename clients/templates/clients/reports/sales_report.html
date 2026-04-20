@@ -12,7 +12,18 @@
     <style>
 
         @page {
-            size: A4;
+            size: A4 landscape;
+        }
+
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 8mm;
+            }
+
+            body {
+                zoom: 0.49;
+            }
         }
 
         * {

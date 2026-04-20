@@ -571,7 +571,8 @@ const bracketTotalsPlugin = {
                 ctx.fillText(txt1, bracketX + 15, yCenter);
                 const w1 = ctx.measureText(txt1).width;
 
-                ctx.fillStyle = (Number(pct) >= 100) ? '#28a745' : '#ff9800';
+                const numPct = Number(pct);
+                ctx.fillStyle = (numPct >= 95) ? '#198754' : (numPct >= 50 ? '#e67e22' : '#dc3545');
                 ctx.fillText(`  /  ${pct}%`, bracketX + 15 + w1, yCenter);
             } else {
                 const unitsText = ` ${fmtUnits(gTotal.units)} Unités  /  `;
@@ -679,6 +680,24 @@ function drawSortedHorizontalBar(canvasId, title, apiData, boxId, bannerId, isUs
             });
         });
 
+        // Dataset dedicated entirely to rendering the month label on the left side of the bar
+        datasets.push({
+            label: `__month_label_${monthStr}__`,
+            stack: monthStr,
+            data: apiData.map(row => {
+                const mData = row.months[monthStr];
+                return mData && mData.total_val > 0 ? [0, 0] : null;
+            }),
+            backgroundColor: 'transparent',
+            barThickness: isMultiMonth ? 16 : 28,
+            datalabels: {
+                display: isMultiMonth,
+                anchor: 'center', align: 'left', offset: 4,
+                color: '#666', font: { weight: 'bold', size: 11, family: 'Arial' },
+                formatter: () => `[${mLabel}]`
+            }
+        });
+
         // Dummy dataset for the individual month's total label
         const dummyData = apiData.map(row => {
             const mData = row.months[monthStr];
@@ -703,8 +722,7 @@ function drawSortedHorizontalBar(canvasId, title, apiData, boxId, bannerId, isUs
                             const rowIdx = ctx.dataIndex;
                             const mData = apiData[rowIdx].months[monthStr];
                             if (!mData || mData.total_val === 0) return null;
-                            const pre = isMultiMonth ? `[${mLabel}] ` : '';
-                            return isUserGraph ? `${pre}${fmtDA(mData.total_val)} DA` : `${pre}${fmtUnits(mData.total_units)} Unités  /  `;
+                            return isUserGraph ? `${fmtDA(mData.total_val)} DA` : `${fmtUnits(mData.total_units)} Unités  /  `;
                         }
                     },
                     val2: {
@@ -716,16 +734,17 @@ function drawSortedHorizontalBar(canvasId, title, apiData, boxId, bannerId, isUs
                             if (!mData) return '#555';
                             const uName = rowLabels[rowIdx];
                             const target = (window.currentTargetMap && window.currentTargetMap[uName] && window.currentTargetMap[uName][monthStr]) ? window.currentTargetMap[uName][monthStr] : 0;
-                            return (target > 0 && ((mData.total_val / target) * 100) >= 100) ? '#28a745' : '#ff9800';
+                            if (target <= 0) return '#555';
+                            const calcPct = (mData.total_val / target) * 100;
+                            return calcPct >= 95 ? '#198754' : (calcPct >= 50 ? '#e67e22' : '#dc3545');
                         },
                         font: { weight: 'bold', size: 11, family: 'Arial' },
                         offset: function(ctx) {
                             const rowIdx = ctx.dataIndex;
                             const mData = apiData[rowIdx].months[monthStr];
                             if (!mData || mData.total_val === 0) return 6;
-                            const pre = isMultiMonth ? `[${mLabel}] ` : '';
                             ctx.chart.ctx.font = 'bold 11px Arial';
-                            const txt1 = isUserGraph ? `${pre}${fmtDA(mData.total_val)} DA` : `${pre}${fmtUnits(mData.total_units)} Unités  /  `;
+                            const txt1 = isUserGraph ? `${fmtDA(mData.total_val)} DA` : `${fmtUnits(mData.total_units)} Unités  /  `;
                             return 6 + ctx.chart.ctx.measureText(txt1).width;
                         },
                         formatter: function(value, ctx) {
@@ -762,20 +781,28 @@ function drawSortedHorizontalBar(canvasId, title, apiData, boxId, bannerId, isUs
             animation: { duration: 600 },
             scales: {
                 x: { stacked: false, beginAtZero: true, grace: '40%', grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { color: '#555', callback: v => fmtDA(v) + ' DA' } },
-                y: { stacked: true, grid: { display: false }, ticks: { color: '#444', font: { size: 12, weight: 'bold' } } },
+                y: {
+                    stacked: true,
+                    grid: { display: false },
+                    ticks: {
+                        padding: isMultiMonth ? 40 : 5, // Creates space for the [Mois] labels
+                        color: '#444',
+                        font: { size: 12, weight: 'bold' }
+                    }
+                },
             },
             plugins: {
                 bracketTotals: { rowTotals, isMultiMonth, isUserGraph },
                 legend: {
                     display: true, position: 'bottom',
-                    labels: { color: '#555', font: { size: 11 }, filter: item => !item.text.startsWith('__total_') }
+                    labels: { color: '#555', font: { size: 11 }, filter: item => !item.text.startsWith('__') }
                 },
                 title: { display: true, text: title, color: '#333', font: { size: 15, weight: 'bold' }, padding: { bottom: 16 } },
                 tooltip: {
                     callbacks: {
-                        beforeTitle: items => items.filter(i => !i.dataset.label.startsWith('__total_')),
+                        beforeTitle: items => items.filter(i => !i.dataset.label.startsWith('__')),
                         label: function(context) {
-                            if (context.dataset.label.startsWith('__total_')) return null;
+                            if (context.dataset.label.startsWith('__')) return null;
                             const raw = context.raw;
                             if (!Array.isArray(raw)) return null;
                             const segVal = raw[1] - raw[0];
@@ -803,7 +830,7 @@ function drawSortedHorizontalBar(canvasId, title, apiData, boxId, bannerId, isUs
                 },
                 datalabels: { display: false }
             },
-            layout: { padding: { right: 300 } },
+            layout: { padding: { left: 45, right: 300 } },
         },
     });
 }
@@ -902,6 +929,7 @@ function applyFrontendFiltersAndGraph() {
     const fSector = document.getElementById('filter-sector').value;
     const fRegion = document.getElementById('filter-region').value;
     const fRole   = document.getElementById('filter-role').value;
+    const fPerf   = document.getElementById('filter-performance').value;
     const fProd   = document.getElementById('filter-produit').value;
 
     const year = document.getElementById('year-select').value;
@@ -918,6 +946,7 @@ function applyFrontendFiltersAndGraph() {
     fSector ? params.set('sector', fSector) : params.delete('sector');
     fRegion ? params.set('region', fRegion) : params.delete('region');
     fRole   ? params.set('role',   fRole)   : params.delete('role');
+    fPerf   ? params.set('perf',   fPerf)  : params.delete('perf');
     fProd   ? params.set('produit', fProd)  : params.delete('produit');
 
     window.history.replaceState({}, '', window.location.pathname + '?' + params.toString());
@@ -963,14 +992,38 @@ function applyFrontendFiltersAndGraph() {
     });
 
     const targetMap = {};
+    const userTotalTarget = {};
     filtered_targets.forEach(t => {
         const u = t.user_name;
         const m = String(t.month);
         if (!targetMap[u]) targetMap[u] = {};
         if (!targetMap[u][m]) targetMap[u][m] = 0;
         targetMap[u][m] += t.target_value;
+
+        if (!userTotalTarget[u]) userTotalTarget[u] = 0;
+        userTotalTarget[u] += t.target_value;
     });
     window.currentTargetMap = targetMap;
+
+    // Apply Performance Filter (Average % across selected months)
+    if (fPerf) {
+        const userAchieved = {};
+        filtered_data.forEach(item => {
+            if (!userAchieved[item.user_name]) userAchieved[item.user_name] = 0;
+            userAchieved[item.user_name] += item.value;
+        });
+
+        filtered_data = filtered_data.filter(item => {
+            const uName = item.user_name;
+            const achieved = userAchieved[uName] || 0;
+            const target = userTotalTarget[uName] || 0;
+            const pct = target > 0 ? (achieved / target) * 100 : 0;
+
+            if (fPerf === 'gte100') return pct >= 100;
+            if (fPerf === 'lt100')  return pct < 100;
+            return true;
+        });
+    }
 
     // Step B: Multi-Month Aggregate helper
     function pivot(items, filterFn, groupKeyFn, segKeyFn) {
@@ -1227,7 +1280,7 @@ function renderMeriemCard(dashData) {
             <div class="value-target">${fmtDA(meriem.target_total)} DA</div>
             <div class="value-achieved">${fmtDA(meriem.achieved_total)} DA</div>
             <div>
-                <strong style="color:${meriem.personal_percentage >= 100 ? '#28a745' : '#ffc107'};">
+                <strong style="color:${meriem.personal_percentage >= 95 ? '#198754' : (meriem.personal_percentage >= 50 ? '#e67e22' : '#dc3545')};">
                     ${meriem.personal_percentage}%
                 </strong>
             </div>
