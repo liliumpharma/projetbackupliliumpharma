@@ -124,18 +124,24 @@
 
         .grid-header {
             font-weight: bold;
-            color: var(--text-muted);
+            color: #e0e6ef;
             text-transform: uppercase;
             font-size: 12px;
             margin-bottom: 15px;
             position: sticky;
             top: var(--grid-header-top, 0px); /* Dynamically set by JS */
-            background-color: var(--bg-color);
-            padding-top: 10px;
-            padding-bottom: 10px;
+            background: linear-gradient(135deg, #1a2332, #2c3e50);
+            padding-top: 12px;
+            padding-bottom: 12px;
             z-index: 90;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            letter-spacing: 0.4px;
         }
+        .grid-header .header-ar { color: #8fa8c8; }
+        .grid-header .sort-col:hover { color: #7ec8e3; }
+        .grid-header .sort-col.sort-active { color: #7ec8e3; }
 
         /* --- SORTABLE COLUMN HEADERS --- */
         .sort-col {
@@ -277,6 +283,57 @@
 
         /* --- SECTION / SUBGROUP WRAPPERS --- */
         .subgroup-wrapper { margin-top: 20px; }
+
+        /* --- ACTIVE FILTER BADGES --- */
+        #active-filters-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 18px;
+            min-height: 24px;
+        }
+        .filter-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(0,123,255,0.1);
+            border: 1px solid rgba(0,123,255,0.35);
+            color: #0056b3;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .filter-badge .badge-x {
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 1;
+            color: #0056b3;
+            opacity: 0.6;
+        }
+        .filter-badge .badge-x:hover { opacity: 1; }
+
+        /* --- PERFORMANCE ICONS --- */
+        @keyframes flash-gift {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: 0.3; transform: scale(1.25); }
+        }
+        @keyframes flash-danger {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.2; }
+        }
+        .icon-gift   { display:inline-block; animation: flash-gift   1.4s ease-in-out infinite; margin-left: 5px; font-size: 14px; }
+        .icon-danger { display:inline-block; animation: flash-danger  0.8s ease-in-out infinite; margin-left: 5px; font-size: 14px; }
+        /* --- UX: ERROR SHAKE ANIMATION --- */
+        @keyframes shake-flash {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); background-color: #ffe6e6; border-color: #dc3545; color: #dc3545; }
+            40%, 80% { transform: translateX(4px); background-color: #ffe6e6; border-color: #dc3545; color: #dc3545; }
+        }
+        .error-shake {
+            animation: shake-flash 0.4s ease-in-out;
+        }
     </style>
 </head>
 <body>
@@ -289,6 +346,11 @@
     </form>
 
     <h1>Dashboard des vente/target</h1>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <span style="background-color: #e9ecef; color: #6c757d; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #ced4da; margin-bottom: 20px;">
+        🕒 Dernière mise à jour : <span id="last-updated-badge">{{ last_updated }}</span>
+    </span>
+    </div>
 
     <div class="filter-section">
         <!-- Top Row: month chips -->
@@ -375,8 +437,9 @@
                 <div class="filter-label">Performance</div>
                 <select id="filter-performance" class="filter-select">
                     <option value="">Tous</option>
-                    <option value="gte100">&ge; 100% (Objectif Atteint)</option>
-                    <option value="lt100">&lt; 100% (Objectif Non Atteint)</option>
+                    <option value="gift">🎁 Objectif Atteint</option>
+                    <option value="acceptable">🟠 Acceptable</option>
+                    <option value="danger">🚨 En Danger</option>
                 </select>
             </div>
 
@@ -439,6 +502,9 @@
         <div class="sort-col" data-sort="global_achieved_percentage" onclick="sortHeaderClick(this)" id="sort-global_achieved_percentage">PART DU CA<span class="sort-arrow">↓</span><span class="header-ar">حصة المبيعات</span></div>
         <div class="sort-col" data-sort="global_percentage" onclick="sortHeaderClick(this)" id="sort-global_percentage">% OBJ.GLOBAL<span class="sort-arrow">↓</span><span class="header-ar">الهدف العام</span></div>
     </div>
+
+    <!-- Active filter badge strip -->
+    <div id="active-filters-bar"></div>
 
     <div id="loading-spinner">Chargement des données...</div>
 
@@ -554,7 +620,8 @@
 
         // ── Search listener ──────────────────────────────────────────────────────
         document.getElementById('btn-search').addEventListener('click', function() {
-            fetchDashboardData();
+            // On passe "true" pour indiquer que c'est une recherche manuelle
+            fetchDashboardData(true); 
             updateStickyOffset();
         });
 
@@ -572,6 +639,72 @@
             document.getElementById(id).addEventListener('change', applyFilters);
         });
 
+        // ── Active filter badge strip ────────────────────────────────────────────
+        const MONTH_NAMES = ['','Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+        const PERF_LABELS = { gift: '🎁 Objectif Atteint', acceptable: '🟠 Acceptable', danger: '🚨 En Danger' };
+
+        function clearFilter(key) {
+            if (key === 'months') {
+                document.querySelectorAll('.month-chip.active').forEach(c => c.classList.remove('active'));
+                selectedMonths = [];
+                fetchDashboardData();
+            } else if (key === 'year') {
+                // year is always set, skip removal
+            } else {
+                const el = document.getElementById('filter-' + key);
+                if (el) { el.value = ''; applyFilters(); }
+            }
+        }
+
+        function renderFilterBadges() {
+            const bar = document.getElementById('active-filters-bar');
+            bar.innerHTML = '';
+
+            const badges = [];
+
+            // Months
+            if (selectedMonths.length) {
+                badges.push({ label: 'Mois : ' + selectedMonths.map(m => MONTH_NAMES[+m]).join(', '), key: 'months' });
+            }
+            // Year
+            const yr = document.getElementById('year-select').value;
+            if (yr) badges.push({ label: 'Année : ' + yr, key: 'year' });
+            // Dropdowns
+            [
+                { id: 'filter-user',        label: 'Utilisateur' },
+                { id: 'filter-sector',      label: 'Secteur' },
+                { id: 'filter-region',      label: 'Région' },
+                { id: 'filter-role',        label: 'Rôle' },
+                { id: 'filter-performance', label: 'Performance', map: PERF_LABELS },
+                { id: 'filter-produit',     label: 'Produit' },
+            ].forEach(({ id, label, map }) => {
+                const el = document.getElementById(id);
+                if (!el || !el.value) return;
+                const display = map ? (map[el.value] || el.value) : el.value;
+                badges.push({ label: `${label} : ${display}`, key: id.replace('filter-', '') });
+            });
+            // Lines multi-select
+            const lines = Array.from(document.getElementById('filter-line').selectedOptions).map(o => o.value);
+            if (lines.length) badges.push({ label: 'Lignes : ' + lines.join(' - '), key: 'line' });
+
+            if (!badges.length) {
+                const s = document.createElement('span');
+                s.className = 'filter-badge';
+                s.style.opacity = '0.4';
+                s.textContent = 'Aucun filtre actif';
+                bar.appendChild(s);
+                return;
+            }
+
+            badges.forEach(({ label, key }) => {
+                const s = document.createElement('span');
+                s.className = 'filter-badge';
+                const canClear = key !== 'year';
+                s.innerHTML = label + (canClear ? ` <span class="badge-x" onclick="clearFilter('${key}')">✕</span>` : '');
+                bar.appendChild(s);
+            });
+        }
+
         // ── Helpers ─────────────────────────────────────────────────────────────
         function formatDA(number) {
             return new Intl.NumberFormat('fr-DZ', {
@@ -584,6 +717,7 @@
             document.getElementById('loading-spinner').style.display   = 'none';
             document.getElementById('dashboard-content').style.display  = 'none';
             document.getElementById('no-selection-msg').style.display   = 'block';
+            renderFilterBadges();
         }
 
         function hideEmptyState() {
@@ -667,10 +801,94 @@
             const fPerf    = document.getElementById('filter-performance').value;
             const fProduit = document.getElementById('filter-produit').value;
 
+            // 1. Extraire les lignes des produits depuis le menu déroulant
+            const productLines = {};
+            document.querySelectorAll('#filter-produit option').forEach(opt => {
+                if (opt.value) productLines[opt.value] = opt.getAttribute('data-line') || '';
+            });
+
+            // ── CALCUL DYNAMIQUE DE COUNTRY MANAGER (MERIEM) ──
+            const cmUser = allUsersData.find(u => u.role === 'CountryManager');
+            let cmTarget = 0;
+            let cmAchieved = 0;
+
+            // 1. RÉALISÉ : Basé UNIQUEMENT sur les ventes globales de l'entreprise (pas sur les utilisateurs)
+            if (cmUser && cmUser.product_breakdown) {
+                cmUser.product_breakdown.forEach(p => {
+                    const pid = String(p.product_id);
+                    const pLine = productLines[pid] || '';
+
+                    if (fProduit && pid !== fProduit) return;
+                    if (fLines.length > 0 && !fLines.includes(pLine)) return;
+
+                    cmAchieved += p.achieved_value;
+                });
+            }
+
+            // 2. OBJECTIF : Basé sur les délégués (Medico + Commerciaux COM) pour respecter le filtre Région/Secteur
+            allUsersData.forEach(u => {
+                if (u.role === 'CountryManager') return; 
+                
+                // Les filtres Secteur et Région s'appliquent pour isoler l'objectif de la région
+                if (fSector && !u.sector.includes(fSector)) return;
+                if (fRegion && u.region !== fRegion) return;
+                
+                (u.product_breakdown || []).forEach(p => {
+                    const pid = String(p.product_id);
+                    const pLine = productLines[pid] || '';
+                    
+                    if (fProduit && pid !== fProduit) return;
+                    if (fLines.length > 0 && !fLines.includes(pLine)) return;
+                    
+                    if (u.role === 'Medico_commercial') {
+                        cmTarget += p.target_value;
+                    } else if (u.role === 'Commercial' && pLine === 'COM') {
+                        cmTarget += p.target_value;
+                    }
+                });
+            });
+
             const filtered = allUsersData
-                // ── Step 1: inclusion filter ──────────────────────────────────
+                // ── Step 1: value substitution for dynamic totals ─────────────
+                .map(u => {
+                    // Carte CountryManager forcée avec ses nouvelles valeurs
+                    if (u.role === 'CountryManager') {
+                        const newPerc = cmTarget > 0 ? Math.round((cmAchieved / cmTarget) * 10000) / 100 : 0;
+                        return Object.assign({}, u, {
+                            target_total: cmTarget,
+                            achieved_total: cmAchieved,
+                            personal_percentage: newPerc,
+                            force_visible: true 
+                        });
+                    }
+
+                    // Pour les autres, on recalcule le total si Ligne ou Produit est filtré
+                    if (!fProduit && fLines.length === 0) return u;
+
+                    let newTarget = 0;
+                    let newAchieved = 0;
+
+                    (u.product_breakdown || []).forEach(p => {
+                        const pid = String(p.product_id);
+                        const pLine = productLines[pid] || '';
+                        
+                        if (fProduit && pid !== fProduit) return;
+                        if (fLines.length > 0 && !fLines.includes(pLine)) return;
+                        
+                        newTarget += p.target_value;
+                        newAchieved += p.achieved_value;
+                    });
+
+                    const newPerc = newTarget > 0 ? Math.round(newAchieved / newTarget * 10000) / 100 : 0;
+                    return Object.assign({}, u, {
+                        target_total: newTarget,
+                        achieved_total: newAchieved,
+                        personal_percentage: newPerc,
+                    });
+                })
+                // ── Step 2: inclusion filter ──────────────────────────────────
                 .filter(u => {
-                    if (u.role === 'CountryManager') return true; // always visible
+                    if (u.force_visible) return true; // CountryManager reste visible
 
                     if (fUser && u.name !== fUser) return false;
                     if (fLines.length > 0) {
@@ -680,49 +898,42 @@
                     if (fSector && !u.sector.includes(fSector)) return false;
                     if (fRegion && u.region !== fRegion) return false;
                     if (fRole   && u.role   !== fRole)   return false;
-                    if (fPerf === 'gte100' && parseFloat(u.personal_percentage) < 100)  return false;
-                    if (fPerf === 'lt100'  && parseFloat(u.personal_percentage) >= 100) return false;
+                    
+                    if (fPerf) {
+                        const greenThreshold = u.role === 'Commercial' ? 75 : 95;
+                        const pct = parseFloat(u.personal_percentage);
+                        if (fPerf === 'gift'       && pct < greenThreshold)               return false;
+                        if (fPerf === 'acceptable' && (pct < 50 || pct >= greenThreshold)) return false;
+                        if (fPerf === 'danger'     && pct >= 50)                          return false;
+                    }
 
-                    // Product filter: exclude users who have no entry for this product
+                    // Product filter validation
                     if (fProduit) {
-                        const entry = (u.product_breakdown || []).find(
-                            p => String(p.product_id) === fProduit
-                        );
+                        const entry = (u.product_breakdown || []).find(p => String(p.product_id) === fProduit);
                         if (!entry) return false;
                     }
                     return true;
-                })
-                // ── Step 2: value substitution for product filter ─────────────
-                .map(u => {
-                    // No product selected → original totals for everyone
-                    if (!fProduit) return u;
-
-                    const entry = (u.product_breakdown || []).find(
-                        p => String(p.product_id) === fProduit
-                    );
-                    if (!entry) return u;
-
-                    const newTarget   = entry.target_value;
-                    const newAchieved = entry.achieved_value;
-                    const newPerc     = newTarget > 0
-                        ? Math.round(newAchieved / newTarget * 10000) / 100
-                        : 0;
-
-                    // Shallow-clone so allUsersData originals are never mutated
-                    return Object.assign({}, u, {
-                        target_total:        newTarget,
-                        achieved_total:      newAchieved,
-                        personal_percentage: newPerc,
-                    });
                 });
 
             renderCards(filtered, selectedMonths.length);
+            renderFilterBadges();
         }
-
+        
+        
         // ── Fetch ───────────────────────────────────────────────────────────────
-        async function fetchDashboardData() {
+        async function fetchDashboardData(isManualSearch = false) {
             // No months selected → show the placeholder, skip the API call entirely
             if (selectedMonths.length === 0) {
+                
+                // On ne déclenche l'animation QUE si l'utilisateur a cliqué sur le bouton
+                if (isManualSearch) {
+                    document.querySelectorAll('.month-chip').forEach(chip => {
+                        chip.classList.remove('error-shake');
+                        void chip.offsetWidth; 
+                        chip.classList.add('error-shake');
+                    });
+                }
+
                 allUsersData = [];
                 showEmptyState();
                 return;
@@ -738,6 +949,11 @@
             try {
                 const response = await fetch(url);
                 const data     = await response.json();
+                
+                // --- Mise à jour du badge ---
+                const badge = document.getElementById('last-updated-badge');
+                if(badge) badge.innerText = data.last_updated || "Non disponible";
+                
                 allUsersData   = data.users;
                 populateDynamicFilters(allUsersData);
                 applyFilters();
@@ -788,20 +1004,36 @@
             const pctLabel = monthCount > 1 ? '% Moy.' : '%';
 
             // Helper to build a single card's HTML
-            const buildCardHTML = (user, isMeriem) => `
+            const buildCardHTML = (user, isMeriem, rank = 0) => {
+                const isCommercial  = user.role === 'Commercial';
+                const greenThreshold = isCommercial ? 75 : 95;
+                const pct  = user.personal_percentage;
+                const perfColor = pct >= greenThreshold ? '#198754' : (pct >= 50 ? '#e67e22' : '#dc3545');
+                const isGreen = !isMeriem && pct >= greenThreshold;
+                const isRed   = !isMeriem && pct < 50;
+                return `
                 <div class="user-card grid-layout ${isMeriem ? 'meriem-card' : ''}"
                      onclick="goToDetail(${user.id})">
-                    <div>
-                        <strong>${user.name}</strong><br>
-                        <span style="font-size:11px;color:var(--text-muted);">${user.family || ''}</span>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        ${!isMeriem && rank > 0 ? `<span style="
+                            display:inline-flex; align-items:center; justify-content:center;
+                            min-width:24px; height:24px; border-radius:50%;
+                            background:#e9ecef; color:#495057;
+                            font-size:11px; font-weight:bold; flex-shrink:0;
+                        ">${rank}</span>` : ''}
+                        <div>
+                            <strong>${user.name}</strong>${isGreen ? '<span class="icon-gift">🎁</span>' : ''}${isRed ? '<span class="icon-danger">🚨</span>' : ''}<br>
+                            <span style="font-size:11px;color:var(--text-muted);">${user.family || ''}</span>
+                            ${user.lines ? `<span style="font-size:10px;color:#007bff;font-weight:600;display:block;margin-top:2px;">${user.lines.split(',').map(l=>l.trim()).filter(Boolean).join(' - ')}</span>` : ''}
+                        </div>
                     </div>
                     <div><span class="badge-role">${user.role.replace('_', ' ')}</span></div>
                     <div style="font-size:13px;">${isMeriem ? 'ALGERIE' : user.region}</div>
                     <div class="value-target">${formatDA(user.target_total)}</div>
                     <div class="value-achieved">${formatDA(user.achieved_total)}</div>
                     <div>
-                        <strong style="color:${user.personal_percentage >= 95 ? '#198754' : (user.personal_percentage >= 50 ? '#e67e22' : '#dc3545')};">
-                            ${user.personal_percentage}${pctLabel}
+                        <strong style="color:${perfColor};">
+                            ${pct}${pctLabel}
                         </strong>
                     </div>
                     <div>
@@ -816,6 +1048,7 @@
                     </div>
                 </div>
             `;
+            };
 
             // Helper to sort an array of users by activeSortKey (high→low)
             const sortGroup = (arr) => {
@@ -845,8 +1078,8 @@
 
             // 3. Sort each non-meriem bucket, then render + accumulate
             const renderBucket = (arr, container, groupStats) => {
-                sortGroup(arr).forEach(user => {
-                    container.innerHTML += buildCardHTML(user, false);
+                sortGroup(arr).forEach((user, idx) => {
+                    container.innerHTML += buildCardHTML(user, false, idx + 1);
                     groupStats.obj += parseFloat(user.target_total);
                     groupStats.rea += parseFloat(user.achieved_total);
                     groupStats.pca += parseFloat(user.global_achieved_percentage);

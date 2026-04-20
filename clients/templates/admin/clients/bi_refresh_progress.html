@@ -1,0 +1,111 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Actualisation BI{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px; margin: 60px auto; font-family: Arial, sans-serif;">
+
+    <h1 style="color: #333; margin-bottom: 8px;">📊 Actualisation des Données BI</h1>
+    <p style="color: #666; margin-bottom: 32px;">
+        <strong id="item-count">{{ total_items }}</strong> éléments détectés.
+        Le serveur traite les données par tranches de 50 enregistrements.
+    </p>
+
+    <!-- Progress bar track -->
+    <div style="background: #e9ecef; border-radius: 8px; height: 28px; overflow: hidden; margin-bottom: 14px; box-shadow: inset 0 1px 3px rgba(0,0,0,.15);">
+        <div id="progress-bar"
+             style="height: 100%; width: 0%; background: linear-gradient(90deg, #28a745, #20c997);
+                    border-radius: 8px; transition: width .3s ease; position: relative;">
+            <span id="pct-label"
+                  style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+                         color: #fff; font-weight: bold; font-size: 13px; white-space: nowrap;">
+                0 %
+            </span>
+        </div>
+    </div>
+
+    <!-- Status text -->
+    <p id="status-text" style="color: #555; font-size: 14px; min-height: 22px;">
+        Démarrage du traitement…
+    </p>
+
+    <!-- Done section (hidden until complete) -->
+    <div id="done-section" style="display: none; margin-top: 28px; text-align: center;">
+        <p style="font-size: 20px; color: #28a745; font-weight: bold; margin-bottom: 16px;">
+            ✅ Actualisation terminée avec succès !
+        </p>
+        <a href="{% url 'admin:clients_bisnapshot_changelist' %}"
+           style="display: inline-block; padding: 10px 28px; background: #28a745;
+                  color: #fff; border-radius: 6px; text-decoration: none; font-size: 15px;">
+            Retour aux Snapshots BI
+        </a>
+    </div>
+
+    <!-- Error section (hidden unless a network error occurs) -->
+    <div id="error-section" style="display: none; margin-top: 20px; color: #dc3545;"></div>
+
+</div>
+
+<script>
+(function () {
+    const totalItems = {{ total_items }};
+    const chunkUrl   = "{% url 'admin:process_bi_chunk' %}";
+    const csrfToken  = "{{ csrf_token }}";
+
+    let processed = 0;
+
+    function updateUI(remaining) {
+        const done = totalItems - remaining;
+        const pct  = totalItems > 0 ? Math.round(done * 100 / totalItems) : 100;
+
+        document.getElementById('progress-bar').style.width = pct + '%';
+        document.getElementById('pct-label').textContent    = pct + ' %';
+        document.getElementById('status-text').textContent  =
+            done + ' / ' + totalItems + ' traités (' + pct + '%)';
+    }
+
+    function processChunk() {
+        fetch(chunkUrl, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+        .then(function (resp) {
+            if (!resp.ok) { throw new Error('HTTP ' + resp.status); }
+            return resp.json();
+        })
+        .then(function (data) {
+            updateUI(data.remaining);
+
+            if (data.remaining > 0) {
+                // Small breathing room so the browser can repaint
+                setTimeout(processChunk, 80);
+            } else {
+                document.getElementById('done-section').style.display = 'block';
+                document.getElementById('status-text').style.display  = 'none';
+            }
+        })
+        .catch(function (err) {
+            var errEl = document.getElementById('error-section');
+            errEl.style.display = 'block';
+            errEl.innerHTML =
+                '<strong>Erreur réseau :</strong> ' + err +
+                '<br><button onclick="processChunk()" ' +
+                'style="margin-top:10px;padding:6px 18px;cursor:pointer;">Réessayer</button>';
+        });
+    }
+
+    if (totalItems === 0) {
+        updateUI(0);
+        document.getElementById('done-section').style.display = 'block';
+        document.getElementById('status-text').style.display  = 'none';
+    } else {
+        // Start after a short delay so the page renders first
+        setTimeout(processChunk, 400);
+    }
+})();
+</script>
+{% endblock %}

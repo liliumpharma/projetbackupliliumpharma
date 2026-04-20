@@ -432,7 +432,7 @@ class UserTargetMonthExcel(APIView):
 
             worksheet.write(row, 0, user_target_month.user.username)
             worksheet.write(row, 1, user_target_month.user.userprofile.speciality_rolee)
-            worksheet.write(row, 2, user_target_month.user.userprofile.family)
+            worksheet.write(row, 2, user_target_month.user.userprofile.lines or "")
             worksheet.write(row, 3, str(user_target_month.user.userprofile.region))
             worksheet.write(
                 row, 4, f"{user_target_month.date.month}-{user_target_month.date.year}"

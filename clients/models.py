@@ -283,6 +283,128 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 
 
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+import logging
+_bi_log = logging.getLogger("clients.bi_signals")
+
+def _log_wilaya_product(year, month, wilaya_obj, product_obj):
+    """Write one BIPendingUpdate row for a (wilaya, product, year, month) combo."""
+    try:
+        BIPendingUpdate.objects.get_or_create(
+            year=year, month=month,
+            wilaya=wilaya_obj, product=product_obj,
+            user_profile=None,
+        )
+    except Exception as exc:
+        _bi_log.error("_log_wilaya_product failed: %s", exc, exc_info=True)
+
+
+def _log_user_profile(year, month, profile):
+    """Write one BIPendingUpdate row to trigger a dashboard rebuild for this user."""
+    try:
+        BIPendingUpdate.objects.get_or_create(
+            year=year, month=month,
+            wilaya=None, product=None,
+            user_profile=profile,
+        )
+    except Exception as exc:
+        _bi_log.error("_log_user_profile failed: %s", exc, exc_info=True)
+
+
+def _log_user_all_months(profile):
+    """Log a dashboard rebuild for every known (year, month) this user appears in."""
+    try:
+        dates = OrderSource.objects.values('date__year', 'date__month').distinct()
+        for d in dates:
+            _log_user_profile(d['date__year'], d['date__month'], profile)
+    except Exception as exc:
+        _bi_log.error("_log_user_all_months failed: %s", exc, exc_info=True)
+
+# ---------------------------------------------------------------------------
+# Signal: OrderProduct  (SuperGros sales rows)
+# ---------------------------------------------------------------------------
+
+@receiver(post_save, sender=OrderProduct)
+@receiver(post_delete, sender=OrderProduct)
+def _bi_log_order_product(sender, instance, **kwargs):
+    try:
+        sale_date = instance.order.source.date
+        _log_wilaya_product(
+            sale_date.year, sale_date.month,
+            instance.order.client.wilaya,
+            instance.produit,
+        )
+    except Exception as exc:
+        _bi_log.error("_bi_log_order_product failed: %s", exc, exc_info=True)
+
+
+# ---------------------------------------------------------------------------
+# Signal: OrderItem  (direct pharmacy / gros orders used in DashboardSnapshot)
+# ---------------------------------------------------------------------------
+
+def _connect_order_item_signals():
+    try:
+        from orders.models import OrderItem as _OrderItem
+
+        @receiver(post_save, sender=_OrderItem, weak=False)
+        @receiver(post_delete, sender=_OrderItem, weak=False)
+        def _bi_log_order_item(sender, instance, **kwargs):
+            try:
+                order = instance.order
+                profile = order.user.userprofile
+                _log_user_profile(order.added.year, order.added.month, profile)
+            except Exception:
+                pass
+    except Exception as exc:
+        _bi_log.error("_bi_log_order_product failed: %s", exc, exc_info=True)
+
+
+_connect_order_item_signals()
+
+
+# ---------------------------------------------------------------------------
+# Signal: UserSectorDetail  (sector assignments changed → full user rebuild)
+# ---------------------------------------------------------------------------
+
+def _connect_sector_detail_signals():
+    try:
+        from accounts.models import UserSectorDetail as _USD
+
+        @receiver(post_save, sender=_USD, weak=False)
+        @receiver(post_delete, sender=_USD, weak=False)
+        def _bi_log_sector_detail(sender, instance, **kwargs):
+            _log_user_all_months(instance.user_profile)
+    except Exception as exc:
+        _bi_log.error("_bi_log_order_product failed: %s", exc, exc_info=True)
+
+
+_connect_sector_detail_signals()
+
+
+# ---------------------------------------------------------------------------
+# Signal: UserProfile  (role / lines / region changed → full user rebuild)
+# ---------------------------------------------------------------------------
+
+def _connect_user_profile_signals():
+    try:
+        from accounts.models import UserProfile as _UP
+
+        @receiver(post_save, sender=_UP, weak=False)
+        def _bi_log_user_profile(sender, instance, **kwargs):
+            _log_user_all_months(instance)
+    except Exception as exc:
+        _bi_log.error("_bi_log_order_product failed: %s", exc, exc_info=True)
+
+
+_connect_user_profile_signals()
+
+
+# ---------------------------------------------------------------------------
+# Existing supervisor auto-fill signal (kept unchanged)
+# ---------------------------------------------------------------------------
+
 # We listen for both saves (updates/creates) and deletes
 @receiver(post_save, sender=UserTargetMonthProduct)
 @receiver(post_delete, sender=UserTargetMonthProduct)
@@ -427,6 +549,34 @@ def auto_fill_supervisor_targets(sender, instance, **kwargs):
             cm_target_product.save()
 
 
+# ---------------------------------------------------------------------------
+# Signal: UserTargetMonthProduct  (target changed → log per-wilaya + dashboard)
+# Runs AFTER auto_fill_supervisor_targets to avoid reacting to its cascade saves.
+# ---------------------------------------------------------------------------
+
+@receiver(post_save, sender=UserTargetMonthProduct)
+@receiver(post_delete, sender=UserTargetMonthProduct)
+def _bi_log_target_change(sender, instance, **kwargs):
+    from accounts.models import UserProfile as _UP
+    try:
+        profile = instance.usermonth.user.userprofile
+        target_date = instance.usermonth.date
+
+        # Only react to real delegates — supervisors are auto-filled above and
+        # would create an infinite cascade if we logged them too.
+        if profile.speciality_rolee not in ["Commercial", "Medico_commercial"]:
+            return
+
+        # One row per (wilaya, product) so sync_bi_allocation can be granular.
+        for wilaya in profile.sectors.all():
+            _log_wilaya_product(target_date.year, target_date.month, wilaya, instance.product)
+
+        # Also queue a dashboard rebuild for this user.
+        _log_user_profile(target_date.year, target_date.month, profile)
+    except Exception:
+        pass
+
+
 class BISnapshot(models.Model):
     """
     Flat Data Warehouse table for the Business Intelligence Dashboard.
@@ -450,6 +600,7 @@ class BISnapshot(models.Model):
     
     qty = models.FloatField(default=0.0)
     value = models.FloatField(default=0.0)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "BI Snapshot"
@@ -478,6 +629,7 @@ class SupergrosSalesSnapshot(models.Model):
 
     qty = models.FloatField(default=0.0)
     value = models.FloatField(default=0.0)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         indexes = [
@@ -489,7 +641,7 @@ class DashboardSnapshot(models.Model):
     """Flat table specifically for taruser_desktop.html zero-second load times."""
     year = models.IntegerField()
     month = models.IntegerField()
-    
+
     user_id = models.IntegerField()
     user_name = models.CharField(max_length=255)
     role = models.CharField(max_length=100)
@@ -497,15 +649,84 @@ class DashboardSnapshot(models.Model):
     sector_category = models.CharField(max_length=50, null=True, blank=True)
     region = models.CharField(max_length=100, null=True, blank=True)
     work_as_commercial = models.BooleanField(default=False)
-    
+
     product_id = models.IntegerField(default=0)
     product_name = models.CharField(max_length=255, default="Aucun")
-    
+
     target_value = models.FloatField(default=0.0)
     achieved_value = models.FloatField(default=0.0)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         indexes = [
             models.Index(fields=['year', 'month']),
             models.Index(fields=['user_id']),
         ]
+
+
+class BIPendingUpdate(models.Model):
+    """
+    Dirty-log / to-do list for the incremental BI refresh.
+    Signals write here; the AJAX chunk processor reads and deletes here.
+
+    Two kinds of rows:
+      • wilaya + product  (user_profile=None)  → sync sales + BI allocation
+      • user_profile only (wilaya=None, product=None) → sync dashboard snapshot
+
+    unique_together prevents duplicate work when the same Excel file
+    re-saves the same combo hundreds of times.  Note: PostgreSQL does NOT
+    enforce uniqueness across NULL columns, so application-level get_or_create
+    is the primary deduplication guard for nullable combinations.
+    """
+    year         = models.IntegerField()
+    month        = models.IntegerField()
+    wilaya       = models.ForeignKey('regions.Wilaya',        null=True, blank=True, on_delete=models.CASCADE)
+    product      = models.ForeignKey('produits.Produit',      null=True, blank=True, on_delete=models.CASCADE)
+    user_profile = models.ForeignKey('accounts.UserProfile',  null=True, blank=True, on_delete=models.CASCADE)
+    created_at   = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['year', 'month', 'wilaya', 'product', 'user_profile']
+        verbose_name        = "BI Pending Update"
+        verbose_name_plural = "BI Pending Updates"
+
+    def __str__(self):
+        if self.user_profile:
+            return f"[user] {self.user_profile} – {self.month}/{self.year}"
+        return f"[wilaya/product] {self.wilaya} / {self.product} – {self.month}/{self.year}"
+    
+class UserReportSnapshot(models.Model):
+    """
+    Table plate pour charger la page /clients/target_user/ en 50ms.
+    Mise à jour uniquement via le bouton 'Actualiser données BI' de l'Admin.
+    """
+    year = models.IntegerField()
+    month = models.IntegerField()
+    
+    user_id = models.IntegerField()
+    user_name = models.CharField(max_length=255)
+    role = models.CharField(max_length=100)
+    region = models.CharField(max_length=100, null=True, blank=True)
+    
+    product_id = models.IntegerField()
+    product_name = models.CharField(max_length=255)
+    product_price = models.FloatField(default=0.0)
+
+    target_qty = models.FloatField(default=0.0)
+    mobile_ph_gros_qty = models.FloatField(default=0.0)
+    mobile_gros_super_qty = models.FloatField(default=0.0)
+    supergros_achieved_qty = models.FloatField(default=0.0)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "User Report Snapshot"
+        verbose_name_plural = "User Report Snapshots"
+        indexes = [
+            models.Index(fields=['year', 'month']),
+            models.Index(fields=['user_id']),
+            models.Index(fields=['product_id']),
+        ]
+
+    def __str__(self):
+        return f"{self.month}/{self.year} - {self.user_name} - {self.product_name}"

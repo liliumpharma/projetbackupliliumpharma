@@ -650,11 +650,14 @@ class SourceAdmin(admin.ModelAdmin):
 
 
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import path
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.contrib import messages
-from .models import BISnapshot, OrderSource
-from clients.api.functions import get_visualisation_data, get_target_all_users
+from .models import BISnapshot, BIPendingUpdate, OrderSource
+from produits.models import Produit
+from regions.models import Wilaya
+
 
 @admin.register(BISnapshot)
 class BISnapshotAdmin(admin.ModelAdmin):
@@ -665,142 +668,146 @@ class BISnapshotAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         custom_urls = [
-            path('refresh-bi-data/', self.admin_site.admin_view(self.refresh_bi_data), name='refresh_bi_data'),
+            path(
+                'refresh-bi-data/',
+                self.admin_site.admin_view(self.refresh_bi_data),
+                name='refresh_bi_data',
+            ),
+            path(
+                'process-bi-chunk/',
+                self.admin_site.admin_view(self.process_bi_chunk),
+                name='process_bi_chunk',
+            ),
         ]
         return custom_urls + urls
 
+    # ------------------------------------------------------------------
+    # VIEW 1 – "Actualiser" button handler
+    # Wipes all three snapshot tables, populates BIPendingUpdate with
+    # every active (year, month, wilaya, product) and (year, month, user)
+    # combo, then renders the AJAX progress-bar page.
+    # ------------------------------------------------------------------
     def refresh_bi_data(self, request):
-        """
-        Smart Delta Update : Ne recalcule et ne remplace que les 3 DERNIERS MOIS COMPLETS.
-        (Exclut le mois en cours).
-        """
-        import datetime
-        from dateutil.relativedelta import relativedelta
-        from django.db.models import Q
-
-        # 1. Définir la fenêtre temporelle dynamique (M-1, M-2, M-3)
-        today = datetime.date.today()
-        target_dates = [
-            today - relativedelta(months=1), # Le mois dernier
-            today - relativedelta(months=2), # Il y a 2 mois
-            today - relativedelta(months=3)  # Il y a 3 mois
+        dates = OrderSource.objects.values('date__year', 'date__month').distinct()
+        active_dates = [
+            (d['date__year'], d['date__month'])
+            for d in dates
+            if OrderSource.objects.filter(
+                date__year=d['date__year'], date__month=d['date__month']
+            ).exists()
         ]
-        
-        # Créer une liste de tuples (année, mois)
-        periods_to_process = [(d.year, d.month) for d in target_dates]
 
-        # Construire une requête OR pour cibler exactement ces 3 mois
-        query = Q()
-        for y, m in periods_to_process:
-            query |= Q(year=y, month=m)
+        if not active_dates:
+            messages.warning(request, "Aucune donnée source trouvée.")
+            return redirect('admin:clients_bisnapshot_changelist')
 
-        # 2. Supprimer UNIQUEMENT les anciennes données de ces 3 mois spécifiques
-        BISnapshot.objects.filter(query).delete()
-        DashboardSnapshot.objects.filter(query).delete()
-        SupergrosSalesSnapshot.objects.filter(query).delete()
+        # Wipe snapshots so the chunk processor rebuilds from a clean slate.
+        BISnapshot.objects.all().delete()
+        DashboardSnapshot.objects.all().delete()
+        SupergrosSalesSnapshot.objects.all().delete()
+        BIPendingUpdate.objects.all().delete()
 
-        total_created = 0
+        # ── Wilaya/product combos (drives sync_sales_snapshot + sync_bi_allocation)
+        wilayas  = Wilaya.objects.all()
+        products = Produit.objects.all()
 
-        # 3. Boucler uniquement sur ces 3 mois pour générer les nouvelles données
-        for y, m in periods_to_process:
-            # S'il n'y a pas du tout de données de vente pour ce mois, on passe
-            if not OrderSource.objects.filter(date__year=y, date__month=m).exists():
-                continue
-                
-            monthly_params = {'years': [y], 'months': [m]}
-            
-            # ── 3A. CALCULATE & SAVE BI SNAPSHOTS ──
-            monthly_data = get_visualisation_data(monthly_params, request_user=None).get("raw_data", [])
-            
-            snapshots = [
-                BISnapshot(
-                    year=y, month=m,
-                    user_id=row['user_id'], user_name=row['user_name'],
-                    role=row['role'], lines=row.get('lines', ''),
-                    sector_category=row.get('sector', 'IN'), region=row['region'],
-                    wilaya=row['wilaya'], supergros_name=row['supergros_name'],
-                    product_id=row['product_id'], product_name=row['product_name'],
-                    qty=row['qty'], value=row['value']
-                ) for row in monthly_data
-            ]
-            BISnapshot.objects.bulk_create(snapshots)
-            total_created += len(snapshots)
-
-            # ── 3B. CALCULATE & SAVE DASHBOARD SNAPSHOTS ──
-            dash_data = get_target_all_users(years=[y], months=[m])
-            dash_snapshots_to_create = []
-            
-            for user_row in dash_data:
-                uid = user_row.get("user_id")
-                uname = user_row.get("user")
-                role = user_row.get("role")
-                lines_val = user_row.get('lines', '')
-                region = user_row.get("region")
-                wac = user_row.get("work_as_commercial", False)
-                pb = user_row.get("product_breakdown", [])
-                sector_val = user_row.get('sector', 'IN')
-
-                if pb:
-                    for prod in pb:
-                        dash_snapshots_to_create.append(
-                            DashboardSnapshot(
-                                year=y, month=m,
-                                user_id=uid, user_name=uname,
-                                role=role, lines=lines_val,
-                                sector_category=sector_val,
-                                region=region, work_as_commercial=wac,
-                                product_id=prod.get("product_id") or 0,
-                                product_name=prod.get("product_name") or "Inconnu",
-                                target_value=prod.get("target_value", 0.0),
-                                achieved_value=prod.get("achieved_value", 0.0)
-                            )
-                        )
-                else:
-                    dash_snapshots_to_create.append(
-                        DashboardSnapshot(
-                            year=y, month=m, user_id=uid, user_name=uname,
-                            role=role, lines=lines_val, sector_category=sector_val,
-                            region=region, work_as_commercial=wac,
-                            product_id=0, product_name="Aucun",
-                            target_value=0.0, achieved_value=0.0
-                        )
-                    )
-            DashboardSnapshot.objects.bulk_create(dash_snapshots_to_create)
-
-            # ── 3C. CALCULATE & SAVE SUPERGROS SNAPSHOTS ──
-            sales_snapshots_to_create = []
-            from produits.models import Produit as ProduitModel
-            from django.db.models import Sum as DSum
-            
-            prod_map = {p.id: getattr(p, 'line', 'N/A') for p in ProduitModel.objects.all()}
-
-            ops = OrderProduct.objects.filter(
-                order__source__date__year=y,
-                order__source__date__month=m
-            ).values(
-                'order__client__wilaya__nom',
-                'order__source__source__name',
-                'produit__id',
-                'produit__nom',
-                'produit__price'
-            ).annotate(total_qtt=DSum('qtt'))
-
-            for op in ops:
-                pid = op['produit__id']
-                qty = op['total_qtt']
-                if not qty:
-                    continue
-                sales_snapshots_to_create.append(
-                    SupergrosSalesSnapshot(
+        pending = []
+        for y, m in active_dates:
+            # Only queue (wilaya, product) pairs that actually have sales data.
+            existing_combos = (
+                OrderProduct.objects
+                .filter(order__source__date__year=y, order__source__date__month=m)
+                .values_list('order__client__wilaya_id', 'produit_id')
+                .distinct()
+            )
+            for wilaya_id, product_id in existing_combos:
+                pending.append(
+                    BIPendingUpdate(
                         year=y, month=m,
-                        wilaya=op['order__client__wilaya__nom'] or 'Inconnue',
-                        supergros_name=op['order__source__source__name'] or 'Inconnu',
-                        product_id=pid, product_name=op['produit__nom'],
-                        lines=prod_map.get(pid, 'N/A'),
-                        qty=qty, value=round(qty * (op['produit__price'] or 0), 2)
+                        wilaya_id=wilaya_id,
+                        product_id=product_id,
+                        user_profile=None,
                     )
                 )
-            SupergrosSalesSnapshot.objects.bulk_create(sales_snapshots_to_create)
 
-        messages.success(request, f"⚡ Succès ! Les données BI des 3 derniers mois ont été actualisées très rapidement ({total_created} lignes BI). Vos données historiques sont préservées.")
-        return redirect('admin:clients_bisnapshot_changelist')
+        # ── User/dashboard combos (drives sync_user_dashboard)
+        from accounts.models import UserProfile
+        delegate_profiles = UserProfile.objects.filter(
+            speciality_rolee__in=[
+                "CountryManager", "Superviseur_national", "Superviseur_regional",
+                "Medico_commercial", "Commercial",
+            ],
+            hidden=False,
+        )
+        for y, m in active_dates:
+            for profile in delegate_profiles:
+                pending.append(
+                    BIPendingUpdate(
+                        year=y, month=m,
+                        wilaya=None, product=None,
+                        user_profile=profile,
+                    )
+                )
+
+        BIPendingUpdate.objects.bulk_create(pending, ignore_conflicts=True)
+        total = BIPendingUpdate.objects.count()
+
+        return render(
+            request,
+            'admin/clients/bi_refresh_progress.html',
+            {
+                'title': 'Actualisation des Données BI',
+                'total_items': total,
+                'opts': self.model._meta,
+            },
+        )
+
+    # ------------------------------------------------------------------
+    # VIEW 2 – AJAX chunk processor (called repeatedly by the progress bar)
+    # Pops up to CHUNK_SIZE rows, runs the appropriate sync function,
+    # deletes them, and returns the remaining count as JSON.
+    # ------------------------------------------------------------------
+    CHUNK_SIZE = 50
+
+    def process_bi_chunk(self, request):
+        if request.method != 'POST':
+            return JsonResponse({'error': 'POST required'}, status=405)
+
+        from clients.api.functions import sync_sales_snapshot, sync_bi_allocation, sync_user_dashboard, sync_user_report_snapshot
+        from produits.models import Produit as _Produit
+        from regions.models import Wilaya as _Wilaya
+
+        chunk = list(
+            BIPendingUpdate.objects
+            .select_related('wilaya', 'product', 'user_profile__user')
+            .order_by('id')[:self.CHUNK_SIZE]
+        )
+
+        ids_to_delete = []
+        for pu in chunk:
+            try:
+                if pu.user_profile is not None:
+                    # 1. Met à jour le Dashboard classique
+                    sync_user_dashboard(pu.user_profile, pu.month, pu.year)
+                    
+                    # --- NOUVEAU CODE : Met à jour le Report Snapshot (Détails) ---
+                    for product in _Produit.objects.all():
+                        sync_user_report_snapshot(pu.user_profile, product, pu.month, pu.year)
+                    # --------------------------------------------------------------
+
+                elif pu.wilaya is not None and pu.product is not None:
+                    # Met à jour les ventes et l'allocation (Visualisation)
+                    sync_sales_snapshot(pu.wilaya, pu.product, pu.month, pu.year)
+                    sync_bi_allocation(pu.wilaya, pu.product, pu.month, pu.year)
+                    
+            except Exception as exc:
+                # Log and skip — don't let one bad row block the rest.
+                import logging
+                logging.getLogger(__name__).warning(
+                    "BIChunk error for PendingUpdate pk=%s: %s", pu.pk, exc
+                )
+            ids_to_delete.append(pu.pk)
+
+        BIPendingUpdate.objects.filter(pk__in=ids_to_delete).delete()
+        remaining = BIPendingUpdate.objects.count()
+        return JsonResponse({'remaining': remaining, 'processed': len(ids_to_delete)})

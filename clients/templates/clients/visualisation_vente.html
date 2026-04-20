@@ -83,7 +83,8 @@
         .value-achieved { color: #28a745; font-weight: bold; }
         .badge-role { background-color: #e9ecef; color: #495057; border: 1px solid #ced4da; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; }
         .header-ar { display: block; font-size: 10px; color: #666; font-weight: normal; direction: rtl; margin-top: 3px; }
-        .grid-header { font-weight: bold; color: var(--text-muted); text-transform: uppercase; font-size: 12px; padding: 10px 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 5px; }
+        .grid-header { font-weight: bold; color: #e0e6ef; text-transform: uppercase; font-size: 12px; margin-bottom: 15px; background: linear-gradient(135deg, #1a2332, #2c3e50); padding-top: 12px; padding-bottom: 12px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); letter-spacing: 0.4px; }
+        .grid-header .header-ar { color: #8fa8c8; }
 
         /* ── Filter section (exact mirror of taruser_desktop.html) ── */
         .filter-section {
@@ -290,6 +291,15 @@
             .filter-section { padding: 12px; border-radius: 8px; }
             .month-row { justify-content: flex-start !important; }
         }
+        /* --- UX: ERROR SHAKE ANIMATION --- */
+        @keyframes shake-flash {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-4px); background-color: #ffe6e6; border-color: #dc3545; color: #dc3545; }
+            40%, 80% { transform: translateX(4px); background-color: #ffe6e6; border-color: #dc3545; color: #dc3545; }
+        }
+        .error-shake {
+            animation: shake-flash 0.4s ease-in-out;
+        }
     </style>
 </head>
 <body>
@@ -297,8 +307,12 @@
 
 <div class="page-header" style="justify-content:center; flex-direction:column; align-items:center; margin-bottom:6px;">
     <h1>📊 Visualisation des Ventes</h1>
+    <p class="subtitle" style="margin-bottom: 10px;">Graphiques BI · Sélectionnez une période et lancez l'analyse</p>
+    
+    <span style="background-color: #e9ecef; color: #6c757d; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #ced4da; margin-bottom: 20px;">
+        🕒 Dernière mise à jour : <span id="last-updated-badge">{{ last_updated }}</span>
+    </span>
 </div>
-<p class="subtitle">Graphiques BI · Sélectionnez une période et lancez l'analyse</p>
 
 <!-- ════════════════ FILTER SECTION ════════════════ -->
 <div class="filter-section">
@@ -381,8 +395,9 @@
             <div class="filter-label">Performance</div>
             <select id="filter-performance" class="filter-select">
                 <option value="">Tous</option>
-                <option value="gte100">≥ 100% (Atteint)</option>
-                <option value="lt100">&lt; 100% (Non Atteint)</option>
+                <option value="gift">🎁 Objectif Atteint</option>
+                <option value="acceptable">🟠 Acceptable</option>
+                <option value="danger">🚨 En Danger</option>
             </select>
         </div>
         <div class="filter-group">
@@ -542,22 +557,47 @@ const bracketTotalsPlugin = {
     afterDatasetsDraw(chart, args, options) {
         const ctx = chart.ctx;
         ctx.save();
-        ctx.textAlign = 'left';
+        ctx.textAlign = 'right'; // Labels now align to the right of their area
         ctx.textBaseline = 'middle';
 
         const rowTotals = options.rowTotals || [];
         const yAxis = chart.scales.y;
-
-        // Draw the brackets fixed on the right side
+        
+        // This X position is where the bracket sits
         const bracketX = chart.width - 240;
 
+        const MONTH_NAMES = {'1':'Jan','2':'Fév','3':'Mar','4':'Avr','5':'Mai','6':'Juin','7':'Juil','8':'Aoû','9':'Sep','10':'Oct','11':'Nov','12':'Déc'};
+        const activeMonths = Array.from(new Set(chart.data.datasets.map(d => d.stack).filter(s => s && !isNaN(s))))
+                                  .sort((a,b) => Number(a) - Number(b));
+        
+        const isMultiMonth = options.isMultiMonth;
         const isUserGraph = options.isUserGraph;
+
         for (let i = 0; i < yAxis.ticks.length; i++) {
             const yCenter = yAxis.getPixelForTick(i);
             const gTotal = rowTotals[i];
             if (!gTotal || gTotal.val === 0) continue;
 
+            // 1. Draw Superposed Month Labels (Now on the LEFT of the bracket)
+            ctx.font = 'bold 11px Arial';
+            ctx.fillStyle = '#888';
+            ctx.textAlign = 'right'; // Align text to end at the bracket line
+            
+            const lineHeight = 16; 
+            const totalStackHeight = (activeMonths.length - 1) * lineHeight;
+            let startY = yCenter - (totalStackHeight / 2);
+
+            activeMonths.forEach((mStr, idx) => {
+                const label = `[${MONTH_NAMES[mStr]}]`;
+                // Positioned slightly to the left of the bracket vertical line
+                ctx.fillText(label, bracketX - 12, startY + (idx * lineHeight));
+            });
+
+            // 2. Draw Grand Totals (To the right of the bracket)
+            ctx.textAlign = 'left'; 
             ctx.font = 'bold 13px Arial';
+            const textX = bracketX + 15;
+
             if (isUserGraph) {
                 const uName = chart.data.labels[i];
                 let totalTarget = 0;
@@ -568,28 +608,36 @@ const bracketTotalsPlugin = {
 
                 const txt1 = `${fmtDA(gTotal.val)} DA`;
                 ctx.fillStyle = '#28a745';
-                ctx.fillText(txt1, bracketX + 15, yCenter);
+                ctx.fillText(txt1, textX, yCenter);
+                
                 const w1 = ctx.measureText(txt1).width;
-
                 const numPct = Number(pct);
-                ctx.fillStyle = (numPct >= 95) ? '#198754' : (numPct >= 50 ? '#e67e22' : '#dc3545');
-                ctx.fillText(`  /  ${pct}%`, bracketX + 15 + w1, yCenter);
+                const uRole = window.currentRoleMap && window.currentRoleMap[uName] ? window.currentRoleMap[uName] : '';
+                const greenT = uRole === 'Commercial' ? 75 : 95;
+                
+                ctx.fillStyle = (numPct >= greenT) ? '#198754' : (numPct >= 50 ? '#e67e22' : '#dc3545');
+                ctx.fillText(`  /  ${pct}%`, textX + w1, yCenter);
             } else {
-                const unitsText = ` ${fmtUnits(gTotal.units)} Unités  /  `;
+                const unitsText = `${fmtUnits(gTotal.units)} Unités  /  `;
                 ctx.fillStyle = '#007bff';
-                ctx.fillText(unitsText, bracketX + 15, yCenter);
+                ctx.fillText(unitsText, textX, yCenter);
+                
                 const unitsWidth = ctx.measureText(unitsText).width;
                 ctx.fillStyle = '#28a745';
-                ctx.fillText(`${fmtDA(gTotal.val)} DA`, bracketX + 15 + unitsWidth, yCenter);
+                ctx.fillText(`${fmtDA(gTotal.val)} DA`, textX + unitsWidth, yCenter);
             }
 
-            // Draw Vertical Bracket ]
-            const bracketHeight = options.isMultiMonth ? 20 : 10;
+            // 3. Draw the Bracket [ (Flipped to face the labels)
+            const bracketHeight = isMultiMonth ? (activeMonths.length * 10) + 5 : 12;
             ctx.beginPath();
+            // Horizontal top tick
             ctx.moveTo(bracketX - 6, yCenter - bracketHeight);
             ctx.lineTo(bracketX, yCenter - bracketHeight);
+            // Vertical line
             ctx.lineTo(bracketX, yCenter + bracketHeight);
+            // Horizontal bottom tick
             ctx.lineTo(bracketX - 6, yCenter + bracketHeight);
+            
             ctx.strokeStyle = '#888';
             ctx.lineWidth = 2;
             ctx.stroke();
@@ -597,7 +645,6 @@ const bracketTotalsPlugin = {
         ctx.restore();
     }
 };
-
 // ═══════════════════════════════════════════════════════════════════════════════
 //  CORE CHART DRAWING — Multi-Month Grouped Floating Bars
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -736,7 +783,9 @@ function drawSortedHorizontalBar(canvasId, title, apiData, boxId, bannerId, isUs
                             const target = (window.currentTargetMap && window.currentTargetMap[uName] && window.currentTargetMap[uName][monthStr]) ? window.currentTargetMap[uName][monthStr] : 0;
                             if (target <= 0) return '#555';
                             const calcPct = (mData.total_val / target) * 100;
-                            return calcPct >= 95 ? '#198754' : (calcPct >= 50 ? '#e67e22' : '#dc3545');
+                            const uRole = window.currentRoleMap && window.currentRoleMap[uName] ? window.currentRoleMap[uName] : '';
+                            const greenT = uRole === 'Commercial' ? 75 : 95;
+                            return calcPct >= greenT ? '#198754' : (calcPct >= 50 ? '#e67e22' : '#dc3545');
                         },
                         font: { weight: 'bold', size: 11, family: 'Arial' },
                         offset: function(ctx) {
@@ -900,9 +949,13 @@ function renderFilterBadges(params) {
     if (months.length) {
         bar.appendChild(makeBadge('Mois : ' + months.map(m=>MONTH_NAMES[m]||m).join(', ')));
     }
+    const PERF_LABELS = { gift: '🎁 Objectif Atteint', acceptable: '🟠 Acceptable', danger: '🚨 En Danger' };
+    const BADGE_LABELS = { year: 'Année', user: 'Utilisateur', sector: 'Secteur', region: 'Région', role: 'Rôle', perf: 'Performance', produit: 'Produit' };
     ['year','user','sector','region','role','perf','produit'].forEach(k => {
         const v = params.get(k);
-        if (v) bar.appendChild(makeBadge(`${k.charAt(0).toUpperCase()+k.slice(1)} : ${v}`));
+        if (!v) return;
+        const display = k === 'perf' ? (PERF_LABELS[v] || v) : v;
+        bar.appendChild(makeBadge(`${BADGE_LABELS[k] || k} : ${display}`));
     });
     const linesParam = params.getAll('lines[]');
     if (linesParam.length) bar.appendChild(makeBadge('Lignes : ' + linesParam.join(', ')));
@@ -946,13 +999,85 @@ function applyFrontendFiltersAndGraph() {
     fSector ? params.set('sector', fSector) : params.delete('sector');
     fRegion ? params.set('region', fRegion) : params.delete('region');
     fRole   ? params.set('role',   fRole)   : params.delete('role');
-    fPerf   ? params.set('perf',   fPerf)  : params.delete('perf');
+    fPerf   ? params.set('perf',   fPerf)   : params.delete('perf');
     fProd   ? params.set('produit', fProd)  : params.delete('produit');
 
     window.history.replaceState({}, '', window.location.pathname + '?' + params.toString());
     renderFilterBadges(params);
 
-    // Step A: Filter raw data
+    // ── EXTRACTION DES LIGNES PRODUIT ──
+    const productLines = {};
+    document.querySelectorAll('#filter-produit option').forEach(opt => {
+        if(opt.value) productLines[opt.value] = opt.getAttribute('data-line') || '';
+    });
+
+    // ── CALCUL DYNAMIQUE DE COUNTRY MANAGER (MERIEM) ──
+    const cmUser = (window.globalDashUsers || []).find(u => u.role === 'CountryManager');
+    let cmTarget = 0;
+    let cmAchieved = 0;
+
+    // 1. RÉALISÉ : Ventes globales de l'entreprise
+    if (cmUser && cmUser.product_breakdown) {
+        cmUser.product_breakdown.forEach(p => {
+            const pid = String(p.product_id);
+            const pLine = productLines[pid] || '';
+
+            if (fProd && pid !== fProd) return;
+            if (fLines.length > 0 && !fLines.includes(pLine)) return;
+
+            cmAchieved += p.achieved_value;
+        });
+    }
+
+    // 2. OBJECTIF : Basé sur les délégués pour le ciblage Régional/Secteur
+    (window.globalDashUsers || []).forEach(u => {
+        if (u.role === 'CountryManager') return;
+        
+        if (fSector && !u.sector.includes(fSector)) return;
+        if (fRegion && u.region !== fRegion) return;
+        
+        (u.product_breakdown || []).forEach(p => {
+            const pid = String(p.product_id);
+            const pLine = productLines[pid] || '';
+            
+            if (fProd && pid !== fProd) return;
+            if (fLines.length > 0 && !fLines.includes(pLine)) return;
+            
+            if (u.role === 'Medico_commercial') {
+                cmTarget += p.target_value;
+            } else if (u.role === 'Commercial' && pLine === 'COM') {
+                cmTarget += p.target_value;
+            }
+        });
+    });
+
+    // Rendu Html de la carte Meriem
+    const cmWrapper = document.getElementById('meriem-card-wrapper');
+    const cmContent = document.getElementById('meriem-card-content');
+    if (window.globalDashUsers && window.globalDashUsers.length > 0) {
+        const cmObj = window.globalDashUsers.find(u => u.role === 'CountryManager');
+        const name = cmObj ? cmObj.name : "Meriem RIMOUCHE";
+        const pct = cmTarget > 0 ? Math.round((cmAchieved / cmTarget) * 100) : 0;
+        const color = pct >= 95 ? '#198754' : (pct >= 50 ? '#e67e22' : '#dc3545');
+
+        cmContent.innerHTML = `
+            <div class="user-card grid-layout meriem-card">
+                <div><strong>${name}</strong><br><span style="font-size:11px;color:var(--text-muted);"></span></div>
+                <div><span class="badge-role">CountryManager</span></div>
+                <div style="font-size:13px;">ALGERIE</div>
+                <div class="value-target">${fmtDA(cmTarget)} DA</div>
+                <div class="value-achieved">${fmtDA(cmAchieved)} DA</div>
+                <div><strong style="color:${color};">${pct}%</strong></div>
+                <div><strong style="color: var(--accent);">-</strong></div>
+                <div><strong style="color: #17a2b8;">-</strong></div>
+            </div>
+        `;
+        cmWrapper.style.display = 'block';
+    } else {
+        cmWrapper.style.display = 'none';
+    }
+
+    // Step A: Filter raw data (Graphiques Performance)
     let filtered_data = window.globalRawData.filter(item => {
         if (fUser   && item.user_id != fUser && item.user_name != fUser) return false;
         if (fLines.length > 0) {
@@ -966,15 +1091,16 @@ function applyFrontendFiltersAndGraph() {
         return true;
     });
 
-    // Step A.2: Filter pure sales data (respects Lines, Produit, and Region via wilaya lookup)
+    // Step A.2: Filter pure sales data (Graphiques Wilayas, Produits, Supergros)
     const regionWilayas = fRegion
         ? new Set(window.globalRawData.filter(i => i.region === fRegion).map(i => i.wilaya).filter(Boolean))
         : null;
 
     let filtered_sales_data = (window.globalSalesData || []).filter(item => {
         if (fLines.length > 0) {
-            const itemLines = item.lines ? item.lines.split(',') : [];
-            if (!fLines.every(sel => itemLines.includes(sel))) return false;
+            // FIX: Dans globalSalesData, item.lines contient la ligne DU PRODUIT ("L1"), pas de l'utilisateur.
+            const itemLine = item.lines || '';
+            if (!fLines.includes(itemLine)) return false;
         }
         if (fProd && item.product_id != fProd) return false;
         if (regionWilayas && !regionWilayas.has(item.wilaya)) return false;
@@ -984,8 +1110,8 @@ function applyFrontendFiltersAndGraph() {
     // ── TARGET PERCENTAGE CALCULATION ──
     let filtered_targets = (window.globalDashRaw || []).filter(item => {
         if (fLines.length > 0) {
-            const itemLines = item.lines ? item.lines.split(',') : [];
-            if (!fLines.every(sel => itemLines.includes(sel))) return false;
+            const pLine = productLines[item.product_id] || '';
+            if (!fLines.includes(pLine)) return false;
         }
         if (fProd && item.product_id != fProd) return false;
         return true;
@@ -1005,12 +1131,20 @@ function applyFrontendFiltersAndGraph() {
     });
     window.currentTargetMap = targetMap;
 
-    // Apply Performance Filter (Average % across selected months)
+    const roleMap = {};
+    filtered_data.forEach(item => {
+        if (!roleMap[item.user_name]) roleMap[item.user_name] = item.role || '';
+    });
+    window.currentRoleMap = roleMap;
+
+    // Apply Performance Filter
     if (fPerf) {
         const userAchieved = {};
+        const userRole = {};
         filtered_data.forEach(item => {
             if (!userAchieved[item.user_name]) userAchieved[item.user_name] = 0;
             userAchieved[item.user_name] += item.value;
+            if (!userRole[item.user_name]) userRole[item.user_name] = item.role || '';
         });
 
         filtered_data = filtered_data.filter(item => {
@@ -1018,9 +1152,11 @@ function applyFrontendFiltersAndGraph() {
             const achieved = userAchieved[uName] || 0;
             const target = userTotalTarget[uName] || 0;
             const pct = target > 0 ? (achieved / target) * 100 : 0;
+            const greenThreshold = userRole[uName] === 'Commercial' ? 75 : 95;
 
-            if (fPerf === 'gte100') return pct >= 100;
-            if (fPerf === 'lt100')  return pct < 100;
+            if (fPerf === 'gift')       return pct >= greenThreshold;
+            if (fPerf === 'acceptable') return pct >= 50 && pct < greenThreshold;
+            if (fPerf === 'danger')     return pct < 50;
             return true;
         });
     }
@@ -1060,7 +1196,6 @@ function applyFrontendFiltersAndGraph() {
 
         const result = [];
         for (const g of Object.values(groups)) {
-            // Sort segments inside each month low->high
             for (const mKey of Object.keys(g.months)) {
                 const segArray = Object.values(g.months[mKey].segmentsMap);
                 segArray.sort((a, b) => a.value - b.value);
@@ -1068,12 +1203,11 @@ function applyFrontendFiltersAndGraph() {
             }
             result.push(g);
         }
-        // Sort rows high->low by grand total
         result.sort((a, b) => b.grand_total_val - a.grand_total_val);
         return result;
     }
 
-    // Step B (Aggregate into the 5 datasets):
+    // ── Agrégation des 5 graphiques ──
     const graph_medical = pivot(
         filtered_data, 
         i => i.role === 'Medico_commercial', 
@@ -1086,6 +1220,7 @@ function applyFrontendFiltersAndGraph() {
         i => i.user_name, 
         i => i.wilaya || 'N/A'
     );
+    // Ces graphiques sont maintenant toujours nourris, filtrés dynamiquement.
     const graph_wilayas = pivot(
         filtered_sales_data,
         null,
@@ -1105,7 +1240,6 @@ function applyFrontendFiltersAndGraph() {
         i => i.product_name || 'N/A'
     );
 
-    // Determine period label
     const MONTH_NAMES_ARR = ['','Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
     const monthsLabel = activeMonths.length
         ? activeMonths.map(m => MONTH_NAMES_ARR[+m]).join(', ')
@@ -1117,12 +1251,11 @@ function applyFrontendFiltersAndGraph() {
     const sectorWrapper   = document.getElementById('sector-charts-wrapper');
 
     if (fSector === 'SEMI' || fSector === 'DEP') {
-        // MODE 2: SECTOR TREND LINES
+        // MODE 2 (Exception conservée selon ta demande)
         standardWrapper.style.display = 'none';
         sectorWrapper.style.display   = 'grid';
-        sectorWrapper.innerHTML       = ''; // Clear old graphs
+        sectorWrapper.innerHTML       = ''; 
 
-        // Destroy any lingering sector chart instances
         Object.keys(chartInstances).forEach(id => {
             if (id.startsWith('canvas-sector-')) {
                 chartInstances[id].destroy();
@@ -1130,7 +1263,6 @@ function applyFrontendFiltersAndGraph() {
             }
         });
 
-        // 1. Group data by Wilaya -> User -> Month
         const wilayaData = {};
         filtered_data.forEach(item => {
             const w = item.wilaya || 'Inconnue';
@@ -1142,24 +1274,17 @@ function applyFrontendFiltersAndGraph() {
             wilayaData[w][u][m] += item.value;
         });
 
-        // Custom sort: If early months (1-3) and late months (10-12) are selected together,
-        // treat late months as negative (previous year) for visual sorting.
         const activeMonthsSorted = activeMonths.slice().sort((a, b) => {
             const na = Number(a); const nb = Number(b);
             const hasEarly = activeMonths.some(m => Number(m) <= 3);
             const hasLate  = activeMonths.some(m => Number(m) >= 10);
-
             if (hasEarly && hasLate) {
-                const adjA = na >= 10 ? na - 12 : na;
-                const adjB = nb >= 10 ? nb - 12 : nb;
-                return adjA - adjB;
+                return (na >= 10 ? na - 12 : na) - (nb >= 10 ? nb - 12 : nb);
             }
             return na - nb;
         });
-        const MONTH_NAMES = {'1':'Jan','2':'Fév','3':'Mar','4':'Avr','5':'Mai','6':'Juin','7':'Juil','8':'Aoû','9':'Sep','10':'Oct','11':'Nov','12':'Déc'};
-        const xLabels = activeMonthsSorted.map(m => MONTH_NAMES[m]);
+        const xLabels = activeMonthsSorted.map(m => MONTH_NAMES_ARR[m]);
 
-        // 2. Generate a card and chart for each Wilaya
         Object.keys(wilayaData).sort().forEach((wilaya, index) => {
             const users = wilayaData[wilaya];
             const datasets = [];
@@ -1168,34 +1293,21 @@ function applyFrontendFiltersAndGraph() {
                 const dataPoints = activeMonthsSorted.map(m => users[user][m] || 0);
                 if (dataPoints.some(v => v > 0)) {
                     datasets.push({
-                        label: user,
-                        data: dataPoints,
-                        borderColor: colorForLabel(user),
-                        backgroundColor: colorForLabel(user),
-                        tension: 0.3,
-                        borderWidth: 3,
-                        pointRadius: 4,
-                        datalabels: { display: false }
+                        label: user, data: dataPoints,
+                        borderColor: colorForLabel(user), backgroundColor: colorForLabel(user),
+                        tension: 0.3, borderWidth: 3, pointRadius: 4, datalabels: { display: false }
                     });
                 }
             });
 
-            // Add the "Coût Total" curve for this Wilaya and Sector
             const wCosts = window.globalSectorCosts[wilaya];
             if (wCosts && wCosts[fSector]) {
                 const costDataPoints = activeMonthsSorted.map(m => wCosts[fSector][m] || 0);
                 if (costDataPoints.some(v => v > 0)) {
                     datasets.push({
-                        label: `Coût Total Investi (${fSector})`,
-                        data: costDataPoints,
-                        borderColor: '#FF9800',
-                        backgroundColor: '#FF9800',
-                        borderDash: [6, 6],
-                        tension: 0.1,
-                        borderWidth: 3,
-                        pointRadius: 5,
-                        pointStyle: 'rectRot',
-                        datalabels: { display: false }
+                        label: `Coût Total Investi (${fSector})`, data: costDataPoints,
+                        borderColor: '#FF9800', backgroundColor: '#FF9800', borderDash: [6, 6],
+                        tension: 0.1, borderWidth: 3, pointRadius: 5, pointStyle: 'rectRot', datalabels: { display: false }
                     });
                 }
             }
@@ -1215,21 +1327,13 @@ function applyFrontendFiltersAndGraph() {
 
             const ctx = document.getElementById(canvasId).getContext('2d');
             chartInstances[canvasId] = new Chart(ctx, {
-                type: 'line',
-                data: { labels: xLabels, datasets },
+                type: 'line', data: { labels: xLabels, datasets },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { callback: v => fmtDA(v) } }
-                    },
+                    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                    scales: { y: { beginAtZero: true, ticks: { callback: v => fmtDA(v) } } },
                     plugins: {
                         legend: { position: 'bottom', labels: { boxWidth: 12, usePointStyle: true } },
-                        tooltip: {
-                            callbacks: {
-                                label: ctx => `${ctx.dataset.label}: ${fmtDA(ctx.raw)} DA`
-                            }
-                        },
+                        tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmtDA(ctx.raw)} DA` } },
                         datalabels: { display: false }
                     }
                 }
@@ -1251,44 +1355,6 @@ function applyFrontendFiltersAndGraph() {
         drawSortedHorizontalBar('chart-products', `💊 CA par Produit — ${periodLabel}`, graph_products, 'box-products', 'banner-products', false);
         drawSortedHorizontalBar('chart-supergros', `🏭 Supergros — ${periodLabel}`, graph_supergros, 'box-supergros', 'banner-supergros', false);
     }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-//  MERIEM CARD RENDERER
-// ═══════════════════════════════════════════════════════════════════════════════
-function renderMeriemCard(dashData) {
-    const wrapper = document.getElementById('meriem-card-wrapper');
-    const content = document.getElementById('meriem-card-content');
-
-    if (!dashData || !dashData.users) {
-        wrapper.style.display = 'none'; return;
-    }
-
-    const meriem = dashData.users.find(u => u.role === 'CountryManager');
-    if (!meriem) {
-        wrapper.style.display = 'none'; return;
-    }
-
-    content.innerHTML = `
-        <div class="user-card grid-layout meriem-card">
-            <div>
-                <strong>${meriem.name}</strong><br>
-                <span style="font-size:11px;color:var(--text-muted);">${meriem.family || ''}</span>
-            </div>
-            <div><span class="badge-role">${meriem.role.replace('_', ' ')}</span></div>
-            <div style="font-size:13px;">ALGERIE</div>
-            <div class="value-target">${fmtDA(meriem.target_total)} DA</div>
-            <div class="value-achieved">${fmtDA(meriem.achieved_total)} DA</div>
-            <div>
-                <strong style="color:${meriem.personal_percentage >= 95 ? '#198754' : (meriem.personal_percentage >= 50 ? '#e67e22' : '#dc3545')};">
-                    ${meriem.personal_percentage}%
-                </strong>
-            </div>
-            <div><strong style="color: var(--accent);">-</strong></div>
-            <div><strong style="color: #17a2b8;">-</strong></div>
-        </div>
-    `;
-    wrapper.style.display = 'block';
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1337,6 +1403,18 @@ function applyCascadeLogic() {
 let lastFetchQuery = '';
 
 async function fetchAndRender() {
+    const activeMonths = Array.from(document.querySelectorAll('.month-chip.active')).map(c => c.dataset.val);
+
+    // UX : Bloquer et faire vibrer si aucun mois n'est sélectionné
+    if (activeMonths.length === 0) {
+        document.querySelectorAll('.month-chip').forEach(chip => {
+            chip.classList.remove('error-shake');
+            void chip.offsetWidth; // Force le redémarrage de l'animation
+            chip.classList.add('error-shake');
+        });
+        return; // On arrête la fonction ici
+    }
+
     const btn     = document.getElementById('btn-fetch');
     const spinner = document.getElementById('global-spinner');
     const wrapper = document.getElementById('charts-wrapper');
@@ -1346,7 +1424,6 @@ async function fetchAndRender() {
     const year   = document.getElementById('year-select').value;
     if (year) params.set('year', year);
 
-    const activeMonths = Array.from(document.querySelectorAll('.month-chip.active')).map(c => c.dataset.val);
     activeMonths.forEach(m => params.append('months[]', m));
 
     const currentQuery = params.toString();
@@ -1364,7 +1441,6 @@ async function fetchAndRender() {
     wrapper.style.display  = 'none';
 
     try {
-        // Fetch both the heavy BI data and the lightweight Dashboard data concurrently
         const visPromise  = fetch(`/clients/api/visualisation-data/?${currentQuery}`).then(r => r.json());
         const dashPromise = fetch(`/clients/api/dashboard-data/?${currentQuery}`).then(r => r.json());
 
@@ -1375,18 +1451,22 @@ async function fetchAndRender() {
             return;
         }
 
+        // --- Mise à jour du badge ---
+        const badge = document.getElementById('last-updated-badge');
+        if(badge) badge.innerText = data.last_updated || "Non disponible";
+        // ----------------------------
+
         // Store into global memory
         window.globalRawData     = data.raw_data       || [];
         window.globalSalesData   = data.raw_sales_data || [];
         window.globalSectorCosts = data.sector_costs   || {};
         window.globalDashRaw     = dashData.dash_raw   || [];
+        window.globalDashUsers   = dashData.users      || []; 
         lastFetchQuery = currentQuery;
 
         spinner.style.display = 'none';
         wrapper.style.display = 'block';
 
-        renderMeriemCard(dashData);
-        // Initialize cascade states before rendering graphs
         applyCascadeLogic();
         applyFrontendFiltersAndGraph();
 

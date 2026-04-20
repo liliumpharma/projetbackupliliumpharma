@@ -3,6 +3,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.db.models import Exists, OuterRef
+from django.db.models import Max
 
 from rest_framework.views import APIView
 
@@ -140,6 +141,13 @@ class taruser(APIView):
             "clients/taruser_desktop.html" if is_desktop else "clients/taruser.html"
         )
 
+        # --- NOUVEAU : Date globale de dernière mise à jour ---
+        from .models import DashboardSnapshot
+        from django.db.models import Max
+        latest_update = DashboardSnapshot.objects.aggregate(max_date=Max('updated_at'))['max_date']
+        last_updated_str = latest_update.strftime('%d/%m/%Y à %H:%M') if latest_update else "Non disponible"
+        # ------------------------------------------------------
+
         print(str(request))
         print("sesssionnnnnnnnnnnn")
         print(request.session.items())
@@ -161,9 +169,8 @@ class taruser(APIView):
             "Commercial",
         ]:
             user_profiles = User.objects.filter(id=user_id)
-            # 3. UPDATED: Render the dynamic template_name
             return render(
-                request, template_name, {"users": user_profiles, "num_id": 33, "produits": produits}
+                request, template_name, {"users": user_profiles, "num_id": 33, "produits": produits, "last_updated": last_updated_str}
             )
 
         elif (
@@ -181,8 +188,7 @@ class taruser(APIView):
                 ],
                 userprofile__hidden=False,
             ).filter(Exists(UserTargetMonth.objects.filter(user=OuterRef("pk"))))
-            # 3. UPDATED: Render the dynamic template_name
-            return render(request, template_name, {"users": user_profiles, "num_id": 1, "produits": produits})
+            return render(request, template_name, {"users": user_profiles, "num_id": 1, "produits": produits, "last_updated": last_updated_str})
 
         elif (
             UserProfile.objects.get(user=user_id).speciality_rolee
@@ -194,206 +200,203 @@ class taruser(APIView):
             user_profiles = user_profiles.usersunder.all()
             ur = User.objects.get(id=user_id)
             nam = ur.first_name + " " + ur.last_name
-            # 3. UPDATED: Render the dynamic template_name
             return render(
                 request,
                 template_name,
-                {"users": user_profiles, "num_id": 2, "name": nam, "produits": produits},
+                {"users": user_profiles, "num_id": 2, "name": nam, "produits": produits, "last_updated": last_updated_str},
             )
         else:
             pass
 
-        # 3. UPDATED: Render the dynamic template_name
-        return render(request, template_name, {"produits": produits})
+        return render(request, template_name, {"produits": produits, "last_updated": last_updated_str})
 
+
+
+    # ════════════════ NOUVELLE FONCTION POST ULTRA-RAPIDE ════════════════
     def post(self, request):
         is_desktop = request.GET.get('view') == 'desktop'
 
         if request.user.is_authenticated:
-            user_id = request.user.id
-            print("dans request web")
+            session_user_id = request.user.id
         else:
-            user_id = request.session.get("user_id")
-            print("dans la session")
+            session_user_id = request.session.get("user_id")
 
-        request_params = request.GET
-        e = request.POST.get("users")
-        if e:
-            selected_user = int(request.POST.get("users"))
-        else:
-            selected_user = "passssssss"
+        # 1. Extraction des paramètres
+        selected_user_str = request.POST.get("users")
+        years_str = request.POST.getlist("years")
+        months_str = request.POST.getlist("months")
+        
+        # Fallback si l'année est envoyée comme un champ simple
+        if not years_str and request.POST.get("years"):
+            years_str = [request.POST.get("years")]
+            
+        years = [int(y) for y in years_str if y]
+        months = [int(m) for m in months_str if m]
+        
+        selected_user = int(selected_user_str) if selected_user_str and selected_user_str.isdigit() else session_user_id
 
-        if selected_user == 0 and UserProfile.objects.get(
-            user=user_id
-        ).speciality_rolee in ["Superviseur_regional"]:
-            print("SuperViseur Regional")
-            year = int(request.POST.get("years"))
-            month = int(request.POST.get("months"))
-            mo = month_number_to_french_name(month)
-            year = int(request.POST.get("years"))
-            months = request.POST.getlist("months")
-            for i in months:
-                mo = month_number_to_french_name(int(i))
-            params = {}
-            if year:
-                params["years"] = year
-            if month:
-                params["months"] = months
-            params["user_id"] = user_id
-            context = {"month": mo, "year": year}
-            data = get_target_for_supervisor(**params)
-            context["data"] = data
-            return render(
-                request,
-                template_name="clients/reports/target_report_per_user.html",
-                context=context,
-            )
-
-        elif (
-            selected_user != 0
-            and selected_user != "passssssss"
-            and UserProfile.objects.get(user=selected_user).speciality_rolee
-            in ["Superviseur_regional", "CountryManager"]
-        ):
-            t = UserProfile.objects.get(user=selected_user)
-            print("SuperViseur Regional or CountryManager")
-            year = int(request.POST.get("years"))
-            months = request.POST.getlist("months")
-            m = []
-            for i in months:
-                mo = month_number_to_french_name(int(i))
-                m.append(mo)
-
-            year = [int(request.POST.get("years"))]
-            month = months = request.POST.getlist("months")
-
-            params = {}
-            if year:
-                params["years"] = year
-            if month:
-                params["months"] = months
-            params["user_id"] = selected_user
-            context = {"month": m, "year": year}
-            data = get_target_for_supervisor(**params)
-            context["data"] = data
-
-            # 5. NEW LOGIC: Only run heavy special table processing if it's a desktop
-            if is_desktop:
-                context = add_special_table_data(context)
-
-            return render(
-                request,
-                template_name="clients/reports/target_report_per_user.html",
-                context=context,
-            )
-
-        year = int(request.POST.get("years"))
-        months = request.POST.getlist("months")
-        year = request.POST.getlist("years")
-        q = []
-        m = []
-        if len(months) == 1:
-            month = int(months[0])
-        else:
-            for i in months:
-                mo = month_number_to_french_name(int(i))
-                q.append(int(i))
-                m.append(mo)
-            month = q
-
-        user = request.POST.get("users")
-        if user:
-            user = int(user)
-
-        params = {}
-        year = [int(request.POST.get("years"))]
-        month = [int(request.POST.get("months"))]
-        if year:
-            params["years"] = year
-
-        if month:
-            params["months"] = month
-        french_month = ()
-        if "client_wilaya_id" in request_params:
-            params["wilaya"] = request_params.get("client_wilaya_id")
-        if len(months) == 1:
-            french_month = (
-                month_number_to_french_name(params["months"][0])
-                if "months" in params
-                else "Tous les Mois"
-            )
-
-        year = params["years"] if "years" in params else "Toutes les Années"
-        context = {"month": french_month, "year": year}
-
-        if user == 0:
+        # ── Rétrocompatibilité : Ancienne App Mobile (users = 0) ──
+        if selected_user == 0:
+            params = {"years": years, "months": months}
+            if "client_wilaya_id" in request.GET:
+                params["wilaya"] = request.GET.get("client_wilaya_id")
+            context = {
+                "month": "Tous les Mois" if len(months) > 1 else (month_number_to_french_name(months[0]) if months else ""),
+                "year": years[0] if years else ""
+            }
             data = get_target_all_users(**params)
             context["data"] = data
-            return render(
-                request,
-                template_name="clients/reports/target_report_all_users.html",
-                context=context,
-            )
+            return render(request, "clients/reports/target_report_all_users.html", context)
 
-        if user:
-            params["user_id"] = user
-        else:
-            params["user_id"] = user_id
-
+        # ── NOUVELLE LOGIQUE SNAPSHOT (Chargement < 50ms) ──
+        
+        # A. Données globales agrégées (Tous les mois sélectionnés ensemble)
+        main_data = self.build_fast_target_data(selected_user, years, months)
+        
+        # Formatage des mois pour le titre
         if len(months) == 1:
-            data = get_target_per_user(**params)
-            context["data"] = data
-
-            # 5. NEW LOGIC: Only run heavy special table processing if it's a desktop
-            if is_desktop:
-                context = add_special_table_data(context)
-
-            return render(
-                request,
-                template_name="clients/reports/target_report_per_user.html",
-                context=context,
-            )
+            french_month_str = month_number_to_french_name(months[0])
         else:
-            french_month = q
-            months = request.POST.getlist("months")
-            params["months"] = months
-            context = {"month": m, "year": year}
-            data = get_target_per_user_per_month(**params)
-            context["data"] = data
+            french_month_str = [month_number_to_french_name(m) for m in months]
 
-            # 5. NEW LOGIC: Only run heavy special table processing if it's a desktop
-            if is_desktop:
-                context = add_special_table_data(context)
+        context = {
+            "month": french_month_str, 
+            "year": years,
+            "data": main_data
+        }
+        
+        # La table spéciale (ADVAGEN, HAIRVOL, etc.)
+        if is_desktop:
+            context = add_special_table_data(context)
 
+        # B. Ventilation par mois (si plusieurs mois sélectionnés)
+        if len(months) > 1:
             per_month_sections = []
-            for single_month in months:
-                single_params = dict(params)
-                single_params["months"] = [single_month]
-                single_data = get_target_per_user(**single_params)
-                single_french_month = month_number_to_french_name(int(single_month))
+            for m in months:
+                single_data = self.build_fast_target_data(selected_user, years, [m])
                 single_ctx = {"data": single_data}
-
-                # 5. NEW LOGIC: Only run heavy special table processing if it's a desktop
+                
                 if is_desktop:
                     single_ctx = add_special_table_data(single_ctx)
-
-                per_month_sections.append(
-                    {
-                        "month": single_french_month,
-                        "data": single_ctx["data"],
-                        "show_special_table": single_ctx.get(
-                            "show_special_table", False
-                        ),
-                    }
-                )
+                
+                per_month_sections.append({
+                    "month": month_number_to_french_name(m),
+                    "data": single_ctx["data"],
+                    "show_special_table": single_ctx.get("show_special_table", False),
+                })
             context["per_month_sections"] = per_month_sections
 
-            return render(
-                request,
-                template_name="clients/reports/target_report_per_user.html",
-                context=context,
-            )
+        return render(request, "clients/reports/target_report_per_user.html", context)
 
+
+    # ════════════════ FONCTION HELPER (Lecture du Snapshot) ════════════════
+    def build_fast_target_data(self, user_id, years, months):
+        """
+        Génère exactement le dictionnaire attendu par le template HTML,
+        mais en lisant instantanément notre table précalculée UserReportSnapshot.
+        """
+        from .models import UserReportSnapshot
+        from accounts.models import UserProfile
+        from django.db.models import Sum
+        from django.urls import reverse
+        from liliumpharm.utils import thousand_separator
+
+        try:
+            profile = UserProfile.objects.select_related('user').get(user_id=user_id)
+        except UserProfile.DoesNotExist:
+            return {}
+
+        # 1. Agrégation instantanée depuis la BDD (Sans boucles complexes)
+        qs = UserReportSnapshot.objects.filter(
+            user_id=user_id,
+            year__in=years,
+            month__in=months
+        ).values('product_id', 'product_name', 'product_price').annotate(
+            t_target=Sum('target_qty'),
+            t_ph_gros=Sum('mobile_ph_gros_qty'),
+            t_gros_super=Sum('mobile_gros_super_qty'),
+            t_supergros=Sum('supergros_achieved_qty')
+        ).order_by('product_name')
+
+        wilayas = [w.nom for w in profile.sectors.all()]
+        
+        products, targets, prices = [], [], []
+        total_unite_product = []
+        total_unite_product_gros_super = []
+        quantities = []
+        total_targets, total_achievements = [], []
+
+        total_target = 0.0
+        total_reached = 0.0
+        total_ph_gros_value = 0.0
+        total_gros_super_value = 0.0
+
+        for row in qs:
+            p_name = row['product_name']
+            p_price = float(row['product_price'])
+            
+            t_qty = float(row['t_target'] or 0)
+            ph_qty = float(row['t_ph_gros'] or 0)
+            gs_qty = float(row['t_gros_super'] or 0)
+            sg_qty = float(row['t_supergros'] or 0)
+
+            # --- CORRECTION ICI ---
+            # On ignore les colonnes 100% vides. 
+            # Si un produit n'a pas d'objectif (t_qty=0) mais a été vendu (sg_qty>0), il s'affichera !
+            if t_qty == 0 and ph_qty == 0 and gs_qty == 0 and sg_qty == 0:
+                continue
+
+            row_target_val = t_qty * p_price
+            row_sg_val = sg_qty * p_price
+            row_ph_val = ph_qty * p_price
+            row_gs_val = gs_qty * p_price
+
+            products.append(p_name)
+            targets.append(t_qty)
+            prices.append(p_price)
+            
+            # Reconstruction des liens pour voir le détail des ventes
+            query_string = f"user={user_id}&product={row['product_id']}"
+            for y in years: query_string += f"&years={y}"
+            for m in months: query_string += f"&months={m}"
+            
+            link_mobile = f"{reverse('target_report_details_use')}?{query_string}"
+            link_sg     = f"{reverse('target_report_details')}?{query_string}"
+
+            total_unite_product.append({"total": ph_qty, "target_report_details_link": link_mobile})
+            total_unite_product_gros_super.append({"total": gs_qty, "target_report_details_link": link_mobile + "&gros_super=1"})
+            quantities.append({"total": sg_qty, "target_report_details_link": link_sg})
+
+            total_targets.append(row_target_val)
+            total_achievements.append(row_sg_val)
+
+            total_target += row_target_val
+            total_reached += row_sg_val
+            total_ph_gros_value += row_ph_val
+            total_gros_super_value += row_gs_val
+
+        percentage_reached = round((total_reached / total_target * 100), 2) if total_target > 0 else 0
+
+        # On retourne le dictionnaire exact attendu par target_report_per_user.html
+        return {
+            "user_id": user_id,
+            "user": f"{profile.user.last_name} {profile.user.first_name}",
+            "wilayas": wilayas,
+            "products": products,
+            "targets": [thousand_separator(t) for t in targets],
+            "prices": [thousand_separator(p) for p in prices],
+            "total_unite_product": total_unite_product,
+            "total_unite_product_gros_super": total_unite_product_gros_super,
+            "quantities": quantities,
+            "total_targets": [thousand_separator(t) for t in total_targets],
+            "total_achievements": [thousand_separator(t) for t in total_achievements],
+            "total_target": thousand_separator(total_target),
+            "total_reached": thousand_separator(total_reached),
+            "percentage_reached": percentage_reached,
+            "total_ph_gros_value": thousand_separator(total_ph_gros_value),
+            "total_gros_super_value": thousand_separator(total_gros_super_value),
+            "speciality_rolee": profile.speciality_rolee
+        }
 
 class DashboardDataAPI(APIView):
     """
@@ -494,30 +497,37 @@ class DashboardDataAPI(APIView):
         # Also return raw targets so frontend can calculate per-month percentages
         dash_raw = list(snapshots.values("month", "user_id", "user_name", "product_id", "lines", "target_value"))
 
+        # --- Find Latest Update ---
+        latest_update = snapshots.aggregate(max_date=Max('updated_at'))['max_date']
+        last_updated_str = latest_update.strftime('%d/%m/%Y à %H:%M') if latest_update else "Non disponible"
+
         return JsonResponse({
             "meriem_total_target": meriem_total_target,
             "users": cards_data,
-            "dash_raw": dash_raw
+            "dash_raw": dash_raw,
+            "last_updated": last_updated_str # <-- Nouvelle donnée renvoyée
         })
 
 
 class VisualisationVenteView(APIView):
     """
     Renders the Data Visualisation page.
-    The query-string parameters (?year=…&months[]=…&user=…&…) are passed
-    through to the template so the JS initFilters() function can hydrate
-    the filter bar on page load without an extra round-trip.
     """
-
     def get(self, request):
+        from .models import BISnapshot
+        from django.db.models import Max
+        
+        # --- Date globale de dernière mise à jour ---
+        latest_update = BISnapshot.objects.aggregate(max_date=Max('updated_at'))['max_date']
+        last_updated_str = latest_update.strftime('%d/%m/%Y à %H:%M') if latest_update else "Non disponible"
+
         produits = Produit.objects.all()
         context = {
             "produits": produits,
-            # Pass raw query string so the template can embed it in a JS variable
             "query_string": request.GET.urlencode(),
+            "last_updated": last_updated_str, # Injection de la date
         }
         return render(request, "clients/visualisation_vente.html", context)
-
 
 class VisualisationDataAPI(APIView):
     """
@@ -630,4 +640,12 @@ class VisualisationDataAPI(APIView):
                         sector_costs[w_name][usd.category].get(m_str, 0) + cost
                     )
 
-        return JsonResponse({"raw_data": raw_data, "raw_sales_data": raw_sales_data, "sector_costs": sector_costs})
+        latest_update = snapshots.aggregate(max_date=Max('updated_at'))['max_date']
+        last_updated_str = latest_update.strftime('%d/%m/%Y à %H:%M') if latest_update else "Non disponible"
+
+        return JsonResponse({
+            "raw_data": raw_data, 
+            "raw_sales_data": raw_sales_data, 
+            "sector_costs": sector_costs,
+            "last_updated": last_updated_str # <-- Nouvelle donnée renvoyée
+        })

@@ -1133,6 +1133,323 @@ def get_targets_by_order_source(order_source):
     return data
 
 # ════════════════════════════════════════════════════════════════════════════════
+#  GRANULAR SYNC FUNCTIONS  (Event-Driven Dirty-Log Architecture)
+#  Each function rebuilds exactly ONE intersection instead of the whole table.
+# ════════════════════════════════════════════════════════════════════════════════
+
+def sync_sales_snapshot(wilaya, product, month, year):
+    """
+    Rebuild SupergrosSalesSnapshot for one (wilaya, product, month, year) cell.
+    wilaya / product are ORM objects (not IDs).
+    """
+    from django.db.models import Sum as _Sum
+    from clients.models import OrderProduct, SupergrosSalesSnapshot
+
+    SupergrosSalesSnapshot.objects.filter(
+        year=year, month=month,
+        wilaya=wilaya.nom,
+        product_id=product.id,
+    ).delete()
+
+    ops = (
+        OrderProduct.objects
+        .filter(
+            order__source__date__year=year,
+            order__source__date__month=month,
+            order__client__wilaya=wilaya,
+            produit=product,
+        )
+        .values('order__source__source__name', 'produit__price')
+        .annotate(total_qtt=_Sum('qtt'))
+    )
+
+    lines = getattr(product, 'line', 'N/A')
+    new_rows = []
+    for op in ops:
+        qty = op['total_qtt']
+        if not qty:
+            continue
+        new_rows.append(
+            SupergrosSalesSnapshot(
+                year=year, month=month,
+                wilaya=wilaya.nom,
+                supergros_name=op['order__source__source__name'] or 'Inconnu',
+                product_id=product.id,
+                product_name=product.nom,
+                lines=lines,
+                qty=qty,
+                value=round(qty * (op['produit__price'] or 0), 2),
+            )
+        )
+    if new_rows:
+        SupergrosSalesSnapshot.objects.bulk_create(new_rows)
+
+
+def sync_bi_allocation(wilaya, product, month, year):
+    """
+    Rebuild BISnapshot rows for one (wilaya, product, month, year) cell.
+
+    Replicates the divisor logic of get_visualisation_data exactly:
+      divisor(role) = # unique users of that role who cover this wilaya AND
+                      track this product in this period
+                      (Superviseur_national / CountryManager excluded from divisor)
+    """
+    from django.db.models import Sum as _Sum
+    from collections import defaultdict
+    from clients.models import (
+        OrderProduct, BISnapshot, UserTargetMonthProduct, UserTargetMonth,
+    )
+    from accounts.models import UserProfile, UserSectorDetail
+
+    BISnapshot.objects.filter(
+        year=year, month=month,
+        wilaya=wilaya.nom,
+        product_id=product.id,
+    ).delete()
+
+    # Raw sales grouped by supergros source
+    sales = (
+        OrderProduct.objects
+        .filter(
+            order__source__date__year=year,
+            order__source__date__month=month,
+            order__client__wilaya=wilaya,
+            produit=product,
+        )
+        .values('order__source__source__name', 'produit__price')
+        .annotate(total_qtt=_Sum('qtt'))
+    )
+    if not sales.exists():
+        return
+
+    # ── Divisor map ──────────────────────────────────────────────────────────
+    # Count unique users per role covering this wilaya with a target for this product.
+    # Mirrors the global_targets exclusion in get_visualisation_data.
+    target_users = (
+        UserTargetMonthProduct.objects
+        .filter(
+            usermonth__date__year=year,
+            usermonth__date__month=month,
+            product=product,
+            usermonth__user__userprofile__sectors=wilaya,
+        )
+        .exclude(
+            usermonth__user__userprofile__speciality_rolee__in=[
+                "Superviseur_national", "CountryManager"
+            ]
+        )
+        .values(
+            'usermonth__user_id',
+            'usermonth__user__userprofile__speciality_rolee',
+        )
+        .distinct()
+    )
+
+    role_user_sets = defaultdict(set)
+    for t in target_users:
+        role_user_sets[
+            t['usermonth__user__userprofile__speciality_rolee']
+        ].add(t['usermonth__user_id'])
+
+    def get_divisor(role):
+        c = len(role_user_sets.get(role, set()))
+        return c if c > 0 else 1
+
+    # ── Active delegates for this cell ───────────────────────────────────────
+    delegates = (
+        UserProfile.objects
+        .filter(
+            speciality_rolee__in=[
+                "Medico_commercial", "Commercial", "Superviseur",
+                "Superviseur_regional", "Superviseur_national",
+            ],
+            hidden=False,
+            sectors=wilaya,
+            user__usertargetmonth__date__year=year,
+            user__usertargetmonth__date__month=month,
+            user__usertargetmonth__usertargetmonthproduct__product=product,
+        )
+        .distinct()
+        .select_related('user')
+    )
+
+    usds = UserSectorDetail.objects.filter(user_profile__in=delegates).prefetch_related('wilayas')
+    user_sector_map = {}
+    for usd in usds:
+        for w in usd.wilayas.all():
+            user_sector_map[(usd.user_profile.user_id, w.id)] = usd.category
+
+    new_rows = []
+    for d in delegates:
+        role = d.speciality_rolee
+        divisor = get_divisor(role)
+        sector_cat = user_sector_map.get((d.user.id, wilaya.id), "IN")
+
+        for sale in sales:
+            total_qty = sale['total_qtt']
+            if not total_qty:
+                continue
+            allocated_qty = round(total_qty / divisor, 2)
+            if not allocated_qty:
+                continue
+            new_rows.append(
+                BISnapshot(
+                    year=year, month=month,
+                    user_id=d.user.id,
+                    user_name=f"{d.user.last_name} {d.user.first_name}".strip(),
+                    role=role,
+                    lines=getattr(d, 'lines', '') or '',
+                    sector_category=sector_cat,
+                    region=getattr(d, 'region', 'N/A') or 'N/A',
+                    wilaya=wilaya.nom,
+                    supergros_name=sale['order__source__source__name'],
+                    product_id=product.id,
+                    product_name=product.nom,
+                    qty=allocated_qty,
+                    value=round(allocated_qty * (sale['produit__price'] or 0), 2),
+                )
+            )
+
+    if new_rows:
+        BISnapshot.objects.bulk_create(new_rows)
+
+def sync_user_dashboard(user_profile, month, year):
+    """
+    Rebuild DashboardSnapshot for one (user_profile, month, year) cell.
+    """
+    import datetime as _dt
+    from django.db.models import Sum as _Sum
+    from clients.models import DashboardSnapshot, BISnapshot, UserTargetMonth, UserTargetMonthProduct, SupergrosSalesSnapshot
+    from accounts.models import UserSectorDetail
+
+    # 1. Nettoyer les anciennes données pour ce mois
+    DashboardSnapshot.objects.filter(
+        year=year, month=month,
+        user_id=user_profile.user.id,
+    ).delete()
+
+    role = user_profile.speciality_rolee
+
+    # 2. Préparer les données communes (Dates, Objectifs, Base Kwargs)
+    try:
+        target_date = _dt.date(int(year), int(month), 1)
+    except ValueError:
+        return
+
+    latest_utm = (
+        UserTargetMonth.objects
+        .filter(user=user_profile.user, date__lte=target_date)
+        .order_by('-date')
+        .first()
+    )
+
+    sector_cats = list(
+        UserSectorDetail.objects
+        .filter(user_profile=user_profile)
+        .values_list('category', flat=True)
+        .distinct()
+    )
+    sector_cat = ','.join(sector_cats) if sector_cats else 'IN'
+
+    base_kwargs = dict(
+        year=year, month=month,
+        user_id=user_profile.user.id,
+        user_name=f"{user_profile.user.last_name} {user_profile.user.first_name}".strip(),
+        role=role,
+        lines=getattr(user_profile, 'lines', '') or '',
+        sector_category=sector_cat,
+        region=getattr(user_profile, 'region', 'N/A') or 'N/A',
+        work_as_commercial=getattr(user_profile, 'work_as_commercial', False),
+    )
+
+    new_rows = []
+
+    # 3. Logique de calcul selon le Rôle
+    if role in ["Superviseur_national", "Superviseur_regional", "Superviseur"]:
+        # Logique Superviseur : Toutes les ventes de la région (100%) + Objectifs
+        supervisor_wilayas = list(user_profile.sectors.values_list('nom', flat=True))
+
+        regional_sales = (
+            SupergrosSalesSnapshot.objects
+            .filter(year=year, month=month, wilaya__in=supervisor_wilayas)
+            .values('product_id', 'product_name')
+            .annotate(achieved=_Sum('value'))
+        )
+        achieved_map = {r['product_id']: r for r in regional_sales}
+
+        target_map = {}
+        if latest_utm:
+            for tp in UserTargetMonthProduct.objects.filter(usermonth=latest_utm).select_related('product'):
+                target_map[tp.product.id] = {
+                    'name': tp.product.nom,
+                    'target_val': float(tp.quantity * tp.product.price)
+                }
+
+        all_product_ids = set(achieved_map.keys()).union(set(target_map.keys()))
+
+        for pid in all_product_ids:
+            p_name = target_map.get(pid, {}).get('name') or achieved_map.get(pid, {}).get('product_name') or "Inconnu"
+            t_val = target_map.get(pid, {}).get('target_val', 0.0)
+            a_val = achieved_map.get(pid, {}).get('achieved', 0.0)
+
+            new_rows.append(
+                DashboardSnapshot(
+                    **base_kwargs,
+                    product_id=pid,
+                    product_name=p_name,
+                    target_value=t_val,
+                    achieved_value=a_val,
+                )
+            )
+
+    else:
+        # Logique CountryManager et Délégués : Uniquement les produits ciblés
+        achieved_by_pid = {}
+        if role == "CountryManager":
+            sg_rows = (
+                SupergrosSalesSnapshot.objects
+                .filter(year=year, month=month)
+                .values('product_id')
+                .annotate(achieved=_Sum('value'))
+            )
+            achieved_by_pid = {r['product_id']: r['achieved'] for r in sg_rows}
+        else:
+            bi_rows = (
+                BISnapshot.objects
+                .filter(year=year, month=month, user_id=user_profile.user.id)
+                .values('product_id')
+                .annotate(achieved=_Sum('value'))
+            )
+            achieved_by_pid = {r['product_id']: r['achieved'] for r in bi_rows}
+
+        if latest_utm:
+            for tp in (
+                UserTargetMonthProduct.objects
+                .filter(usermonth=latest_utm)
+                .select_related('product')
+            ):
+                new_rows.append(
+                    DashboardSnapshot(
+                        **base_kwargs,
+                        product_id=tp.product.id,
+                        product_name=tp.product.nom,
+                        target_value=float(tp.quantity * tp.product.price),
+                        achieved_value=achieved_by_pid.get(tp.product.id, 0.0),
+                    )
+                )
+
+    # 4. Sauvegarde en Base de données
+    if new_rows:
+        DashboardSnapshot.objects.bulk_create(new_rows)
+    else:
+        # Création d'une ligne vide pour ne pas faire crasher l'UI si l'utilisateur n'a rien
+        DashboardSnapshot.objects.create(
+            **base_kwargs,
+            product_id=0, product_name="Aucun",
+            target_value=0.0, achieved_value=0.0,
+        )
+
+# ════════════════════════════════════════════════════════════════════════════════
 #  get_visualisation_data (REWRITTEN FOR WILAYA ALLOCATION PARITY)
 #  -----------------------------------------------------------------------
 #  This explicitly mimics the "System-2" math from get_target_per_user.
@@ -1281,3 +1598,110 @@ def get_visualisation_data(params, request_user=None):
                     })
 
     return {"raw_data": raw_data}
+
+
+def sync_user_report_snapshot(user_profile, product, month, year):
+    """
+    Rebuilds the UserReportSnapshot row. 
+    Called safely by the Admin AJAX chunk processor to avoid locking the DB.
+    """
+    import datetime
+    from django.db.models import Sum
+    from clients.models import UserReportSnapshot, UserTargetMonth, UserTargetMonthProduct, BISnapshot, SupergrosSalesSnapshot
+    from orders.models import OrderItem, Order
+
+    user = user_profile.user
+    role = user_profile.speciality_rolee
+    
+    if role not in ["Commercial", "Medico_commercial", "Superviseur", "Superviseur_regional", "Superviseur_national", "CountryManager"]:
+        return
+
+    # 1. Target (Carry-Over)
+    try:
+        target_date = datetime.date(int(year), int(month), 1)
+    except ValueError:
+        return
+
+    latest_utm = UserTargetMonth.objects.filter(user=user, date__lte=target_date).order_by("-date").first()
+    target_qty = 0.0
+    if latest_utm:
+        tp = UserTargetMonthProduct.objects.filter(usermonth=latest_utm, product=product).first()
+        if tp:
+            target_qty = float(tp.quantity)
+
+    # 2. Mobile Orders (Ph_Gros vs Gros_Super)
+    mobile_ph_gros_qty = 0.0
+    mobile_gros_super_qty = 0.0
+    
+    order_query_ph_gros = []
+    order_query_gros_super = []
+
+    if role == "Medico_commercial":
+        order_query_ph_gros = Order.objects.filter(user=user, added__month=month, added__year=year, super_gros__isnull=True).exclude(pharmacy__isnull=True, gros__isnull=True).exclude(super_gros_id=149)
+        order_query_gros_super = Order.objects.filter(user=user, added__month=month, added__year=year, super_gros__isnull=False).exclude(pharmacy__isnull=True, gros__isnull=True).exclude(super_gros_id=149)
+    elif role == "Commercial":
+        order_query_ph_gros = Order.objects.filter(user=user, added__month=month, added__year=year, super_gros__isnull=True).exclude(pharmacy__isnull=True, gros__isnull=True).exclude(super_gros_id=149)
+        order_query_gros_super = Order.objects.filter(user=user, added__month=month, added__year=year, pharmacy__isnull=True, gros__isnull=False).exclude(super_gros_id=149)
+    elif role == "Superviseur_national" and getattr(user_profile, 'work_as_commercial', False) == False:
+        users_under = user_profile.usersunder.all()
+        order_query_ph_gros = Order.objects.filter(user__in=users_under, added__month=month, added__year=year, super_gros__isnull=True).exclude(pharmacy__isnull=True, gros__isnull=True).exclude(super_gros_id=149)
+        order_query_gros_super = Order.objects.filter(user__in=users_under, added__month=month, added__year=year, super_gros__isnull=False).exclude(pharmacy__isnull=True, gros__isnull=True).exclude(super_gros_id=149) | Order.objects.filter(user__in=users_under, added__month=month, added__year=year, pharmacy__isnull=True, gros__isnull=False).exclude(super_gros_id=149)
+    elif role == "Superviseur_national" and getattr(user_profile, 'work_as_commercial', False) == True:
+        users_under = user_profile.usersunder.all()
+        order_query_ph_gros = Order.objects.filter(user__in=users_under, added__month=month, added__year=year, super_gros__isnull=True).exclude(pharmacy__isnull=True, gros__isnull=True).exclude(super_gros_id=149)
+        order_query_gros_super = Order.objects.filter(user__in=users_under, added__month=month, added__year=year, pharmacy__isnull=True, gros__isnull=False).exclude(super_gros_id=149)
+    elif role == "CountryManager":
+        users_cm = User.objects.filter(userprofile__commune__wilaya__pays=user_profile.commune.wilaya.pays)
+        order_query_ph_gros = Order.objects.filter(user__in=users_cm, added__month=month, added__year=year, super_gros__isnull=True).exclude(pharmacy__isnull=True, gros__isnull=True).exclude(super_gros_id=149)
+        order_query_gros_super = Order.objects.filter(user__in=users_cm, added__month=month, added__year=year, super_gros__isnull=False).exclude(pharmacy__isnull=True, gros__isnull=True).exclude(super_gros_id=149) | Order.objects.filter(user__in=users_cm, added__month=month, added__year=year, pharmacy__isnull=True, gros__isnull=False).exclude(super_gros_id=149)
+    elif role in ["Superviseur", "Superviseur_regional"]:
+        users_under = user_profile.usersunder.all() | User.objects.filter(pk=user.pk)
+        order_query_ph_gros = Order.objects.filter(user__in=users_under, added__month=month, added__year=year, super_gros__isnull=True).exclude(pharmacy__isnull=True, gros__isnull=True).exclude(super_gros_id=149)
+        order_query_gros_super = Order.objects.filter(user__in=users_under, added__month=month, added__year=year, super_gros__isnull=False).exclude(pharmacy__isnull=True, gros__isnull=True).exclude(super_gros_id=149) | Order.objects.filter(user__in=users_under, added__month=month, added__year=year, pharmacy__isnull=True, gros__isnull=False).exclude(super_gros_id=149)
+
+    if order_query_ph_gros:
+        mobile_ph_gros_qty = OrderItem.objects.filter(order__in=order_query_ph_gros, produit=product).aggregate(total=Sum('qtt'))['total'] or 0.0
+
+    if order_query_gros_super:
+        mobile_gros_super_qty = OrderItem.objects.filter(order__in=order_query_gros_super, produit=product).aggregate(total=Sum('qtt'))['total'] or 0.0
+
+
+    # 3. SuperGros allocation (Brut pour Boss/Sup, Divisé pour Délégués)
+    supergros_achieved_qty = 0.0
+    
+    if role == "CountryManager":
+        sg_sales = SupergrosSalesSnapshot.objects.filter(year=year, month=month, product_id=product.id).aggregate(total=Sum('qty'))['total'] or 0.0
+        supergros_achieved_qty = sg_sales
+    elif role in ["Superviseur_national", "Superviseur_regional", "Superviseur"]:
+        # --- CORRECTION ICI ---
+        # Les Superviseurs prennent TOUTES les ventes brutes de leur région (sans division, même hors objectif)
+        supervisor_wilayas = list(user_profile.sectors.values_list('nom', flat=True))
+        sg_sales = SupergrosSalesSnapshot.objects.filter(
+            year=year, month=month, 
+            wilaya__in=supervisor_wilayas, 
+            product_id=product.id
+        ).aggregate(total=Sum('qty'))['total'] or 0.0
+        supergros_achieved_qty = sg_sales
+    else:
+        # Les Commerciaux / Médicaux gardent la logique divisée (BISnapshot)
+        sg_sales = BISnapshot.objects.filter(year=year, month=month, product_id=product.id, user_id=user.id).aggregate(total=Sum('qty'))['total'] or 0.0
+        supergros_achieved_qty = sg_sales
+
+    # 4. Save to Snapshot
+    UserReportSnapshot.objects.update_or_create(
+        year=year,
+        month=month,
+        user_id=user.id,
+        product_id=product.id,
+        defaults={
+            'user_name': f"{user.last_name} {user.first_name}".strip(),
+            'role': role,
+            'region': getattr(user_profile, 'region', 'N/A') or 'N/A',
+            'product_name': product.nom,
+            'product_price': float(product.price),
+            'target_qty': target_qty,
+            'mobile_ph_gros_qty': float(mobile_ph_gros_qty),
+            'mobile_gros_super_qty': float(mobile_gros_super_qty),
+            'supergros_achieved_qty': float(supergros_achieved_qty),
+        }
+    )
