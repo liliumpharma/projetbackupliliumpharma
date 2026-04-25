@@ -201,8 +201,11 @@
                 <tr>
                   <td>
                     <!-- NOM  -->
-                    <strong style="font-size:18px;"><strong style="font-size:18px;">{{visite.medecin.id}}</strong> - {{visite.medecin.nom}}</strong> <strong class="text-center" style="font-weight: bold; font-size:12px; color: green;" >   | {{visite.medecin.specialite}} <strong class="text-center" style="font-weight: bold; font-size:12px;color: green;"> | {{visite.medecin.classification}}</strong></strong>
+                    <strong style="font-size:18px;"><a href="/admin/medecins/medecin/{{visite.medecin.id}}/change/" target="_blank" style="color: inherit; text-decoration: underline;">{{visite.medecin.id}}</a></strong><strong style="font-size:18px;"> - {{visite.medecin.nom}}</strong> <strong class="text-center" style="font-weight: bold; font-size:12px; color: green;" >   | {{visite.medecin.specialite}} <strong class="text-center" style="font-weight: bold; font-size:12px;color: green;"> | {{visite.medecin.classification}}</strong></strong>
 
+                    <br>
+                    <!-- WILAYA / COMMUNE -->
+                    <strong class="text-center" style="font-weight: bold; font-size:12px; color: #555;">{{visite.medecin.wilaya}} | {{visite.medecin.commune}}</strong>
                     <br>
                     <!-- ADR -->
                     <strong class="text-center" style="font-weight: bold; font-size:12px;">Localisation: {{visite.medecin.adresse}} {% if visite.medecin.lat and visite.medecin.lon %}<img src="https://app.liliumpharma.com/{% static 'img/location.png' %}" style="height: 14px;"/>{%endif%}</strong><strong class="text-center" style="font-weight: bold; font-size:12px;">  | Tel: {{visite.medecin.telephone}}</strong>                    

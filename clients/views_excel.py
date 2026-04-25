@@ -415,11 +415,14 @@ class UserTargetMonthExcel(APIView):
         worksheet.write(0, 4, "Mois")
 
         col = 5
-        products = Produit.objects.all()
+        products = list(Produit.objects.all())
 
         for product in products:
             worksheet.write(0, col, product.nom)
             col += 1
+
+        total_price_col = col
+        worksheet.write(0, total_price_col, "Prix Total")
 
         user_target_months = UserTargetMonth.objects.filter(date__year=year).order_by(
             "date__month"
@@ -440,15 +443,18 @@ class UserTargetMonthExcel(APIView):
 
             products_targets = user_target_month.usertargetmonthproduct_set.all()
 
-            for index, product in enumerate(list(products)):
+            row_total = 0
+            for index, product in enumerate(products):
                 product_target = products_targets.filter(product=product)
 
                 if product_target.exists():
                     quantity = product_target.first().quantity
                     worksheet.write(row, index + 5, quantity)
+                    row_total += quantity * (product.price or 0)
                 else:
                     worksheet.write(row, index + 5, "-")
 
+            worksheet.write(row, total_price_col, round(row_total, 2))
             row += 1
 
         workbook.close()

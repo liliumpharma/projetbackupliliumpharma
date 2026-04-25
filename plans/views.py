@@ -1880,49 +1880,187 @@ def PlanPDF(request):
                     "pharmacies": pharmacie_count,
                 }
 
-    # Build plan → sector category mapping (SEMI / DEP) for PDF colour coding
+    # Build plan → sector category mapping for PDF colour coding & Data Aggregation
     from accounts.models import UserSectorDetail, SectorCategory
 
     user_sectors = (
         UserSectorDetail.objects
         .filter(user_profile__user=user)
-        .exclude(category=SectorCategory.IN)
-        .prefetch_related('communes', 'wilayas')
+        .prefetch_related('communes__wilaya', 'wilayas')
     )
 
-    commune_sector_map = {}   # commune_id  -> category
-    wilaya_sector_map  = {}   # wilaya_id   -> category
-    for sec in user_sectors:
-        specific_commune_ids = list(sec.communes.values_list('id', flat=True))
-        if specific_commune_ids:
-            for cid in specific_commune_ids:
-                commune_sector_map[cid] = sec.category
-        else:
-            for wid in sec.wilayas.values_list('id', flat=True):
-                wilaya_sector_map[wid] = sec.category
+    priority = {"IN": 3, "SEMI": 2, "DEP": 1}
 
+    commune_map = {}   # commune_id  -> {'cat': ..., 'name': ..., 'prio': ...}
+    wilaya_map  = {}   # wilaya_id   -> {'cat': ..., 'name': ..., 'prio': ...}
+
+    has_semi = False
+    has_dep = False
+
+    # Store all advanced stats by Category -> Sector Name
+    sector_stats = {"SEMI": {}, "DEP": {}}
+
+    for sec in user_sectors:
+        cat = sec.category
+        if cat == "SEMI": has_semi = True
+        if cat == "DEP": has_dep = True
+
+        times = sec.times or 0
+        days = sec.days or 0
+
+        specific_communes = list(sec.communes.all())
+        if specific_communes:
+            for commune in specific_communes:
+                name = commune.nom
+                existing_cat = commune_map.get(commune.id)
+                # Apply priority logic
+                if not existing_cat or priority.get(cat, 0) > existing_cat['prio']:
+                    commune_map[commune.id] = {'cat': cat, 'name': name, 'prio': priority.get(cat, 0)}
+
+                # Initialize advanced stats dictionary
+                if cat in ["SEMI", "DEP"]:
+                    if name not in sector_stats[cat]:
+                        sector_stats[cat][name] = {'times': times, 'days': days, 'plans': {}, 'missing': []}
+                    else:
+                        sector_stats[cat][name]['times'] = max(sector_stats[cat][name]['times'], times)
+                        sector_stats[cat][name]['days'] = max(sector_stats[cat][name]['days'], days)
+        else:
+            specific_wilayas = list(sec.wilayas.all())
+            for wilaya in specific_wilayas:
+                name = wilaya.nom if hasattr(wilaya, 'nom') else str(wilaya)
+                existing_cat = wilaya_map.get(wilaya.id)
+                # Apply priority logic
+                if not existing_cat or priority.get(cat, 0) > existing_cat['prio']:
+                    wilaya_map[wilaya.id] = {'cat': cat, 'name': name, 'prio': priority.get(cat, 0)}
+
+                # Initialize advanced stats dictionary
+                if cat in ["SEMI", "DEP"]:
+                    if name not in sector_stats[cat]:
+                        sector_stats[cat][name] = {'times': times, 'days': days, 'plans': {}, 'missing': []}
+                    else:
+                        sector_stats[cat][name]['times'] = max(sector_stats[cat][name]['times'], times)
+                        sector_stats[cat][name]['days'] = max(sector_stats[cat][name]['days'], days)
+
+    has_no_semi_dep = not (has_semi or has_dep)
+
+    # Colorize the columns and aggregate planned statistics per sector
     plan_to_sector = {}
     for p in plans:
-        for commune in p.communes.select_related('wilaya').all():
-            cat = commune_sector_map.get(commune.id)
-            if not cat:
-                cat = wilaya_sector_map.get(commune.wilaya_id)
-            if cat:
-                plan_to_sector[p.id] = cat
-                break
+        plan_cat = None
+        plan_sector_name = None
 
-    # Split non_visite_communes by sector category
+        # Determine the sector assignment for this plan
+        for commune in p.communes.select_related('wilaya').all():
+            mapping = commune_map.get(commune.id)
+            if not mapping:
+                mapping = wilaya_map.get(commune.wilaya_id)
+
+            if mapping:
+                cat = mapping['cat']
+                if cat == "DEP":
+                    plan_cat = "DEP"
+                    plan_sector_name = mapping['name']
+                    break
+                elif cat == "SEMI" and plan_cat != "DEP":
+                    plan_cat = "SEMI"
+                    plan_sector_name = mapping['name']
+                elif cat == "IN" and plan_cat is None:
+                    plan_cat = "IN"
+                    plan_sector_name = mapping['name']
+
+        if plan_cat in ["SEMI", "DEP"]:
+            plan_to_sector[p.id] = plan_cat
+
+            # Use the exact date of the plan
+            date_str = p.day.strftime("%d-%m-%Y")
+
+            # Count doctors and pharmacies scheduled for this plan
+            med_count = 0
+            phar_count = 0
+            for client in p.clients.all():
+                if client.specialite in ["Pharmacie", "Grossiste", "SuperGros"]:
+                    phar_count += 1
+                else:
+                    med_count += 1
+
+            # Save the execution details into our tracking dictionary
+            if plan_sector_name and plan_sector_name in sector_stats[plan_cat]:
+                if date_str not in sector_stats[plan_cat][plan_sector_name]['plans']:
+                    sector_stats[plan_cat][plan_sector_name]['plans'][date_str] = {'medecins': med_count, 'pharmacies': phar_count}
+                else:
+                    sector_stats[plan_cat][plan_sector_name]['plans'][date_str]['medecins'] += med_count
+                    sector_stats[plan_cat][plan_sector_name]['plans'][date_str]['pharmacies'] += phar_count
+
+    # Build per-plan validation status
+    plan_validations = {
+        p.id: bool(p.valid_commune and p.valid_clients and p.valid_tasks)
+        for p in plans
+    }
+
+    # Assign missing communes into their respective sectors
     non_visite_communes_in = {}
-    non_visite_communes_semi = {}
-    non_visite_communes_dep = {}
     for commune, counts in non_visite_communes.items():
-        cat = commune_sector_map.get(commune.id) or wilaya_sector_map.get(commune.wilaya_id)
-        if cat == "SEMI":
-            non_visite_communes_semi[commune] = counts
-        elif cat == "DEP":
-            non_visite_communes_dep[commune] = counts
+        mapping = commune_map.get(commune.id)
+        if not mapping:
+            mapping = wilaya_map.get(commune.wilaya_id)
+
+        if mapping:
+            cat = mapping['cat']
+            name = mapping['name']
+
+            commune_data = {
+                'nom': commune.nom,
+                'medecins': counts['medecins'],
+                'pharmacies': counts['pharmacies']
+            }
+
+            if cat in ["SEMI", "DEP"]:
+                if name in sector_stats[cat]:
+                    sector_stats[cat][name]['missing'].append(commune_data)
+            else:
+                non_visite_communes_in[commune] = counts
         else:
             non_visite_communes_in[commune] = counts
+
+    # Determine if the user is a supervisor (to hide exact PF coverage checks)
+    is_supervisor = False
+    if hasattr(user, 'userprofile'):
+        role = user.userprofile.speciality_rolee
+        if "Superviseur" in role or role == "CountryManager":
+            is_supervisor = True
+
+    # Calculate smart deficits (Missing required visits or days)
+    deficits_semi = []
+    deficits_dep = []
+
+    for name, stats in sector_stats["SEMI"].items():
+        req_times = stats['times']
+        planned_days = len(stats['plans'])
+        if req_times > planned_days:
+            missing = req_times - planned_days
+            stats['missing_count'] = missing
+            deficits_semi.append(f"Il manque {missing} semi-déplacement{'s' if missing > 1 else ''} à {name}.")
+
+    for name, stats in sector_stats["DEP"].items():
+        req_times = stats['times']
+        req_days = stats['days']
+        planned_days = len(stats['plans'])
+
+        if req_times and req_days:
+            total_req = req_times * req_days
+            if planned_days < total_req:
+                missing_days = total_req - planned_days
+                missing_trips = missing_days // req_days
+                remainder = missing_days % req_days
+
+                stats['missing_count'] = missing_trips
+                stats['days_needed'] = req_days
+                stats['missing_days'] = missing_days
+
+                if missing_trips > 0:
+                    deficits_dep.append(f"Il manque {missing_trips} déplacement{'s' if missing_trips > 1 else ''} de {req_days} jour{'s' if req_days > 1 else ''} à {name}.")
+                if remainder > 0:
+                    deficits_dep.append(f"Il manque {remainder} jour{'s' if remainder > 1 else ''} de déplacement supplémentaire à {name}.")
 
     # Regrouper les plans par tranche de 5
     plans = [plans[i : i + 5] for i in range(0, len(plans), 5)]
@@ -1937,10 +2075,20 @@ def PlanPDF(request):
             "from_to": from_to,
             "periode": today,
             "non_visite_communes": non_visite_communes_in,
-            "non_visite_communes_semi": non_visite_communes_semi,
-            "non_visite_communes_dep": non_visite_communes_dep,
+
+            # --- NEW VARIABLES ---
+            "sector_stats": sector_stats,
+            "deficits_semi": deficits_semi,
+            "deficits_dep": deficits_dep,
+            "is_supervisor": is_supervisor,
+            # ---------------------
+
+            "has_semi": has_semi,
+            "has_dep": has_dep,
             "visited_commune_medecin_count": dict(visited_commune_medecin_count),
             "plan_to_sector": plan_to_sector,
+            "plan_validations": plan_validations,
+            "has_no_semi_dep": has_no_semi_dep,
         },
     )
 

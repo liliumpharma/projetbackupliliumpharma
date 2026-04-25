@@ -327,17 +327,8 @@
         // dual-select (DEP) on top of it and sync every change back.
 
         function recheckWilayas() {
-            // Collect IDs already used by IN cards
-            var inWilayas = [];
-            $('#section-IN .wilaya-ui-select').each(function() {
-                var v = $(this).val();
-                if (v) inWilayas.push(String(v));
-            });
-            // Disable those options inside SEMI / DEP UI selects (but never the blank option)
-            $('#section-SEMI .wilaya-ui-select option, #section-DEP .wilaya-ui-select option').each(function() {
-                var v = $(this).val();
-                if (v) $(this).prop('disabled', inWilayas.indexOf(v) !== -1);
-            });
+            // We now allow selecting the same Wilaya 
+            // across IN/SEMI/DEP to accommodate Commune exceptions.
         }
 
         function syncToHidden(container) {
@@ -448,8 +439,8 @@
                 if (existing.length) sel.val(String(existing[0]));
                 sel.on('change', function() {
                     syncToHidden(container);
-                    if (category === 'SEMI') {
-                        // Wilaya changed → clear old commune selection then rebuild UI
+                    // UPDATE: Load communes for both IN and SEMI
+                    if (category === 'SEMI' || category === 'IN') {
                         syncCommunesToHidden(container, []);
                         var wid = $(this).val();
                         buildCommunesUI(container, wid ? [wid] : []);
@@ -457,8 +448,8 @@
                 });
                 uiDiv.append(sel);
 
-                if (category === 'SEMI') {
-                    // Build initial communes UI for the already-selected wilaya
+                // UPDATE: Build initial communes UI for IN and SEMI
+                if (category === 'SEMI' || category === 'IN') {
                     buildCommunesUI(container, existing.length ? [String(existing[0])] : []);
                 }
 
@@ -508,9 +499,10 @@
             container.find('.category-label-title').text('Secteur ' + category + ' / قطاع ' + category);
             container.find('input').addClass('form-control');
 
-            
-
-            if (category === 'SEMI') {
+            // UPDATE: Make sure the communes field is shown for IN!
+            if (category === 'IN') {
+                container.find('.field-communes').show();
+            } else if (category === 'SEMI') {
                 container.find('.field-communes, .field-times, .field-value, .field-medical, .field-commercial, .field-note, .field-month_frequency').show();
                 container.find('.value-label').text('Prime de semi-déplacement / علاوة شبه التنقل');
                 container.find('input[name$="-times"], input[name$="-value"]').on('input change', function() {

@@ -301,26 +301,10 @@ def _log_wilaya_product(year, month, wilaya_obj, product_obj):
         _bi_log.error("_log_wilaya_product failed: %s", exc, exc_info=True)
 
 
-def _log_user_profile(year, month, profile):
-    """Write one BIPendingUpdate row to trigger a dashboard rebuild for this user."""
-    try:
-        BIPendingUpdate.objects.get_or_create(
-            year=year, month=month,
-            wilaya=None, product=None,
-            user_profile=profile,
-        )
-    except Exception as exc:
-        _bi_log.error("_log_user_profile failed: %s", exc, exc_info=True)
+# _log_user_profile — DISABLED (no callers remain after hybrid model switch)
 
 
-def _log_user_all_months(profile):
-    """Log a dashboard rebuild for every known (year, month) this user appears in."""
-    try:
-        dates = OrderSource.objects.values('date__year', 'date__month').distinct()
-        for d in dates:
-            _log_user_profile(d['date__year'], d['date__month'], profile)
-    except Exception as exc:
-        _bi_log.error("_log_user_all_months failed: %s", exc, exc_info=True)
+# _log_user_all_months — DISABLED (no callers remain after hybrid model switch)
 
 # ---------------------------------------------------------------------------
 # Signal: OrderProduct  (SuperGros sales rows)
@@ -341,64 +325,30 @@ def _bi_log_order_product(sender, instance, **kwargs):
 
 
 # ---------------------------------------------------------------------------
-# Signal: OrderItem  (direct pharmacy / gros orders used in DashboardSnapshot)
+# Signal: OrderItem  — DISABLED (Hybrid model: mobile orders queried live)
 # ---------------------------------------------------------------------------
 
-def _connect_order_item_signals():
-    try:
-        from orders.models import OrderItem as _OrderItem
-
-        @receiver(post_save, sender=_OrderItem, weak=False)
-        @receiver(post_delete, sender=_OrderItem, weak=False)
-        def _bi_log_order_item(sender, instance, **kwargs):
-            try:
-                order = instance.order
-                profile = order.user.userprofile
-                _log_user_profile(order.added.year, order.added.month, profile)
-            except Exception:
-                pass
-    except Exception as exc:
-        _bi_log.error("_bi_log_order_product failed: %s", exc, exc_info=True)
-
-
-_connect_order_item_signals()
+# def _connect_order_item_signals():
+#     ...
+# _connect_order_item_signals()
 
 
 # ---------------------------------------------------------------------------
-# Signal: UserSectorDetail  (sector assignments changed → full user rebuild)
+# Signal: UserSectorDetail  — DISABLED (Hybrid model: no auto-queue on admin edits)
 # ---------------------------------------------------------------------------
 
-def _connect_sector_detail_signals():
-    try:
-        from accounts.models import UserSectorDetail as _USD
-
-        @receiver(post_save, sender=_USD, weak=False)
-        @receiver(post_delete, sender=_USD, weak=False)
-        def _bi_log_sector_detail(sender, instance, **kwargs):
-            _log_user_all_months(instance.user_profile)
-    except Exception as exc:
-        _bi_log.error("_bi_log_order_product failed: %s", exc, exc_info=True)
-
-
-_connect_sector_detail_signals()
+# def _connect_sector_detail_signals():
+#     ...
+# _connect_sector_detail_signals()
 
 
 # ---------------------------------------------------------------------------
-# Signal: UserProfile  (role / lines / region changed → full user rebuild)
+# Signal: UserProfile  — DISABLED (Hybrid model: no auto-queue on admin edits)
 # ---------------------------------------------------------------------------
 
-def _connect_user_profile_signals():
-    try:
-        from accounts.models import UserProfile as _UP
-
-        @receiver(post_save, sender=_UP, weak=False)
-        def _bi_log_user_profile(sender, instance, **kwargs):
-            _log_user_all_months(instance)
-    except Exception as exc:
-        _bi_log.error("_bi_log_order_product failed: %s", exc, exc_info=True)
-
-
-_connect_user_profile_signals()
+# def _connect_user_profile_signals():
+#     ...
+# _connect_user_profile_signals()
 
 
 # ---------------------------------------------------------------------------
@@ -550,31 +500,13 @@ def auto_fill_supervisor_targets(sender, instance, **kwargs):
 
 
 # ---------------------------------------------------------------------------
-# Signal: UserTargetMonthProduct  (target changed → log per-wilaya + dashboard)
-# Runs AFTER auto_fill_supervisor_targets to avoid reacting to its cascade saves.
+# Signal: UserTargetMonthProduct (BI queue) — DISABLED (Hybrid model: targets queried live)
 # ---------------------------------------------------------------------------
 
-@receiver(post_save, sender=UserTargetMonthProduct)
-@receiver(post_delete, sender=UserTargetMonthProduct)
-def _bi_log_target_change(sender, instance, **kwargs):
-    from accounts.models import UserProfile as _UP
-    try:
-        profile = instance.usermonth.user.userprofile
-        target_date = instance.usermonth.date
-
-        # Only react to real delegates — supervisors are auto-filled above and
-        # would create an infinite cascade if we logged them too.
-        if profile.speciality_rolee not in ["Commercial", "Medico_commercial"]:
-            return
-
-        # One row per (wilaya, product) so sync_bi_allocation can be granular.
-        for wilaya in profile.sectors.all():
-            _log_wilaya_product(target_date.year, target_date.month, wilaya, instance.product)
-
-        # Also queue a dashboard rebuild for this user.
-        _log_user_profile(target_date.year, target_date.month, profile)
-    except Exception:
-        pass
+# @receiver(post_save, sender=UserTargetMonthProduct)
+# @receiver(post_delete, sender=UserTargetMonthProduct)
+# def _bi_log_target_change(sender, instance, **kwargs):
+#     ...  (was: queue wilaya/product + dashboard rows for delegate target changes)
 
 
 class BISnapshot(models.Model):

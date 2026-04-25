@@ -74,4 +74,6 @@ urlpatterns = [
         name="transaction-tracker-api",
     ),
     path("statistics/", orders_stats_view, name="orders_stats"),
+    path("product-stats/", ProductStatsView.as_view(), name="product-stats"),
+    path("api/product-stats-data/", ProductStatsDataAPI.as_view(), name="product-stats-api"),
 ]

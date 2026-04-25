@@ -1,7 +1,7 @@
 from django.urls import path, re_path, include
 from .views import *
 from .api.api import RapportAPI
-from .api.app_api import RapportAppAPI, CommentAppAPI, VisiteAppApi, SingleRapportAPI, CommentAPI
+from .api.app_api import RapportAppAPI, VisiteAppApi, SingleRapportAPI, CommentAPI
 
 urlpatterns = [
     path("listvisits", Listvisit.as_view(), name="ListVisit"),
@@ -43,7 +43,7 @@ urlpatterns = [
     path(
         "app/api/single/<int:id>", SingleRapportAPI.as_view(), name="SingleRapportAPI"
     ),
-    path("app/comment/api", CommentAppAPI.as_view(), name="CommentAppAPI"),
+    path("app/comment/api", CommentAPI.as_view(), name="CommentAppAPI"),
     path("comment/api", CommentAPI.as_view(), name="CommentAPI"),
     path(
         "SupprimerDoublonsRapportsView",

@@ -272,8 +272,8 @@
             letter-spacing: 0;
         }
 
-        /* --- STICKY MERIEM CONTAINER --- */
-        #meriem-container {
+        /* --- STICKY MERIEM WRAPPER (reference + filtered cards) --- */
+        #meriem-wrapper {
             position: sticky;
             top: var(--meriem-top, 40px);
             z-index: 80;
@@ -381,6 +381,9 @@
                 <div class="filter-label">Utilisateur</div>
                 <select id="filter-user" class="filter-select">
                     <option value="">Tous</option>
+                    {% for u in users %}
+                    <option value="{{ u.last_name }} {{ u.first_name }}">{{ u.last_name }} {{ u.first_name }}</option>
+                    {% endfor %}
                 </select>
             </div>
 
@@ -388,10 +391,9 @@
                 <div class="filter-label">Ligne</div>
 
                 <select id="filter-line" multiple style="display: none;">
-                    <option value="L1">L1</option>
-                    <option value="L2">L2</option>
-                    <option value="L3">L3</option>
-                    <option value="COM">COM</option>
+                    {% for l in lines %}
+                    <option value="{{ l }}">{{ l }}</option>
+                    {% endfor %}
                 </select>
 
                 <div class="ms-wrapper" id="line-ms-wrapper">
@@ -400,26 +402,20 @@
                         <span style="font-size: 10px; margin-left:8px;">▼</span>
                     </div>
                     <div class="ms-dropdown" id="line-ms-dropdown">
-                        <label class="ms-label"><input type="checkbox" value="L1" class="ms-checkbox line-cb"> L1</label>
-                        <label class="ms-label"><input type="checkbox" value="L2" class="ms-checkbox line-cb"> L2</label>
-                        <label class="ms-label"><input type="checkbox" value="L3" class="ms-checkbox line-cb"> L3</label>
-                        <label class="ms-label"><input type="checkbox" value="COM" class="ms-checkbox line-cb"> COM</label>
+                        {% for l in lines %}
+                        <label class="ms-label"><input type="checkbox" value="{{ l }}" class="ms-checkbox line-cb"> {{ l }}</label>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
             <div class="filter-group">
-                <div class="filter-label">Secteur</div>
-                <select id="filter-sector" class="filter-select">
-                    <option value="">Tous</option>
-                    <option value="SEMI">Semi-Déplacement (SEMI)</option>
-                    <option value="DEP">Déplacement (DEP)</option>
-                </select>
-            </div>
-
-            <div class="filter-group">
                 <div class="filter-label">Région</div>
-                <select id="filter-region" class="filter-select">
+                <select id="filter-region" class="filter-select"
+                    {% if request.user.userprofile.speciality_rolee == 'Superviseur_national' %} disabled {% endif %}>
                     <option value="">Tous</option>
+                    {% for r in regions %}
+                    <option value="{{ r }}">{{ r }}</option>
+                    {% endfor %}
                 </select>
             </div>
 
@@ -514,8 +510,11 @@
 
     <div id="dashboard-content" style="display: none;">
 
-        <!-- CountryManager — always visible, sticky below grid-header -->
-        <div id="meriem-container"></div>
+        <!-- CountryManager — reference (date only) + filtered (all filters) -->
+        <div id="meriem-wrapper">
+            <div id="meriem-static-container"></div>
+            <div id="meriem-container"></div>
+        </div>
 
         <!-- ═══ SUPERVISEURS section ═══ -->
         <div id="section-superviseurs">
@@ -587,6 +586,17 @@
         let allUsersData   = [];   // cache of the last successful API payload
         let activeSortKey  = null; // currently active column sort key
 
+        // Inside document.ready or at the start of your script
+const userRole = "{{ request.user.userprofile.speciality_rolee }}";
+const userRegion = "{{ request.user.userprofile.region }}";
+
+if (userRole === "Superviseur_national") {
+    const regionSelect = document.getElementById('filter-region');
+    // We set the value directly. Note: populateDynamicFilters() might overwrite this, 
+    // so we must enforce it inside that function as well.
+    regionSelect.value = userRegion;
+}
+
         // ── Build year <select> dynamically ─────────────────────────────────────
         (function buildYearSelect() {
             const sel   = document.getElementById('year-select');
@@ -627,10 +637,6 @@
 
         // ── Cascade filter listeners ──────────────────────────────────────────────
         // filter-line changes are handled by .line-cb checkboxes in the custom multi-select IIFE
-        document.getElementById('filter-sector').addEventListener('change', function() {
-            applyCascadeLogic();
-            applyFilters();
-        });
         document.getElementById('filter-region').addEventListener('change', function() {
             applyCascadeLogic();
             applyFilters();
@@ -672,7 +678,6 @@
             // Dropdowns
             [
                 { id: 'filter-user',        label: 'Utilisateur' },
-                { id: 'filter-sector',      label: 'Secteur' },
                 { id: 'filter-region',      label: 'Région' },
                 { id: 'filter-role',        label: 'Rôle' },
                 { id: 'filter-performance', label: 'Performance', map: PERF_LABELS },
@@ -749,13 +754,22 @@
             rebuild('filter-user', users.map(u => u.name).filter(Boolean).sort()
                                         .filter((v, i, a) => a.indexOf(v) === i));
             // Apply cascade rules to filter user list, product options, and sector state
-            applyCascadeLogic();
-        }
+            rebuild('filter-region', uniqueVals('region'));
+    
+    // Force lock after rebuild
+    if (userRole === "Superviseur_national") {
+        const regionSel = document.getElementById('filter-region');
+        regionSel.value = userRegion;
+        // Remove "Tous" option for supervisors so they stay in their scope
+        if (regionSel.options[0].value === "") regionSel.remove(0);
+    }
+    
+    applyCascadeLogic();
+}
 
         // ── Cascade Filter Engine ─────────────────────────────────────────────────
         function applyCascadeLogic() {
             const fLines  = Array.from(document.getElementById('filter-line').selectedOptions).map(opt => opt.value);
-            const fSector = document.getElementById('filter-sector').value;
             const fRegion = document.getElementById('filter-region').value;
 
             // Rule 2: Show/hide Produit options whose data-line is included in selected Lignes
@@ -770,7 +784,7 @@
             const selProdOpt = produitSel.querySelector(`option[value="${currentProd}"]`);
             if (selProdOpt && selProdOpt.style.display === 'none') produitSel.value = '';
 
-            // Rule 3: Rebuild #filter-user from allUsersData filtered by Lignes (AND), Secteur, Région
+            // Rule 3: Rebuild #filter-user from allUsersData filtered by Lignes (AND), Région
             if (allUsersData.length === 0) return;
             const userSel    = document.getElementById('filter-user');
             const currentUser = userSel.value;
@@ -780,7 +794,6 @@
                     const userLines = u.lines ? u.lines.split(',') : [];
                     if (!fLines.every(sel => userLines.includes(sel))) return false;
                 }
-                if (fSector && !u.sector.includes(fSector))  return false;
                 if (fRegion && u.region !== fRegion)         return false;
                 return true;
             });
@@ -795,7 +808,6 @@
 
             const fUser    = document.getElementById('filter-user').value;
             const fLines   = Array.from(document.getElementById('filter-line').selectedOptions).map(opt => opt.value);
-            const fSector  = document.getElementById('filter-sector').value;
             const fRegion  = document.getElementById('filter-region').value;
             const fRole    = document.getElementById('filter-role').value;
             const fPerf    = document.getElementById('filter-performance').value;
@@ -807,63 +819,117 @@
                 if (opt.value) productLines[opt.value] = opt.getAttribute('data-line') || '';
             });
 
-            // ── CALCUL DYNAMIQUE DE COUNTRY MANAGER (MERIEM) ──
-            const cmUser = allUsersData.find(u => u.role === 'CountryManager');
+            // ── CALCUL DYNAMIQUE DE LA CARTE GLOBALE (MERIEM / UTILISATEUR) ──
             let cmTarget = 0;
             let cmAchieved = 0;
+            let cmDisplayName = "Meriem RIMOUCHE";
+            let cmDisplayRole = "CountryManager";
+            let cmDisplayRegion = fRegion ? fRegion : "ALGERIE";
+            let cmDisplayId = null;
 
-            // 1. RÉALISÉ : Basé UNIQUEMENT sur les ventes globales de l'entreprise (pas sur les utilisateurs)
-            if (cmUser && cmUser.product_breakdown) {
-                cmUser.product_breakdown.forEach(p => {
-                    const pid = String(p.product_id);
-                    const pLine = productLines[pid] || '';
+            if (fUser) {
+                // 1. UTILISATEUR SPÉCIFIQUE SÉLECTIONNÉ : La Top Card devient cet utilisateur
+                const selectedUser = allUsersData.find(u => u.name === fUser);
+                if (selectedUser) {
+                    cmDisplayName = selectedUser.name;
+                    cmDisplayRole = selectedUser.role;
+                    cmDisplayRegion = selectedUser.region;
+                    cmDisplayId = selectedUser.id;
 
-                    if (fProduit && pid !== fProduit) return;
-                    if (fLines.length > 0 && !fLines.includes(pLine)) return;
+                    (selectedUser.product_breakdown || []).forEach(p => {
+                        const pid = String(p.product_id);
+                        const pLine = productLines[pid] || '';
 
-                    cmAchieved += p.achieved_value;
+                        if (fProduit && pid !== fProduit) return;
+                        if (fLines.length > 0 && !fLines.includes(pLine)) return;
+
+                        cmTarget += p.target_value;
+                        cmAchieved += p.achieved_value;
+                    });
+                }
+            } else {
+                // 2. AUCUN UTILISATEUR SÉLECTIONNÉ : La Top Card agit comme vue globale (Meriem)
+                const cmUser = allUsersData.find(u => u.role === 'CountryManager');
+                if (cmUser) {
+                    cmDisplayName = cmUser.name;
+                    cmDisplayId = cmUser.id;
+                }
+
+                // A. Calcul de l'Achevé (STRICTEMENT SUPERGROS, SANS DUPLICATION, FILTRÉ PAR RÉGION)
+                if (window.globalSalesData) {
+                    window.globalSalesData.forEach(sale => {
+                        const pid = String(sale.product_id);
+                        const pLine = productLines[pid] || '';
+
+                        // Appliquer les filtres de Ligne et Produit
+                        if (fProduit && pid !== fProduit) return;
+                        if (fLines.length > 0 && !fLines.includes(pLine)) return;
+
+                        // Appliquer la règle stricte de la Région basée sur la Wilaya du SuperGros
+                        if (fRegion && sale.region !== fRegion) return;
+
+                        cmAchieved += (sale.value || 0);
+                    });
+                }
+
+                // B. Calcul de l'Objectif (Somme stricte des délégués ciblés)
+                allUsersData.forEach(u => {
+                    if (u.role === 'CountryManager') return;
+
+                    if (fRegion && u.region !== fRegion) return;
+                    if (fRole && u.role !== fRole) return;
+
+                    (u.product_breakdown || []).forEach(p => {
+                        const pid = String(p.product_id);
+                        const pLine = productLines[pid] || '';
+
+                        if (fProduit && pid !== fProduit) return;
+                        if (fLines.length > 0 && !fLines.includes(pLine)) return;
+
+                        if (u.role === 'Medico_commercial') {
+                            cmTarget += p.target_value;
+                        } else if (u.role === 'Commercial' && pLine === 'COM') {
+                            cmTarget += p.target_value;
+                        }
+                    });
                 });
             }
-
-            // 2. OBJECTIF : Basé sur les délégués (Medico + Commerciaux COM) pour respecter le filtre Région/Secteur
-            allUsersData.forEach(u => {
-                if (u.role === 'CountryManager') return; 
-                
-                // Les filtres Secteur et Région s'appliquent pour isoler l'objectif de la région
-                if (fSector && !u.sector.includes(fSector)) return;
-                if (fRegion && u.region !== fRegion) return;
-                
-                (u.product_breakdown || []).forEach(p => {
-                    const pid = String(p.product_id);
-                    const pLine = productLines[pid] || '';
-                    
-                    if (fProduit && pid !== fProduit) return;
-                    if (fLines.length > 0 && !fLines.includes(pLine)) return;
-                    
-                    if (u.role === 'Medico_commercial') {
-                        cmTarget += p.target_value;
-                    } else if (u.role === 'Commercial' && pLine === 'COM') {
-                        cmTarget += p.target_value;
-                    }
-                });
-            });
 
             const filtered = allUsersData
                 // ── Step 1: value substitution for dynamic totals ─────────────
                 .map(u => {
-                    // Carte CountryManager forcée avec ses nouvelles valeurs
+                    const refAch = window.staticRefAchieved || 0;
+                    const refTgt = window.staticRefTarget   || 0;
+
+                    // Carte Top Card (Meriem ou l'Utilisateur sélectionné)
                     if (u.role === 'CountryManager') {
-                        const newPerc = cmTarget > 0 ? Math.round((cmAchieved / cmTarget) * 10000) / 100 : 0;
+                        const newPerc      = cmTarget > 0 ? Math.round((cmAchieved / cmTarget) * 10000) / 100 : 0;
+                        const globalAchPct = refAch   > 0 ? Math.round((cmAchieved / refAch)   * 10000) / 100 : 0;
+                        const globalPct    = refTgt   > 0 ? Math.round((cmAchieved / refTgt)   * 10000) / 100 : 0;
                         return Object.assign({}, u, {
+                            display_name: cmDisplayName,
+                            display_role: cmDisplayRole,
+                            display_region: cmDisplayRegion,
+                            display_id: cmDisplayId,
                             target_total: cmTarget,
                             achieved_total: cmAchieved,
                             personal_percentage: newPerc,
-                            force_visible: true 
+                            global_achieved_percentage: globalAchPct,
+                            global_percentage: globalPct,
+                            force_visible: true
                         });
                     }
 
                     // Pour les autres, on recalcule le total si Ligne ou Produit est filtré
-                    if (!fProduit && fLines.length === 0) return u;
+                    if (!fProduit && fLines.length === 0) {
+                        const ach          = parseFloat(u.achieved_total) || 0;
+                        const globalAchPct = refAch > 0 ? Math.round((ach / refAch) * 10000) / 100 : 0;
+                        const globalPct    = refTgt > 0 ? Math.round((ach / refTgt) * 10000) / 100 : 0;
+                        return Object.assign({}, u, {
+                            global_achieved_percentage: globalAchPct,
+                            global_percentage: globalPct,
+                        });
+                    }
 
                     let newTarget = 0;
                     let newAchieved = 0;
@@ -871,19 +937,23 @@
                     (u.product_breakdown || []).forEach(p => {
                         const pid = String(p.product_id);
                         const pLine = productLines[pid] || '';
-                        
+
                         if (fProduit && pid !== fProduit) return;
                         if (fLines.length > 0 && !fLines.includes(pLine)) return;
-                        
+
                         newTarget += p.target_value;
                         newAchieved += p.achieved_value;
                     });
 
-                    const newPerc = newTarget > 0 ? Math.round(newAchieved / newTarget * 10000) / 100 : 0;
+                    const newPerc      = newTarget > 0 ? Math.round(newAchieved / newTarget * 10000) / 100 : 0;
+                    const globalAchPct = refAch    > 0 ? Math.round((newAchieved / refAch)   * 10000) / 100 : 0;
+                    const globalPct    = refTgt    > 0 ? Math.round((newAchieved / refTgt)   * 10000) / 100 : 0;
                     return Object.assign({}, u, {
                         target_total: newTarget,
                         achieved_total: newAchieved,
                         personal_percentage: newPerc,
+                        global_achieved_percentage: globalAchPct,
+                        global_percentage: globalPct,
                     });
                 })
                 // ── Step 2: inclusion filter ──────────────────────────────────
@@ -895,12 +965,11 @@
                         const userLines = u.lines ? u.lines.split(',') : [];
                         if (!fLines.every(sel => userLines.includes(sel))) return false;
                     }
-                    if (fSector && !u.sector.includes(fSector)) return false;
                     if (fRegion && u.region !== fRegion) return false;
                     if (fRole   && u.role   !== fRole)   return false;
                     
                     if (fPerf) {
-                        const greenThreshold = u.role === 'Commercial' ? 75 : 95;
+                        const greenThreshold = 95;
                         const pct = parseFloat(u.personal_percentage);
                         if (fPerf === 'gift'       && pct < greenThreshold)               return false;
                         if (fPerf === 'acceptable' && (pct < 50 || pct >= greenThreshold)) return false;
@@ -920,6 +989,72 @@
         }
         
         
+        // ── Static global reference card (date only, no dropdown filters) ───────
+        function renderStaticCard() {
+            const staticContainer = document.getElementById('meriem-static-container');
+            staticContainer.innerHTML = '';
+            if (!allUsersData.length) return;
+
+            const cmUser = allUsersData.find(u => u.role === 'CountryManager');
+
+            // Achieved: sum all raw sales with no region/line/product filter
+            let staticAchieved = 0;
+            if (window.globalSalesData) {
+                window.globalSalesData.forEach(sale => { staticAchieved += (sale.value || 0); });
+            }
+
+            // Target: Medico_commercial (all lines) + Commercial (COM line only)
+            const productLines = {};
+            document.querySelectorAll('#filter-produit option').forEach(opt => {
+                if (opt.value) productLines[opt.value] = opt.getAttribute('data-line') || '';
+            });
+            let staticTarget = 0;
+            allUsersData.forEach(u => {
+                if (u.role === 'CountryManager') return;
+                (u.product_breakdown || []).forEach(p => {
+                    const pid = String(p.product_id);
+                    const pLine = productLines[pid] || '';
+                    if (u.role === 'Medico_commercial') {
+                        staticTarget += p.target_value;
+                    } else if (u.role === 'Commercial' && pLine === 'COM') {
+                        staticTarget += p.target_value;
+                    }
+                });
+            });
+
+            window.staticRefTarget   = staticTarget;
+            window.staticRefAchieved = staticAchieved;
+
+            const staticPct = staticTarget > 0 ? Math.round((staticAchieved / staticTarget) * 10000) / 100 : 0;
+            const perfColor = staticPct >= 95 ? '#198754' : (staticPct >= 50 ? '#e67e22' : '#dc3545');
+            const name = cmUser ? cmUser.name : 'GLOBAL';
+            const id   = cmUser ? (cmUser.id || 0) : 0;
+
+            staticContainer.innerHTML = `
+                <div class="user-card grid-layout" style="
+                    border: 2px solid #6c757d;
+                    background: linear-gradient(145deg, #f0f2f5, #e4e8ed);
+                    margin-bottom: 6px;
+                    box-shadow: 0 4px 10px rgba(108,117,125,0.15);
+                " onclick="goToDetail(${id})">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div>
+                            <strong>${name}</strong>
+                            <span style="display:inline-block; margin-left:8px; background:#6c757d; color:white; padding:2px 7px; border-radius:10px; font-size:10px; font-weight:bold; vertical-align:middle;">RÉFÉRENCE</span><br>
+                            <span style="font-size:11px; color:var(--text-muted);">Objectif global — date uniquement</span>
+                        </div>
+                    </div>
+                    <div><span class="badge-role">CountryManager</span></div>
+                    <div style="font-size:13px;">ALGÉRIE</div>
+                    <div class="value-target">${formatDA(staticTarget)}</div>
+                    <div class="value-achieved">${formatDA(staticAchieved)}</div>
+                    <div><strong style="color:${perfColor};">${staticPct}%</strong></div>
+                    <div><strong style="color: var(--accent);">-</strong></div>
+                    <div><strong style="color: #17a2b8;">-</strong></div>
+                </div>
+            `;
+        }
+
         // ── Fetch ───────────────────────────────────────────────────────────────
         async function fetchDashboardData(isManualSearch = false) {
             // No months selected → show the placeholder, skip the API call entirely
@@ -935,6 +1070,8 @@
                 }
 
                 allUsersData = [];
+                window.globalSalesData = [];
+                document.getElementById('meriem-static-container').innerHTML = '';
                 showEmptyState();
                 return;
             }
@@ -955,7 +1092,9 @@
                 if(badge) badge.innerText = data.last_updated || "Non disponible";
                 
                 allUsersData   = data.users;
+                window.globalSalesData = data.raw_sales_data || [];
                 populateDynamicFilters(allUsersData);
+                renderStaticCard();
                 applyFilters();
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -1001,19 +1140,24 @@
                 delCom: { obj: 0, rea: 0, pca: 0, glo: 0 }
             };
 
-            const pctLabel = monthCount > 1 ? '% Moy.' : '%';
 
             // Helper to build a single card's HTML
             const buildCardHTML = (user, isMeriem, rank = 0) => {
-                const isCommercial  = user.role === 'Commercial';
-                const greenThreshold = isCommercial ? 75 : 95;
+                // Use display overrides if this is the Top Card, otherwise use normal properties
+                const uName = user.display_name || user.name;
+                const uRole = user.display_role || user.role;
+                const uRegion = user.display_region || user.region;
+                const uId = user.display_id || user.id;
+
+                const isCommercial  = uRole === 'Commercial';
+                const greenThreshold = 95;
                 const pct  = user.personal_percentage;
                 const perfColor = pct >= greenThreshold ? '#198754' : (pct >= 50 ? '#e67e22' : '#dc3545');
                 const isGreen = !isMeriem && pct >= greenThreshold;
                 const isRed   = !isMeriem && pct < 50;
                 return `
                 <div class="user-card grid-layout ${isMeriem ? 'meriem-card' : ''}"
-                     onclick="goToDetail(${user.id})">
+                     onclick="goToDetail(${uId})">
                     <div style="display:flex; align-items:center; gap:10px;">
                         ${!isMeriem && rank > 0 ? `<span style="
                             display:inline-flex; align-items:center; justify-content:center;
@@ -1022,28 +1166,28 @@
                             font-size:11px; font-weight:bold; flex-shrink:0;
                         ">${rank}</span>` : ''}
                         <div>
-                            <strong>${user.name}</strong>${isGreen ? '<span class="icon-gift">🎁</span>' : ''}${isRed ? '<span class="icon-danger">🚨</span>' : ''}<br>
-                            <span style="font-size:11px;color:var(--text-muted);">${user.family || ''}</span>
+                            <strong>${uName}</strong>${isMeriem ? '<span style="display:inline-block;margin-left:8px;background:#ffc107;color:#333;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:bold;vertical-align:middle;">FILTRÉ</span>' : ''}${isGreen ? '<span class="icon-gift">🎁</span>' : ''}${isRed ? '<span class="icon-danger">🚨</span>' : ''}<br>
+                            <span style="font-size:11px;color:var(--text-muted);">${isMeriem ? 'Vue filtrée (tous les filtres)' : (user.family || '')}</span>
                             ${user.lines ? `<span style="font-size:10px;color:#007bff;font-weight:600;display:block;margin-top:2px;">${user.lines.split(',').map(l=>l.trim()).filter(Boolean).join(' - ')}</span>` : ''}
                         </div>
                     </div>
-                    <div><span class="badge-role">${user.role.replace('_', ' ')}</span></div>
-                    <div style="font-size:13px;">${isMeriem ? 'ALGERIE' : user.region}</div>
+                    <div><span class="badge-role">${uRole.replace('_', ' ')}</span></div>
+                    <div style="font-size:13px;">${uRegion}</div>
                     <div class="value-target">${formatDA(user.target_total)}</div>
                     <div class="value-achieved">${formatDA(user.achieved_total)}</div>
                     <div>
                         <strong style="color:${perfColor};">
-                            ${pct}${pctLabel}
+                            ${pct}%
                         </strong>
                     </div>
                     <div>
                         <strong style="color: var(--accent);">
-                            ${isMeriem ? '-' : user.global_achieved_percentage + '%'}
+                            ${user.global_achieved_percentage + '%'}
                         </strong>
                     </div>
                     <div>
                         <strong style="color: #17a2b8;">
-                            ${isMeriem ? '-' : user.global_percentage + '%'}
+                            ${user.global_percentage + '%'}
                         </strong>
                     </div>
                 </div>
@@ -1104,7 +1248,7 @@
                 document.getElementById(`rea-${prefix}`).innerText = formatDA(data.rea);
                 
                 const attEl = document.getElementById(`att-${prefix}`);
-                attEl.innerText = att.toFixed(2) + pctLabel;
+                attEl.innerText = att.toFixed(2) + '%';
                 attEl.style.color = att >= 95 ? '#198754' : (att >= 50 ? '#e67e22' : '#dc3545');
 
                 document.getElementById(`pca-${prefix}`).innerText = data.pca.toFixed(2) + '%';
@@ -1230,7 +1374,6 @@
             // Single-value dropdowns
             const fUser    = document.getElementById('filter-user').value;
             const fLines   = Array.from(document.getElementById('filter-line').selectedOptions).map(opt => opt.value);
-            const fSector  = document.getElementById('filter-sector').value;
             const fRegion  = document.getElementById('filter-region').value;
             const fRole    = document.getElementById('filter-role').value;
             const fPerf    = document.getElementById('filter-performance').value;
@@ -1238,7 +1381,6 @@
 
             if (fUser)    params.set('user',    fUser);
             fLines.forEach(l => params.append('lines[]', l));
-            if (fSector)  params.set('sector',  fSector);
             if (fRegion)  params.set('region',  fRegion);
             if (fRole)    params.set('role',    fRole);
             if (fPerf)    params.set('perf',    fPerf);

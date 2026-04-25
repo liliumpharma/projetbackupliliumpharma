@@ -346,6 +346,7 @@ class YearListFilter(admin.SimpleListFilter):
 @admin.register(OrderSource)
 class OrderSourceAdmin(admin.ModelAdmin):
     inlines = [OrderSourceProductInLine]
+    actions = ["force_recalculate_allocations"]
     list_display = ["Supergrossiste", "attachement", "Month", "Reports"]
     list_filter = [
         (
@@ -357,6 +358,38 @@ class OrderSourceAdmin(admin.ModelAdmin):
         YearListFilter,
     ]
     date_hierarchy = "date"
+
+    @admin.action(description="Recalculer les allocations BI pour les mois sélectionnés")
+    def force_recalculate_allocations(self, request, queryset):
+        from .models import BIPendingUpdate, OrderProduct as _OP
+        queued = 0
+        for order_source in queryset.prefetch_related('order_set__orderproduct_set__produit', 'order_set__orderproduct_set__order__client__wilaya'):
+            sale_date = order_source.date
+            combos = (
+                _OP.objects
+                .filter(order__source=order_source)
+                .values_list('order__client__wilaya_id', 'produit_id')
+                .distinct()
+            )
+            for wilaya_id, product_id in combos:
+                _, created = BIPendingUpdate.objects.get_or_create(
+                    year=sale_date.year,
+                    month=sale_date.month,
+                    wilaya_id=wilaya_id,
+                    product_id=product_id,
+                    user_profile=None,
+                )
+                if created:
+                    queued += 1
+
+        self.message_user(
+            request,
+            f"{queued} combinaison(s) wilaya/produit ajoutées à la file d'attente BI. "
+            "Cliquez sur 'Actualiser les données BI' pour traiter.",
+            messages.SUCCESS,
+        )
+
+    force_recalculate_allocations.short_description = "Recalculer les allocations BI pour les mois sélectionnés"
 
     # Optimization: Prefetch related data
     def get_queryset(self, request):
@@ -515,7 +548,7 @@ class UserTargetMonthAdmin(admin.ModelAdmin):
 
     def get_list_display(self, request):
         product_fields = [p.nom.replace(" ", "_") for p in Produit.objects.all()]
-        return ["user", "role", "mois", *product_fields, "print_button"]
+        return ["user", "role", "mois", *product_fields, "total_price", "print_button"]
     date_hierarchy = "date"
     actions = [duplicate_for_next_month]
 
@@ -542,6 +575,16 @@ class UserTargetMonthAdmin(admin.ModelAdmin):
         if obj.date:
             return f"{month_number_to_french_name(obj.date.month)} {obj.date.year}"
         return "-"
+
+    def total_price(self, obj):
+        total = sum(
+            utm.quantity * utm.product.price
+            for utm in obj.usertargetmonthproduct_set.all()
+            if utm.product.price
+        )
+        return f"{total:,.2f}"
+
+    total_price.short_description = "Prix Total"
 
     def print_button(self, obj):
         url = reverse("usertargetmonth_print", args=[obj.id])
@@ -688,69 +731,11 @@ class BISnapshotAdmin(admin.ModelAdmin):
     # combo, then renders the AJAX progress-bar page.
     # ------------------------------------------------------------------
     def refresh_bi_data(self, request):
-        dates = OrderSource.objects.values('date__year', 'date__month').distinct()
-        active_dates = [
-            (d['date__year'], d['date__month'])
-            for d in dates
-            if OrderSource.objects.filter(
-                date__year=d['date__year'], date__month=d['date__month']
-            ).exists()
-        ]
-
-        if not active_dates:
-            messages.warning(request, "Aucune donnée source trouvée.")
-            return redirect('admin:clients_bisnapshot_changelist')
-
-        # Wipe snapshots so the chunk processor rebuilds from a clean slate.
-        BISnapshot.objects.all().delete()
-        DashboardSnapshot.objects.all().delete()
-        SupergrosSalesSnapshot.objects.all().delete()
-        BIPendingUpdate.objects.all().delete()
-
-        # ── Wilaya/product combos (drives sync_sales_snapshot + sync_bi_allocation)
-        wilayas  = Wilaya.objects.all()
-        products = Produit.objects.all()
-
-        pending = []
-        for y, m in active_dates:
-            # Only queue (wilaya, product) pairs that actually have sales data.
-            existing_combos = (
-                OrderProduct.objects
-                .filter(order__source__date__year=y, order__source__date__month=m)
-                .values_list('order__client__wilaya_id', 'produit_id')
-                .distinct()
-            )
-            for wilaya_id, product_id in existing_combos:
-                pending.append(
-                    BIPendingUpdate(
-                        year=y, month=m,
-                        wilaya_id=wilaya_id,
-                        product_id=product_id,
-                        user_profile=None,
-                    )
-                )
-
-        # ── User/dashboard combos (drives sync_user_dashboard)
-        from accounts.models import UserProfile
-        delegate_profiles = UserProfile.objects.filter(
-            speciality_rolee__in=[
-                "CountryManager", "Superviseur_national", "Superviseur_regional",
-                "Medico_commercial", "Commercial",
-            ],
-            hidden=False,
-        )
-        for y, m in active_dates:
-            for profile in delegate_profiles:
-                pending.append(
-                    BIPendingUpdate(
-                        year=y, month=m,
-                        wilaya=None, product=None,
-                        user_profile=profile,
-                    )
-                )
-
-        BIPendingUpdate.objects.bulk_create(pending, ignore_conflicts=True)
         total = BIPendingUpdate.objects.count()
+
+        if total == 0:
+            messages.success(request, "Les données BI sont déjà à jour. Aucune mise à jour en attente.")
+            return redirect('admin:clients_bisnapshot_changelist')
 
         return render(
             request,

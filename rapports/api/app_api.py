@@ -505,18 +505,7 @@ class RapportAppAPI(APIView):
 
         details = f"{len(medecins)} clients {medecin_nbr} medecins {other_details}"
 
-        # Keep default = 3 (existing behavior) unless mobile sends page_size
-        raw_ps = request.GET.get("page_size") or request.GET.get("pageSize")
-        try:
-            page_size = int(raw_ps) if raw_ps else 3
-        except Exception:
-            page_size = 3
-
-        # Safety clamp
-        page_size = max(1, min(page_size, 100))
-
-        paginator = Paginator(rapports_list, page_size)
-
+        paginator = Paginator(rapports_list, 3)
         page = (
             request.GET.get("page")
             if request.GET.get("page") and request.GET.get("page") != "0"
@@ -660,146 +649,16 @@ class VisiteAppApi(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class CommentAppAPI(APIView):
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, format=None):
-        serializer = CommentAppSerializer(
-            data=request.data, instance=Comment(user=request.user), partial=True
-        )
-        if serializer.is_valid():
-            comment = serializer.save()
-
-            # Formater la date du rapport associé
-            rapport_date = comment.rapport.added
-            date_formatee = DateFormat(rapport_date).format("Y-m-d")
-
-            # Créer la notification
-            notification = Notification.objects.create(
-                title="Nouveau Commentaire !",
-                description=f"{request.user.username} à commenté le rapport du {date_formatee}",
-                data={
-                    "name": "Rapports",
-                    "title": "Rapport",
-                    "message": f"Nouveau Commentaire de {request.user.username}",
-                    "confirm_text": "voir le rapport",
-                    "cancel_text": "plus tard",
-                    "StackName": "Rapports",
-                    "url": f"https://app.liliumpharma.com/rapports/PDF/{comment.rapport.id}",
-                    "navigate_to": json.dumps(
-                        {
-                            "screen": "List",
-                            "params": {
-                                "user": request.user.username,
-                                "date": date_formatee,
-                            },
-                        },
-                        ensure_ascii=False,
-                    ),
-                },
-            )
-
-            # Assigner les utilisateurs à notifier
-            notification.users.set(
-                [usr for usr in request.user.userprofile.get_users_to_notify()]
-            )
-
-            # Envoyer la notification
-            # notification.send()
-
-            return Response(
-                {
-                    "id": comment.id,
-                    "user": {"username": request.user.username},
-                    "comment": comment.comment,
-                },
-                status=status.HTTP_201_CREATED,
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class RapportNoteAppAPI(APIView):
-    authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def patch(self, request, id, format=None):
-        rapport = Rapport.objects.filter(id=id).first()
-        if not rapport:
-            raise Http404
-
-        profile = getattr(request.user, "userprofile", None)
-        rolee = (getattr(profile, "rolee", "") or "").strip()
-        speciality = (getattr(profile, "speciality_rolee", "") or "").strip()
-
-        allowed_roles = {
-            "CountryManager",
-            "Superviseur",
-            "Superviseur_regional",
-            "Superviseur_national",
-        }
-
-        if not (request.user.is_superuser or rolee in allowed_roles or speciality in allowed_roles):
-            return Response({"message": "forbidden"}, status=403)
-
-        raw_note = request.data.get("note", None)
-        try:
-            note = int(raw_note)
-        except Exception:
-            return Response({"note": "Must be an integer"}, status=400)
-
-        if note < 0 or note > 5:
-            return Response({"note": "Must be between 0 and 5"}, status=400)
-
-        rapport.note = note
-        rapport.save(update_fields=["note"])
-        return Response({"id": rapport.id, "note": rapport.note}, status=200)
-
-
-
 class CommentAPI(APIView):
+    authentication_classes = [SessionAuthentication, TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, format=None):
         serializer = CommentAppSerializer(
             data=request.data, instance=Comment(user=request.user), partial=True
         )
         if serializer.is_valid():
             comment = serializer.save()
-
-            # Formater la date du rapport associé
-            rapport_date = comment.rapport.added
-            date_formatee = DateFormat(rapport_date).format("Y-m-d")
-
-            # Créer la notification
-            notification = Notification.objects.create(
-                title="Nouveau Commentaire !",
-                description=f"{request.user.username} à commenté le rapport du {date_formatee}",
-                data={
-                    "name": "Rapports",
-                    "title": "Rapport",
-                    "message": f"Nouveau Commentaire de {request.user.username}",
-                    "confirm_text": "voir le rapport",
-                    "cancel_text": "plus tard",
-                    "StackName": "Rapports",
-                    "url": f"https://app.liliumpharma.com/rapports/PDF/{comment.rapport.id}",
-                    "navigate_to": json.dumps(
-                        {
-                            "screen": "List",
-                            "params": {
-                                "user": request.user.username,
-                                "date": date_formatee,
-                            },
-                        },
-                        ensure_ascii=False,
-                    ),
-                },
-            )
-
-            # Assigner les utilisateurs à notifier
-            notification.users.set(
-                [usr for usr in request.user.userprofile.get_users_to_notify()]
-            )
-
-            # Envoyer la notification
-            # notification.send()
 
             return Response(
                 {

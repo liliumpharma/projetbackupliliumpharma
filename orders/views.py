@@ -9,7 +9,7 @@ from rest_framework.authentication import (
     SessionAuthentication,
     BasicAuthentication,
 )
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.core.paginator import Paginator
 from django.shortcuts import render
 from django.views.generic import TemplateView
@@ -24,6 +24,7 @@ from django.shortcuts import render, redirect
 from django.utils import timezone
 from rest_framework.authtoken.models import Token
 import json
+from produits.models import Produit
 
 
 from accounts.models import *
@@ -2479,10 +2480,147 @@ def orders_stats_view(request):
     ]
     users_list = [{"value": up.user.username, "label": up.user.username, "region": up.region or "", "role": up.speciality_rolee or ""} for up in users]
     restricted_user = users_list[0] if is_restricted and users_list else None
+
+    produits = list(Produit.objects.values('id', 'nom', 'line').order_by('nom'))
+    lignes = list(Produit.objects.exclude(line__isnull=True).exclude(line__exact='').values_list('line', flat=True).distinct().order_by('line'))
+
     return render(request, "orders/stats_dashboard.html", {
         "users_json": _json2.dumps(users_list),
         "restricted_user": _json2.dumps(restricted_user),
         "super_gros_json": _json2.dumps(super_gros),
         "grossistes_json": _json2.dumps(grossistes),
+        "produits_json": _json2.dumps(produits),
+        "lignes_json": _json2.dumps(lignes),
         "is_restricted": is_restricted,
     })
+
+
+class ProductStatsView(TemplateView):
+    template_name = "orders/product_stats.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['query_string'] = self.request.GET.urlencode()
+        return context
+
+class ProductStatsDataAPI(APIView):
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        min_date = request.GET.get('min_date')
+        max_date = request.GET.get('max_date')
+        produit_id = request.GET.get('produit')
+        ligne = request.GET.get('ligne')
+        region = request.GET.get('region')
+
+        # select_related profond pour la Wilaya
+        # NOTE: The hardcoded order__status__in filter was removed to match the 
+        # export_excel.py behavior which pulls all orders in the date range.
+        items = OrderItem.objects.select_related(
+            'order',
+            'order__user',
+            'order__user__userprofile',
+            'produit',
+            'order__pharmacy__commune__wilaya',
+            'order__gros__commune__wilaya',
+            'order__super_gros'
+        )
+
+        if min_date:
+            items = items.filter(order__added__date__gte=min_date)
+        if max_date:
+            items = items.filter(order__added__date__lte=max_date)
+        if produit_id:
+            items = items.filter(produit_id=produit_id)
+        if ligne:
+            items = items.filter(produit__line=ligne)
+        if region:
+            items = items.filter(order__user__userprofile__region=region)
+
+        raw_data = []
+        for item in items:
+            o = item.order
+            p = item.produit
+
+            # 1. EXACT FIELD-BASED LOGIC FROM export_excel.py
+            ph  = o.pharmacy_id is not None
+            gro = o.gros_id is not None
+            sg  = o.super_gros_id is not None
+
+            if ph and gro:
+                order_type = "PH_GROS"
+            elif (ph and not gro and sg) or (not ph and gro and sg):
+                order_type = "GROS_SUPER"
+            else:
+                # Skips OFFICE (not ph and not gro and sg) and anomalie
+                continue
+
+            # Mirror preview.html exclusion: skip LILIUM PHARMA ALG super-gros orders
+            if o.super_gros and getattr(o.super_gros, 'name', None) == "LILIUM PHARMA ALG":
+                continue
+
+            # 2. DETERMINER LA WILAYA (Via le client direct)
+            wilaya_nom = "Inconnue"
+            if o.pharmacy and o.pharmacy.commune and o.pharmacy.commune.wilaya:
+                wilaya_nom = o.pharmacy.commune.wilaya.nom
+            elif o.gros and o.gros.commune and o.gros.commune.wilaya:
+                wilaya_nom = o.gros.commune.wilaya.nom
+
+            # 3. IDENTIFIER LE ROLE ET LA REGION
+            try:
+                role = o.user.userprofile.speciality_rolee
+                user_region = o.user.userprofile.region
+            except Exception:
+                role = ""
+                user_region = ""
+
+            qty = item.qtt or 0
+            val = float(qty) * float(p.price or 0)
+
+            raw_data.append({
+                "order_id": o.id,
+                "month": "1", # Force single month for global period aggregation
+                "user_id": o.user.id,
+                "user_name": f"{o.user.first_name} {o.user.last_name}".strip() or o.user.username,
+                "role": role,
+                "region": user_region,
+                "wilaya": wilaya_nom,
+                "order_type": order_type,
+                "product_id": p.id,
+                "product_name": p.nom,
+                "qty": qty,
+                "value": val,
+                "gros_name": o.gros.nom if o.gros else None,
+                "gros_wilaya": (o.gros.commune.wilaya.nom if o.gros and o.gros.commune and o.gros.commune.wilaya else None),
+                "super_gros_name": o.super_gros.name if o.super_gros else None,
+                "from_company": o.from_company,
+            })
+
+        # Determine the target line for zero-order user detection
+        target_line = None
+        if produit_id:
+            try:
+                from produits.models import Produit as ProduitModel
+                target_line = ProduitModel.objects.get(id=produit_id).line
+            except Exception:
+                pass
+        elif ligne:
+            target_line = ligne
+
+        all_line_users = []
+        if target_line:
+            profiles = UserProfile.objects.select_related('user').filter(
+                speciality_rolee__in=['Medico_commercial', 'Commercial', 'Superviseur_national']
+            )
+            for profile in profiles:
+                user_lines = [l.strip() for l in (profile.lines or '').split(',') if l.strip()]
+                if target_line in user_lines:
+                    full_name = f"{profile.user.first_name} {profile.user.last_name}".strip() or profile.user.username
+                    all_line_users.append({
+                        'user_id': profile.user.id,
+                        'user_name': full_name,
+                        'role': profile.speciality_rolee,
+                    })
+
+        return JsonResponse({"raw_data": raw_data, "all_line_users": all_line_users})

@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <title>Statistiques par Produit</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; padding: 20px; color: #333; margin: 0; }
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+            width: 100%;
+            overflow-x: auto;
+        }
+        h2 { color: #1B5E20; border-bottom: 2px solid #2E7D32; padding-bottom: 10px; }
+        h3 { color: #0D47A1; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+        th { background-color: #E8F5E9; color: #1B5E20; }
+
+        .chart-box {
+            position: relative;
+            width: 100%;
+            min-height: 50px;
+        }
+        .vis-card-title { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 15px; }
+        .total-banner { background: #0D47A1; color: white; padding: 10px; text-align: center; border-radius: 8px; margin-bottom: 15px; font-weight: bold; }
+
+        .filter-tag {
+            display: inline-block;
+            background-color: #e9ecef;
+            color: #495057;
+            border: 1px solid #ced4da;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-right: 8px;
+            margin-bottom: 4px;
+            margin-top: 4px;
+        }
+        .filter-tag strong { color: #212529; }
+
+        /* --- Share FAB --- */
+        #share-fab {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            z-index: 9999;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 11px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s, transform 0.1s;
+            font-family: Arial, sans-serif;
+        }
+        #share-fab:hover  { background: #128C7E; transform: scale(1.04); }
+        #share-fab:active { transform: scale(0.97); }
+        #share-fab:disabled { background: #9e9e9e; cursor: not-allowed; transform: none; }
+
+        @media print {
+            @page { 
+                margin: 1cm; 
+            }
+
+            /* Hide UI elements that shouldn't be printed */
+            #share-fab, #global-spinner, a[href="javascript:history.back()"] { 
+                display: none !important; 
+            }
+
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            body { 
+                background: white !important; 
+                margin: 0; 
+                padding: 0; 
+            }
+
+            /* Allow cards to break naturally across pages */
+            .card { 
+                box-shadow: none !important; 
+                border: none !important;
+                border-top: 2px solid #ddd !important; /* Visual separator */
+                padding: 10px 0 !important; 
+                margin-bottom: 30px !important; 
+                background: transparent !important;
+                page-break-inside: auto !important; 
+                break-inside: auto !important; 
+                overflow: visible !important; 
+            }
+
+            /* Force titles and banners to stick to the top of the chart */
+            h2, h3, .total-banner { 
+                page-break-after: avoid !important; 
+                break-after: avoid !important; 
+                margin-bottom: 10px !important;
+            }
+
+            /* Ensure the chart container doesn't restrict layout */
+            .chart-box { 
+                page-break-inside: auto !important; 
+                break-inside: auto !important; 
+                border: none !important; 
+                background: transparent !important; 
+                display: block !important;
+                position: static !important;
+            }
+
+            /* Ensure the generated image scales properly to the page width */
+            img.print-chart-img {
+                max-width: 100% !important;
+                page-break-inside: auto !important;
+                break-inside: auto !important;
+                display: block !important;
+            }
+            /* 1. Force major sections to always start on a fresh page */
+            #card-wilayas, 
+            #card-products, 
+            #card-supergros, 
+            #card-gros {
+                page-break-before: always !important;
+                break-before: page !important;
+            }
+
+            /* 2. Actively prevent breaks between the title, banner, and image */
+            .card h2, 
+            .card .total-banner {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+            }
+            
+            .print-chart-img {
+                page-break-before: avoid !important;
+                break-before: avoid !important;
+                margin-top: 10px !important; /* Tiny buffer to keep it looking clean */
+            }
+        }
+        
+    </style>
+</head>
+<body>
+
+    <button id="share-fab" onclick="shareReport()" title="Partager le rapport via WhatsApp">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+        Partager
+    </button>
+
+    <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:24px; margin-top:4px; gap:6px;">
+        <div style="display:flex; align-items:center; gap:14px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 64 64" fill="none">
+                <rect x="4" y="34" width="10" height="20" rx="2" fill="#F9A825" stroke="#333" stroke-width="2"/>
+                <rect x="18" y="26" width="10" height="28" rx="2" fill="#E53935" stroke="#333" stroke-width="2"/>
+                <rect x="32" y="18" width="10" height="36" rx="2" fill="#F9A825" stroke="#333" stroke-width="2"/>
+                <rect x="46" y="8" width="10" height="46" rx="2" fill="#2E7D32" stroke="#333" stroke-width="2"/>
+                <polyline points="9,30 23,20 37,13 51,4" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <polyline points="44,2 51,4 49,11" stroke="#2E7D32" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            </svg>
+            <h1 style="margin:0; font-size:26px; font-weight:700; color:#1B5E20; letter-spacing:0.3px;" id="dynamic-page-title">
+                Statistiques par Produit
+            </h1>
+        </div>
+        <div id="stat-subtitle" style="font-size:18px; font-weight:600; color:#1B5E20; letter-spacing:0.2px; display:none;"></div>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+        <a href="javascript:history.back()" style="text-decoration:none; color:#555; font-weight:bold;">
+            <i class="fas fa-arrow-left"></i> Retour
+        </a>
+    </div>
+
+    <div id="global-spinner" style="text-align:center; padding:50px; font-size:18px; color:#555;">
+        <i class="fas fa-spinner fa-spin"></i> Récupération des bons de commande...
+    </div>
+
+    <div id="charts-wrapper" style="display:none;">
+
+        <div class="card" id="card-filters">
+            <h2>1. Filtres appliqués</h2>
+            <div id="applied-filters-tags"></div>
+        </div>
+
+        <div class="card" id="card-ph-gros-users">
+            <h2>2. Commandes PH_GROS</h2>
+            <div class="total-banner" id="banner-ph-gros-users"></div>
+            <div class="chart-box" id="box-ph-gros-users"></div>
+            <div id="zero-users-ph-gros"></div>
+        </div>
+
+        <div class="card" id="card-gros-super-users">
+            <h2 style="color:#0D47A1; border-color:#1976D2;">3. Commandes GROS_SUPER</h2>
+            <div class="total-banner" id="banner-gros-super-users"></div>
+            <div class="chart-box" id="box-gros-super-users"></div>
+            <div id="zero-users-gros-super"></div>
+        </div>
+
+        <div class="card" id="card-wilayas">
+            <h2 style="color:#E65100; border-color:#FF9800;">4. Commande par Wilaya</h2>
+            <div class="total-banner" id="banner-wilayas"></div>
+            <div class="chart-box" id="box-wilayas"></div>
+        </div>
+
+        <div class="card" id="card-products">
+            <h2 style="color:#6A1B9A; border-color:#8E24AA;">5. Commande par Produit</h2>
+            <div class="total-banner" id="banner-products"></div>
+            <div class="chart-box" id="box-products"></div>
+        </div>
+
+        <div class="card" id="card-supergros">
+            <h2 style="color:#00695C; border-color:#00897B;">6. Déstockage par SuperGros</h2>
+            <div class="total-banner" id="banner-supergros"></div>
+            <div class="chart-box" id="box-supergros"></div>
+        </div>
+
+        <div class="card" id="card-gros">
+            <h2 style="color:#4E342E; border-color:#6D4C41;">7. Déstockage par Grossiste</h2>
+            <div class="total-banner" id="banner-gros"></div>
+            <div class="chart-box" id="box-gros"></div>
+        </div>
+
+    </div>
+
+<script>
+Chart.register(ChartDataLabels);
+
+/* ── Page-ready promise (resolves once data loaded + all chart animations done) ── */
+let _resolvePageReady;
+const pageReady = new Promise(resolve => { _resolvePageReady = resolve; });
+let _pendingCharts  = 0;
+let _completedCharts = 0;
+let _dataLoaded = false;
+function _onChartAnimationComplete() {
+    _completedCharts++;
+    if (_dataLoaded && _completedCharts >= _pendingCharts) _resolvePageReady();
+}
+function _markDataLoaded() {
+    _dataLoaded = true;
+    if (_completedCharts >= _pendingCharts) _resolvePageReady();
+}
+
+/* ── Share Report ── */
+async function shareReport() {
+    const btn = document.getElementById('share-fab');
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Génération...';
+    try {
+        await pageReady;
+        btn.style.visibility = 'hidden';
+        const savedScrollY = window.scrollY;
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const fullW = document.documentElement.scrollWidth;
+        const fullH = document.documentElement.scrollHeight;
+        const canvas = await window.html2canvas(document.body, {
+            scale: 1.5, useCORS: true, logging: false,
+            scrollX: 0, scrollY: 0, x: 0, y: 0,
+            width: fullW, height: fullH, windowWidth: fullW, windowHeight: fullH
+        });
+        window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+        btn.style.visibility = 'visible';
+        const imgData = canvas.toDataURL('image/jpeg', 0.92);
+        const pxW = canvas.width, pxH = canvas.height;
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ orientation: pxW >= pxH ? 'landscape' : 'portrait', unit: 'px', format: [pxW, pxH], hotfixes: ['px_scaling'] });
+        pdf.addImage(imgData, 'JPEG', 0, 0, pxW, pxH);
+        const pdfBlob = pdf.output('blob');
+        const pdfFile = new File([pdfBlob], 'stats_produits.pdf', { type: 'application/pdf' });
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+            await navigator.share({ title: 'Statistiques Produits', text: 'Rapport généré automatiquement', files: [pdfFile] });
+        } else {
+            const url = URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'stats_produits.pdf';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            alert('Partage direct non disponible sur ce navigateur.\nLe PDF a été téléchargé à la place.');
+        }
+    } catch (err) {
+        btn.style.visibility = 'visible';
+        if (err.name !== 'AbortError') { console.error('shareReport error:', err); alert('Erreur : ' + err.message); }
+    } finally {
+        btn.style.visibility = 'visible';
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    }
+}
+
+/* ── Helpers ── */
+function fmtDA(n) {
+    return Number(n).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' DA';
+}
+function fmtUnits(n) {
+    return Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+}
+
+const COLOR_PALETTE = ['#E53935','#4CAF50','#03A9F4','#FF9800','#AB47BC','#00BCD4','#FFEB3B','#F06292','#8D6E63','#26C6DA'];
+const _colorMap = {};
+let _colorIdx = 0;
+function colorForLabel(label) {
+    if (!_colorMap[label]) { _colorMap[label] = COLOR_PALETTE[_colorIdx % COLOR_PALETTE.length]; _colorIdx++; }
+    return _colorMap[label];
+}
+
+const chartInstances = {};
+
+/* ── Data processing (stacked PH_GROS / GROS_SUPER) ── */
+function processData(raw, filterFn, groupKeyFn, segmentKeyFn) {
+    const entities = {};
+    const segmentsSet = new Set();
+    raw.forEach(item => {
+        if (filterFn && !filterFn(item)) return;
+        const entityLabel = groupKeyFn(item);
+        const segmentLabel = segmentKeyFn(item);
+        if (!entityLabel || !segmentLabel) return;
+        segmentsSet.add(segmentLabel);
+        if (!entities[entityLabel]) {
+            entities[entityLabel] = {
+                ph_gros: { val: 0, qty: 0, orders: new Set(), segments: {}, segmentsQty: {} },
+                gros_super: { val: 0, qty: 0, orders: new Set(), segments: {}, segmentsQty: {} },
+                total_ph_gros_val: 0
+            };
+        }
+        const typeKey = item.order_type === 'PH_GROS' ? 'ph_gros' : 'gros_super';
+        const target = entities[entityLabel][typeKey];
+        target.val += item.value;
+        target.qty += item.qty;
+        target.orders.add(item.order_id);
+        if (!target.segments[segmentLabel])    target.segments[segmentLabel]    = 0;
+        if (!target.segmentsQty[segmentLabel]) target.segmentsQty[segmentLabel] = 0;
+        target.segments[segmentLabel]    += item.value;
+        target.segmentsQty[segmentLabel] += item.qty;
+        if (typeKey === 'ph_gros') entities[entityLabel].total_ph_gros_val += item.value;
+    });
+    const sortedEntitiesLabels = Object.keys(entities).sort((a, b) => entities[b].total_ph_gros_val - entities[a].total_ph_gros_val);
+    const segmentTotals = {};
+    segmentsSet.forEach(seg => {
+        segmentTotals[seg] = sortedEntitiesLabels.reduce((sum, lbl) => {
+            const e = entities[lbl];
+            return sum + (e.ph_gros.segments[seg] || 0) + (e.gros_super.segments[seg] || 0);
+        }, 0);
+    });
+    const sortedSegments = Array.from(segmentsSet).sort((a, b) => segmentTotals[a] - segmentTotals[b]);
+    return { labels: sortedEntitiesLabels, entities: entities, segments: sortedSegments };
+}
+
+/* ── Shared helper: draw X Bons / Y Unités / Z DA in yellow / blue / green ── */
+function drawColoredLabel(ctx, x, y, prefix, bons, qty, val, prefixColor) {
+    const sep = '  /  ';
+    const bonsText    = `${bons} Bons`;
+    const unitsText   = `${fmtUnits(qty)} Unités`;
+    const daText      = fmtDA(val);
+
+    let curX = x;
+
+    if (prefix) {
+        ctx.fillStyle = prefixColor || '#555';
+        ctx.fillText(prefix + '  ', curX, y);
+        curX += ctx.measureText(prefix + '  ').width;
+    }
+
+    ctx.fillStyle = '#FBC02D'; // yellow — Bons
+    ctx.fillText(bonsText, curX, y);
+    curX += ctx.measureText(bonsText).width;
+
+    ctx.fillStyle = '#888';
+    ctx.fillText(sep, curX, y);
+    curX += ctx.measureText(sep).width;
+
+    ctx.fillStyle = '#1976D2'; // blue — Unités
+    ctx.fillText(unitsText, curX, y);
+    curX += ctx.measureText(unitsText).width;
+
+    ctx.fillStyle = '#888';
+    ctx.fillText(sep, curX, y);
+    curX += ctx.measureText(sep).width;
+
+    ctx.fillStyle = '#2E7D32'; // green — DA
+    ctx.fillText(daText, curX, y);
+}
+
+/* ── End-labels plugin ── */
+const endLabelsPlugin = {
+    id: 'endLabels',
+    afterDatasetsDraw(chart, args, options) {
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.font = 'bold 12px Arial';
+        ctx.textBaseline = 'middle';
+        const parsedData = options.parsedData;
+        const xAxis = chart.scales.x;
+        parsedData.labels.forEach((label, index) => {
+            const entity = parsedData.entities[label];
+            let phGrosMaxX = xAxis.getPixelForValue(0), grosSuperMaxX = xAxis.getPixelForValue(0);
+            let phGrosY = null, grosSuperY = null;
+            chart.data.datasets.forEach((ds, dsIndex) => {
+                const meta = chart.getDatasetMeta(dsIndex);
+                if (meta.hidden) return;
+                const bar = meta.data[index];
+                if (bar && bar.x) {
+                    if (ds.stack === 'PH_GROS')         { phGrosMaxX    = Math.max(phGrosMaxX,    bar.x); phGrosY    = bar.y; }
+                    else if (ds.stack === 'GROS_SUPER') { grosSuperMaxX = Math.max(grosSuperMaxX, bar.x); grosSuperY = bar.y; }
+                }
+            });
+            if (entity.ph_gros.val > 0 && phGrosY !== null) {
+                drawColoredLabel(ctx, phGrosMaxX + 10, phGrosY, '[PH_GROS]', entity.ph_gros.orders.size, entity.ph_gros.qty, entity.ph_gros.val, '#198754');
+            }
+            if (entity.gros_super.val > 0 && grosSuperY !== null) {
+                drawColoredLabel(ctx, grosSuperMaxX + 10, grosSuperY, '[GROS_SUPER]', entity.gros_super.orders.size, entity.gros_super.qty, entity.gros_super.val, '#0d6efd');
+            }
+        });
+        ctx.restore();
+    }
+};
+
+/* ── Chart builder ── */
+function drawGroupedBarChart(canvasId, parsedData, boxId, bannerId) {
+    if (chartInstances[canvasId]) { chartInstances[canvasId].destroy(); delete chartInstances[canvasId]; }
+    const box = document.getElementById(boxId);
+    if (!parsedData || parsedData.labels.length === 0) {
+        box.innerHTML = '<div style="padding:30px; text-align:center; color:#888; font-style:italic;">Aucune donnée trouvée.</div>';
+        box.style.minHeight = 'auto';
+        if (bannerId) document.getElementById(bannerId).style.display = 'none';
+        return;
+    }
+    if (bannerId) document.getElementById(bannerId).style.display = 'block';
+    if (!box.querySelector('canvas')) box.innerHTML = `<canvas id="${canvasId}"></canvas>`;
+    if (bannerId) {
+        let globalVal = 0, globalQty = 0, globalOrders = new Set();
+        parsedData.labels.forEach(lbl => {
+            const e = parsedData.entities[lbl];
+            globalVal += e.ph_gros.val + e.gros_super.val;
+            globalQty += e.ph_gros.qty + e.gros_super.qty;
+            e.ph_gros.orders.forEach(id => globalOrders.add(id));
+            e.gros_super.orders.forEach(id => globalOrders.add(id));
+        });
+        document.getElementById(bannerId).textContent = `Total Général : ${globalOrders.size} Bons  /  ${fmtUnits(globalQty)} Unités  /  ${fmtDA(globalVal)}`;
+    }
+    const datasets = [];
+    parsedData.segments.forEach(seg => {
+        const color = colorForLabel(seg);
+        datasets.push({ label: seg, stack: 'PH_GROS',    data: parsedData.labels.map(lbl => parsedData.entities[lbl].ph_gros.segments[seg]    || 0), backgroundColor: color, datalabels: { display: false } });
+        datasets.push({ label: seg, stack: 'GROS_SUPER', data: parsedData.labels.map(lbl => parsedData.entities[lbl].gros_super.segments[seg] || 0), backgroundColor: color, datalabels: { display: false } });
+    });
+    const canvasH = Math.max(350, parsedData.labels.length * 80 + 80);
+    box.style.minHeight = canvasH + 'px';
+    _pendingCharts++;
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    chartInstances[canvasId] = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: parsedData.labels, datasets: datasets },
+        plugins: [endLabelsPlugin],
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { stacked: true, beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: v => fmtDA(v) } },
+                y: { stacked: true, grid: { display: false }, ticks: { color: '#333', font: { size: 13, weight: 'bold' } } }
+            },
+            plugins: {
+                endLabels: { parsedData: parsedData },
+                legend: {
+                    display: true, position: 'top',
+                    labels: {
+                        usePointStyle: true, boxWidth: 10,
+                        filter: (item, chart) => chart.datasets.findIndex(ds => ds.label === item.text) === item.datasetIndex
+                    }
+                },
+                title: { display: false },
+                tooltip: { callbacks: { label: ctx => {
+                    if (ctx.raw === 0) return null;
+                    const lbl = parsedData.labels[ctx.dataIndex];
+                    const typeKey = ctx.dataset.stack === 'PH_GROS' ? 'ph_gros' : 'gros_super';
+                    const qty = parsedData.entities[lbl][typeKey].segmentsQty[ctx.dataset.label] || 0;
+                    return ` ${ctx.dataset.label} (${ctx.dataset.stack}) : ${fmtUnits(qty)} Unités  /  ${fmtDA(ctx.raw)}`;
+                }}}
+            },
+            layout: { padding: { right: 350 } },
+            animation: { onComplete: _onChartAnimationComplete }
+        }
+    });
+}
+
+/* ── Client data processing (single stack, sorted by total value) ── */
+function processClientData(raw, filterFn, clientKeyFn, segmentKeyFn) {
+    const clients = {};
+    const segmentsSet = new Set();
+    raw.forEach(item => {
+        if (filterFn && !filterFn(item)) return;
+        const clientLabel = clientKeyFn(item);
+        const segmentLabel = segmentKeyFn(item);
+        if (!clientLabel || !segmentLabel) return;
+        segmentsSet.add(segmentLabel);
+        if (!clients[clientLabel]) clients[clientLabel] = { val: 0, qty: 0, orders: new Set(), segments: {}, segmentsQty: {} };
+        clients[clientLabel].val += item.value;
+        clients[clientLabel].qty += item.qty;
+        clients[clientLabel].orders.add(item.order_id);
+        if (!clients[clientLabel].segments[segmentLabel])    clients[clientLabel].segments[segmentLabel]    = 0;
+        if (!clients[clientLabel].segmentsQty[segmentLabel]) clients[clientLabel].segmentsQty[segmentLabel] = 0;
+        clients[clientLabel].segments[segmentLabel]    += item.value;
+        clients[clientLabel].segmentsQty[segmentLabel] += item.qty;
+    });
+    const labels = Object.keys(clients).sort((a, b) => clients[b].val - clients[a].val);
+    const segmentTotals = {};
+    segmentsSet.forEach(seg => {
+        segmentTotals[seg] = labels.reduce((sum, lbl) => sum + (clients[lbl].segments[seg] || 0), 0);
+    });
+    const sortedSegments = Array.from(segmentsSet).sort((a, b) => segmentTotals[a] - segmentTotals[b]);
+    return { labels, clients, segments: sortedSegments };
+}
+
+/* ── End-labels plugin for client charts ── */
+const clientEndLabelsPlugin = {
+    id: 'clientEndLabels',
+    afterDatasetsDraw(chart, args, options) {
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.font = 'bold 12px Arial';
+        ctx.textBaseline = 'middle';
+        const parsedData = options.parsedData;
+        const xAxis = chart.scales.x;
+        parsedData.labels.forEach((label, index) => {
+            const client = parsedData.clients[label];
+            let maxX = xAxis.getPixelForValue(0);
+            let barY = null;
+            chart.data.datasets.forEach((ds, dsIndex) => {
+                const meta = chart.getDatasetMeta(dsIndex);
+                if (meta.hidden) return;
+                const bar = meta.data[index];
+                if (bar && bar.x) { maxX = Math.max(maxX, bar.x); barY = bar.y; }
+            });
+            if (client.val > 0 && barY !== null) {
+                drawColoredLabel(ctx, maxX + 10, barY, null, client.orders.size, client.qty, client.val, null);
+            }
+        });
+        ctx.restore();
+    }
+};
+
+/* ── Y-axis sub-labels plugin (wilaya + commercials below each bar name) ── */
+const clientYSubLabelsPlugin = {
+    id: 'clientYSubLabels',
+    afterDraw(chart, args, options) {
+        if (!options || !options.subLabels) return;
+        const ctx = chart.ctx;
+        const yScale = chart.scales.y;
+        const rightEdge = chart.chartArea.left - 8;
+        ctx.save();
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'italic 10px Arial';
+        ctx.fillStyle = '#777';
+        chart.data.labels.forEach((label, i) => {
+            const info = options.subLabels[label];
+            if (!info) return;
+            const centerY = yScale.getPixelForTick(i);
+            const parts = [];
+            if (info.wilaya) parts.push(info.wilaya);
+            if (info.commercials && info.commercials.length) parts.push(info.commercials.join(', '));
+            if (!parts.length) return;
+            ctx.fillText(parts.join('  |  '), rightEdge, centerY + 14);
+        });
+        ctx.restore();
+    }
+};
+
+/* ── Client chart builder (stacked by product/segment, single order-type) ── */
+function drawClientBarChart(canvasId, parsedData, boxId, bannerId, subLabels) {
+    if (chartInstances[canvasId]) { chartInstances[canvasId].destroy(); delete chartInstances[canvasId]; }
+    const box = document.getElementById(boxId);
+    if (!parsedData || parsedData.labels.length === 0) {
+        box.innerHTML = '<div style="padding:30px; text-align:center; color:#888; font-style:italic;">Aucune donnée trouvée.</div>';
+        box.style.minHeight = 'auto';
+        if (bannerId) document.getElementById(bannerId).style.display = 'none';
+        return;
+    }
+    if (bannerId) document.getElementById(bannerId).style.display = 'block';
+    if (!box.querySelector('canvas')) box.innerHTML = `<canvas id="${canvasId}"></canvas>`;
+    if (bannerId) {
+        let globalVal = 0, globalQty = 0, globalOrders = new Set();
+        parsedData.labels.forEach(lbl => {
+            const c = parsedData.clients[lbl];
+            globalVal += c.val; globalQty += c.qty;
+            c.orders.forEach(id => globalOrders.add(id));
+        });
+        document.getElementById(bannerId).textContent = `Total : ${globalOrders.size} Bons  /  ${fmtUnits(globalQty)} Unités  /  ${fmtDA(globalVal)}`;
+    }
+    const datasets = parsedData.segments.map(seg => ({
+        label: seg,
+        data: parsedData.labels.map(lbl => parsedData.clients[lbl].segments[seg] || 0),
+        backgroundColor: colorForLabel(seg),
+        datalabels: { display: false }
+    }));
+    const perBarH = subLabels ? 80 : 60;
+    const canvasH = Math.max(350, parsedData.labels.length * perBarH + 80);
+    box.style.minHeight = canvasH + 'px';
+    _pendingCharts++;
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    chartInstances[canvasId] = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: parsedData.labels, datasets },
+        plugins: [clientEndLabelsPlugin, clientYSubLabelsPlugin],
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { stacked: true, beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: v => fmtDA(v) } },
+                y: { stacked: true, grid: { display: false }, ticks: { color: '#333', font: { size: 13, weight: 'bold' } } }
+            },
+            plugins: {
+                clientEndLabels: { parsedData },
+                clientYSubLabels: { subLabels: subLabels || null },
+                legend: {
+                    display: true, position: 'top',
+                    labels: {
+                        usePointStyle: true, boxWidth: 10,
+                        filter: (item, chart) => chart.datasets.findIndex(ds => ds.label === item.text) === item.datasetIndex
+                    }
+                },
+                title: { display: false },
+                tooltip: { callbacks: { label: ctx => {
+                    if (ctx.raw === 0) return null;
+                    const lbl = parsedData.labels[ctx.dataIndex];
+                    const qty = parsedData.clients[lbl].segmentsQty[ctx.dataset.label] || 0;
+                    return ` ${ctx.dataset.label} : ${fmtUnits(qty)} Unités  /  ${fmtDA(ctx.raw)}`;
+                }}}
+            },
+            layout: { padding: { right: 380 } },
+            animation: { onComplete: _onChartAnimationComplete }
+        }
+    });
+}
+
+/* ── Header & filters ── */
+function updateHeaders(params, rawData) {
+    const minDate  = params.get('min_date');
+    const maxDate  = params.get('max_date');
+    const produitId = params.get('produit');
+    const ligne    = params.get('ligne');
+    const region   = params.get('region');
+
+    const makeTag = (label, val) => `<span class="filter-tag"><strong>${label} :</strong> ${val}</span>`;
+    let filtersHtml = '';
+    let subtitleText = '';
+
+    if (produitId && rawData.length > 0) {
+        const prodName = rawData[0].product_name;
+        document.getElementById('dynamic-page-title').innerHTML = `<i class="fas fa-box"></i> Performance du Produit : ${prodName}`;
+        subtitleText = prodName;
+        filtersHtml += makeTag('Produit', prodName);
+    } else if (ligne) {
+        document.getElementById('dynamic-page-title').innerHTML = `<i class="fas fa-layer-group"></i> Performance de la Ligne : ${ligne}`;
+        subtitleText = 'Ligne : ' + ligne;
+    } else {
+        document.getElementById('dynamic-page-title').innerHTML = `<i class="fas fa-chart-bar"></i> Performance Globale des Produits`;
+        subtitleText = 'Tous les produits';
+    }
+
+    if (minDate) filtersHtml += makeTag('Du', minDate);
+    if (maxDate) filtersHtml += makeTag('Au', maxDate);
+    if (ligne)   filtersHtml += makeTag('Ligne', ligne);
+    if (region)  filtersHtml += makeTag('Région', region);
+
+    document.getElementById('applied-filters-tags').innerHTML = filtersHtml || '<em style="color:#888;">Aucun filtre appliqué.</em>';
+
+    const subtitleEl = document.getElementById('stat-subtitle');
+    subtitleEl.textContent = subtitleText;
+    subtitleEl.style.display = 'block';
+}
+
+/* ── Zero-order users alert ── */
+function renderZeroUsers(allLineUsers, activeLabels, containerId) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    if (!allLineUsers || allLineUsers.length === 0) { el.innerHTML = ''; return; }
+    const activeSet = new Set(activeLabels);
+    const missing = allLineUsers.filter(u => !activeSet.has(u.user_name));
+    if (missing.length === 0) { el.innerHTML = ''; return; }
+    const byRole = { Medico_commercial: [], Commercial: [] };
+    missing.forEach(u => { (byRole[u.role] || (byRole[u.role] = [])).push(u.user_name); });
+    let html = '<div style="margin-top:12px; padding:10px 14px; border-left:4px solid #c62828; background:#fff8f8; border-radius:4px;">';
+    html += '<span style="color:#c62828; font-weight:bold; font-size:13px;">⚠ Utilisateurs sans commandes :</span>';
+    Object.entries(byRole).forEach(([role, names]) => {
+        if (!names.length) return;
+        html += `<div style="margin-top:6px; font-size:13px; color:#c62828;"><em style="color:#888;">${role} :</em> ${names.join(', ')}</div>`;
+    });
+    html += '</div>';
+    el.innerHTML = html;
+}
+
+/* ── Main load ── */
+async function loadData() {
+    const params = new URLSearchParams(window.location.search);
+    try {
+        const response = await fetch(`/orders/api/product-stats-data/?${params.toString()}`);
+        const data = await response.json();
+        const raw = data.raw_data || [];
+        const allLineUsers = data.all_line_users || [];
+
+        updateHeaders(params, raw);
+        document.getElementById('global-spinner').style.display = 'none';
+        document.getElementById('charts-wrapper').style.display = 'block';
+
+        // PH_GROS orders: all users (Medico_commercial + Commercial) sorted by value
+        const graph_ph_gros_users = processClientData(
+            raw,
+            i => i.order_type === 'PH_GROS',
+            i => i.user_name   || 'N/A',
+            i => i.wilaya      || 'N/A'
+        );
+        // GROS_SUPER orders: Commercial users only, sorted by value
+        const graph_gros_super_users = processClientData(
+            raw,
+            i => i.order_type === 'GROS_SUPER' && (i.role === 'Commercial' || i.role === 'Superviseur_national'),
+            i => i.user_name   || 'N/A',
+            i => i.wilaya      || 'N/A'
+        );
+
+        const graph_wilayas    = processData(raw, null,                                 i => i.wilaya       || 'N/A', i => i.product_name || 'N/A');
+        const graph_products   = processData(raw, null,                                 i => i.product_name || 'N/A', i => i.wilaya       || 'N/A');
+
+        // SuperGros destockage: GROS_SUPER orders only, exclude company orders (id=149)
+        const graph_supergros  = processClientData(
+            raw,
+            i => i.order_type === 'GROS_SUPER' && !i.from_company,
+            i => i.super_gros_name || 'N/A',
+            i => i.product_name    || 'N/A'
+        );
+        // Grossiste destockage: PH_GROS orders only (grossiste sells to pharmacy)
+        const graph_gros       = processClientData(
+            raw,
+            i => i.order_type === 'PH_GROS',
+            i => i.gros_name    || 'N/A',
+            i => i.product_name || 'N/A'
+        );
+
+        // Sub-labels for chart 7: wilaya + Commercial delegates per grossiste
+        const grossisteDetails = {};
+        raw.filter(i => i.order_type === 'PH_GROS' && i.gros_name).forEach(i => {
+            if (!grossisteDetails[i.gros_name]) grossisteDetails[i.gros_name] = { wilaya: i.gros_wilaya || '', commercials: new Set() };
+            if (i.role === 'Commercial' && i.user_name) grossisteDetails[i.gros_name].commercials.add(i.user_name);
+        });
+        const grossisteSubLabels = {};
+        Object.entries(grossisteDetails).forEach(([name, d]) => {
+            grossisteSubLabels[name] = { wilaya: d.wilaya, commercials: Array.from(d.commercials) };
+        });
+
+        drawClientBarChart('chart-ph-gros-users',    graph_ph_gros_users,    'box-ph-gros-users',    'banner-ph-gros-users');
+        drawClientBarChart('chart-gros-super-users', graph_gros_super_users, 'box-gros-super-users', 'banner-gros-super-users');
+
+        // Override GROS_SUPER banner: total must include all roles (not just shown bars) to match preview
+        const _gsAll = raw.filter(i => i.order_type === 'GROS_SUPER');
+        const _gsOrders = new Set(_gsAll.map(i => i.order_id)).size;
+        const _gsQty   = _gsAll.reduce((s, i) => s + i.qty,   0);
+        const _gsVal   = _gsAll.reduce((s, i) => s + i.value, 0);
+        const _gsBanner = document.getElementById('banner-gros-super-users');
+        if (_gsBanner && _gsAll.length > 0) {
+            _gsBanner.style.display = 'block';
+            _gsBanner.textContent = `Total : ${_gsOrders} Bons  /  ${fmtUnits(_gsQty)} Unités  /  ${fmtDA(_gsVal)}`;
+        }
+
+        renderZeroUsers(allLineUsers.filter(u => u.role !== 'Superviseur_national'), graph_ph_gros_users.labels,    'zero-users-ph-gros');
+        renderZeroUsers(allLineUsers.filter(u => u.role === 'Commercial'),           graph_gros_super_users.labels, 'zero-users-gros-super');
+        drawGroupedBarChart('chart-wilayas',    graph_wilayas,    'box-wilayas',    'banner-wilayas');
+        drawGroupedBarChart('chart-products',   graph_products,   'box-products',   'banner-products');
+        drawClientBarChart('chart-supergros',   graph_supergros,  'box-supergros',  'banner-supergros');
+        drawClientBarChart('chart-gros',        graph_gros,       'box-gros',       'banner-gros',       grossisteSubLabels);
+
+        _markDataLoaded();
+    } catch (err) {
+        console.error(err);
+        document.getElementById('global-spinner').innerHTML = `<span style="color:red;"><i class="fas fa-exclamation-triangle"></i> Erreur de chargement des données.</span>`;
+    }
+}
+
+window.onload = loadData;
+// ... [rest of your code above] ...
+
+window.onload = loadData;
+
+/* ═══════════════════════════════════════════════════════
+   PRINT HELPERS (Fix for blank pages & tall charts)
+   ═══════════════════════════════════════════════════════ */
+(function() {
+    const _origPaddings = {};
+    
+    function beforePrint() {
+        Object.entries(chartInstances).forEach(([id, chart]) => {
+            // Add right padding for labels if needed
+            if (chart.options.layout && chart.options.layout.padding) {
+                _origPaddings[id] = chart.options.layout.padding.right || 0;
+                chart.options.layout.padding.right = 160; 
+            }
+            chart._printMode = true;
+            chart.update('none');
+
+            // Convert canvas to a printable image
+            const img = document.createElement('img');
+            img.src = chart.canvas.toDataURL('image/png', 1.0);
+            img.className = 'print-chart-img';
+            img.style.width = '100%';
+            img.style.height = chart.canvas.style.height; 
+            
+            chart.canvas.parentNode.insertBefore(img, chart.canvas);
+            chart.canvas.style.display = 'none'; // Hide the original canvas
+        });
+    }
+
+    function afterPrint() {
+        Object.entries(chartInstances).forEach(([id, chart]) => {
+            // Restore padding
+            if (chart.options.layout && chart.options.layout.padding && _origPaddings[id] !== undefined) {
+                chart.options.layout.padding.right = _origPaddings[id];
+            }
+            chart._printMode = false;
+            
+            // Remove the temporary image
+            const img = chart.canvas.parentNode.querySelector('.print-chart-img');
+            if (img) img.remove();
+            
+            // Restore canvas
+            chart.canvas.style.display = 'block';
+            chart.update('none');
+        });
+    }
+
+    // Attach listeners for Ctrl+P
+    window.addEventListener('beforeprint', beforePrint);
+    window.addEventListener('afterprint', afterPrint);
+
+    // Backup listener for browsers that prefer matchMedia
+    if (window.matchMedia) {
+        const mql = window.matchMedia('print');
+        mql.addEventListener('change', e => {
+            if (e.matches) beforePrint();
+            else           afterPrint();
+        });
+    }
+})();
+</script>
+</body>
+</html>

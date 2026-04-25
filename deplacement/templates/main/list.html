@@ -288,6 +288,95 @@
         min-width: 160px;
         text-align: center;
       }
+      /* ── Prix Validé Column Styles ── */
+.prix-valide-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.prix-valide-controls {
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #ced4da;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.prix-valide-controls:focus-within {
+  border-color: #86b7fe;
+  box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+}
+.prix-valide-controls.is-approved {
+  background: #f8f9fa;
+  border-color: #dee2e6;
+}
+.prix-valide-input {
+  width: 80px;
+  border: none;
+  text-align: right;
+  font-size: .85rem;
+  font-weight: 600;
+  padding: 6px 4px 6px 8px;
+  color: #495057;
+  background: transparent;
+  outline: none;
+}
+.prix-valide-input:disabled {
+  color: #6c757d;
+}
+.prix-valide-currency {
+  font-size: 0.75rem;
+  color: #6c757d;
+  padding-right: 8px;
+  user-select: none;
+}
+.btn-sup-save {
+  background: #e8f5e9;
+  color: #198754;
+  border: none;
+  border-left: 1px solid #ced4da;
+  padding: 0 12px;
+  height: 100%;
+  align-self: stretch;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-sup-save:hover:not(:disabled) {
+  background: #198754;
+  color: white;
+}
+.btn-sup-save:disabled {
+  background: #e9ecef;
+  color: #adb5bd;
+  cursor: not-allowed;
+}
+.btn-dir-approve {
+  background: #0d6efd;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 12px;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s, transform 0.1s;
+}
+.btn-dir-approve:hover:not(:disabled) {
+  background: #0b5ed7;
+}
+.btn-dir-approve:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.btn-dir-approve:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.65;
+}
 
     </style>
   </head>
@@ -847,91 +936,88 @@
           }
 
           // ── Honor status filter (Honoré / Non honoré / Extra) ──
-          // ── Honor status filter (Honoré / Non honoré / Extra) ──
-          if (honorStatus) {
-            const filtered2 = [];
-            for (const user of filteredData) {
-              const matchedSectors = [];
-              for (const s of user.sectors) {
-                // Deep clone the sector to filter its internal arrays without mutating cached data
-                const sCopy = JSON.parse(JSON.stringify(s));
-                const maxAllowed = sCopy.times || 1;
+if (honorStatus) {
+  const filtered2 = [];
+  for (const user of filteredData) {
+    const matchedSectors = [];
+    for (const s of user.sectors) {
+      const sCopy = JSON.parse(JSON.stringify(s));
+      const maxAllowed = sCopy.times || 1;
 
-                if (sCopy.category === 'SEMI') {
-                  const dates = sCopy.plan_dates || [];
-                  const unplanned = sCopy.unplanned_dates || [];
-                  let vCount = 0;
+      if (sCopy.category === 'SEMI') {
+        const dates = sCopy.plan_dates || [];
+        const unplanned = sCopy.unplanned_dates || [];
+        let vCount = 0;
 
-                  // Tag planned dates
-                  for (let i = 0; i < dates.length; i++) {
-                    const entry = dates[i];
-                    if (!entry || entry.status === 'non_honore' || entry.rapport_status === 'missing' || entry.rapport_status === 'wrong_region') {
-                      if (entry) entry._hStatus = 'non_honore';
-                      else dates[i] = { status: 'non_honore', _hStatus: 'non_honore' };
-                    } else {
-                      vCount++;
-                      entry._hStatus = (vCount <= maxAllowed) ? 'honore' : 'extra';
-                      if (vCount > maxAllowed) entry._isExtra = true;
-                    }
-                  }
-
-                  // Tag unplanned dates
-                  for (const u of unplanned) {
-                    vCount++;
-                    u._hStatus = (vCount <= maxAllowed) ? 'honore' : 'extra';
-                    if (vCount > maxAllowed) u._isExtra = true;
-                  }
-
-                  // Apply deep filter
-                  sCopy.plan_dates = dates.filter(e => e && e._hStatus === honorStatus);
-                  sCopy.unplanned_dates = unplanned.filter(u => u && u._hStatus === honorStatus);
-
-                  // Fix base row structure if plan_dates became empty but unplanned exists
-                  if (sCopy.plan_dates.length === 0 && sCopy.unplanned_dates.length > 0) {
-                    sCopy.plan_dates.push(sCopy.unplanned_dates.shift());
-                  }
-
-                  // Keep the sector if it still has rows, or if it has phone orders and we're looking for 'honore'
-                  if (sCopy.plan_dates.length > 0 || sCopy.unplanned_dates.length > 0) {
-                    matchedSectors.push(sCopy);
-                  } else if (honorStatus === 'honore' && sCopy.orphan_orders) {
-                    matchedSectors.push(sCopy);
-                  }
-
-                } else {
-                  // DEP
-                  const trips = sCopy.trips || [];
-                  let vCount = 0;
-
-                  for (const trip of trips) {
-                    const isTripFullyValid = trip.every(slot => 
-                      slot && slot.status !== 'non_honore' && slot.rapport_status !== 'missing' && slot.rapport_status !== 'wrong_region'
-                    );
-
-                    if (!isTripFullyValid) {
-                      trip._hStatus = 'non_honore';
-                    } else {
-                      vCount++;
-                      trip._hStatus = (vCount <= maxAllowed) ? 'honore' : 'extra';
-                      if (vCount > maxAllowed) trip._isExtra = true;
-                    }
-                  }
-
-                  sCopy.trips = trips.filter(t => t._hStatus === honorStatus);
-
-                  if (sCopy.trips.length > 0) {
-                    matchedSectors.push(sCopy);
-                  } else if (honorStatus === 'honore' && sCopy.orphan_orders) {
-                    matchedSectors.push(sCopy);
-                  }
-                }
-              }
-              if (matchedSectors.length > 0) {
-                filtered2.push({ ...user, sectors: matchedSectors });
-              }
-            }
-            filteredData = filtered2;
+        // Tag and Filter planned dates
+        sCopy.plan_dates = dates.map(entry => {
+          if (!entry || entry.status === 'non_honore' || entry.rapport_status === 'missing' || entry.rapport_status === 'wrong_region') {
+            return { ...entry, _hStatus: 'non_honore' };
+          } else {
+            vCount++;
+            const status = (vCount <= maxAllowed) ? 'honore' : 'extra';
+            return { ...entry, _hStatus: status, _isExtra: (vCount > maxAllowed) };
           }
+        }).filter(e => e._hStatus === honorStatus);
+
+        // Tag and Filter unplanned dates
+        sCopy.unplanned_dates = unplanned.map(u => {
+          vCount++;
+          const status = (vCount <= maxAllowed) ? 'honore' : 'extra';
+          return { ...u, _hStatus: status, _isExtra: (vCount > maxAllowed) };
+        }).filter(u => u._hStatus === honorStatus);
+
+        // --- FIX: Remove Orphan Orders row if filtering for "Honoré" ---
+        if (honorStatus === 'honore') {
+          sCopy.orphan_orders = null; 
+        }
+
+        // Fix base row structure for rendering
+        if (sCopy.plan_dates.length === 0 && sCopy.unplanned_dates.length > 0) {
+          sCopy.plan_dates.push(sCopy.unplanned_dates.shift());
+        }
+
+        if (sCopy.plan_dates.length > 0 || sCopy.unplanned_dates.length > 0) {
+          matchedSectors.push(sCopy);
+        }
+
+      } else {
+        // DEP Logic
+        const trips = sCopy.trips || [];
+        let vCount = 0;
+
+        sCopy.trips = trips.map(trip => {
+          const isTripFullyValid = trip.every(slot => 
+            slot && slot.status !== 'non_honore' && slot.rapport_status !== 'missing' && slot.rapport_status !== 'wrong_region'
+          );
+
+          if (!isTripFullyValid) {
+            trip._hStatus = 'non_honore';
+          } else {
+            vCount++;
+            trip._hStatus = (vCount <= maxAllowed) ? 'honore' : 'extra';
+            trip._isExtra = (vCount > maxAllowed);
+          }
+          return trip;
+        }).filter(t => t._hStatus === honorStatus);
+
+        // --- FIX: Remove Orphan Orders row if filtering for "Honoré" ---
+        if (honorStatus === 'honore') {
+          sCopy.orphan_orders = null;
+        }
+
+        if (sCopy.trips.length > 0) {
+          matchedSectors.push(sCopy);
+        }
+      }
+    }
+    if (matchedSectors.length > 0) {
+      filtered2.push({ ...user, sectors: matchedSectors });
+    }
+  }
+  filteredData = filtered2;
+}
+
 
           renderSectorTable(filteredData, tbody, currentMonth);
         } catch {
@@ -1082,98 +1168,124 @@
         return (s.value !== null || s.hotel_cost !== null) ? formatPrice(v + h) : '—';
       }
 
-      // Builds the "Prix Validé" cell: input auto-filled with prix_valide (or prixPrevu),
-      // a green Save button, and — for CountryManagers only — a blue Approve button.
-      // rowspan > 1 is used for DEP trips that span multiple rows.
-      function buildPrixValide(s, currentMonth, rowspan = 1, entry = null, prixPrevu = 0) {
-        const isCommercial    = ['Medico_commercial', 'Commercial'].includes(currentUserRole);
-        const isCountryManager = currentUserRole === 'CountryManager';
+      // Builds the "Prix Validé" cell: updated UI and validation logic
+function buildPrixValide(s, currentMonth, rowspan = 1, entry = null, prixPrevu = 0) {
+  const isCommercial     = ['Medico_commercial', 'Commercial'].includes(currentUserRole);
+  const isCountryManager = currentUserRole === 'CountryManager';
 
-        const val         = (s.prix_valide != null) ? s.prix_valide : prixPrevu;
-        const isApproved  = !!s.is_approved_by_dir;
-        const rowspanAttr = rowspan > 1 ? ` rowspan="${rowspan}"` : '';
+  // Logic constraint: Did the supervisor validate it yet?
+  const isSupValidated = s.prix_valide !== null;
+  const isApproved     = !!s.is_approved_by_dir;
+  const val            = isSupValidated ? s.prix_valide : prixPrevu;
+  const rowspanAttr    = rowspan > 1 ? ` rowspan="${rowspan}"` : '';
 
-        // ── 1. COMMERCIAL VIEW — read-only ───────────────────────────────────
-        if (isCommercial) {
-          const displayVal = s.prix_valide != null
-            ? formatPrice(s.prix_valide)
-            : '<span style="color:#6c757d;font-style:italic;font-size:0.8rem;">En attente</span>';
-          const checkIcon = isApproved
-            ? `<svg viewBox="0 0 20 20" style="width:14px;height:14px;fill:#28a745;vertical-align:middle;margin-left:5px;" xmlns="http://www.w3.org/2000/svg"><path d="M16.7 5.3a1 1 0 0 0-1.4 0L8 12.6 4.7 9.3a1 1 0 0 0-1.4 1.4l4 4a1 1 0 0 0 1.4 0l8-8a1 1 0 0 0 0-1.4z"/></svg>`
-            : '';
-          return `<td${rowspanAttr} style="text-align:center;vertical-align:middle;font-weight:bold;">${displayVal}${checkIcon}</td>`;
-        }
+  // ── 1. COMMERCIAL VIEW — read-only ───────────────────────────────────
+  if (isCommercial) {
+    const displayVal = isSupValidated
+      ? formatPrice(s.prix_valide)
+      : '<span style="color:#6c757d;font-style:italic;font-size:0.8rem;">En attente de validation</span>';
+    const checkIcon = isApproved
+      ? `<svg viewBox="0 0 20 20" style="width:16px;height:16px;fill:#28a745;vertical-align:middle;margin-left:5px;" xmlns="http://www.w3.org/2000/svg"><path d="M16.7 5.3a1 1 0 0 0-1.4 0L8 12.6 4.7 9.3a1 1 0 0 0-1.4 1.4l4 4a1 1 0 0 0 1.4 0l8-8a1 1 0 0 0 0-1.4z"/></svg>`
+      : '';
+    return `<td${rowspanAttr} style="text-align:center;vertical-align:middle;font-weight:bold;">${displayVal}${checkIcon}</td>`;
+  }
 
-        // ── 2. SUPERVISOR / COUNTRY MANAGER VIEW — interactive ───────────────
-        const med    = entry ? (entry.rapport_medical    || 0) : 0;
-        const comm   = entry ? (entry.rapport_commercial || 0) : 0;
-        const orders = entry && entry.rendement_orders
-                         ? (entry.rendement_orders.ids ? entry.rendement_orders.ids.length : 0)
-                         : 0;
-        const disabledAttr = isApproved ? ' disabled' : '';
+  // ── 2. SUPERVISOR / COUNTRY MANAGER VIEW — interactive ───────────────
+  const med    = entry ? (entry.rapport_medical    || 0) : 0;
+  const comm   = entry ? (entry.rapport_commercial || 0) : 0;
+  const orders = entry && entry.rendement_orders
+                   ? (entry.rendement_orders.ids ? entry.rendement_orders.ids.length : 0)
+                   : 0;
 
-        const saveBtn = `<button onclick="savePrixValide(this,${s.id},'${currentMonth}','save_price',${med},${comm},${orders})" style="background:#28a745;color:white;border:none;border-radius:4px;padding:3px 9px;cursor:pointer;font-size:.9rem;line-height:1;" title="Sauvegarder le prix validé"${disabledAttr}>&#10003;</button>`;
+  const inputDisabled = isApproved ? 'disabled' : '';
+  const saveDisabled  = isApproved ? 'disabled' : '';
 
-        const approveBtn = isCountryManager
-          ? `<button onclick="savePrixValide(this,${s.id},'${currentMonth}','approve',${med},${comm},${orders})" style="background:#0d6efd;color:white;border:none;border-radius:4px;padding:3px 9px;cursor:pointer;font-size:.8rem;line-height:1;" title="Approuver définitivement"${disabledAttr}>Approuver</button>`
-          : '';
+  // Prevent CM from approving if the supervisor hasn't explicitly validated it
+  const approveDisabled = (isApproved || !isSupValidated) ? 'disabled' : '';
+  
+  let approveTitle = "Approuver définitivement";
+  if (isApproved) {
+    approveTitle = "Déjà approuvé par la Direction";
+  } else if (!isSupValidated) {
+    approveTitle = "En attente de la validation du superviseur";
+  }
 
-        return `<td${rowspanAttr} style="text-align:center;vertical-align:middle;min-width:180px;padding:6px 8px;">
-          <div style="display:flex;align-items:center;gap:5px;justify-content:center;flex-wrap:wrap;">
-            <input type="number" step="any" min="0" max="${prixPrevu}" value="${val}"${disabledAttr} style="width:85px;font-size:.8rem;padding:3px 6px;border:1px solid ${isApproved ? '#6c757d' : '#ced4da'};border-radius:4px;text-align:right;${isApproved ? 'background:#e9ecef;color:#6c757d;' : ''}" title="Prix validé (DA)" />
-            ${saveBtn}${approveBtn}
-          </div>
-        </td>`;
+  const saveBtn = `<button onclick="savePrixValide(this,${s.id},'${currentMonth}','save_price',${med},${comm},${orders})" class="btn-sup-save" title="Sauvegarder le prix validé" ${saveDisabled}>&#10003;</button>`;
+
+  const approveBtn = isCountryManager
+    ? `<button onclick="savePrixValide(this,${s.id},'${currentMonth}','approve',${med},${comm},${orders})" class="btn-dir-approve" title="${approveTitle}" ${approveDisabled}>${isApproved ? 'Approuvé ✔' : 'Approuver'}</button>`
+    : '';
+
+  return `<td${rowspanAttr} style="text-align:center;vertical-align:middle;min-width:140px;padding:8px;">
+    <div class="prix-valide-wrap">
+      <div class="prix-valide-controls ${isApproved ? 'is-approved' : ''}">
+        <input type="number" step="any" min="0" max="${prixPrevu}" value="${val}" class="prix-valide-input" title="Prix validé (DA)" ${inputDisabled} />
+        <span class="prix-valide-currency">DA</span>
+        ${saveBtn}
+      </div>
+      ${approveBtn}
+    </div>
+  </td>`;
+}
+
+// Saves or approves a sector's validated price via the unified snapshot API.
+async function savePrixValide(btn, sectorId, month, action, med, comm, orders) {
+  const wrap        = btn.closest('.prix-valide-wrap');
+  const controlsBox = wrap.querySelector('.prix-valide-controls');
+  const input       = wrap.querySelector('.prix-valide-input');
+  const value       = parseFloat(input.value);
+
+  if (isNaN(value) || value < 0) {
+    controlsBox.style.borderColor = '#dc3545';
+    return;
+  }
+  controlsBox.style.borderColor = ''; // reset
+
+  const originalHtml = btn.innerHTML;
+  btn.disabled  = true;
+  btn.innerHTML = '…';
+
+  try {
+    const res = await fetch('/deplacement/api/validate-sector/', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+      body: JSON.stringify({
+        sector_id: sectorId, month: month, prix_valide: value,
+        medical_visits: med, commercial_visits: comm, order_count: orders,
+        action: action
+      }),
+    });
+    
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      if (res.status === 403) {
+        alert(err.error || 'Accès refusé : Action non autorisée.');
       }
-
-      // Saves or approves a sector's validated price via the unified snapshot API.
-      async function savePrixValide(btn, sectorId, month, action, med, comm, orders) {
-        const input = btn.closest('div').querySelector('input[type="number"]');
-        const value = parseFloat(input.value);
-        if (isNaN(value) || value < 0) {
-          input.style.borderColor = '#dc3545';
-          return;
-        }
-        input.style.borderColor = '#ced4da';
-        const originalHtml = btn.innerHTML;
-        btn.disabled   = true;
-        btn.innerHTML  = '…';
-        try {
-          const res = await fetch('/deplacement/api/validate-sector/', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
-            body: JSON.stringify({
-              sector_id: sectorId, month: month, prix_valide: value,
-              medical_visits: med, commercial_visits: comm, order_count: orders,
-              action: action
-            }),
-          });
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            if (res.status === 403) {
-              alert(err.error || 'Accès refusé : cette fiche a déjà été approuvée par la Direction.');
-            }
-            throw new Error();
-          }
-          btn.innerHTML        = '✔';
-          btn.style.background = action === 'approve' ? '#0d6efd' : '#198754';
-          if (action === 'approve') {
-            // Lock the entire cell — no further edits allowed
-            input.disabled = true;
-            input.style.background   = '#e9ecef';
-            input.style.color        = '#6c757d';
-            input.style.borderColor  = '#6c757d';
-            btn.closest('div').querySelectorAll('button').forEach(b => { b.disabled = true; });
-          } else {
-            setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; }, 1500);
-          }
-        } catch {
-          btn.innerHTML        = '✗';
-          btn.style.background = '#dc3545';
-          setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; }, 1500);
-        }
+      throw new Error();
+    }
+    
+    btn.innerHTML = '✔';
+    
+    if (action === 'approve') {
+      // Lock the entire cell visually for approval
+      input.disabled = true;
+      controlsBox.classList.add('is-approved');
+      wrap.querySelectorAll('button').forEach(b => { b.disabled = true; });
+      btn.innerHTML = 'Approuvé ✔';
+    } else if (action === 'save_price') {
+      // If the supervisor saves, we can now enable the Approve button for the CM
+      const approveBtn = wrap.querySelector('.btn-dir-approve');
+      if (approveBtn) {
+        approveBtn.disabled = false;
+        approveBtn.title    = "Approuver définitivement";
       }
-
+      setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; }, 1500);
+    }
+  } catch {
+    btn.innerHTML = '✗';
+    setTimeout(() => { btn.innerHTML = originalHtml; btn.disabled = false; }, 1500);
+  }
+}
       // Builds the "Commune" cell.
       // - rapport OK or unplanned → show communes from the actual rapport visits.
       // - missing / wrong_region / empty → show communes from the planning.

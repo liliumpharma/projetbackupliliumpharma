@@ -341,15 +341,19 @@
         </div>
         <div class="filter-group">
             <div class="filter-label">Utilisateur</div>
-            <select id="filter-user" class="filter-select"><option value="">Tous</option></select>
+            <select id="filter-user" class="filter-select">
+                <option value="">Tous</option>
+                {% for u in users %}
+                <option value="{{ u.user.id }}">{{ u.user.last_name }} {{ u.user.first_name }}</option>
+                {% endfor %}
+            </select>
         </div>
         <div class="filter-group">
             <div class="filter-label">Ligne</div>
             <select id="filter-line" multiple style="display: none;">
-                <option value="L1">L1</option>
-                <option value="L2">L2</option>
-                <option value="L3">L3</option>
-                <option value="COM">COM</option>
+                {% for l in lines %}
+                <option value="{{ l }}">{{ l }}</option>
+                {% endfor %}
             </select>
             <div class="ms-wrapper" id="line-ms-wrapper">
                 <div class="ms-display" id="line-ms-display">
@@ -357,10 +361,9 @@
                     <span style="font-size: 10px; margin-left:8px;">▼</span>
                 </div>
                 <div class="ms-dropdown" id="line-ms-dropdown">
-                    <label class="ms-label"><input type="checkbox" value="L1" class="ms-checkbox line-cb"> L1</label>
-                    <label class="ms-label"><input type="checkbox" value="L2" class="ms-checkbox line-cb"> L2</label>
-                    <label class="ms-label"><input type="checkbox" value="L3" class="ms-checkbox line-cb"> L3</label>
-                    <label class="ms-label"><input type="checkbox" value="COM" class="ms-checkbox line-cb"> COM</label>
+                    {% for l in lines %}
+                    <label class="ms-label"><input type="checkbox" value="{{ l }}" class="ms-checkbox line-cb"> {{ l }}</label>
+                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -374,12 +377,12 @@
         </div>
         <div class="filter-group">
             <div class="filter-label">Région</div>
-            <select id="filter-region" class="filter-select">
+            <select id="filter-region" class="filter-select"
+                {% if request.user.userprofile.speciality_rolee == 'Superviseur_national' %} disabled {% endif %}>
                 <option value="">Tous</option>
-                <option value="Centre">Centre</option>
-                <option value="Est">Est</option>
-                <option value="Ouest">Ouest</option>
-                <option value="Sud">Sud</option>
+                {% for r in regions %}
+                <option value="{{ r }}">{{ r }}</option>
+                {% endfor %}
             </select>
         </div>
         <div class="filter-group">
@@ -422,7 +425,7 @@
 <!-- Active-filter badge strip -->
 <div id="active-filters-bar"></div>
 
-<!-- Meriem (CountryManager) summary card -->
+<!-- CountryManager summary — reference (date only) + filtered (all filters) -->
 <div id="meriem-card-wrapper" style="display: none; margin-bottom: 24px;">
     <div class="grid-layout grid-header">
         <div>Utilisateur<span class="header-ar">المستخدم</span></div>
@@ -434,6 +437,7 @@
         <div>PART DU CA<span class="header-ar">حصة المبيعات</span></div>
         <div>% OBJ.GLOBAL<span class="header-ar">الهدف العام</span></div>
     </div>
+    <div id="meriem-static-content"></div>
     <div id="meriem-card-content"></div>
 </div>
 
@@ -784,7 +788,7 @@ function drawSortedHorizontalBar(canvasId, title, apiData, boxId, bannerId, isUs
                             if (target <= 0) return '#555';
                             const calcPct = (mData.total_val / target) * 100;
                             const uRole = window.currentRoleMap && window.currentRoleMap[uName] ? window.currentRoleMap[uName] : '';
-                            const greenT = uRole === 'Commercial' ? 75 : 95;
+                            const greenT = 95;
                             return calcPct >= greenT ? '#198754' : (calcPct >= 50 ? '#e67e22' : '#dc3545');
                         },
                         font: { weight: 'bold', size: 11, family: 'Arial' },
@@ -976,11 +980,19 @@ function makeBadge(text) {
 function applyFrontendFiltersAndGraph() {
     if (!window.globalRawData || window.globalRawData.length === 0) return;
     
+    let fRegion = document.getElementById('filter-region').value;
+    const userRole = "{{ request.user.userprofile.speciality_rolee }}";
+    const userRegion = "{{ request.user.userprofile.region }}";
+
+    // Enforcement
+    if (userRole === "Superviseur_national") {
+        fRegion = userRegion;
+    }
+    
     // Read current filter values
     const fUser   = document.getElementById('filter-user').value;
     const fLines  = Array.from(document.getElementById('filter-line').selectedOptions).map(opt => opt.value);
     const fSector = document.getElementById('filter-sector').value;
-    const fRegion = document.getElementById('filter-region').value;
     const fRole   = document.getElementById('filter-role').value;
     const fPerf   = document.getElementById('filter-performance').value;
     const fProd   = document.getElementById('filter-produit').value;
@@ -1011,79 +1023,20 @@ function applyFrontendFiltersAndGraph() {
         if(opt.value) productLines[opt.value] = opt.getAttribute('data-line') || '';
     });
 
-    // ── CALCUL DYNAMIQUE DE COUNTRY MANAGER (MERIEM) ──
-    const cmUser = (window.globalDashUsers || []).find(u => u.role === 'CountryManager');
-    let cmTarget = 0;
-    let cmAchieved = 0;
-
-    // 1. RÉALISÉ : Ventes globales de l'entreprise
-    if (cmUser && cmUser.product_breakdown) {
-        cmUser.product_breakdown.forEach(p => {
-            const pid = String(p.product_id);
-            const pLine = productLines[pid] || '';
-
-            if (fProd && pid !== fProd) return;
-            if (fLines.length > 0 && !fLines.includes(pLine)) return;
-
-            cmAchieved += p.achieved_value;
-        });
-    }
-
-    // 2. OBJECTIF : Basé sur les délégués pour le ciblage Régional/Secteur
-    (window.globalDashUsers || []).forEach(u => {
-        if (u.role === 'CountryManager') return;
-        
-        if (fSector && !u.sector.includes(fSector)) return;
-        if (fRegion && u.region !== fRegion) return;
-        
-        (u.product_breakdown || []).forEach(p => {
-            const pid = String(p.product_id);
-            const pLine = productLines[pid] || '';
-            
-            if (fProd && pid !== fProd) return;
-            if (fLines.length > 0 && !fLines.includes(pLine)) return;
-            
-            if (u.role === 'Medico_commercial') {
-                cmTarget += p.target_value;
-            } else if (u.role === 'Commercial' && pLine === 'COM') {
-                cmTarget += p.target_value;
-            }
-        });
-    });
-
-    // Rendu Html de la carte Meriem
-    const cmWrapper = document.getElementById('meriem-card-wrapper');
-    const cmContent = document.getElementById('meriem-card-content');
-    if (window.globalDashUsers && window.globalDashUsers.length > 0) {
-        const cmObj = window.globalDashUsers.find(u => u.role === 'CountryManager');
-        const name = cmObj ? cmObj.name : "Meriem RIMOUCHE";
-        const pct = cmTarget > 0 ? Math.round((cmAchieved / cmTarget) * 100) : 0;
-        const color = pct >= 95 ? '#198754' : (pct >= 50 ? '#e67e22' : '#dc3545');
-
-        cmContent.innerHTML = `
-            <div class="user-card grid-layout meriem-card">
-                <div><strong>${name}</strong><br><span style="font-size:11px;color:var(--text-muted);"></span></div>
-                <div><span class="badge-role">CountryManager</span></div>
-                <div style="font-size:13px;">ALGERIE</div>
-                <div class="value-target">${fmtDA(cmTarget)} DA</div>
-                <div class="value-achieved">${fmtDA(cmAchieved)} DA</div>
-                <div><strong style="color:${color};">${pct}%</strong></div>
-                <div><strong style="color: var(--accent);">-</strong></div>
-                <div><strong style="color: #17a2b8;">-</strong></div>
-            </div>
-        `;
-        cmWrapper.style.display = 'block';
-    } else {
-        cmWrapper.style.display = 'none';
-    }
+    
 
     // Step A: Filter raw data (Graphiques Performance)
     let filtered_data = window.globalRawData.filter(item => {
         if (fUser   && item.user_id != fUser && item.user_name != fUser) return false;
+        
+        // --- NEW LINE FILTER LOGIC ---
+        // Filter the actual sales rows based on the product's line (not the user's assigned lines)
         if (fLines.length > 0) {
-            const userLines = item.lines ? item.lines.split(',') : [];
-            if (!fLines.every(sel => userLines.includes(sel))) return false;
+            const pLine = productLines[item.product_id] || '';
+            if (!fLines.includes(pLine)) return false;
         }
+        // ------------------------------
+        
         if (fSector && item.sector !== fSector) return false;
         if (fRegion && item.region !== fRegion) return false;
         if (fRole   && item.role   !== fRole)   return false;
@@ -1096,16 +1049,132 @@ function applyFrontendFiltersAndGraph() {
         ? new Set(window.globalRawData.filter(i => i.region === fRegion).map(i => i.wilaya).filter(Boolean))
         : null;
 
+    // --- NEW CROSS-FILTER LOGIC ---
+    // If a specific user is selected, figure out exactly which Wilayas and Products they sold in.
+    let activeUserWilayas = null;
+    let activeUserProducts = null;
+    
+    if (fUser) {
+        // Look at filtered_data (which is already filtered down to the selected user)
+        activeUserWilayas = new Set(filtered_data.map(i => i.wilaya).filter(Boolean));
+        activeUserProducts = new Set(filtered_data.map(i => String(i.product_id)).filter(Boolean));
+    }
+    // ------------------------------
+
     let filtered_sales_data = (window.globalSalesData || []).filter(item => {
         if (fLines.length > 0) {
-            // FIX: Dans globalSalesData, item.lines contient la ligne DU PRODUIT ("L1"), pas de l'utilisateur.
-            const itemLine = item.lines || '';
-            if (!fLines.includes(itemLine)) return false;
+            const pLine = productLines[item.product_id] || ''; // MORE ROBUST
+            if (!fLines.includes(pLine)) return false;
         }
         if (fProd && item.product_id != fProd) return false;
         if (regionWilayas && !regionWilayas.has(item.wilaya)) return false;
+        
+        // --- NEW CROSS-FILTER CHECK ---
+        if (fUser) {
+            if (!activeUserWilayas.has(item.wilaya)) return false;
+            if (!activeUserProducts.has(String(item.product_id))) return false;
+        }
+
         return true;
     });
+
+    // ── CALCUL DYNAMIQUE DE LA CARTE (MERIEM / UTILISATEUR) ──
+    let cmTarget = 0;
+    let cmAchieved = 0;
+
+    if (fUser) {
+        // 1. CARTE UTILISATEUR SÉLECTIONNÉ : On affiche SES vrais objectifs et SON réalisé alloué
+        const selectedUserDash = (window.globalDashUsers || []).find(u => String(u.id) === String(fUser));
+        if (selectedUserDash) {
+            (selectedUserDash.product_breakdown || []).forEach(p => {
+                const pid = String(p.product_id);
+                const pLine = productLines[pid] || '';
+
+                if (fProd && pid !== fProd) return;
+                if (fLines.length > 0 && !fLines.includes(pLine)) return;
+
+                cmTarget += p.target_value;       // Objectif complet pour cette ligne
+                cmAchieved += p.achieved_value;   // Ventes divisées et allouées au délégué
+            });
+        }
+    } else {
+        // 2. CARTE GLOBALE (MERIEM) : Ventes brutes et Objectifs avec règles de rollup
+        
+        // A. Achieved = Somme stricte des ventes SuperGros pures (sans duplication)
+        filtered_sales_data.forEach(sale => {
+            cmAchieved += (sale.value || 0); 
+        });
+
+        // B. Target = Somme des cibles des délégués (Medico = ALL, Commercial = COM)
+        (window.globalDashUsers || []).forEach(u => {
+            if (u.role === 'CountryManager') return;
+            if (fSector && !u.sector.includes(fSector)) return;
+            if (fRegion && u.region !== fRegion) return;
+            if (fRole && u.role !== fRole) return;
+
+            (u.product_breakdown || []).forEach(p => {
+                const pid = String(p.product_id);
+                const pLine = productLines[pid] || '';
+
+                if (fProd && pid !== fProd) return;
+                if (fLines.length > 0 && !fLines.includes(pLine)) return;
+
+                if (u.role === 'Medico_commercial') {
+                    cmTarget += p.target_value;
+                } else if (u.role === 'Commercial' && pLine === 'COM') {
+                    cmTarget += p.target_value;
+                }
+            });
+        });
+    }
+
+    // Rendu Html de la carte Meriem/Utilisateur
+    const cmWrapper = document.getElementById('meriem-card-wrapper');
+    const cmContent = document.getElementById('meriem-card-content');
+    if (window.globalDashUsers && window.globalDashUsers.length > 0) {
+        let name = "Meriem RIMOUCHE";
+        let displayRole = "CountryManager";
+        
+        if (fUser) {
+            const selectedUserDash = window.globalDashUsers.find(u => String(u.id) === String(fUser));
+            if (selectedUserDash) {
+                name = selectedUserDash.name;
+                displayRole = selectedUserDash.role;
+            }
+        } else {
+            const cmObj = window.globalDashUsers.find(u => u.role === 'CountryManager');
+            if (cmObj) name = cmObj.name;
+        }
+
+        const pct = cmTarget > 0 ? Math.round((cmAchieved / cmTarget) * 10000) / 100 : 0;
+        const color = pct >= 95 ? '#198754' : (pct >= 50 ? '#e67e22' : '#dc3545');
+        const refAch = window.staticRefAchieved || 0;
+        const refTgt = window.staticRefTarget   || 0;
+        const globalAchPct = refAch > 0 ? Math.round((cmAchieved / refAch) * 10000) / 100 : 0;
+        const globalPct    = refTgt > 0 ? Math.round((cmAchieved / refTgt) * 10000) / 100 : 0;
+
+        cmContent.innerHTML = `
+            <div class="user-card grid-layout meriem-card">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div>
+                        <strong>${name}</strong>
+                        <span style="display:inline-block;margin-left:8px;background:#ffc107;color:#333;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:bold;vertical-align:middle;">FILTRÉ</span><br>
+                        <span style="font-size:11px;color:var(--text-muted);">Vue filtrée (tous les filtres)</span>
+                    </div>
+                </div>
+                <div><span class="badge-role">${displayRole.replace('_', ' ')}</span></div>
+                <div style="font-size:13px;">${fRegion ? fRegion : 'ALGÉRIE'}</div>
+                <div class="value-target">${fmtDA(cmTarget)} DA</div>
+                <div class="value-achieved">${fmtDA(cmAchieved)} DA</div>
+                <div><strong style="color:${color};">${pct}%</strong></div>
+                <div><strong style="color: var(--accent);">${globalAchPct}%</strong></div>
+                <div><strong style="color: #17a2b8;">${globalPct}%</strong></div>
+            </div>
+        `;
+        cmWrapper.style.display = 'block';
+    } else {
+        cmWrapper.style.display = 'none';
+    }
 
     // ── TARGET PERCENTAGE CALCULATION ──
     let filtered_targets = (window.globalDashRaw || []).filter(item => {
@@ -1152,7 +1221,7 @@ function applyFrontendFiltersAndGraph() {
             const achieved = userAchieved[uName] || 0;
             const target = userTotalTarget[uName] || 0;
             const pct = target > 0 ? (achieved / target) * 100 : 0;
-            const greenThreshold = userRole[uName] === 'Commercial' ? 75 : 95;
+            const greenThreshold = 95;
 
             if (fPerf === 'gift')       return pct >= greenThreshold;
             if (fPerf === 'acceptable') return pct >= 50 && pct < greenThreshold;
@@ -1357,6 +1426,71 @@ function applyFrontendFiltersAndGraph() {
     }
 }
 
+// ── Static global reference card (date only, no dropdown filters) ───────────
+function renderStaticCard() {
+    const staticEl = document.getElementById('meriem-static-content');
+    staticEl.innerHTML = '';
+    if (!window.globalDashUsers || window.globalDashUsers.length === 0) return;
+
+    const cmUser = window.globalDashUsers.find(u => u.role === 'CountryManager');
+
+    // Achieved: sum all raw sales, no filters
+    let staticAchieved = 0;
+    if (window.globalSalesData) {
+        window.globalSalesData.forEach(sale => { staticAchieved += (sale.value || 0); });
+    }
+
+    // Target: Medico_commercial (all lines) + Commercial (COM line only)
+    const productLines = {};
+    document.querySelectorAll('#filter-produit option').forEach(opt => {
+        if (opt.value) productLines[opt.value] = opt.getAttribute('data-line') || '';
+    });
+    let staticTarget = 0;
+    window.globalDashUsers.forEach(u => {
+        if (u.role === 'CountryManager') return;
+        (u.product_breakdown || []).forEach(p => {
+            const pid = String(p.product_id);
+            const pLine = productLines[pid] || '';
+            if (u.role === 'Medico_commercial') {
+                staticTarget += p.target_value;
+            } else if (u.role === 'Commercial' && pLine === 'COM') {
+                staticTarget += p.target_value;
+            }
+        });
+    });
+
+    window.staticRefTarget   = staticTarget;
+    window.staticRefAchieved = staticAchieved;
+
+    const staticPct = staticTarget > 0 ? Math.round((staticAchieved / staticTarget) * 10000) / 100 : 0;
+    const perfColor = staticPct >= 95 ? '#198754' : (staticPct >= 50 ? '#e67e22' : '#dc3545');
+    const name = cmUser ? cmUser.name : 'GLOBAL';
+
+    staticEl.innerHTML = `
+        <div class="user-card grid-layout" style="
+            border: 2px solid #6c757d;
+            background: linear-gradient(145deg, #f0f2f5, #e4e8ed);
+            margin-bottom: 6px;
+            box-shadow: 0 4px 10px rgba(108,117,125,0.15);
+        ">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div>
+                    <strong>${name}</strong>
+                    <span style="display:inline-block; margin-left:8px; background:#6c757d; color:white; padding:2px 7px; border-radius:10px; font-size:10px; font-weight:bold; vertical-align:middle;">RÉFÉRENCE</span><br>
+                    <span style="font-size:11px; color:var(--text-muted);">Objectif global — date uniquement</span>
+                </div>
+            </div>
+            <div><span class="badge-role">CountryManager</span></div>
+            <div style="font-size:13px;">ALGÉRIE</div>
+            <div class="value-target">${fmtDA(staticTarget)} DA</div>
+            <div class="value-achieved">${fmtDA(staticAchieved)} DA</div>
+            <div><strong style="color:${perfColor};">${staticPct}%</strong></div>
+            <div><strong style="color: var(--accent);">-</strong></div>
+            <div><strong style="color: #17a2b8;">-</strong></div>
+        </div>
+    `;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 //  CASCADE FILTER ENGINE
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1365,35 +1499,48 @@ function applyCascadeLogic() {
     const fSector = document.getElementById('filter-sector').value;
     const fRegion = document.getElementById('filter-region').value;
 
+    // ── EXTRACTION DES LIGNES (Fix pour éviter l'erreur de référence) ──
+    const productLines = {};
+    document.querySelectorAll('#filter-produit option').forEach(opt => {
+        if(opt.value) productLines[opt.value] = opt.getAttribute('data-line') || '';
+    });
+
     // Rule 2: Show/hide Produit options whose data-line is included in selected Lignes
     const produitSel  = document.getElementById('filter-produit');
     const currentProd = produitSel.value;
     Array.from(produitSel.options).forEach(opt => {
-        if (!opt.value) return; // always keep "Tous les produits"
+        if (!opt.value) return; 
         const optLine = opt.getAttribute('data-line') || '';
         opt.style.display = (fLines.length === 0 || fLines.includes(optLine) || optLine === '') ? '' : 'none';
     });
     const selProdOpt = produitSel.querySelector(`option[value="${currentProd}"]`);
     if (selProdOpt && selProdOpt.style.display === 'none') produitSel.value = '';
 
-    // Rule 3: Rebuild #filter-user from globalRawData filtered by Lignes, Secteur, Région
-    if (!window.globalRawData || window.globalRawData.length === 0) return;
+    // Rule 3: Rebuild #filter-user using globalDashUsers (Garde les utilisateurs qui ont un Objectif, même sans ventes)
+    if (!window.globalDashUsers || window.globalDashUsers.length === 0) return;
     const userSel     = document.getElementById('filter-user');
     const currentUser = userSel.value;
     while (userSel.options.length > 1) userSel.remove(1);
-    const matched = window.globalRawData.filter(item => {
+    
+    const matchedUsers = window.globalDashUsers.filter(u => {
+        if (u.role === 'CountryManager') return false; 
+        if (fSector && !u.sector.includes(fSector)) return false;
+        if (fRegion && u.region !== fRegion) return false;
+        
+        // Vérifie si l'utilisateur a cette ligne dans ses objectifs ou ventes
         if (fLines.length > 0) {
-            const userLines = item.lines ? item.lines.split(',') : [];
-            if (!fLines.every(sel => userLines.includes(sel))) return false;
+            const hasLine = (u.product_breakdown || []).some(p => {
+                const pLine = productLines[p.product_id] || '';
+                return fLines.includes(pLine);
+            });
+            if (!hasLine) return false;
         }
-        if (fSector && item.sector !== fSector) return false;
-        if (fRegion && item.region !== fRegion) return false;
         return true;
     });
-    const uniqueUsers = [...new Map(matched.map(i => [i.user_id, i.user_name])).entries()];
-    uniqueUsers.sort((a, b) => (a[1] || '').localeCompare(b[1] || ''));
-    uniqueUsers.forEach(([uid, uname]) => userSel.add(new Option(uname, uid)));
-    const stillValid = uniqueUsers.some(([uid]) => String(uid) === String(currentUser));
+
+    matchedUsers.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    matchedUsers.forEach(u => userSel.add(new Option(u.name, u.id)));
+    const stillValid = matchedUsers.some(u => String(u.id) === String(currentUser));
     if (stillValid) userSel.value = currentUser;
 }
 
@@ -1461,13 +1608,14 @@ async function fetchAndRender() {
         window.globalSalesData   = data.raw_sales_data || [];
         window.globalSectorCosts = data.sector_costs   || {};
         window.globalDashRaw     = dashData.dash_raw   || [];
-        window.globalDashUsers   = dashData.users      || []; 
+        window.globalDashUsers   = dashData.users      || [];
         lastFetchQuery = currentQuery;
 
         spinner.style.display = 'none';
         wrapper.style.display = 'block';
 
         applyCascadeLogic();
+        renderStaticCard();
         applyFrontendFiltersAndGraph();
 
     } catch (err) {

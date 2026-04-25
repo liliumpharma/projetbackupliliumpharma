@@ -617,121 +617,130 @@ def get_sector_table(request):
             for v in tq.values('rapport__added').annotate(total=Count('id'))
         }
 
-        # ── User-level Order data (computed once per user) ──────────────────────
-        from orders.models import Order
+        # ── 1. Build Precedence Map for this User (IN > SEMI > DEP) ───────────
+        all_user_sectors = UserSectorDetail.objects.filter(user_profile__user_id=uid).prefetch_related('wilayas', 'communes')
+        c_map = {}  # commune_id -> {'sec_id': ..., 'cat': ..., 'prio': ...}
+        w_map = {}  # wilaya_id  -> {'sec_id': ..., 'cat': ..., 'prio': ...}
+        
+        mapping_priority = {"IN": 3, "SEMI": 2, "DEP": 1}
 
-        # Added prefetch_related to avoid N+1 queries when accessing order.valeur_net
+        for sec in all_user_sectors:
+            cat = sec.category
+            prio = mapping_priority.get(cat, 0)
+            specific_communes = list(sec.communes.all())
+            if specific_communes:
+                for c in specific_communes:
+                    existing = c_map.get(c.id)
+                    if not existing or prio > existing['prio']:
+                        c_map[c.id] = {'sec_id': sec.id, 'prio': prio, 'cat': cat}
+            else:
+                specific_wilayas = list(sec.wilayas.all())
+                for w in specific_wilayas:
+                    existing = w_map.get(w.id)
+                    if not existing or prio > existing['prio']:
+                        w_map[w.id] = {'sec_id': sec.id, 'prio': prio, 'cat': cat}
+
+        # ── 2. Bucket Plans by exact Sector ────────────────────────────────────
+        plan_qs = Plan.objects.filter(user_id=uid).distinct().order_by('day').prefetch_related('communes', 'clients__commune')
+        if start_date:
+            plan_qs = plan_qs.filter(day__gte=start_date)
+        if end_date:
+            plan_qs = plan_qs.filter(day__lte=end_date)
+
+        plans_by_sector = {} # sector_id -> list of plans
+        plan_severity = {"DEP": 3, "SEMI": 2, "IN": 1} # For mixed region days
+
+        for plan in plan_qs:
+            plan_sec_id = None
+            current_sev = 0
+
+            for c in plan.communes.all():
+                mapping = c_map.get(c.id) or w_map.get(c.wilaya_id)
+                if mapping:
+                    sev = plan_severity.get(mapping['cat'], 0)
+                    if sev > current_sev:
+                        current_sev = sev
+                        plan_sec_id = mapping['sec_id']
+
+            if plan_sec_id:
+                plans_by_sector.setdefault(plan_sec_id, []).append(plan)
+
+        # ── 3. Bucket Visites by exact Sector & Date ──────────────────────────
+        visite_qs = Visite.objects.filter(rapport__user_id=uid).values(
+            "rapport__added", "rapport__id", "medecin__specialite", 
+            "medecin_id", "medecin__commune_id", "medecin__wilaya_id", "medecin__commune__nom"
+        )
+        if start_date:
+            visite_qs = visite_qs.filter(rapport__added__gte=start_date)
+        if end_date:
+            visite_qs = visite_qs.filter(rapport__added__lte=end_date)
+
+        visites_by_sec_date = {} 
+        for v in visite_qs:
+            c_id = v['medecin__commune_id']
+            w_id = v['medecin__wilaya_id']
+            mapping = c_map.get(c_id) or w_map.get(w_id)
+            if mapping:
+                sec_id = mapping['sec_id']
+                date_str = str(v["rapport__added"])
+
+                if sec_id not in visites_by_sec_date:
+                    visites_by_sec_date[sec_id] = {}
+                if date_str not in visites_by_sec_date[sec_id]:
+                    visites_by_sec_date[sec_id][date_str] = {
+                        "medical": 0, "commercial": 0, "rapport_id": v["rapport__id"],
+                        "medecin_ids": set(), "commune_names": set()
+                    }
+                
+                rc = visites_by_sec_date[sec_id][date_str]
+                if v['medecin__specialite'] in COMMERCIAL_SPECIALITES:
+                    rc["commercial"] += 1
+                else:
+                    rc["medical"] += 1
+                rc["medecin_ids"].add(v['medecin_id'])
+                if v['medecin__commune__nom']:
+                    rc["commune_names"].add(v['medecin__commune__nom'])
+
+        # ── 4. Bucket Orders by exact Sector & Date ────────────────────────────
+        from orders.models import Order
         oq = Order.objects.filter(user_id=uid).select_related(
             'pharmacy', 'gros', 'super_gros'
         ).prefetch_related('orderitem_set__produit')
-
         if start_date:
             oq = oq.filter(added__date__gte=start_date)
         if end_date:
             oq = oq.filter(added__date__lte=end_date)
 
-        # Structure: date_str -> w_id -> c_id -> {'ids': [], 'total_value': float}
-        # c_id is the commune_id of the client (None if client has no commune).
-        orders_by_date_wilaya = {}
+        orders_by_sec_date = {} 
         for order in oq:
-            # Hierarchy: Pharmacy > Grossiste > SuperGrossiste
             target_client = order.pharmacy or order.gros or order.super_gros
-
             if target_client and hasattr(target_client, 'wilaya_id'):
-                date_str = str(order.added.date())
-                w_id = target_client.wilaya_id
                 c_id = getattr(target_client, 'commune_id', None)
+                w_id = target_client.wilaya_id
+                
+                mapping = c_map.get(c_id) or w_map.get(w_id)
+                if mapping:
+                    sec_id = mapping['sec_id']
+                    date_str = str(order.added.date())
 
-                orders_by_date_wilaya.setdefault(date_str, {})
-                orders_by_date_wilaya[date_str].setdefault(w_id, {})
-                orders_by_date_wilaya[date_str][w_id].setdefault(
-                    c_id, {'ids': [], 'total_value': 0.0}
-                )
-                orders_by_date_wilaya[date_str][w_id][c_id]['ids'].append(order.id)
-                orders_by_date_wilaya[date_str][w_id][c_id]['total_value'] += float(order.valeur_net)
-        # ────────────────────────────────────────────────────────────────────────────────────
+                    if sec_id not in orders_by_sec_date:
+                        orders_by_sec_date[sec_id] = {}
+                    if date_str not in orders_by_sec_date[sec_id]:
+                        orders_by_sec_date[sec_id][date_str] = {'ids': [], 'total_value': 0.0}
 
-        # Collect every commune that is pinned to a specific-commune sector for
-        # this user.  General sectors must exclude these to avoid double-counting.
-        exception_commune_ids = set()
-        for sec in entry['sectors']:
-            exception_commune_ids.update(sec['commune_ids'])
+                    orders_by_sec_date[sec_id][date_str]['ids'].append(order.id)
+                    orders_by_sec_date[sec_id][date_str]['total_value'] += float(order.valeur_net)
 
+        # ── 5. Process Output for strictly SEMI and DEP Sectors ───────────────
         for sector in entry['sectors']:
-            wilaya_ids = sector['wilaya_ids']
-            specific_commune_ids = set(sector['commune_ids'])
-            # For a general sector: exclude communes owned by other specific sectors
-            excl_commune_ids = exception_commune_ids if not specific_commune_ids else set()
-
-            # ── Plan queryset ─────────────────────────────────────────────────
-            if specific_commune_ids:
-                plan_filter = {'communes__id__in': specific_commune_ids}
-                client_qs = Medecin.objects.filter(
-                    commune_id__in=specific_commune_ids
-                ).select_related('commune')
-            else:
-                plan_filter = {'communes__wilaya_id__in': wilaya_ids}
-                client_qs = Medecin.objects.filter(wilaya_id__in=wilaya_ids)
-                if excl_commune_ids:
-                    client_qs = client_qs.exclude(commune_id__in=excl_commune_ids)
-                client_qs = client_qs.select_related('commune')
-
-            plan_qs = (
-                Plan.objects
-                .filter(user_id=uid, **plan_filter)
-                .distinct()
-                .order_by('day')
-                .prefetch_related(Prefetch('clients', queryset=client_qs))
-            )
-            if start_date:
-                plan_qs = plan_qs.filter(day__gte=start_date)
-            if end_date:
-                plan_qs = plan_qs.filter(day__lte=end_date)
-
-            # ── Visite queryset ───────────────────────────────────────────────
-            if specific_commune_ids:
-                visite_qs = Visite.objects.filter(
-                    rapport__user_id=uid,
-                    medecin__commune_id__in=specific_commune_ids,
-                )
-            else:
-                visite_qs = Visite.objects.filter(
-                    rapport__user_id=uid,
-                    medecin__wilaya_id__in=wilaya_ids,
-                )
-                if excl_commune_ids:
-                    visite_qs = visite_qs.exclude(medecin__commune_id__in=excl_commune_ids)
-
-            visite_qs = visite_qs.values(
-                "rapport__added", "rapport__id", "medecin__specialite", "medecin_id",
-                "medecin__commune__nom",
-            )
-            if start_date:
-                visite_qs = visite_qs.filter(rapport__added__gte=start_date)
-            if end_date:
-                visite_qs = visite_qs.filter(rapport__added__lte=end_date)
-
-            rapport_counts = {}
-            visited_ids_by_date = {}  # date_str -> set of medecin_id
-            rapport_commune_names = {}  # date_str -> set of commune names
-            for v in visite_qs:
-                date_str = str(v["rapport__added"])
-                if date_str not in rapport_counts:
-                    rapport_counts[date_str] = {
-                        "medical": 0,
-                        "commercial": 0,
-                        "rapport_id": v["rapport__id"],
-                    }
-                if v['medecin__specialite'] in COMMERCIAL_SPECIALITES:
-                    rapport_counts[date_str]['commercial'] += 1
-                else:
-                    rapport_counts[date_str]['medical'] += 1
-                visited_ids_by_date.setdefault(date_str, set()).add(v['medecin_id'])
-                if v.get('medecin__commune__nom'):
-                    rapport_commune_names.setdefault(date_str, set()).add(v['medecin__commune__nom'])
+            sec_id = sector['id']
+            
+            sec_plans = plans_by_sector.get(sec_id, [])
+            sec_visites = visites_by_sec_date.get(sec_id, {})
+            sec_orders = orders_by_sec_date.get(sec_id, {})
 
             dates_data = []
-            for plan in plan_qs:
+            for plan in sec_plans:
                 date_str = str(plan.day)
                 clients = plan.clients.all()
                 commercial_plan = sum(1 for c in clients if c.specialite in COMMERCIAL_SPECIALITES)
@@ -740,103 +749,65 @@ def get_sector_table(request):
                     rapport_status = 'missing'
                 elif total_by_date.get(date_str, 0) == 0:
                     rapport_status = 'empty'
-                elif date_str not in rapport_counts:
+                elif date_str not in sec_visites:
                     rapport_status = 'wrong_region'
                 else:
                     rapport_status = 'ok'
 
-                rc = rapport_counts.get(date_str, {'medical': 0, 'commercial': 0})
+                rc = sec_visites.get(date_str, {'medical': 0, 'commercial': 0, 'medecin_ids': set(), 'commune_names': set()})
 
-                # ── Similarity calculation ──────────────────────────────────
-                plan_client_ids = {client.id for client in clients}
-                visited_medecin_ids = visited_ids_by_date.get(date_str, set())
+                plan_client_ids = {c.id for c in clients}
+                visited_ids = rc.get('medecin_ids', set())
                 total_planned = len(plan_client_ids)
-                similarity = (
-                    round(len(plan_client_ids & visited_medecin_ids) / total_planned * 100)
-                    if total_planned else 0
-                )
-                # ───────────────────────────────────────────────────────────
+                similarity = round(len(plan_client_ids & visited_ids) / total_planned * 100) if total_planned else 0
 
-                dates_data.append(
-                    {
+                dates_data.append({
+                    "date": date_str,
+                    "medical": len(clients) - commercial_plan,
+                    "commercial": commercial_plan,
+                    "rapport_medical": rc["medical"],
+                    "rapport_commercial": rc["commercial"],
+                    "rapport_id": rc.get("rapport_id"),
+                    "rapport_status": rapport_status,
+                    "rendement_orders": sec_orders.get(date_str, None),
+                    "similarity": similarity,
+                    "plan_communes": sorted({c.commune.nom for c in clients if c.commune_id and c.commune}),
+                    "rapport_communes": sorted(rc.get('commune_names', set())),
+                })
+
+            # Unplanned Dates (Phone calls, ad-hoc visits inside this exact sector)
+            planned_date_strs = {d['date'] for d in dates_data}
+            unplanned_dates = []
+            for date_str, rc in sec_visites.items():
+                if date_str not in planned_date_strs:
+                    unplanned_dates.append({
                         "date": date_str,
-                        "medical": len(clients) - commercial_plan,
-                        "commercial": commercial_plan,
                         "rapport_medical": rc["medical"],
                         "rapport_commercial": rc["commercial"],
                         "rapport_id": rc.get("rapport_id"),
-                        "rapport_status": rapport_status,
-                        "rendement_orders": _merge_orders(
-                            orders_by_date_wilaya.get(date_str, {}),
-                            wilaya_ids,
-                            specific_commune_ids=specific_commune_ids or None,
-                            excluded_commune_ids=excl_commune_ids or None,
-                        ),
-                        "similarity": similarity,
-                        "plan_communes": sorted({
-                            c.commune.nom
-                            for c in clients
-                            if c.commune_id and c.commune
-                        }),
-                        "rapport_communes": sorted(rapport_commune_names.get(date_str, set())),
-                    }
-                )
+                        "rendement_orders": sec_orders.get(date_str, None),
+                        "rapport_communes": sorted(rc.get('commune_names', set())),
+                    })
 
-            # Build unplanned list (rapport in this sector geography, no matching plan)
-            planned_date_strs = {d['date'] for d in dates_data}
-            unplanned_dates = []
-            for date_str in sorted(rapport_counts):
-                if date_str not in planned_date_strs:
-                    rc = rapport_counts[date_str]
-                    unplanned_dates.append(
-                        {
-                            "date": date_str,
-                            "rapport_medical": rc["medical"],
-                            "rapport_commercial": rc["commercial"],
-                            "rapport_id": rc.get("rapport_id"),
-                            "rendement_orders": _merge_orders(
-                                orders_by_date_wilaya.get(date_str, {}),
-                                wilaya_ids,
-                                specific_commune_ids=specific_commune_ids or None,
-                                excluded_commune_ids=excl_commune_ids or None,
-                            ),
-                            "rapport_communes": sorted(rapport_commune_names.get(date_str, set())),
-                        }
-                    )
-
-            # ── Orphan orders (phone orders — no rapport on that date) ────────
+            # Orphan Orders (Phone orders unlinked to a rapport in this sector)
             orphan_ids = []
             orphan_total = 0.0
-            for o_date, w_dict in orders_by_date_wilaya.items():
-                if o_date not in rapport_counts:
-                    for wid in wilaya_ids:
-                        if wid not in w_dict:
-                            continue
-                        for cid, data in w_dict[wid].items():
-                            if specific_commune_ids:
-                                if cid not in specific_commune_ids:
-                                    continue
-                            elif excl_commune_ids and cid in excl_commune_ids:
-                                continue
-                            orphan_ids.extend(data['ids'])
-                            orphan_total += data['total_value']
+            for date_str, ord_data in sec_orders.items():
+                if date_str not in sec_visites:
+                    orphan_ids.extend(ord_data['ids'])
+                    orphan_total += ord_data['total_value']
 
             sector['orphan_orders'] = {'ids': orphan_ids, 'total_value': orphan_total} if orphan_ids else None
 
             if sector["category"] == "DEP":
-                # DEP: Pass 'times' to dynamically pad missing trips
-                sector["trips"] = build_dep_trips(
-                    dates_data, unplanned_dates, sector["days"], sector["times"]
-                )
+                sector["trips"] = build_dep_trips(dates_data, unplanned_dates, sector["days"], sector["times"])
             else:
-                # SEMI: Pad the plan_dates taking into account unplanned dates
                 total_valid_slots = len(dates_data) + len(unplanned_dates)
 
                 while total_valid_slots < sector["times"]:
                     dates_data.append(None)
                     total_valid_slots += 1
 
-                # Fix frontend base row issue if dates_data is empty but unplanned exists
                 if not dates_data and unplanned_dates:
                     shifted = unplanned_dates.pop(0)
                     shifted["status"] = "unplanned"
@@ -846,7 +817,6 @@ def get_sector_table(request):
                 sector["unplanned_dates"] = unplanned_dates
 
     return JsonResponse(result, safe=False)
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TASK 2 — Unified sector validation (supervisor price + direction approval)

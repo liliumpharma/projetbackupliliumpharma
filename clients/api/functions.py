@@ -1194,7 +1194,7 @@ def sync_bi_allocation(wilaya, product, month, year):
                       track this product in this period
                       (Superviseur_national / CountryManager excluded from divisor)
     """
-    from django.db.models import Sum as _Sum
+    from django.db.models import Sum as _Sum, Q
     from collections import defaultdict
     from clients.models import (
         OrderProduct, BISnapshot, UserTargetMonthProduct, UserTargetMonth,
@@ -1252,6 +1252,10 @@ def sync_bi_allocation(wilaya, product, month, year):
         ].add(t['usermonth__user_id'])
 
     def get_divisor(role):
+        # Superviseurs always get 100% of wilaya sales regardless of how many there are.
+        # Medico_commercial and Commercial share equally among users of the same role.
+        if role in ("Superviseur", "Superviseur_regional", "Superviseur_national"):
+            return 1
         c = len(role_user_sets.get(role, set()))
         return c if c > 0 else 1
 
@@ -1265,9 +1269,13 @@ def sync_bi_allocation(wilaya, product, month, year):
             ],
             hidden=False,
             sectors=wilaya,
-            user__usertargetmonth__date__year=year,
-            user__usertargetmonth__date__month=month,
-            user__usertargetmonth__usertargetmonthproduct__product=product,
+        )
+        .filter(
+            # Delegates must have a target, BUT Supervisors get a free pass to see all products
+            Q(user__usertargetmonth__date__year=year,
+              user__usertargetmonth__date__month=month,
+              user__usertargetmonth__usertargetmonthproduct__product=product) |
+            Q(speciality_rolee__in=["Superviseur", "Superviseur_regional", "Superviseur_national"])
         )
         .distinct()
         .select_related('user')
@@ -1556,8 +1564,13 @@ def get_visualisation_data(params, request_user=None):
     for d in delegates:
         uid = d.user.id
         role = d.speciality_rolee
-        tracked_pids = user_tracked_products.get(uid, set())
-        
+
+        # Supervisors track ALL products that have sales in their wilayas
+        if role in ["Superviseur", "Superviseur_regional", "Superviseur_national"]:
+            tracked_pids = set(p_id for (w_id, p_id) in sales_by_wp.keys() if w_id in [s.id for s in d.sectors.all()])
+        else:
+            tracked_pids = user_tracked_products.get(uid, set())
+
         if not tracked_pids:
             continue
             

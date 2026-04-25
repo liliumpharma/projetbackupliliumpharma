@@ -57,15 +57,8 @@
         font-size: 0.9em;
     }
 
-    .sector-semi th.sector-header,
-    .sector-semi td.sector-region {
-        background-color: #ffc107 !important;
-        color: #212529 !important;
-    }
-
-    .sector-dep th.sector-header,
-    .sector-dep td.sector-region {
-        background-color: #dc3545 !important;
+    .validated-header {
+        background-color: #28a745 !important;
         color: white !important;
     }
   </style>
@@ -103,29 +96,96 @@
         {% endif %}
     </div>
 
-    {% if non_visite_communes_semi %}
-    <h4 class="section-title" style="color:#856404;">Secteurs Semi-Déplacement non planifiés</h4>
-    <div class="no-visits" style="background-color:#ffc107;padding:8px;border-radius:4px;">
-        <p>
-            {% for commune, counts in non_visite_communes_semi.items %}
-            <strong>{{ commune.nom }}</strong>
-            ({{ counts.medecins }} médecin{% if counts.medecins > 1 %}s{% endif %},
-            {{ counts.pharmacies }} pharmacie{% if counts.pharmacies > 1 %}s{% endif %}){% if not forloop.last %}, {% endif %}
+    {% if has_semi %}
+    <h4 class="section-title" style="color:#856404;">Secteurs Semi-Déplacement</h4>
+    <div class="no-visits" style="background-color:#fff3cd; color:#856404; padding:15px; border-radius:4px; border: 1px solid #ffeeba;">
+        <table style="width: 100%; border-collapse: collapse;">
+        {% for name, data in sector_stats.SEMI.items %}
+            <tr>
+                <td style="width: 150px; border: none !important; vertical-align: top; padding: 5px 0;"><u><strong>{{ name }}</strong></u> :</td>
+                <td style="border: none !important; vertical-align: top; padding: 5px 0 5px 15px; font-weight: 400;">
+                    {% if data.plans %}
+                        Planifié le
+                        {% for date, counts in data.plans.items %}
+                            {{ date }} ({{ counts.medecins }} médecin{% if counts.medecins > 1 %}s{% endif %}, {{ counts.pharmacies }} pharmacie{% if counts.pharmacies > 1 %}s{% endif %}){% if not forloop.last %} et {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        Non planifié
+                    {% endif %}
+                </td>
+                <td dir="rtl" style="border: none !important; vertical-align: top; padding: 5px 0; text-align: right; font-family: 'Lalezar', cursive; font-weight: normal; width: 200px;">
+                    {% if not data.plans %}لم يتم برمجتها{% else %}تمت البرمجة{% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </table>
+
+        {% if deficits_semi %}
+            <div class="mt-2 pt-2" style="border-top: 1px solid #ffeeba;">
+            {% for name, data in sector_stats.SEMI.items %}
+                {% if data.missing_count %}
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span class="text-danger" style="font-weight: 500;">
+                        Il manque {{ data.missing_count }} semi-déplacement{% if data.missing_count > 1 %}s{% endif %} à {{ name }}.
+                    </span>
+                    <span dir="rtl" style="text-align: right; font-family: 'Lalezar', cursive; color: #dc3545; font-weight: normal;">
+                        نقص {{ data.missing_count }} شبه تنقل في {{ name }}.
+                    </span>
+                </div>
+                {% endif %}
             {% endfor %}
-        </p>
+            </div>
+        {% endif %}
     </div>
     {% endif %}
 
-    {% if non_visite_communes_dep %}
-    <h4 class="section-title" style="color:#dc3545;">Secteurs Déplacement non planifiés</h4>
-    <div class="no-visits" style="background-color:#dc3545;color:#fff;padding:8px;border-radius:4px;">
-        <p>
-            {% for commune, counts in non_visite_communes_dep.items %}
-            <strong>{{ commune.nom }}</strong>
-            ({{ counts.medecins }} médecin{% if counts.medecins > 1 %}s{% endif %},
-            {{ counts.pharmacies }} pharmacie{% if counts.pharmacies > 1 %}s{% endif %}){% if not forloop.last %}, {% endif %}
+    {% if has_dep %}
+    <h4 class="section-title" style="color:#721c24;">Secteurs Déplacement</h4>
+    <div class="no-visits" style="background-color:#f8d7da; color:#721c24; padding:15px; border-radius:4px; border: 1px solid #f5c6cb;">
+        <table style="width: 100%; border-collapse: collapse;">
+        {% for name, data in sector_stats.DEP.items %}
+            <tr>
+                <td style="width: 150px; border: none !important; vertical-align: top; padding: 5px 0;"><u><strong>{{ name }}</strong></u> :</td>
+                <td style="border: none !important; vertical-align: top; padding: 5px 0 5px 15px; font-weight: 400;">
+                    {% if data.plans %}
+                        Planifié le
+                        {% for date, counts in data.plans.items %}
+                            {{ date }} ({{ counts.medecins }} médecin{% if counts.medecins > 1 %}s{% endif %}, {{ counts.pharmacies }} pharmacie{% if counts.pharmacies > 1 %}s{% endif %}){% if not forloop.last %} et {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        Non planifié
+                    {% endif %}
+                </td>
+                <td dir="rtl" style="border: none !important; vertical-align: top; padding: 5px 0; text-align: right; font-family: 'Lalezar', cursive; font-weight: normal; width: 200px;">
+                    {% if not data.plans %}لم يتم برمجتها{% else %}تمت البرمجة{% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </table>
+
+        {% if deficits_dep %}
+            <div class="mt-2 pt-2" style="border-top: 1px solid #f5c6cb;">
+            {% for name, data in sector_stats.DEP.items %}
+                {% if data.missing_days %}
+                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                    <span class="text-danger" style="font-weight: 500;">
+                        Il manque {{ data.missing_count }} déplacement{% if data.missing_count > 1 %}s{% endif %} de {{ data.days_needed }} jours à {{ name }}.
+                    </span>
+                    <span dir="rtl" style="text-align: right; font-family: 'Lalezar', cursive; color: #721c24; font-weight: normal;">
+                        نقص {{ data.missing_count }} تنقل ({{ data.days_needed }} أيام) في {{ name }}.
+                    </span>
+                </div>
+                {% endif %}
             {% endfor %}
-        </p>
+            </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if has_no_semi_dep %}
+    <h4 class="section-title" style="color:#6f42c1;">Aucun secteur SEMI / DEP configuré</h4>
+    <div class="no-visits" style="background-color:#6f42c1;color:#fff;padding:8px;border-radius:4px;">
+        <p>Ce délégué n'a aucun secteur de type Semi-Déplacement ou Déplacement dans ses secteurs assignés.</p>
     </div>
     {% endif %}
 </div>
@@ -140,9 +200,9 @@
           <thead>
               <tr>
                   {% for single in plan %}
-                      {% with cat=plan_to_sector|get_item:single.id %}
-                      <th class="text-left sector-header{% if cat == 'SEMI' %} sector-semi-header{% elif cat == 'DEP' %} sector-dep-header{% endif %}"
-                          {% if cat == 'SEMI' %}style="background-color:#ffc107;color:#212529;"{% elif cat == 'DEP' %}style="background-color:#dc3545;color:white;"{% endif %}>
+                      {% with cat=plan_to_sector|get_item:single.id validated=plan_validations|get_item:single.id %}
+                      <th class="text-left sector-header"
+                          {% if validated %}style="background-color:#28a745;color:white;"{% endif %}>
                           {{ single.get_date }}
                       </th>
                       {% endwith %}

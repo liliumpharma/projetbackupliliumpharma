@@ -175,7 +175,7 @@
                       const userSelect = document.getElementById('search_user');
                   
                       // Fetch pour obtenir les familles et remplir le select
-                      fetch('https://app.liliumpharma.com/accounts/families/')
+                      fetch('/accounts/families/')
                         .then(response => response.json())
                         .then(data => {
                           data.families.forEach(family => {
@@ -199,7 +199,7 @@
                         userSelect.innerHTML = '<option value="-1" disabled>Choisir un utilisateur</option>';
                   
                         // Faire une requête pour obtenir les utilisateurs par famille
-                        fetch(`https://app.liliumpharma.com/accounts/api/users-by-family/?family=${selectedFamily}`)
+                        fetch(`/accounts/api/users-by-family/?family=${selectedFamily}`)
                           .then(response => response.json())
                           .then(users => {
                             users.forEach(user => {
@@ -359,7 +359,7 @@
             
           
               // Construire l'URL avec les paramètres
-              const apiUrl = `https://app.liliumpharma.com/rapports/api?${params.toString()}`;
+              const apiUrl = `/rapports/api?${params.toString()}`;
           
               // Faire la requête fetch en utilisant la méthode GET
               fetch(apiUrl, { method: 'GET' })
@@ -577,7 +577,7 @@
                         const reportId = this.getAttribute('data-id');
                         
                         // Mettre à jour la note sur le serveur
-                        fetch(`https://app.liliumpharma.com/rapports/${reportId}/note/set/?note=${rating}`, {
+                        fetch(`/rapports/${reportId}/note/set/?note=${rating}`, {
                           method: 'GET'
                         })
                         .then(response => response.json())
@@ -654,39 +654,50 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'X-CSRFToken': csrfToken // <-- ADD THIS LINE
+          'X-CSRFToken': csrfToken
         },
         body: formData.toString()
       })
       .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
+        console.log('[comment] status:', response.status, response.ok);
+        if (!response.ok) {
+          return response.text().then(body => {
+            console.error('[comment] error body:', body);
+            throw new Error('api_error');
+          });
+        }
         return response.json();
       })
-              .then(response => {
+      .then(response => {
+                console.log('[comment] success response:', response);
                 const safeUsername = escapeHTML(response.user?.username || 'Utilisateur');
                 const safeComment = escapeHTML(response.comment);
-                
+
                 const commentHTML = `
                   <li>
                     <strong>${safeUsername}</strong>: ${safeComment} <span style="font-size:10px">(Ajouté le: ${formattedDate})</span>
                   </li>
                 `;
-                
-                let existingComments = administrationCommentDiv.querySelector('ul');
-                if (existingComments) {
-                  existingComments.insertAdjacentHTML('beforeend', commentHTML);
-                } else {
-                  administrationCommentDiv.innerHTML = `<div><h6 class="text-left"><strong>Nouveau Commentaires :</strong></h6><ul>${commentHTML}</ul></div>`;
+
+                try {
+                  let existingComments = administrationCommentDiv ? administrationCommentDiv.querySelector('ul') : null;
+                  if (existingComments) {
+                    existingComments.insertAdjacentHTML('beforeend', commentHTML);
+                  } else if (administrationCommentDiv) {
+                    administrationCommentDiv.innerHTML = `<div><h6 class="text-left"><strong>Nouveau Commentaires :</strong></h6><ul>${commentHTML}</ul></div>`;
+                  }
+                } catch (domError) {
+                  console.warn('[comment] DOM update failed, but comment was saved:', domError);
                 }
-          
+
                 commentInput.value = '';
                 if(typeof vanillaToast !== 'undefined') {
                     vanillaToast.success('Votre commentaire a été enregistré avec succès.');
                 }
               })
               .catch(error => {
-                console.error("Error:", error);
-                if(typeof vanillaToast !== 'undefined') {
+                console.error('[comment] catch:', error);
+                if (error.message === 'api_error' && typeof vanillaToast !== 'undefined') {
                     vanillaToast.error("Erreur lors de l'enregistrement du commentaire.");
                 }
               });

@@ -1052,9 +1052,22 @@ from .models import UserTargetMonth
 
 def user_target_month_print(request, id):
     user_target_month = get_object_or_404(UserTargetMonth, id=id)
+    raw_products = user_target_month.usertargetmonthproduct_set.select_related("product").all()
+    products = []
+    total_price = 0
+    for p in raw_products:
+        line_total = p.quantity * (p.product.price or 0)
+        total_price += line_total
+        products.append({
+            "nom": p.product.nom,
+            "quantity": p.quantity,
+            "unit_price": p.product.price,
+            "line_total": line_total,
+        })
     context = {
         "user_target_month": user_target_month,
-        "products": user_target_month.usertargetmonthproduct_set.all(),
+        "products": products,
+        "total_price": total_price,
     }
     return render(
         request, "../templates/print/target_month.html", context

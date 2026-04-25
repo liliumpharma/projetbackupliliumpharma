@@ -821,34 +821,6 @@ def notifiate_on_create(sender, **kwargs):
 # ----------TO HERE -----------
 
 
-@receiver(post_save, sender=Comment)
-def notifiate_on_create(sender, **kwargs):
-    from rapports.api.serializers import RapportSerializer
-
-    instance = kwargs["instance"]
-    notification = Notification.objects.create(
-        title=f"Nouveau commentaire !",
-        description=f"{instance.user.username} vient de commenter le rapport du {str(instance.rapport.added)}",
-        data={
-            "name": "Rapports",
-            "title": "Rapport",
-            "message": f"{instance.rapport.user.username}  vien de commenter le  rapport du  {str(instance.rapport.added)}",
-            "confirm_text": "voir le rapport",
-            "cancel_text": "plus tard",
-            "StackName": "Rapports",
-            "url": f"https://app.liliumpharma.com/rapports/PDF/{instance.id}",
-            "navigate_to": json.dumps(
-                {
-                    "screen": "Details",
-                    "params": {"rapport": instance.rapport.id, "should_fetch": True},
-                }
-            ),
-        },
-    )
-    # notification.users.set([usr for usr in instance.rapport.user.userprofile.get_users_to_notify()])
-    user = User.objects.filter(id=1).first()
-    notification.users.set([user])
-    # notification.send()
 
 
 class QRCodeModel(models.Model):
