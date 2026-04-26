@@ -25,6 +25,9 @@ from django.utils import timezone
 from rest_framework.authtoken.models import Token
 import json
 from produits.models import Produit
+from . import send_pdf_whatsapp
+
+# ADMIN_WHATSAPP_NUMBER = "213540096997"  # replace with the real admin number
 
 
 from accounts.models import *
@@ -433,6 +436,10 @@ class addorder(TemplateView):
             pass
         elif pharmacy_id and gros_id and not super_gros_id:
             pass
+        elif not pharmacy_id and gros_id and super_gros_id:
+            pass
+        elif pharmacy_id and not gros_id and super_gros_id:
+            pass
         elif pharmacy_id and not gros_id and not super_gros_id:
             return _render_form_with_message(
                 "Veuillez Choisir que deux parmi Pharmacie, Grossiste et SuperGros ou Bien que SuperGros Seul"
@@ -493,6 +500,21 @@ class addorder(TemplateView):
 
         for produit_obj, qtt_int in selected_lines:
             OrderItem.objects.create(order=order, produit=produit_obj, qtt=qtt_int)
+
+        # ==========================================
+        # SMART WHATSAPP TRIGGER
+        # ==========================================
+        print(f"[WhatsApp DEBUG] super_gros={order.super_gros}, gros={order.gros}, pharmacy={order.pharmacy}")
+        if order.super_gros and (order.gros or order.pharmacy):
+            responsible_profile = order.super_gros.user
+            print(f"[WhatsApp DEBUG] responsible_profile={responsible_profile}, telephone={getattr(responsible_profile, 'telephone', 'N/A')}")
+            if responsible_profile and responsible_profile.telephone:
+                send_pdf_whatsapp.thread(order.id, responsible_profile.telephone).run()
+            else:
+                print(f"[WhatsApp] Skipping: No phone number for {order.super_gros.name}'s responsible user.")
+        else:
+            print(f"[WhatsApp DEBUG] Condition not met: super_gros={bool(order.super_gros)}, gros_or_pharmacy={bool(order.gros or order.pharmacy)}")
+        # ==========================================
 
         m = "Bon de Commande ajouter avec succes"
         return render(request, "orders/ord.html", {"m": m})
@@ -742,6 +764,18 @@ class OrderAppAPI(APIView):
                 pserializer = OrderItemSerializer(data=produits_data, many=True)
                 if pserializer.is_valid():
                     pserializer.save()
+                    
+                    # ==========================================
+                    # SMART WHATSAPP TRIGGER
+                    # ==========================================
+                    if order.super_gros and (order.gros or order.pharmacy):
+                        responsible_profile = order.super_gros.user
+                        if responsible_profile and responsible_profile.telephone:
+                            send_pdf_whatsapp.thread(order.id, responsible_profile.telephone).run()
+                        else:
+                            print(f"[WhatsApp] Skipping: No phone number for {order.super_gros.name}'s responsible user.")
+                    # ==========================================
+
                     return Response(
                         OrderSerializer(order, many=False).data,
                         status=status.HTTP_201_CREATED,

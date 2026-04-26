@@ -148,8 +148,27 @@
     </div>
 
     <div class="card">
-        <h2>1. Filtres appliqués</h2>
-        <ul id="filters-list"></ul>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">
+            <div>
+                <h2 style="border-bottom: none; margin-bottom: 0;">1. Filtres appliqués</h2>
+                <ul id="filters-list" style="margin-bottom: 0;"></ul>
+            </div>
+            <div id="secondary-filter-container">
+                <label style="font-size:12px; font-weight:bold; color:#1B5E20; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:5px; margin-bottom: 5px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2z"/>
+                  </svg> Région
+                </label>
+                <select id="filter-region" style="border: 2px solid #28a745; background-color: #F1F8E9; color: #1B5E20; font-weight: bold; border-radius:4px; padding:6px 10px; min-width: 180px;">
+                    <option value="">Toutes les régions</option>
+                    <option value="Centre">Centre</option>
+                    <option value="Sud">Sud</option>
+                    <option value="Est">Est</option>
+                    <option value="Ouest">Ouest</option>
+                    <option value="Vide">Vide</option>
+                </select>
+            </div>
+        </div>
     </div>
 
     <div class="card">
@@ -351,6 +370,22 @@
             }
         }
         
+        // Initialize region filter from URL
+        const filterRegionEl = document.getElementById('filter-region');
+        if (urlObj.has('user_region')) {
+            filterRegionEl.value = urlObj.get('user_region');
+        }
+
+        filterRegionEl.addEventListener('change', (e) => {
+            const newRegion = e.target.value;
+            if (newRegion) {
+                urlObj.set('user_region', newRegion);
+            } else {
+                urlObj.delete('user_region');
+            }
+            window.location.search = urlObj.toString();
+        });
+        
         // Added headers to ensure Django accepts the request
         fetch('/orders/api/export/preview/' + currentParams, {
             headers: {
@@ -409,109 +444,140 @@
                 filteredRows[idxGS] = temp;
             }
 
-            const phGrosRow = filteredRows.find(row => String(row[0]).toUpperCase() === "PH_GROS");
+            let currentSortType = 'PH_GROS';
+            let currentSortOrder = 'desc';
 
-            let colIndices = [];
-            for (let i = 1; i < data.totaux_type.headers.length; i++) {
-                colIndices.push(i);
-            }
-
-            if (phGrosRow) {
-                colIndices.sort((a, b) => {
-                    const headerA = String(data.totaux_type.headers[a]).toLowerCase();
-                    const headerB = String(data.totaux_type.headers[b]).toLowerCase();
-
-                    const isValeurTotalA = headerA === "valeur total";
-                    const isValeurTotalB = headerB === "valeur total";
-                    const isTotalA = !isValeurTotalA && (headerA.includes("total") || headerA.includes("somme"));
-                    const isTotalB = !isValeurTotalB && (headerB.includes("total") || headerB.includes("somme"));
-
-                    // "Valeur Total" comes first
-                    if (isValeurTotalA && !isValeurTotalB) return -1;
-                    if (!isValeurTotalA && isValeurTotalB) return 1;
-
-                    // "Total" (non-valeur) comes second
-                    if (isTotalA && !isTotalB) return -1;
-                    if (!isTotalA && isTotalB) return 1;
-
-                    // Product rows: sort by PH_GROS descending (bigger to smaller)
-                    const valA = parseFloat(phGrosRow[a]) || 0;
-                    const valB = parseFloat(phGrosRow[b]) || 0;
-                    return valB - valA;
-                });
-            }
-
-            colIndices = [0, ...colIndices];
-
-            const totauxBody = document.getElementById('totaux-body');
-            const totauxHeaders = document.getElementById('totaux-headers');
-
-            let rowCounter = 0;
-            colIndices.forEach((colIndex) => {
-                const header = data.totaux_type.headers[colIndex];
-                const tr = document.createElement('tr');
-
-                const headerLower = header.toLowerCase();
-                const isValeurTotalRow = headerLower === "valeur total";
-                const isTotalRow = !isValeurTotalRow && (headerLower.includes('total') || headerLower.includes('somme'));
-                const isHeaderRow = colIndex === 0;
-
-                const specialRowBg = isValeurTotalRow ? '#FFF8E1' : isTotalRow ? '#E3F2FD' : null;
-                const specialRowColor = isValeurTotalRow ? '#E65100' : isTotalRow ? '#0D47A1' : null;
-
-                // Row header (the original column header)
-                const thRowHeader = document.createElement('th');
-                if (!isHeaderRow && !isTotalRow && !isValeurTotalRow) {
-                    rowCounter++;
-                    thRowHeader.textContent = `${rowCounter}- ${header}`;
-                } else {
-                    thRowHeader.textContent = header;
+            function renderTotauxTable() {
+                const totauxBody = document.getElementById('totaux-body');
+                const totauxHeaders = document.getElementById('totaux-headers');
+                totauxBody.innerHTML = '';
+                
+                let colIndices = [];
+                for (let i = 1; i < data.totaux_type.headers.length; i++) {
+                    colIndices.push(i);
                 }
-                thRowHeader.style.textAlign = 'left';
-                if (specialRowBg) { thRowHeader.style.backgroundColor = specialRowBg; thRowHeader.style.color = specialRowColor; }
-                tr.appendChild(thRowHeader);
 
-                // Values from each type (GROS_SUPER, PH_GROS)
-                filteredRows.forEach(row => {
-                    let cell;
-                    if (colIndex === 0) {
-                        // First row of the transposed table contains the type names as column headers
-                        cell = document.createElement('th');
-                    } else if (isTotalRow || isValeurTotalRow) {
-                        // Style total rows as header cells
-                        cell = document.createElement('th');
+                const sortRow = filteredRows.find(row => String(row[0]).toUpperCase() === currentSortType);
+
+                if (sortRow) {
+                    colIndices.sort((a, b) => {
+                        const headerA = String(data.totaux_type.headers[a]).toLowerCase();
+                        const headerB = String(data.totaux_type.headers[b]).toLowerCase();
+
+                        const isValeurTotalA = headerA === "valeur total";
+                        const isValeurTotalB = headerB === "valeur total";
+                        const isTotalA = !isValeurTotalA && (headerA.includes("total") || headerA.includes("somme"));
+                        const isTotalB = !isValeurTotalB && (headerB.includes("total") || headerB.includes("somme"));
+
+                        // "Valeur Total" comes first
+                        if (isValeurTotalA && !isValeurTotalB) return -1;
+                        if (!isValeurTotalA && isValeurTotalB) return 1;
+
+                        // "Total" (non-valeur) comes second
+                        if (isTotalA && !isTotalB) return -1;
+                        if (!isTotalA && isTotalB) return 1;
+
+                        // Product rows: sort by chosen type
+                        const valA = parseFloat(sortRow[a]) || 0;
+                        const valB = parseFloat(sortRow[b]) || 0;
+                        return currentSortOrder === 'desc' ? valB - valA : valA - valB;
+                    });
+                }
+
+                colIndices = [0, ...colIndices];
+
+                let rowCounter = 0;
+                colIndices.forEach((colIndex) => {
+                    const header = data.totaux_type.headers[colIndex];
+                    const tr = document.createElement('tr');
+
+                    const headerLower = header.toLowerCase();
+                    const isValeurTotalRow = headerLower === "valeur total";
+                    const isTotalRow = !isValeurTotalRow && (headerLower.includes('total') || headerLower.includes('somme'));
+                    const isHeaderRow = colIndex === 0;
+
+                    const specialRowBg = isValeurTotalRow ? '#FFF8E1' : isTotalRow ? '#E3F2FD' : null;
+                    const specialRowColor = isValeurTotalRow ? '#E65100' : isTotalRow ? '#0D47A1' : null;
+
+                    // Row header (the original column header)
+                    const thRowHeader = document.createElement('th');
+                    if (!isHeaderRow && !isTotalRow && !isValeurTotalRow) {
+                        rowCounter++;
+                        thRowHeader.textContent = `${rowCounter}- ${header}`;
                     } else {
-                        cell = document.createElement('td');
+                        thRowHeader.textContent = header;
                     }
-                    if (specialRowBg) { cell.style.backgroundColor = specialRowBg; cell.style.color = specialRowColor; }
-                    const val = row[colIndex];
-                    if (header.toLowerCase() === "valeur total" && colIndex !== 0 && typeof val === 'number') {
-                        const typeName = String(row[0]).toUpperCase();
-                        const fmt = v => Number(v).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' DA';
-                        if (typeName === 'PH_GROS') {
-                            const brute = val * 1.19 * 1.15 * 1.1;
-                            cell.innerHTML =
-                                `<span style="font-size:12px;white-space:nowrap;"><span style="color:#0D47A1;font-weight:bold;">NET&nbsp;:</span> ${fmt(val)}</span>` +
-                                `<span style="font-size:12px;white-space:nowrap;margin-left:12px;padding-left:12px;border-left:2px solid #ccc;"><span style="color:#BF360C;font-weight:bold;">BRUTE&nbsp;:</span> ${fmt(brute)}</span>`;
-                        } else if (typeName === 'GROS_SUPER') {
-                            const brute = val * 1.19 * 1.15;
-                            cell.innerHTML =
-                                `<span style="font-size:12px;white-space:nowrap;"><span style="color:#0D47A1;font-weight:bold;">NET&nbsp;:</span> ${fmt(val)}</span>` +
-                                `<span style="font-size:12px;white-space:nowrap;margin-left:12px;padding-left:12px;border-left:2px solid #ccc;"><span style="color:#BF360C;font-weight:bold;">BRUTE&nbsp;:</span> ${fmt(brute)}</span>`;
+                    thRowHeader.style.textAlign = 'left';
+                    if (specialRowBg) { thRowHeader.style.backgroundColor = specialRowBg; thRowHeader.style.color = specialRowColor; }
+                    tr.appendChild(thRowHeader);
+
+                    // Values from each type (GROS_SUPER, PH_GROS)
+                    filteredRows.forEach(row => {
+                        let cell;
+                        if (colIndex === 0) {
+                            // First row of the transposed table contains the type names as column headers
+                            cell = document.createElement('th');
+                            const typeName = String(row[0]).toUpperCase();
+                            cell.style.cursor = 'pointer';
+                            cell.style.userSelect = 'none';
+                            cell.title = "Cliquez pour trier par " + typeName;
+                            
+                            let sortIcon = '';
+                            if (typeName === currentSortType) {
+                                sortIcon = currentSortOrder === 'desc' ? ' ▼' : ' ▲';
+                            }
+                            cell.innerHTML = `${typeName}<span style="font-size: 0.8em; color: #555; margin-left: 4px;">${sortIcon}</span>`;
+                            
+                            cell.onclick = () => {
+                                if (currentSortType === typeName) {
+                                    currentSortOrder = currentSortOrder === 'desc' ? 'asc' : 'desc';
+                                } else {
+                                    currentSortType = typeName;
+                                    currentSortOrder = 'desc';
+                                }
+                                renderTotauxTable();
+                            };
+                        } else if (isTotalRow || isValeurTotalRow) {
+                            // Style total rows as header cells
+                            cell = document.createElement('th');
                         } else {
-                            cell.textContent = fmt(val);
+                            cell = document.createElement('td');
                         }
-                    } else {
-                        cell.textContent = (val !== null && val !== undefined) ? val : '-';
-                    }
-                    tr.appendChild(cell);
+                        
+                        if (colIndex !== 0) {
+                            if (specialRowBg) { cell.style.backgroundColor = specialRowBg; cell.style.color = specialRowColor; }
+                            const val = row[colIndex];
+                            if (header.toLowerCase() === "valeur total" && typeof val === 'number') {
+                                const typeName = String(row[0]).toUpperCase();
+                                const fmt = v => Number(v).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' DA';
+                                if (typeName === 'PH_GROS') {
+                                    const brute = val * 1.19 * 1.15 * 1.1;
+                                    cell.innerHTML =
+                                        `<span style="font-size:12px;white-space:nowrap;"><span style="color:#0D47A1;font-weight:bold;">NET&nbsp;:</span> ${fmt(val)}</span>` +
+                                        `<span style="font-size:12px;white-space:nowrap;margin-left:12px;padding-left:12px;border-left:2px solid #ccc;"><span style="color:#BF360C;font-weight:bold;">BRUTE&nbsp;:</span> ${fmt(brute)}</span>`;
+                                } else if (typeName === 'GROS_SUPER') {
+                                    const brute = val * 1.19 * 1.15;
+                                    cell.innerHTML =
+                                        `<span style="font-size:12px;white-space:nowrap;"><span style="color:#0D47A1;font-weight:bold;">NET&nbsp;:</span> ${fmt(val)}</span>` +
+                                        `<span style="font-size:12px;white-space:nowrap;margin-left:12px;padding-left:12px;border-left:2px solid #ccc;"><span style="color:#BF360C;font-weight:bold;">BRUTE&nbsp;:</span> ${fmt(brute)}</span>`;
+                                } else {
+                                    cell.textContent = fmt(val);
+                                }
+                            } else {
+                                cell.textContent = (val !== null && val !== undefined) ? val : '-';
+                            }
+                        }
+                        tr.appendChild(cell);
+                    });
+                    
+                    totauxBody.appendChild(tr);
                 });
                 
-                totauxBody.appendChild(tr);
-            });
-            
-            // Clear top headers row since we moved to a transposed layout
-            totauxHeaders.innerHTML = '';
+                // Clear top headers row since we moved to a transposed layout
+                totauxHeaders.innerHTML = '';
+            }
+
+            renderTotauxTable();
 
             // Show missing products below the table
             if (data.missing_products && data.missing_products.length > 0) {

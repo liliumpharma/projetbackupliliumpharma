@@ -34,6 +34,9 @@
         }
         .vis-card-title { font-size: 16px; font-weight: bold; color: #333; margin-bottom: 15px; }
         .total-banner { background: #0D47A1; color: white; padding: 10px; text-align: center; border-radius: 8px; margin-bottom: 15px; font-weight: bold; }
+        .total-banner-split { display: flex; gap: 10px; margin-bottom: 15px; }
+        .total-banner-split .banner-ph  { flex: 1; background: #1B5E20; color: white; padding: 10px; text-align: center; border-radius: 8px; font-weight: bold; }
+        .total-banner-split .banner-gs  { flex: 1; background: #0D47A1; color: white; padding: 10px; text-align: center; border-radius: 8px; font-weight: bold; }
 
         .filter-tag {
             display: inline-block;
@@ -196,8 +199,27 @@
     <div id="charts-wrapper" style="display:none;">
 
         <div class="card" id="card-filters">
-            <h2>1. Filtres appliqués</h2>
-            <div id="applied-filters-tags"></div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 20px;">
+                <div>
+                    <h2 style="border-bottom: none; margin-bottom: 0;">1. Filtres appliqués</h2>
+                    <div id="applied-filters-tags" style="margin-top: 10px;"></div>
+                </div>
+                <div id="secondary-filter-container">
+                    <label style="font-size:12px; font-weight:bold; color:#1B5E20; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:5px; margin-bottom: 5px;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5v-2z"/>
+                      </svg> Région
+                    </label>
+                    <select id="filter-region" style="border: 2px solid #28a745; background-color: #F1F8E9; color: #1B5E20; font-weight: bold; border-radius:4px; padding:6px 10px; min-width: 180px;">
+                        <option value="">Toutes les régions</option>
+                        <option value="Centre">Centre</option>
+                        <option value="Sud">Sud</option>
+                        <option value="Est">Est</option>
+                        <option value="Ouest">Ouest</option>
+                        <option value="Vide">Vide</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <div class="card" id="card-ph-gros-users">
@@ -216,13 +238,19 @@
 
         <div class="card" id="card-wilayas">
             <h2 style="color:#E65100; border-color:#FF9800;">4. Commande par Wilaya</h2>
-            <div class="total-banner" id="banner-wilayas"></div>
+            <div class="total-banner-split" id="banner-wilayas">
+                <div class="banner-ph" id="banner-wilayas-ph"></div>
+                <div class="banner-gs" id="banner-wilayas-gs"></div>
+            </div>
             <div class="chart-box" id="box-wilayas"></div>
         </div>
 
         <div class="card" id="card-products">
             <h2 style="color:#6A1B9A; border-color:#8E24AA;">5. Commande par Produit</h2>
-            <div class="total-banner" id="banner-products"></div>
+            <div class="total-banner-split" id="banner-products">
+                <div class="banner-ph" id="banner-products-ph"></div>
+                <div class="banner-gs" id="banner-products-gs"></div>
+            </div>
             <div class="chart-box" id="box-products"></div>
         </div>
 
@@ -443,18 +471,22 @@ function drawGroupedBarChart(canvasId, parsedData, boxId, bannerId) {
         if (bannerId) document.getElementById(bannerId).style.display = 'none';
         return;
     }
-    if (bannerId) document.getElementById(bannerId).style.display = 'block';
+    if (bannerId) document.getElementById(bannerId).style.display = 'flex';
     if (!box.querySelector('canvas')) box.innerHTML = `<canvas id="${canvasId}"></canvas>`;
     if (bannerId) {
-        let globalVal = 0, globalQty = 0, globalOrders = new Set();
+        let phVal = 0, phQty = 0, phOrders = new Set();
+        let gsVal = 0, gsQty = 0, gsOrders = new Set();
         parsedData.labels.forEach(lbl => {
             const e = parsedData.entities[lbl];
-            globalVal += e.ph_gros.val + e.gros_super.val;
-            globalQty += e.ph_gros.qty + e.gros_super.qty;
-            e.ph_gros.orders.forEach(id => globalOrders.add(id));
-            e.gros_super.orders.forEach(id => globalOrders.add(id));
+            phVal += e.ph_gros.val;    phQty += e.ph_gros.qty;
+            gsVal += e.gros_super.val; gsQty += e.gros_super.qty;
+            e.ph_gros.orders.forEach(id => phOrders.add(id));
+            e.gros_super.orders.forEach(id => gsOrders.add(id));
         });
-        document.getElementById(bannerId).textContent = `Total Général : ${globalOrders.size} Bons  /  ${fmtUnits(globalQty)} Unités  /  ${fmtDA(globalVal)}`;
+        const elPh = document.getElementById(bannerId + '-ph');
+        const elGs = document.getElementById(bannerId + '-gs');
+        if (elPh) elPh.textContent = `PH_GROS : ${phOrders.size} Bons  /  ${fmtUnits(phQty)} Unités  /  ${fmtDA(phVal)}`;
+        if (elGs) elGs.textContent = `GROS_SUPER : ${gsOrders.size} Bons  /  ${fmtUnits(gsQty)} Unités  /  ${fmtDA(gsVal)}`;
     }
     const datasets = [];
     parsedData.segments.forEach(seg => {
@@ -713,6 +745,23 @@ function renderZeroUsers(allLineUsers, activeLabels, containerId) {
 /* ── Main load ── */
 async function loadData() {
     const params = new URLSearchParams(window.location.search);
+    
+    // Initialize region filter from URL
+    const filterRegionEl = document.getElementById('filter-region');
+    if (params.has('region')) {
+        filterRegionEl.value = params.get('region');
+    }
+
+    filterRegionEl.addEventListener('change', (e) => {
+        const newRegion = e.target.value;
+        if (newRegion) {
+            params.set('region', newRegion);
+        } else {
+            params.delete('region');
+        }
+        window.location.search = params.toString();
+    });
+
     try {
         const response = await fetch(`/orders/api/product-stats-data/?${params.toString()}`);
         const data = await response.json();

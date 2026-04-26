@@ -201,14 +201,14 @@ def my_handler(sender, **kwargs):
     # notification.users.set(all_users_to_notify)
 
     # shot = WebShot()
-    create_jpg = thread(
-        "generating_jpg_for_exit_order"+str(instance.id),
-         instance.id+1000,
-         'http://localhost:8001/orders/exit_orders/'+str(instance.id),
-         '/app/static/share/exit_orders/'+str(instance.id)+'.jpg'
-         )
+    # create_jpg = thread(
+    #     "generating_jpg_for_exit_order"+str(instance.id),
+    #      instance.id+1000,
+    #      'http://localhost:8001/orders/exit_orders/'+str(instance.id),
+    #      '/app/static/share/exit_orders/'+str(instance.id)+'.jpg'
+    #      )
 
-    create_jpg.start()
+    # create_jpg.start()
 
 
 @receiver(post_save, sender=Order)
@@ -269,14 +269,14 @@ def my_handler(sender, **kwargs):
 
     # notification.send()
     # shot = WebShot()
-    create_jpg = thread(
-        "generating_jpg_for_order"+str(instance.id),
-         instance.id+1000,
-         'http://localhost:8001/orders/'+str(instance.id),
-         '/app/static/share/orders/'+str(instance.id)+'.jpg'
-         )
+    # create_jpg = thread(
+    #     "generating_jpg_for_order"+str(instance.id),
+    #      instance.id+1000,
+    #      'http://localhost:8001/orders/'+str(instance.id),
+    #      '/app/static/share/orders/'+str(instance.id)+'.jpg'
+    #      )
 
-    create_jpg.start()
+    # create_jpg.start()
     # import imgkit
     # imgkit.from_url('http://localhost:8001/orders/'+str(instance.id),'/app/static/share/orders/'+str(instance.id)+'.jpg')
 

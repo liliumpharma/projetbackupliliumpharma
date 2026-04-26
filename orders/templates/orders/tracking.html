@@ -179,6 +179,7 @@
             <option value="Sud">Sud</option>
             <option value="Est">Est</option>
             <option value="Ouest">Ouest</option>
+            <option value="Vide">Vide</option>
         </select>
       </div>
     </div>
@@ -884,7 +885,7 @@
               var rHtml = '';
               var totalVal = data.root.stats.valeur || 0;
 
-              var regions = ['Centre', 'Est', 'Ouest', 'Sud'];
+              var regions = ['Centre', 'Est', 'Ouest', 'Sud', 'Vide'];
               regions.forEach(function(reg, index) {
                   var stats = data.regional_stats[reg];
                   // Only calculate percentage for the Value (DA) now

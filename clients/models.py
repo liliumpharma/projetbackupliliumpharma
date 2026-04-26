@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from accounts.models import UserProfile
 from produits.models import Produit
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
@@ -24,6 +25,14 @@ class Client(models.Model):
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
+    )
+
+    user = models.ForeignKey(
+        UserProfile,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="clients",
     )
 
     def __str__(self):

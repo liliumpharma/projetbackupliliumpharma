@@ -74,6 +74,11 @@ class ClientAdmin(admin.ModelAdmin):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "related_client":
             kwargs["queryset"] = Client.objects.filter(supergro=True)
+        if db_field.name == "user":
+            kwargs["queryset"] = UserProfile.objects.filter(
+                speciality_rolee="Superviseur_national",
+                work_as_commercial=True,
+            )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def Number_of_Grossiste(self, obj):
