@@ -161,7 +161,6 @@
               <th class="text-left">spec</th>
               <th class="text-left">contact</th>
               <th class="text-left">adresse</th>
-              <th class="text-left">commercial</th>
               <th class="text-left">Lilium 1</th>
               <th class="text-left">Lilium 2</th>
               <th class="text-left">L3</th>
@@ -183,7 +182,7 @@
                     <br>
                     <p style="font-size: 14px;">
                       <a target="_blank" href="https://app.liliumpharma.com/medecins/visites/PDF/{{medecin.id}}/?priority=&amp;mindate={% now 'Y' %}-01-01&amp;maxdate=&amp;produit=&amp;stock=">
-                        {{medecin.nbr_visites_year}} v cette année
+                        {{medecin.annotated_nbr_visites_year}} v cette année
                       </a>
                     </p>
                     {% if request.GET.visites == "2" %}
@@ -206,7 +205,6 @@
 
                   <td style="font-size: 14px;">{{medecin.email}} / {{medecin.telephone}}</td>
                   <td style="font-size: 14px;">{{medecin.adresse}} {% if medecin.lat and medecin.lon %}<img src="https://app.liliumpharma.com/{% static 'img/location.png' %}" style="height: 14px;"/>{%endif%}</td>
-                  <td style="font-size: 14px;">{% if medecin.medecin_commercial_poste %}{{ medecin.medecin_commercial_poste }}{% else %}-{% endif %}</td>
                   <td style="font-size: 14px;">{% if medecin.medecin_commercial_lilium_1 %}{{ medecin.medecin_commercial_lilium_1 }}{% else %}-{% endif %}</td>
                   <td style="font-size: 14px;">{% if medecin.medecin_commercial_lilium_2 %}{{ medecin.medecin_commercial_lilium_2 }}{% else %}-{% endif %}</td>
                   <td style="font-size: 14px;">{% if medecin.medecin_commercial_l3 %}{{ medecin.medecin_commercial_l3 }}{% else %}-{% endif %}</td>

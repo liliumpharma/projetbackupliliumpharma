@@ -308,9 +308,9 @@ class UsersByFamilyAPIView(APIView):
                 user_data.insert(0,t)
             elif profile.speciality_rolee == "Superviseur_national" or profile.speciality_rolee == "CountryManager":
                 users = User.objects.filter(
-                    userprofile__family=family
+                    userprofile__lines=family
                 )  # Adjust this if necessary based on your models
-                users = User.objects.filter(userprofile__family__in=["lilium Pharma", "Lilium1", "Lilium2", "orient Bio", "Aniya_Pharm", "production", "Administration"])
+                users = User.objects.filter(userprofile__lines__in=["lilium Pharma", "Lilium1", "Lilium2", "orient Bio", "Aniya_Pharm", "production", "Administration"])
                 user_data = [
                 {
                     "id": user.id,
@@ -346,7 +346,7 @@ class UsersByFamilyAPIView(APIView):
             return Response(user_data, status=200)
         else:
             if request.user.is_superuser:
-                users = User.objects.filter(userprofile__region=family, userprofile__family__in=["lilium Pharma", "Lilium1", "Lilium2", "orient Bio", "Aniya_Pharm", "production", "Administration"])
+                users = User.objects.filter(userprofile__region=family, userprofile__lines__in=["lilium Pharma", "Lilium1", "Lilium2", "orient Bio", "Aniya_Pharm", "production", "Administration"])
                 user_data = [
                 {
                     "id": user.id,
@@ -388,9 +388,9 @@ class UsersByFamilyAPIView(APIView):
                 user_data.insert(0,t)
             elif profile.speciality_rolee == "Superviseur_national" or profile.speciality_rolee == "CountryManager":
                 users = User.objects.filter(
-                    userprofile__family=family
+                    userprofile__lines=family
                 )  # Adjust this if necessary based on your models
-                users = User.objects.filter(userprofile__region=family, userprofile__family__in=["lilium Pharma", "Lilium1", "Lilium2", "orient Bio", "Aniya_Pharm", "production", "Administration"])
+                users = User.objects.filter(userprofile__region=family, userprofile__lines__in=["lilium Pharma", "Lilium1", "Lilium2", "orient Bio", "Aniya_Pharm", "production", "Administration"])
                 user_data = [
                 {
                     "id": user.id,

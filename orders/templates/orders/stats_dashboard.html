@@ -335,7 +335,7 @@
                         <div class="filter-group">
                             <label><i class="fas fa-user"></i> Utilisateur</label>
                             <div class="custom-select-wrapper" id="usr-wrapper">
-                                <div class="custom-select-trigger" id="usr-trigger" onclick="toggleUserDropdown()">
+                                <div class="custom-select-trigger" id="usr-trigger" onclick="toggleGenericDropdown('usr')">
                                     <span id="usr-display">Tous les utilisateurs</span>
                                     <i class="fas fa-chevron-down trigger-icon"></i>
                                 </div>
@@ -440,6 +440,7 @@
                                     <option value="">-- Sélectionner --</option>
                                     <option value="SuperGros">SuperGros</option>
                                     <option value="Grossiste">Grossiste</option>
+                                    <option value="Pharmacie">Pharmacie</option>
                                 </select>
                                 <i class="fas fa-chevron-down field-icon"></i>
                             </div>
@@ -478,6 +479,26 @@
                                     <div class="dropdown-no-results" id="ct-entity-no-results">Aucun résultat</div>
                                 </div>
                                 <input type="hidden" name="id" id="ct-entity-value">
+                            </div>
+                        </div>
+
+                        <!-- Utilisateur -->
+                        <div class="filter-group">
+                            <label><i class="fas fa-user"></i> Utilisateur</label>
+                            <div class="custom-select-wrapper" id="ct-usr-wrapper">
+                                <div class="custom-select-trigger" id="ct-usr-trigger" onclick="toggleGenericDropdown('ct-usr')">
+                                    <span id="ct-usr-display">Tous les utilisateurs</span>
+                                    <i class="fas fa-chevron-down trigger-icon"></i>
+                                </div>
+                                <div class="custom-select-dropdown" id="ct-usr-dropdown">
+                                    <div class="dropdown-search-wrap">
+                                        <i class="fas fa-search"></i>
+                                        <input type="text" id="ct-usr-search" placeholder="Rechercher..." oninput="renderGenericUserOptions('ct-usr', this.value)" onclick="event.stopPropagation()">
+                                    </div>
+                                    <div class="dropdown-options" id="ct-usr-options"></div>
+                                    <div class="dropdown-no-results" id="ct-usr-no-results">Aucun résultat</div>
+                                </div>
+                                <input type="hidden" name="user" id="ct-usr-value">
                             </div>
                         </div>
 
@@ -561,6 +582,26 @@
                             </div>
                         </div>
 
+                        <!-- Utilisateur -->
+                        <div class="filter-group">
+                            <label><i class="fas fa-user"></i> Utilisateur</label>
+                            <div class="custom-select-wrapper" id="prod-usr-wrapper">
+                                <div class="custom-select-trigger" id="prod-usr-trigger" onclick="toggleGenericDropdown('prod-usr')">
+                                    <span id="prod-usr-display">Tous les utilisateurs</span>
+                                    <i class="fas fa-chevron-down trigger-icon"></i>
+                                </div>
+                                <div class="custom-select-dropdown" id="prod-usr-dropdown">
+                                    <div class="dropdown-search-wrap">
+                                        <i class="fas fa-search"></i>
+                                        <input type="text" id="prod-usr-search" placeholder="Rechercher..." oninput="renderGenericUserOptions('prod-usr', this.value)" onclick="event.stopPropagation()">
+                                    </div>
+                                    <div class="dropdown-options" id="prod-usr-options"></div>
+                                    <div class="dropdown-no-results" id="prod-usr-no-results">Aucun résultat</div>
+                                </div>
+                                <input type="hidden" name="user" id="prod-usr-value">
+                            </div>
+                        </div>
+
                     </div>
 
                     <button type="submit" class="btn-search">
@@ -579,6 +620,7 @@
     const IS_RESTRICTED    = {{ is_restricted|yesno:"true,false" }};
     const SUPER_GROS_LIST  = {{ super_gros_json|safe }};
     const GROSSISTE_LIST   = {{ grossistes_json|safe }};
+    const PHARMACIE_LIST   = {{ pharmacies_json|safe }};
 
     // ── Default dates: first day of current month → today ──
     (function () {
@@ -639,8 +681,8 @@
             return;
         }
 
-        const list     = type === 'SuperGros' ? SUPER_GROS_LIST : GROSSISTE_LIST;
-        const allLabel = type === 'SuperGros' ? 'Tous les SuperGros' : 'Tous les Grossistes';
+        const list     = type === 'SuperGros' ? SUPER_GROS_LIST : (type === 'Grossiste' ? GROSSISTE_LIST : PHARMACIE_LIST);
+        const allLabel = type === 'SuperGros' ? 'Tous les SuperGros' : (type === 'Grossiste' ? 'Tous les Grossistes' : 'Toutes les Pharmacies');
 
         entityOptions = [{ value: 'ALL', label: allLabel }];
         list.forEach(item => entityOptions.push({ value: String(item.id), label: item.name }));
@@ -756,29 +798,37 @@
         });
     }
 
-    // ── User searchable dropdown ──
-    (function initUserDropdown() {
-        if (IS_RESTRICTED && RESTRICTED_USER) {
-            document.getElementById('usr-value').value   = RESTRICTED_USER.value;
-            document.getElementById('usr-display').textContent = userDisplayLabel(RESTRICTED_USER);
-            document.getElementById('usr-trigger').classList.add('disabled');
-        }
-    })();
+    // ── Generic User Dropdown ──
+    ['usr', 'ct-usr', 'prod-usr'].forEach(prefix => initUserDropdown(prefix));
 
-    function onUserRegionChange() {
-        // Reset user selection when region changes
-        document.getElementById('usr-value').value = '';
-        document.getElementById('usr-display').textContent = 'Tous les utilisateurs';
-        document.getElementById('usr-search').value = '';
-        renderUserOptions();
+    function initUserDropdown(prefix) {
+        const elValue = document.getElementById(prefix + '-value');
+        if (!elValue) return;
+
+        if (IS_RESTRICTED && RESTRICTED_USER) {
+            elValue.value = RESTRICTED_USER.value;
+            document.getElementById(prefix + '-display').textContent = userDisplayLabel(RESTRICTED_USER);
+            document.getElementById(prefix + '-trigger').classList.add('disabled');
+        } else {
+            renderGenericUserOptions(prefix, '');
+        }
     }
 
-    function renderUserOptions(filter) {
-        const container  = document.getElementById('usr-options');
-        const noResults  = document.getElementById('usr-no-results');
-        const currentVal = document.getElementById('usr-value').value;
+    function onUserRegionChange() {
+        // Uniquement pour le form "Utilisateurs" (usr)
+        document.getElementById('usr-value').value = '';
+        document.getElementById('usr-display').textContent = 'Tous les utilisateurs';
+        renderGenericUserOptions('usr', '');
+    }
+
+    function renderGenericUserOptions(prefix, filter) {
+        const container  = document.getElementById(prefix + '-options');
+        const noResults  = document.getElementById(prefix + '-no-results');
+        const currentVal = document.getElementById(prefix + '-value').value;
         const q          = (filter || '').toLowerCase().trim();
-        const regionFilter = document.getElementById('usr-region').value;
+
+        const regionEl = document.getElementById(prefix + '-region');
+        const regionFilter = regionEl ? regionEl.value : '';
 
         container.innerHTML = '';
         let visible = 0;
@@ -789,10 +839,10 @@
 
         const sorted = sortedUsers(filteredByRegion);
         const options = IS_RESTRICTED ? sorted : [{ value: '', label: 'Tous les utilisateurs', role: '' }, ...sorted];
+
         options.forEach(opt => {
             const displayLabel = opt.value === '' ? opt.label : userDisplayLabel(opt);
-            const matches = !q || displayLabel.toLowerCase().includes(q);
-            if (!matches) return;
+            if (q && !displayLabel.toLowerCase().includes(q)) return;
             visible++;
             const div = document.createElement('div');
             div.className = 'dropdown-option' + (opt.value === currentVal ? ' selected' : '');
@@ -800,63 +850,55 @@
             div.dataset.value = opt.value;
             div.onclick = function (e) {
                 e.stopPropagation();
-                selectUserOption(opt.value, displayLabel);
+                document.getElementById(prefix + '-value').value = opt.value;
+                document.getElementById(prefix + '-display').textContent = displayLabel;
+                closeGenericDropdown(prefix);
             };
             container.appendChild(div);
         });
-
         noResults.style.display = visible === 0 ? 'block' : 'none';
     }
 
-    function selectUserOption(value, label) {
-        document.getElementById('usr-value').value = value;
-        document.getElementById('usr-display').textContent = label;
-        closeUserDropdown();
-    }
-
-    function positionUserDropdown() {
-        const trigger  = document.getElementById('usr-trigger');
-        const dropdown = document.getElementById('usr-dropdown');
-        const rect     = trigger.getBoundingClientRect();
-        dropdown.style.top   = (rect.bottom + 5) + 'px';
-        dropdown.style.left  = rect.left + 'px';
-        dropdown.style.width = rect.width + 'px';
-    }
-
-    function toggleUserDropdown() {
-        const trigger  = document.getElementById('usr-trigger');
+    function toggleGenericDropdown(prefix) {
+        const trigger = document.getElementById(prefix + '-trigger');
         if (trigger.classList.contains('disabled')) return;
-        const dropdown = document.getElementById('usr-dropdown');
-        const isOpen   = dropdown.classList.contains('open');
-        if (isOpen) {
-            closeUserDropdown();
-        } else {
-            positionUserDropdown();
+        const dropdown = document.getElementById(prefix + '-dropdown');
+        const isOpen = dropdown.classList.contains('open');
+
+        ['usr', 'ct-usr', 'prod-usr'].forEach(p => closeGenericDropdown(p));
+        if (!isOpen) {
+            const rect = trigger.getBoundingClientRect();
+            dropdown.style.top = (rect.bottom + 5) + 'px';
+            dropdown.style.left = rect.left + 'px';
+            dropdown.style.width = rect.width + 'px';
             dropdown.classList.add('open');
             trigger.classList.add('open');
-            renderUserOptions(document.getElementById('usr-search').value);
-            setTimeout(() => document.getElementById('usr-search').focus(), 50);
+            renderGenericUserOptions(prefix, document.getElementById(prefix + '-search').value);
+            setTimeout(() => document.getElementById(prefix + '-search').focus(), 50);
         }
     }
 
-    function closeUserDropdown() {
-        document.getElementById('usr-dropdown').classList.remove('open');
-        document.getElementById('usr-trigger').classList.remove('open');
-    }
-
-    function filterUserOptions() {
-        renderUserOptions(document.getElementById('usr-search').value);
+    function closeGenericDropdown(prefix) {
+        const d = document.getElementById(prefix + '-dropdown');
+        const t = document.getElementById(prefix + '-trigger');
+        if(d) d.classList.remove('open');
+        if(t) t.classList.remove('open');
     }
 
     window.addEventListener('scroll', function (e) {
-        const d = document.getElementById('usr-dropdown');
-        if (d && !d.contains(e.target)) closeUserDropdown();
+        ['usr', 'ct-usr', 'prod-usr'].forEach(p => {
+            const d = document.getElementById(p + '-dropdown');
+            if (d && !d.contains(e.target)) closeGenericDropdown(p);
+        });
     }, true);
 
     document.addEventListener('click', function (e) {
-        const wrapper = document.getElementById('usr-wrapper');
-        if (wrapper && !wrapper.contains(e.target)) closeUserDropdown();
+        ['usr', 'ct-usr', 'prod-usr'].forEach(p => {
+            const wrapper = document.getElementById(p + '-wrapper');
+            if (wrapper && !wrapper.contains(e.target)) closeGenericDropdown(p);
+        });
     });
+
 
     function goToTracker(e) {
         e.preventDefault();

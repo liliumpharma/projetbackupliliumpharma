@@ -119,6 +119,7 @@ urlpatterns = [
     path("upload_excel/", upload_excel, name="upload_excel"),
     path("excel-loading/", excel_loading_view, name="excel_loading"),
     path('delete-medecins/', DeleteMedecinsView.as_view(), name='delete_medecins'),
+   
 
 ]
 

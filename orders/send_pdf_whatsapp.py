@@ -1,59 +1,54 @@
+import sys
 import os
-import threading
 import requests
-from django.template.loader import render_to_string
-from django.conf import settings
-from weasyprint import HTML
 
-class thread(threading.Thread):
-    def __init__(self, order_id, raw_phone):
-        threading.Thread.__init__(self)
-        self.order_id = order_id
-        self.daemon = True
+# This tells the script to run independently of Apache
+if __name__ == "__main__":
+    # 1. Wake up Django from the command line
+    sys.path.append('/var/www/server')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'liliumpharm.settings')
+    import django
+    django.setup()
+
+    # 2. Import models AFTER Django is awake
+    from orders.models import Order
+    from django.template.loader import render_to_string
+    from weasyprint import HTML
+
+    # 3. Grab the data sent from views.py
+    order_id = sys.argv[1]
+    raw_phone = sys.argv[2]
+
+    if not raw_phone or raw_phone == "None":
+        sys.exit(0)
+
+    # 4. Clean the phone number
+    clean_phone = str(raw_phone).replace(" ", "").replace("-", "").replace("+", "")
+    if clean_phone.startswith("0"):
+        clean_phone = "213" + clean_phone[1:]
+
+    pdf_path = f"/var/www/server/temp_pdfs/temp_order_{order_id}.pdf"
+
+    try:
+        # Generate the PDF
+        order = Order.objects.get(id=order_id)
+        rendered = render_to_string("orders/pdf.html", {"order": order})
+        html_doc = HTML(string=rendered, base_url="http://app.liliumpharma.com")
+        html_doc.write_pdf(pdf_path)
+
+        # Send it to Node.js
+        payload = {
+            "number": clean_phone,
+            "filePath": pdf_path,
+            "message": f"Nouvelle commande n° {order_id} - soumise par {order.user.username} - à transférer à {order.super_gros}",
+        }
+        requests.post("http://127.0.0.1:3000/send-pdf", json=payload, timeout=30)
         
-        if raw_phone:
-            clean_phone = str(raw_phone).replace(" ", "").replace("-", "").replace("+", "")
-            if clean_phone.startswith("0"):
-                clean_phone = "213" + clean_phone[1:]
-            self.admin_phone = clean_phone
-        else:
-            self.admin_phone = None
-
-    def run(self):
-        print(f"🚀 [WHATSAPP] THREAD STARTED FOR ORDER {self.order_id} 🚀")
-        
-        if not self.admin_phone:
-            print(f"❌ [WHATSAPP] Aborting: No valid phone number.")
-            return
-
-        from .models import Order
-        pdf_path = f"/var/www/server/temp_pdfs/temp_order_{self.order_id}.pdf"
-        
-        try:
-            print(f"⏳ [WHATSAPP] Generating PDF for Order {self.order_id}...")
-            order = Order.objects.get(id=self.order_id)
-            rendered = render_to_string("orders/pdf.html", {"order": order})
-            html_doc = HTML(string=rendered, base_url="http://app.liliumpharma.com")
-            html_doc.write_pdf(pdf_path)
-            
-            print(f"✅ [WHATSAPP] PDF successfully saved to {pdf_path}")
-
-            payload = {
-                "number": self.admin_phone,
-                "filePath": pdf_path,
-                "message": f"Nouvelle commande n° {self.order_id} - soumise par {order.user.username} - à transférer à {order.super_gros}",
-            }
-            
-            print(f"📡 [WHATSAPP] Sending request to Node.js at 127.0.0.1:3000...")
-            response = requests.post("http://127.0.0.1:3000/send-pdf", json=payload, timeout=30)
-            
-            print(f"🎯 [WHATSAPP] Node.js replied with Status: {response.status_code} | Body: {response.text}")
-            
-        except requests.exceptions.RequestException as req_err:
-            print(f"🔥 [WHATSAPP] FAILED TO CONNECT TO NODE.JS: {req_err}")
-        except Exception as e:
-            print(f"🔥 [WHATSAPP] PYTHON CRASHED: {e}")
-        finally:
-            if os.path.exists(pdf_path):
-                os.remove(pdf_path)
-                print(f"🧹 [WHATSAPP] Cleaned up temporary PDF file.")
+    except Exception as e:
+        # REPLACE 'pass' WITH THESE TWO LINES:
+        with open("/var/www/server/whatsapp_debug.log", "a") as f:
+            f.write(f"Error on order {order_id}: {str(e)}\n")
+    finally:
+        # Always clean up the PDF
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)

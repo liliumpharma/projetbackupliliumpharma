@@ -8,7 +8,7 @@ from django.core.paginator import Paginator
 import datetime
 from rapports.models import Visite
 from produits.models import Produit
-from django.db.models import Count
+from django.db.models import Count, Q, Prefetch
 from django.contrib.auth.models import User
 from .get_medecins import get_medecins
 
@@ -20,7 +20,6 @@ from weasyprint import HTML
 from django.db.models.functions import TruncDate
 from itertools import groupby
 from operator import attrgetter
-
 
 
 MEDICAL = [
@@ -391,15 +390,41 @@ class MedecinListPDF(LoginRequiredMixin, TemplateView):
         user = None
         print(str(request))
 
-        # Extraction de l'utilisateur à partir de la clé commerciale
+        current_year = datetime.datetime.now().year
+
         if commercial_key:
-            username = commercial_key.split(" - ")[0]  # Extraire le nom d'utilisateur
+            username = commercial_key.split(" - ")[0]
             user = User.objects.filter(username=username).first()
-            # Obtenir la liste des médecins pour l'utilisateur, filtrée par commune si spécifiée
-            medecins_list = Medecin.objects.filter(users=user)
-            print("TOUS LES MEDECINS BY USER")
+
+            medecins_list = Medecin.objects.filter(users=user).select_related(
+                'wilaya', 
+                'commune', 
+                'commune__wilaya' 
+            ).prefetch_related(
+                'medecin', 
+                Prefetch('users', queryset=User.objects.select_related('userprofile')) 
+            ).annotate(
+                annotated_nbr_visites_year=Count(
+                    'visite', 
+                    filter=Q(visite__rapport__added__year=current_year),
+                    distinct=True
+                )
+            )
         else:
-            medecins_list = Medecin.objects.all()
+            medecins_list = Medecin.objects.all().select_related(
+                'wilaya', 
+                'commune', 
+                'commune__wilaya' 
+            ).prefetch_related(
+                'medecin', 
+                Prefetch('users', queryset=User.objects.select_related('userprofile')) 
+            ).annotate(
+                annotated_nbr_visites_year=Count(
+                    'visite', 
+                    filter=Q(visite__rapport__added__year=current_year),
+                    distinct=True
+                )
+            )
 
         if commune != "0":  # Si la commune est spécifiée
             medecins_list = medecins_list.filter(commune=commune)
@@ -413,7 +438,7 @@ class MedecinListPDF(LoginRequiredMixin, TemplateView):
         elif visites == "1":
             medecins_list = medecins_list.filter(visite__isnull=False)
         elif visites == "2":
-            #medecin with more then one visite
+            # medecin with more then one visite
             medecins_list = medecins_list.annotate(visite_count=Count("visite")).filter(visite_count__gt=1)
 
         # Application des filtres de spécialité
@@ -433,7 +458,7 @@ class MedecinListPDF(LoginRequiredMixin, TemplateView):
 
         # Détails par wilaya et commune
         wilaya_details = medecins_list.values("wilaya__nom", "commune__nom").annotate(
-            nbr_clients=Count("id")
+            nbr_clients=Count("id", distinct=True)
         )
 
         # Regroupement des communes par wilaya
@@ -452,7 +477,7 @@ class MedecinListPDF(LoginRequiredMixin, TemplateView):
         # Détails par spécialité, commune et wilaya
         specialite_details = (
             medecins_list.values("wilaya__nom", "commune__nom", "specialite")
-            .annotate(nbr_clients=Count("id"))
+            .annotate(nbr_clients=Count("id", distinct=True))
             .distinct()
         )
 
@@ -473,8 +498,8 @@ class MedecinListPDF(LoginRequiredMixin, TemplateView):
 
         if user and user.userprofile.speciality_rolee == "Commercial":
             include_specialties = ["Pharmacie", "Grossiste", "SuperGros"]
-            medecin_nbr_commercial = Medecin.objects.filter(
-                id__in=medecins_list.values("id"), specialite__in=include_specialties
+            medecin_nbr_commercial = medecins_list.filter(
+                specialite__in=include_specialties
             ).count()
 
             # Récapitulatif des spécialités commerciales
@@ -482,12 +507,12 @@ class MedecinListPDF(LoginRequiredMixin, TemplateView):
             count_per_specialitys_commercial = " ".join(
                 f'<b>({detail["dcount"]})</b> {detail["specialite"]}'
                 for detail in (
-                    Medecin.objects.filter(
-                        id__in=medecins_list.values("id"),
+                    medecins_list.filter(
                         specialite__in=include_specialties,
                     )
                     .values("specialite")
-                    .annotate(dcount=Count("specialite"))
+                    .annotate(dcount=Count("id", distinct=True))
+                    .order_by("-dcount") # <--- AJOUTEZ CECI
                 )
             )
             count_specialitys_commercial = (
@@ -497,8 +522,7 @@ class MedecinListPDF(LoginRequiredMixin, TemplateView):
         else:
             exclude_specialties = ["Pharmacie", "Grossiste", "SuperGros"]
             medecin_nbr = (
-                Medecin.objects.filter(id__in=medecins_list.values("id"))
-                .exclude(specialite__in=exclude_specialties)
+                medecins_list.exclude(specialite__in=exclude_specialties)
                 .count()
             )
 
@@ -509,18 +533,17 @@ class MedecinListPDF(LoginRequiredMixin, TemplateView):
             count_per_specialitys = " ".join(
                 f'<b>({detail["dcount"]})</b> {detail["specialite"]}'
                 for detail in (
-                    Medecin.objects.filter(id__in=medecins_list.values("id"))
-                    .exclude(specialite__in=exclude_specialties)
+                    medecins_list.exclude(specialite__in=exclude_specialties)
                     .values("specialite")
-                    .annotate(dcount=Count("specialite"))
+                    .annotate(dcount=Count("id", distinct=True))
+                    .order_by("-dcount") # <--- AJOUTEZ CECI
                 )
             )
             count_specialitys = f"{recap_specialities} : {count_per_specialitys}"
-
         # Récupérer le nombre de médecins par commune
         commune_counts = (
             medecins_list.values("commune__nom")
-            .annotate(nbr_contacts=Count("id"))
+            .annotate(nbr_contacts=Count("id", distinct=True))
             .distinct()
         )
 
@@ -603,10 +626,22 @@ class MedecinListPDF(LoginRequiredMixin, TemplateView):
         print("----> " + str(medecins_list))
         if commune_first == "0":
             commune_first = "-"
+
+        # EXTRACT SECTOR WILAYAS FOR THE USER
+        user_wilayas_display = wilaya  # Default fallback
+        if user:
+            try:
+                user_wilayas_list = user.userprofile.sector_details.values_list("wilayas__nom", flat=True).distinct()
+                valid_wilayas = [w for w in user_wilayas_list if w]
+                if valid_wilayas:
+                    user_wilayas_display = ", ".join(valid_wilayas)
+            except Exception:
+                pass
+
         context = {
             "medecins": medecins_list,
             "commerciale": user,
-            "wilaya": wilaya,
+            "wilaya": user_wilayas_display, # UPDATED to pass the sector list
             "commune": commune_first,
             "details": count_specialitys,
             "details_commercial": count_specialitys_commercial,
@@ -643,8 +678,7 @@ class HomeMedecin(LoginRequiredMixin, TemplateView):
         )
 
         details = (
-            Medecin.objects.filter(id__in=medecins_list.values("id"))
-            .values("specialite")
+            medecins_list.values("specialite")
             .annotate(dcount=Count("specialite"))
         )
         other_details = f"<b>{medecin_nbr}</b> medecins "
@@ -866,7 +900,6 @@ class VisitesMedecin(LoginRequiredMixin, TemplateView):
                 "users": User.objects.all(), # Pour le filtre utilisateur
             },
         )
-
 
 
 def medecin_last_six_months(request, id):
@@ -1420,4 +1453,8 @@ class DeleteMedecinsView(View):
             'medecins_deleted_with_users_102_103': deleted_medecins_with_users,
             'medecins_deleted_without_users': deleted_medecins_without_users
         })
+
+
+from django.http import JsonResponse
+from .models import Commune # Make sure to import your Commune model
 

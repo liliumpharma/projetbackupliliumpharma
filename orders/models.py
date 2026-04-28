@@ -1,42 +1,91 @@
 from django.db import models
-from django.contrib.auth.models import User 
+from django.contrib.auth.models import User
 import json
 from .generate_jpg import thread
 import requests
 
+
 class Order(models.Model):
-    added=models.DateTimeField(auto_now_add=True)
-    pharmacy=models.ForeignKey("medecins.Medecin",on_delete=models.CASCADE,null=True,blank=True,related_name="from_pharmacy")
-    gros=models.ForeignKey("medecins.Medecin",on_delete=models.CASCADE,null=True,blank=True,related_name="from_grossite")
-    super_gros=models.ForeignKey("clients.Client",on_delete=models.CASCADE,related_name="from_sgros",null=True,blank=True)
-    user=models.ForeignKey(User,on_delete=models.CASCADE)
-    observation=models.TextField(blank=True)
-    status=models.CharField(max_length=20,choices=(("initial","initial"),("confirme","confirme"),("en cours","en cours"),("traite","traite") ), default="initial")
-    flag=models.BooleanField(default=False, verbose_name="Flag  |   طلبية معلقة")
-    cause=models.TextField(max_length=500,null=True,blank=True,verbose_name="Cause Flag  |   سبب التعليق")
+    added = models.DateTimeField(auto_now_add=True)
+    pharmacy = models.ForeignKey(
+        "medecins.Medecin",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="from_pharmacy",
+    )
+    gros = models.ForeignKey(
+        "medecins.Medecin",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="from_grossite",
+    )
+    super_gros = models.ForeignKey(
+        "clients.Client",
+        on_delete=models.CASCADE,
+        related_name="from_sgros",
+        null=True,
+        blank=True,
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    observation = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=(
+            ("En attente", "En attente"),
+            ("Confirmé", "Confirmé"),
+            ("Annulé", "Annulé"),
+            ("Reajusté", "Reajusté"),
+        ),
+        default="En attente",  
+    )
+    flag = models.BooleanField(default=False, verbose_name="Flag  |   طلبية معلقة")
+    cause = models.TextField(
+        max_length=500,
+        null=True,
+        blank=True,
+        verbose_name="Cause Flag  |   سبب التعليق",
+    )
 
-    validation_date=models.DateField(null=True,blank=True)
-    done_date=models.DateField(null=True,blank=True)
+    validation_date = models.DateField(null=True, blank=True)
+    done_date = models.DateField(null=True, blank=True)
 
-    infos=models.CharField(max_length=255,choices=(("yalidine", "yalidine"), ('livreur',"livreur"), ("bureau", "bureau"), ("delegue", "delegue")),null=True,blank=True)
-    tracking = models.JSONField(default=dict,blank=True)
-    bl=models.CharField(max_length=255,null=True,blank=True)
+    infos = models.CharField(
+        max_length=255,
+        choices=(
+            ("yalidine", "yalidine"),
+            ("livreur", "livreur"),
+            ("bureau", "bureau"),
+            ("delegue", "delegue"),
+        ),
+        null=True,
+        blank=True,
+    )
+    tracking = models.JSONField(default=dict, blank=True)
+    bl = models.CharField(max_length=255, null=True, blank=True)
 
+    touser = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="share_to_user",
+        null=True,
+        blank=True,
+    )
+    transfer_date = models.DateField(null=True, blank=True)
 
-    touser=models.ForeignKey(User,on_delete=models.CASCADE,related_name="share_to_user",null=True,blank=True)
-    transfer_date=models.DateField(null=True,blank=True)
-
-    image=models.ImageField(upload_to="order_photo/", blank=True,null=True)
-    from_company=models.BooleanField(default=False)
-    attente=models.BooleanField(default=False, verbose_name="En attente")
+    image = models.ImageField(upload_to="order_photo/", blank=True, null=True)
+    from_company = models.BooleanField(default=False)
+    attente = models.BooleanField(default=False, verbose_name="En attente")
 
     class Meta:
-        verbose_name="Bon de commande"
-
+        verbose_name = "Bon de commande"
 
     def items_admin(self):
-        return '<br/> '.join([f'{item}' for item in OrderItem.objects.filter(order=self)])  
-    
+        return "<br/> ".join(
+            [f"{item}" for item in OrderItem.objects.filter(order=self)]
+        )
+
     @property
     def valeur_net(self):
         """Calcule la somme de (prix unitaire x quantité) pour tous les articles."""
@@ -45,38 +94,43 @@ class Order(models.Model):
     @property
     def valeur_brute(self):
         return sum(item.line_total_ttc for item in self.orderitem_set.all())
+
     # ---------------------------
 
     def save(self, *args, **kwargs):
-        if  not  ( self.super_gros and self.super_gros.id == 149 or (not self.pharmacy and  not self.gros and self.super_gros ) ):
+        if not (
+            self.super_gros
+            and self.super_gros.id == 149
+            or (not self.pharmacy and not self.gros and self.super_gros)
+        ):
             if not self.status:
-                self.status = "traite"
+                self.status = "Confirmé"
         else:
-            self.from_company=True    
+            self.from_company = True
         super(Order, self).save(*args, **kwargs)
 
 
-
-
-
 class OrderItem(models.Model):
-    order=models.ForeignKey(Order,on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
     produit = models.ForeignKey("produits.Produit", on_delete=models.CASCADE)
-    qtt=models.IntegerField()
-    
-
+    qtt = models.IntegerField()
 
     def __str__(self):
         return f"{self.produit.nom}--{self.qtt}"
-        
+
     @property
     def prix_unitaire(self):
         import decimal
+
         base_price = float(self.produit.price)
-        
+
         def normal_round(n):
-            return float(decimal.Decimal(str(n)).quantize(decimal.Decimal('1'), rounding=decimal.ROUND_HALF_UP))
-            
+            return float(
+                decimal.Decimal(str(n)).quantize(
+                    decimal.Decimal("1"), rounding=decimal.ROUND_HALF_UP
+                )
+            )
+
         # 1. Si une Pharmacie est sélectionnée
         if self.order.pharmacy:
             return normal_round(base_price * 1.19) * 1.15 * 1.1
@@ -91,75 +145,99 @@ class OrderItem(models.Model):
     @property
     def line_total_net(self):
         return self.produit.price * self.qtt
-        
+
     @property
     def line_total_ttc(self):
         return self.prix_unitaire * self.qtt
 
 
 class ExitOrder(models.Model):
-    added=models.DateTimeField(auto_now_add=True)
-    user=models.ForeignKey(User,on_delete=models.CASCADE)
-    observation=models.TextField(blank=True)
-    status=models.CharField(max_length=20,choices=(("initial","initial"),("traite","traite") ), default="initial")
-    brochure=models.BooleanField(default=False)
-    validation_date=models.DateField(null=True,blank=True)
-    done_date=models.DateField(null=True,blank=True)
-    depot=models.CharField(max_length=20,choices=(("delegue","delegue"),("principale","principale") ), default="principale")
-    user_confirmed=models.ForeignKey(User,on_delete=models.SET_NULL,blank=True,null=True,related_name="confirmed_by")
+    added = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    observation = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=(("initial", "initial"), ("traite", "traite")),
+        default="initial",
+    )
+    brochure = models.BooleanField(default=False)
+    validation_date = models.DateField(null=True, blank=True)
+    done_date = models.DateField(null=True, blank=True)
+    depot = models.CharField(
+        max_length=20,
+        choices=(("delegue", "delegue"), ("principale", "principale")),
+        default="principale",
+    )
+    user_confirmed = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="confirmed_by",
+    )
 
     class Meta:
-        verbose_name="Bon de sortie"
+        verbose_name = "Bon de sortie"
+
     def items_admin(self):
-        return '<br/> '.join([f'{item}' for item in ExitOrderItem.objects.filter(order=self)])  
-
-
+        return "<br/> ".join(
+            [f"{item}" for item in ExitOrderItem.objects.filter(order=self)]
+        )
 
 
 class ExitOrderItem(models.Model):
-    order=models.ForeignKey(ExitOrder,on_delete=models.CASCADE)
+    order = models.ForeignKey(ExitOrder, on_delete=models.CASCADE)
     produit = models.ForeignKey("produits.Produit", on_delete=models.CASCADE)
-    qtt=models.IntegerField()
-
+    qtt = models.IntegerField()
 
     def __str__(self):
         return f"{self.produit.nom}--{self.qtt}"
 
 
-
-
 from datetime import datetime
 from datetime import timedelta
-from django.db.models.signals import pre_save,post_save
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
+
 # from notifications.utils import sendPush
-from notifications.models import Notification 
-
-
+from notifications.models import Notification
 
 
 @receiver(post_save, sender=ExitOrder)
 def my_handler(sender, **kwargs):
     from .serializers import ExitOrderSerializer
 
-    tokens=[]
-   
-    for user in User.objects.filter(userprofile__usersunder=kwargs['instance'].user):
-        tokens.append(user.userprofile.notification_token) if user.userprofile.notification_token else None
+    tokens = []
 
+    for user in User.objects.filter(userprofile__usersunder=kwargs["instance"].user):
+        (
+            tokens.append(user.userprofile.notification_token)
+            if user.userprofile.notification_token
+            else None
+        )
 
     for user in User.objects.filter(is_superuser=True):
-        tokens.append(user.userprofile.notification_token) if user.userprofile.notification_token else None
-    
-    for user in User.objects.filter(username__in=["liliumdz","ibtissemdz"]):
-        tokens.append(user.userprofile.notification_token) if user.userprofile.notification_token else None    
+        (
+            tokens.append(user.userprofile.notification_token)
+            if user.userprofile.notification_token
+            else None
+        )
 
+    for user in User.objects.filter(username__in=["liliumdz", "ibtissemdz"]):
+        (
+            tokens.append(user.userprofile.notification_token)
+            if user.userprofile.notification_token
+            else None
+        )
 
     for user in User.objects.filter(userprofile__rolee="CountryManager"):
-        tokens.append(user.userprofile.notification_token) if user.userprofile.notification_token else None    
+        (
+            tokens.append(user.userprofile.notification_token)
+            if user.userprofile.notification_token
+            else None
+        )
 
-
-    instance=kwargs['instance']
+    instance = kwargs["instance"]
 
     updated_datetime = instance.added + timedelta(hours=1)
 
@@ -215,26 +293,37 @@ def my_handler(sender, **kwargs):
 def my_handler(sender, **kwargs):
     from .serializers import OrderSerializer
 
-    tokens=[]
-   
-    for user in User.objects.filter(userprofile__usersunder=kwargs['instance'].user):
-        tokens.append(user.userprofile.notification_token) if user.userprofile.notification_token else None
+    tokens = []
 
+    for user in User.objects.filter(userprofile__usersunder=kwargs["instance"].user):
+        (
+            tokens.append(user.userprofile.notification_token)
+            if user.userprofile.notification_token
+            else None
+        )
 
     for user in User.objects.filter(is_superuser=True):
-        tokens.append(user.userprofile.notification_token) if user.userprofile.notification_token else None
-    
-    for user in User.objects.filter(username__in=["liliumdz","ibtissemdz"]):
-        tokens.append(user.userprofile.notification_token) if user.userprofile.notification_token else None    
+        (
+            tokens.append(user.userprofile.notification_token)
+            if user.userprofile.notification_token
+            else None
+        )
 
+    for user in User.objects.filter(username__in=["liliumdz", "ibtissemdz"]):
+        (
+            tokens.append(user.userprofile.notification_token)
+            if user.userprofile.notification_token
+            else None
+        )
 
     for user in User.objects.filter(userprofile__rolee="CountryManager"):
-        tokens.append(user.userprofile.notification_token) if user.userprofile.notification_token else None    
+        (
+            tokens.append(user.userprofile.notification_token)
+            if user.userprofile.notification_token
+            else None
+        )
 
-
-    instance=kwargs['instance']
-
-
+    instance = kwargs["instance"]
 
     # notification=Notification.objects.create(
     #         title=f"Nouveau Bon de commande  {kwargs['instance'].user.username}",

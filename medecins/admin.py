@@ -190,6 +190,14 @@ class MedecinsAdmin(admin.ModelAdmin):
     filter_horizontal = ('users',)
     date_hierarchy = 'added'
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "wilaya":
+            # This restricts the dropdown to only Wilayas where the Pays name contains "Alger"
+            # (Using icontains covers "Algerie", "Algérie", or "Algeria" just to be safe)
+            kwargs["queryset"] = Wilaya.objects.filter(pays__nom__icontains="alger")
+        
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 
     def _users(self,obj):
         return ",".join([user.username for user in obj.users.all()[:4] ])
@@ -222,6 +230,11 @@ class MedecinsAdmin(admin.ModelAdmin):
     #         return True
     #     else:
     #         return False
+    class Media:
+        js = (
+            'admin/js/vendor/jquery/jquery.js', 
+            'js/chained_communes.js', 
+        )
 
 admin.site.register(Medecin,MedecinsAdmin)
 admin.site.register(MedecinSpecialite)

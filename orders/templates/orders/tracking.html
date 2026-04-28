@@ -190,28 +190,77 @@
   <input type="hidden" id="filter-entity" />
   <input type="hidden" id="filter-min-date" />
   <input type="hidden" id="filter-max-date" />
+  <input type="hidden" id="filter-user" />
 
   <div class="card card-spinner-wrap" id="card-all-supergros" style="display:none;">
     <div class="card-spinner-overlay" id="spinner-all-supergros">
-        <div class="spinner-ring"></div>
-        <div class="spinner-label">Chargement...</div>
+        <div class="spinner-ring"></div><div class="spinner-label">Chargement...</div>
     </div>
-    <h2 style="color: #1B5E20; border-bottom: 2px solid #2E7D32;">Classement de Tous les SuperGros | ترتيب جميع سوبر غرو</h2>
-    <div id="total-banner-supergros" style="display:none; margin: 0 0 16px; background: linear-gradient(135deg, #1B5E20, #2E7D32); color:#fff; border-radius:10px; padding:12px 20px; font-size:15px; font-weight:600; text-align:center; box-shadow:0 3px 8px rgba(0,0,0,0.15); letter-spacing:0.3px;"></div>
-    <div class="chart-container" style="width: 100%; position: relative;">
-        <canvas id="chart-all-supergros"></canvas>
+    <h2 style="text-align: center; border-bottom: 2px solid #0288D1; padding-bottom: 10px; color: #333;">
+        Bilan des SuperGros (<span style="color: #1976D2;">Achats</span> vs <span style="color: #2E7D32;">Déstockage par l'équipe Lilium</span>)
+        <br>
+        <small style="color: #555; font-size: 1.0em; font-weight: normal;">
+            تقرير كبار الموزعين (<span style="color: #1976D2;">المشتريات</span> مقابل <span style="color: #2E7D32;">مبيعات التصفية من قبل فريق ليليوم</span>)
+        </small>
+    </h2>  
+    <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 15px;">
+        <button class="btn btn-primary btn-sort" data-sort="achats" data-target="chart-all-supergros-combined" data-active-class="btn-primary">Achat depuis Office</button>
+        <button class="btn btn-secondary btn-sort" data-sort="ventes" data-target="chart-all-supergros-combined" data-active-class="btn-success">Déstockage vers Grossistes</button>
+    </div>
+
+    <div id="total-banner-supergros-combined" style="display:none; margin: 0 0 16px; background: #f4f6f9; color:#333; border: 1px solid #ddd; border-radius:10px; padding:12px 20px; font-size:15px; text-align:center;"></div>
+    <div class="chart-container" style="width: 100%; position: relative; margin-bottom: 40px;">
+        <canvas id="chart-all-supergros-combined"></canvas>
+    </div>
+    <div class="zero-list-achats">
+        <h4 style="color: #d32f2f; margin-top: 20px;">SuperGros sans achats (0 DA)</h4>
+        <div id="sg-zero-achats-container" style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; margin-bottom: 20px;"></div>
+    </div>
+    <div class="zero-list-ventes" style="display: none;">
+        <h4 style="color: #d32f2f; margin-top: 20px;">SuperGros sans déstockage (0 DA)</h4>
+        <div id="sg-zero-ventes-container" style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;"></div>
     </div>
   </div>
 
   <div class="card card-spinner-wrap" id="card-all-grossistes" style="display:none;">
     <div class="card-spinner-overlay" id="spinner-all-grossistes">
-        <div class="spinner-ring"></div>
-        <div class="spinner-label">Chargement...</div>
+        <div class="spinner-ring"></div><div class="spinner-label">Chargement...</div>
     </div>
-    <h2 style="color: #E65100; border-bottom: 2px solid #F57C00;">Classement de Tous les Grossistes | ترتيب جميع باعة الجملة</h2>
-    <div id="total-banner-grossistes" style="display:none; margin: 0 0 16px; background: linear-gradient(135deg, #BF360C, #E64A19); color:#fff; border-radius:10px; padding:12px 20px; font-size:15px; font-weight:600; text-align:center; box-shadow:0 3px 8px rgba(0,0,0,0.15); letter-spacing:0.3px;"></div>
+    <h2 style="text-align: center; border-bottom: 2px solid #2196F3; padding-bottom: 10px; color: #333;">
+        Bilan des Grossistes (<span style="color: #1976D2;">Achats</span> vs <span style="color: #2E7D32;">Déstockage par l'équipe Lilium</span>)
+        <br>
+        <small style="color: #555; font-size: 1.0em; font-weight: normal;">
+            تقرير تجار الجملة (<span style="color: #1976D2;">المشتريات</span> مقابل <span style="color: #2E7D32;">مبيعات التصفية من قبل فريق ليليوم</span>)
+        </small>
+    </h2>  
+    <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 15px;">
+        <button class="btn btn-primary btn-sort" data-sort="achats" data-target="chart-all-grossistes-combined" data-active-class="btn-primary">Achat depuis SuperGros</button>
+        <button class="btn btn-secondary btn-sort" data-sort="ventes" data-target="chart-all-grossistes-combined" data-active-class="btn-success">Déstockage vers Pharmacies</button>
+    </div>
+
+    <div id="total-banner-grossistes-combined" style="display:none; margin: 0 0 16px; background: #f4f6f9; color:#333; border: 1px solid #ddd; border-radius:10px; padding:12px 20px; font-size:15px; text-align:center;"></div>
     <div class="chart-container" style="width: 100%; position: relative;">
-        <canvas id="chart-all-grossistes"></canvas>
+        <canvas id="chart-all-grossistes-combined"></canvas>
+    </div>
+    
+    <div class="zero-list-achats">
+        <h4 style="color: #d32f2f; margin-top: 20px;">Grossistes sans achats (0 DA)</h4>
+        <div id="zero-achats-container" style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; margin-bottom: 20px;"></div>
+    </div>
+    <div class="zero-list-ventes" style="display: none;">
+        <h4 style="color: #d32f2f; margin-top: 20px;">Grossistes sans ventes (0 DA)</h4>
+        <div id="zero-ventes-container" style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;"></div>
+    </div>
+  </div>
+
+  <div class="card card-spinner-wrap" id="card-all-pharmacies" style="display:none;">
+    <div class="card-spinner-overlay" id="spinner-all-pharmacies">
+        <div class="spinner-ring"></div><div class="spinner-label">Chargement...</div>
+    </div>
+    <h2 style="color: #8B5CF6; border-bottom: 2px solid #7C3AED;">Classement des Pharmacies (Meilleurs Acheteurs) | ترتيب الصيدليات (أفضل المشترين)</h2>
+    <div id="total-banner-pharmacies-achats" style="display:none; margin: 0 0 16px; background: linear-gradient(135deg, #7C3AED, #8B5CF6); color:#fff; border-radius:10px; padding:12px 20px; font-size:15px; font-weight:600; text-align:center; box-shadow:0 3px 8px rgba(0,0,0,0.15);"></div>
+    <div class="chart-container" style="width: 100%; position: relative;">
+        <canvas id="chart-all-pharmacies-achats"></canvas>
     </div>
   </div>
 
@@ -245,9 +294,10 @@
   (function ($) {
     "use strict";
 
-    var CFG = { TRACKER_API: "{% url 'transaction-tracker-api' %}" };
+    var CFG = { TRACKER_API: "{% url 'transaction-tracker-api' %}", DRILLDOWN_API: "{% url 'tracker-drilldown' %}" };
     var SUPER_GROS_LIST = {{ super_gros_json|safe }};
     var GROSSISTE_LIST  = {{ grossistes_json|safe }};
+    var PHARMACIE_LIST  = {{ pharmacies_json|safe }};
     var chartInstances = {};
 
     function fmt(n) { return Number(n).toLocaleString('fr-DZ', { maximumFractionDigits: 2 }); }
@@ -340,10 +390,17 @@
     /* ════════════════ ALL – SINGLE REGION CHART ════════════════ */
     var REGION_COLORS = { 'Ouest': '#E53935', 'Centre': '#4CAF50', 'Est': '#03A9F4', 'Sud': '#FFEB3B', 'Vide': '#E0E0E0' };
 
-    function drawAllRegionChart(canvasId, cardId, region, entityData, bannerId) {
+    function drawAllRegionChart(canvasId, cardId, region, entityData, bannerId, role) {
         if (chartInstances[canvasId]) { chartInstances[canvasId].destroy(); }
 
-        var $container = $('#' + cardId + ' .chart-container');
+        // Find the specific container dynamically rather than globally within the card
+        var $container;
+        if ($('#' + canvasId).length > 0) {
+            $container = $('#' + canvasId).parent();
+        } else {
+            $container = $('#' + bannerId).next('.chart-container');
+        }
+        
         var barColor   = REGION_COLORS[region] || '#90A4AE';
 
         if (!entityData || entityData.length === 0) {
@@ -378,6 +435,16 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 indexAxis: 'y',
+                onClick: function(event, elements, chart) {
+                    if (elements.length > 0) {
+                        var index = elements[0].index;
+                        var clickedData = entityData[index];
+                        if(clickedData && clickedData.id) {
+                            var eType = ($('#filter-type').val() || '').toLowerCase();
+                            fetchDrillDownData(eType, clickedData.id, clickedData.name, role); // role is now defined!
+                        }
+                    }
+                },
                 plugins: {
                     legend: { display: false },
                     title: { display: true, text: 'Classement – Région ' + region, font: { size: 15 } },
@@ -418,87 +485,31 @@
         });
     }
 
-    /* ════════════════ ALL SUPERGROS CHART ════════════════ */
-    function drawAllSuperGrosChart(sgData) {
-        if (chartInstances['chart-all-supergros']) {
-            chartInstances['chart-all-supergros'].destroy();
+    /* ════════════════ ALL GROSSISTES CHART (Reusable) ════════════════ */
+    function drawAllGrossistesChart(gData, canvasId, bannerId, bannerPrefix, role) {
+        if (chartInstances[canvasId]) {
+            chartInstances[canvasId].destroy();
         }
 
-        // Total banner
-        var grandTotal = sgData.reduce(function(s, d) { return s + d.total_val; }, 0);
-        $('#total-banner-supergros').html('Valeur totale – Tous les SuperGros : <strong>' + fmt(grandTotal) + ' DA</strong>').show();
+        var $container;
+        if ($('#' + canvasId).length > 0) {
+            $container = $('#' + canvasId).parent();
+        } else {
+            $container = $('#' + bannerId).next('.chart-container');
+        }
 
-        var ctx = document.getElementById('chart-all-supergros').getContext('2d');
-        var labels = sgData.map(function(d) { return d.name + ' (' + fmt(d.total_val) + ' DA)'; });
-
-        var dsOuest  = { label: 'Ouest',        data: [], backgroundColor: '#E53935' };
-        var dsCentre = { label: 'Centre',       data: [], backgroundColor: '#4CAF50' };
-        var dsEst    = { label: 'Est',          data: [], backgroundColor: '#03A9F4' };
-        var dsSud    = { label: 'Sud',          data: [], backgroundColor: '#FFEB3B' };
-        var dsVide   = { label: 'Vide / Autre', data: [], backgroundColor: '#E0E0E0' };
-
-        sgData.forEach(function(d) {
-            dsOuest.data.push(d.regions['Ouest']  || 0);
-            dsCentre.data.push(d.regions['Centre'] || 0);
-            dsEst.data.push(d.regions['Est']      || 0);
-            dsSud.data.push(d.regions['Sud']      || 0);
-            dsVide.data.push(d.regions['Vide']    || 0);
-        });
-
-        var rowHeight = 45;
-        $('#card-all-supergros .chart-container').css('height', Math.max(350, sgData.length * rowHeight + 100) + 'px');
-
-        Chart.register(ChartDataLabels);
-        chartInstances['chart-all-supergros'] = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: labels, datasets: [dsOuest, dsCentre, dsEst, dsSud, dsVide] },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { x: { stacked: true }, y: { stacked: true } },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                var val = context.raw;
-                                if (val === 0) return null;
-                                var total = sgData[context.dataIndex].total_val;
-                                var pct = ((val / total) * 100).toFixed(1) + '%';
-                                return context.dataset.label + ': ' + fmt(val) + ' DA (' + pct + ')';
-                            }
-                        }
-                    },
-                    datalabels: {
-                        color: function(context) {
-                            var lbl = context.dataset.label;
-                            return (lbl === 'Sud' || lbl === 'Vide / Autre') ? '#333' : '#fff';
-                        },
-                        font: { weight: 'bold', size: 12 },
-                        formatter: function(value, context) {
-                            if (value === 0) return null;
-                            var total = sgData[context.dataIndex].total_val;
-                            var pct = ((value / total) * 100);
-                            if (pct < 6) return null;
-                            return pct.toFixed(1) + '%';
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    /* ════════════════ ALL GROSSISTES CHART ════════════════ */
-    function drawAllGrossistesChart(gData) {
-        if (chartInstances['chart-all-grossistes']) {
-            chartInstances['chart-all-grossistes'].destroy();
+        if (!gData || gData.length === 0) {
+            $container.html('<div style="text-align:center;padding:50px;color:#999;font-weight:bold;">Aucune donnée</div>');
+            $('#' + bannerId).hide();
+            return;
         }
 
         // Total banner
         var grandTotal = gData.reduce(function(s, d) { return s + d.total_val; }, 0);
-        $('#total-banner-grossistes').html('Valeur totale – Tous les Grossistes : <strong>' + fmt(grandTotal) + ' DA</strong>').show();
+        $('#' + bannerId).html(bannerPrefix + ' <strong>' + fmt(grandTotal) + ' DA</strong>').show();
 
-        var ctx = document.getElementById('chart-all-grossistes').getContext('2d');
+        $container.html('<canvas id="' + canvasId + '"></canvas>');
+        var ctx = document.getElementById(canvasId).getContext('2d');
         var labels = gData.map(function(d) { return d.name + ' (' + fmt(d.total_val) + ' DA)'; });
 
         var dsOuest  = { label: 'Ouest',        data: [], backgroundColor: '#E53935' };
@@ -516,16 +527,26 @@
         });
 
         var rowHeight = 45;
-        $('#card-all-grossistes .chart-container').css('height', Math.max(350, gData.length * rowHeight + 100) + 'px');
+        $container.css('height', Math.max(350, gData.length * rowHeight + 100) + 'px');
 
         Chart.register(ChartDataLabels);
-        chartInstances['chart-all-grossistes'] = new Chart(ctx, {
+        chartInstances[canvasId] = new Chart(ctx, {
             type: 'bar',
             data: { labels: labels, datasets: [dsOuest, dsCentre, dsEst, dsSud, dsVide] },
             options: {
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
+                onClick: function(event, elements, chart) {
+                    if (elements.length > 0) {
+                        var index = elements[0].index;
+                        var clickedData = gData[index];
+                        if(clickedData && clickedData.id) {
+                            var eType = ($('#filter-type').val() || '').toLowerCase();
+                            fetchDrillDownData(eType, clickedData.id, clickedData.name, role); // Pass role here
+                        }
+                    }
+                },
                 scales: { x: { stacked: true }, y: { stacked: true } },
                 plugins: {
                     tooltip: {
@@ -557,7 +578,6 @@
             }
         });
     }
-
     /* ════════════════ TABLES LOGIC ════════════════ */
     function buildTables(data) {
       var root = data.root;
@@ -800,10 +820,10 @@
     }
 
     function renderOrgChart(data) {
-      var root = data.root, isGrossiste = root.type === 'Grossiste';
+      var root = data.root;
       var html = '<div class="org-tree">';
 
-      if (isGrossiste) {
+      if (root.type === 'Grossiste') {
         if (data.fournisseurs.length) {
           html += '<div class="tier-label">Fournisseurs (SuperGros) | الموردون (سوبر غرو)</div>' + buildLevelUp(data.fournisseurs) + '<div class="vline" style="margin:0 auto;"></div>';
         }
@@ -811,7 +831,13 @@
         if (data.clients.length) {
           html += '<div class="vline" style="margin:0 auto;"></div><div class="tier-label">Clients (Pharmacies) | العملاء (صيدليات)</div>' + buildLevelDown(data.clients);
         }
+      } else if (root.type === 'Pharmacie') {
+        if (data.fournisseurs.length) {
+          html += '<div class="tier-label">Fournisseurs | الموردون</div>' + buildLevelUp(data.fournisseurs) + '<div class="vline" style="margin:0 auto;"></div>';
+        }
+        html += '<div class="tier-label">Entité Sélectionnée | الكيان المحدد</div><div class="org-solo">' + buildNode(root, true) + '</div>';
       } else {
+        // SuperGros Logic
         var gClients = data.clients.filter(function(c){ return c.type === 'Grossiste'; });
         var pClients = data.clients.filter(function(c){ return c.type === 'Pharmacie'; });
         
@@ -820,8 +846,410 @@
         if (pClients.length) html += '<div class="vline" style="margin:0 auto;"></div><div class="tier-label">Pharmacies Clients | عملاء الصيدليات</div>' + buildLevelDown(pClients);
         if (!data.clients.length) html += '<div class="vline" style="margin:0 auto;"></div><div style="text-align:center;color:#999;font-size:12px;padding:15px;">Aucun client trouvé | لا يوجد عملاء</div>';
       }
+      
       $('#org-container').html(html + '</div>');
     }
+
+    /* ════════════════ COMBINED CHART HELPERS ════════════════ */
+    function mergeChartData(dataVentes, dataAchats) {
+        var map = {};
+        function process(arr, isVentes) {
+            if (!arr) return;
+            arr.forEach(function(item) {
+                if (!map[item.id]) { 
+                    map[item.id] = { 
+                        id: item.id, name: item.name, 
+                        ventes: 0, achats: 0,
+                        ventes_regions: {}, achats_regions: {},
+                        ventes_bons: {}, achats_bons: {},
+                        ventes_unites: {}, achats_unites: {}
+                    }; 
+                }
+                if (isVentes) {
+                    map[item.id].ventes = item.total_val || 0;
+                    map[item.id].ventes_regions = item.regions || {};
+                    map[item.id].ventes_bons = item.regions_bons || {};
+                    map[item.id].ventes_unites = item.regions_unites || {};
+                } else {
+                    map[item.id].achats = item.total_val || 0;
+                    map[item.id].achats_regions = item.regions || {};
+                    map[item.id].achats_bons = item.regions_bons || {};
+                    map[item.id].achats_unites = item.regions_unites || {};
+                }
+            });
+        }
+        process(dataVentes, true);
+        process(dataAchats, false);
+        
+        var result = Object.values(map);
+        result.sort(function(a, b) { return b.achats - a.achats; });
+        return result;
+    }
+
+    function drawCombinedChart(canvasId, bannerId, mergedData, targetRegion) {
+        if (chartInstances[canvasId]) { chartInstances[canvasId].destroy(); }
+        var $container = $('#' + canvasId).parent();
+
+        if (!mergedData || mergedData.length === 0) {
+            $container.html('<div style="text-align:center;padding:50px;color:#999;font-weight:bold;">Aucune donn\u00e9e</div>');
+            $('#' + bannerId).hide();
+            return;
+        }
+
+        var totalAchats = mergedData.reduce(function(s, d) { return s + (targetRegion ? (d.achats_regions[targetRegion]||0) : d.achats); }, 0);
+        var totalVentes = mergedData.reduce(function(s, d) { return s + (targetRegion ? (d.ventes_regions[targetRegion]||0) : d.ventes); }, 0);
+        
+        var tLabel = targetRegion ? 'R\u00e9gion\u00a0: ' + targetRegion : 'National (Toutes les r\u00e9gions)';
+        var regionColors = { 'Ouest': '#E53935', 'Centre': '#4CAF50', 'Est': '#03A9F4', 'Sud': '#FFEB3B', 'Vide': '#E0E0E0' };
+        
+        // --- 1. BUILD THE REGIONAL LEGEND & TOTALS ---
+        var regTotalsHtml = '<div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:12px; font-size:12px;">';
+        
+        if (targetRegion) {
+             var aTot = mergedData.reduce(function(s, d) { return s + (d.achats_regions[targetRegion] || 0); }, 0);
+             var vTot = mergedData.reduce(function(s, d) { return s + (d.ventes_regions[targetRegion] || 0); }, 0);
+             regTotalsHtml += '<div style="display:flex; align-items:center; gap:5px; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #ddd; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">' +
+                              '<span style="display:inline-block; width:16px; height:16px; background:' + (regionColors[targetRegion] || '#999') + '; border-radius:3px;"></span>' +
+                              '<strong style="font-size:13px; margin-right:8px;">' + targetRegion + '</strong>' +
+                              '<span style="color:#1976D2; font-weight:bold;" title="Achats">Achats: ' + fmt(aTot) + ' DA</span> <span style="color:#ccc;">|</span> ' +
+                              '<span style="color:#2E7D32; font-weight:bold;" title="Déstockage">Déstockage: ' + fmt(vTot) + ' DA</span></div>';
+        } else {
+             var regions = ['Ouest', 'Centre', 'Est', 'Sud', 'Vide'];
+             regions.forEach(function(reg) {
+                 var aTot = mergedData.reduce(function(s, d) { return s + (d.achats_regions[reg] || 0); }, 0);
+                 var vTot = mergedData.reduce(function(s, d) { return s + (d.ventes_regions[reg] || 0); }, 0);
+                 
+                 // Only show the region in the legend if it actually has data
+                 if (aTot > 0 || vTot > 0) {
+                     var regName = reg === 'Vide' ? 'Vide / Autre' : reg;
+                     regTotalsHtml += '<div style="display:flex; align-items:center; gap:5px; background:#fff; padding:6px 10px; border-radius:6px; border:1px solid #ddd; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">' +
+                                      '<span style="display:inline-block; width:16px; height:16px; background:' + regionColors[reg] + '; border-radius:3px;"></span>' +
+                                      '<strong style="font-size:13px; margin-right:8px;">' + regName + '</strong>' +
+                                      '<span style="color:#1976D2; font-weight:bold;" title="Achats">A: ' + fmt(aTot) + '</span> <span style="color:#ccc;">|</span> ' +
+                                      '<span style="color:#2E7D32; font-weight:bold;" title="Déstockage">D: ' + fmt(vTot) + '</span></div>';
+                 }
+             });
+        }
+        regTotalsHtml += '</div>';
+
+        // --- 2. ASSEMBLE THE FULL BANNER (No colored borders legend) ---
+        var bannerHtml = '<div style="margin-bottom:8px;"><span style="color:#333; font-weight:bold; font-size:16px;">' + tLabel + '</span> &nbsp;|&nbsp; ' +
+                         '<span style="color:#1976D2; font-weight:bold; font-size:16px;">Total Achats: ' + fmt(totalAchats) + ' DA</span> &nbsp;|&nbsp; ' +
+                         '<span style="color:#2E7D32; font-weight:bold; font-size:16px;">Total Déstockage: ' + fmt(totalVentes) + ' DA</span></div>' +
+                         regTotalsHtml;
+        
+        $('#' + bannerId).html(bannerHtml).show();
+
+        var ctx = document.getElementById(canvasId).getContext('2d');
+        var rowHeight = 70; 
+        $container.css('height', Math.max(350, mergedData.length * rowHeight + 100) + 'px');
+
+        var labels = mergedData.map(function(d) { return d.name; });
+        var datasets = [];
+
+        // --- 3. DATASETS (No Borders) ---
+        if (targetRegion) {
+            var color = regionColors[targetRegion] || '#90A4AE';
+            datasets.push({ label: 'Achats', data: mergedData.map(function(d) { return d.achats_regions[targetRegion] || 0; }), backgroundColor: '#749089', stack: 'Achats', barPercentage: 0.85, categoryPercentage: 0.9 });
+            datasets.push({ label: 'Déstockage', data: mergedData.map(function(d) { return d.ventes_regions[targetRegion] || 0; }), backgroundColor: color, stack: 'Ventes', barPercentage: 0.85, categoryPercentage: 0.9 });
+        } else {
+            var regions = ['Ouest', 'Centre', 'Est', 'Sud', 'Vide'];
+            regions.forEach(function(reg) {
+                datasets.push({
+                    label: 'Achats - ' + reg,
+                    data: mergedData.map(function(d) { return d.achats_regions[reg] || 0; }),
+                    backgroundColor: '#749089', borderColor: '#ffffff', borderWidth: 0.5, stack: 'Achats', barPercentage: 0.85, categoryPercentage: 0.9
+                });
+            });
+            regions.forEach(function(reg) {
+                datasets.push({
+                    label: 'Déstockage - ' + reg,
+                    data: mergedData.map(function(d) { return d.ventes_regions[reg] || 0; }),
+                    backgroundColor: regionColors[reg], stack: 'Ventes', barPercentage: 0.85, categoryPercentage: 0.9
+                });
+            });
+        }
+
+        Chart.register(ChartDataLabels);
+        chartInstances[canvasId] = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: labels, datasets: datasets },
+            options: {
+                // Notice we removed the layout: { padding } here, we handle it in the Y scale now
+                responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                onClick: function(event, elements, chart) {
+                    if (elements.length > 0) {
+                        var datasetIndex = elements[0].datasetIndex; 
+                        var index = elements[0].index;
+                        var clickedData = mergedData[index];
+                        if(clickedData && clickedData.id) {
+                            var eType = ($('#filter-type').val() || '').toLowerCase();
+                            var stack = chart.data.datasets[datasetIndex].stack;
+                            var role = stack === 'Achats' ? 'acheteur' : 'vendeur';
+                            fetchDrillDownData(eType, clickedData.id, clickedData.name, role);
+                        }
+                    }
+                },
+                layout: { padding: { right: 280 } }, // Marge pour les labels Détaillés
+                scales: { 
+                    x: { stacked: true }, 
+                    y: { 
+                        stacked: true,
+                        ticks: {
+                            padding: 95, 
+                            font: { weight: 'bold', size: 12 },
+                            color: '#333'
+                        }
+                    } 
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                var val = context.raw;
+                                if (val === 0) return null;
+                                var isVentes = context.dataset.stack === 'Ventes';
+                                var total = isVentes ? 
+                                    (targetRegion ? (mergedData[context.dataIndex].ventes_regions[targetRegion]||0) : mergedData[context.dataIndex].ventes) : 
+                                    (targetRegion ? (mergedData[context.dataIndex].achats_regions[targetRegion]||0) : mergedData[context.dataIndex].achats);
+                                var pct = total > 0 ? ((val / total) * 100).toFixed(1) + '%' : '';
+                                return context.dataset.label + ': ' + fmt(val) + ' DA (' + pct + ')';
+                            }
+                        }
+                    },
+                    datalabels: {
+                        labels: {
+                            typeLabel: {
+                                align: 'left',   
+                                anchor: 'start', 
+                                offset: 8, 
+                                color: function(context) { return context.dataset.stack === 'Achats' ? '#749089' : '#2E7D32'; },   
+                                font: { weight: 'bold', size: 10, family: 'Arial' },
+                                formatter: function(value, context) {
+                                    if (value === 0) return null; 
+                                    var ds = context.chart.data.datasets;
+                                    for (var i = 0; i < context.datasetIndex; i++) {
+                                        if (ds[i].stack === context.dataset.stack && ds[i].data[context.dataIndex] > 0) return null; 
+                                    }
+                                    return context.dataset.stack === 'Achats' ? 'ACHAT' : 'DÉSTOCKAGE';
+                                }
+                            },
+                            pctLabel: {
+                                align: 'center', anchor: 'center',
+                                color: function(context) {
+                                    var lbl = context.dataset.label;
+                                    return (lbl && (lbl.includes('Sud') || lbl.includes('Vide'))) ? '#333' : '#fff';
+                                },
+                                font: { weight: 'bold', size: 11 },
+                                formatter: function(value, context) {
+                                    if (value === 0) return null;
+                                    var isVentes = context.dataset.stack === 'Ventes';
+                                    var total = isVentes ? 
+                                            (targetRegion ? (mergedData[context.dataIndex].ventes_regions[targetRegion]||0) : mergedData[context.dataIndex].ventes) : 
+                                            (targetRegion ? (mergedData[context.dataIndex].achats_regions[targetRegion]||0) : mergedData[context.dataIndex].achats);
+                                    if (total === 0) return null;
+                                    var pct = (value / total) * 100;
+                                    if (pct < 6) return null; 
+                                    var maxScale = context.chart.scales.x.max;
+                                    if (maxScale && (value / maxScale) < 0.07) return null; 
+                                    return pct.toFixed(1) + '%';
+                                }
+                            },
+                            bonsLabel: {
+                                align: 'right', anchor: 'end', color: '#FBC02D', offset: 5, font: { weight: 'bold', size: 11, family: 'Arial' },
+                                formatter: function(v, ctx) {
+                                    if (v === 0 && ctx.chart.data.datasets[ctx.datasetIndex].data[ctx.dataIndex] === 0) return null;
+                                    var ds = ctx.chart.data.datasets;
+                                    for (var i = ctx.datasetIndex + 1; i < ds.length; i++) {
+                                        if (ds[i].stack === ctx.dataset.stack && ds[i].data[ctx.dataIndex] > 0) return null;
+                                    }
+                                    var isVentes = ctx.dataset.stack === 'Ventes';
+                                    var d = mergedData[ctx.dataIndex];
+                                    var bons = 0, val = 0;
+                                    if (targetRegion) {
+                                        val = isVentes ? (d.ventes_regions[targetRegion]||0) : (d.achats_regions[targetRegion]||0);
+                                        bons = isVentes ? (d.ventes_bons[targetRegion]||0) : (d.achats_bons[targetRegion]||0);
+                                    } else {
+                                        val = isVentes ? d.ventes : d.achats;
+                                        ['Ouest', 'Centre', 'Est', 'Sud', 'Vide'].forEach(function(r) {
+                                            bons += isVentes ? (d.ventes_bons[r]||0) : (d.achats_bons[r]||0);
+                                        });
+                                    }
+                                    if (val === 0) return null;
+                                    return bons + ' Bons';
+                                }
+                            },
+                            unitsLabel: {
+                                align: 'right', anchor: 'end', color: '#1976D2', font: { weight: 'bold', size: 11, family: 'Arial' },
+                                offset: function(ctx) {
+                                    var ds = ctx.chart.data.datasets;
+                                    for (var i = ctx.datasetIndex + 1; i < ds.length; i++) {
+                                        if (ds[i].stack === ctx.dataset.stack && ds[i].data[ctx.dataIndex] > 0) return 0;
+                                    }
+                                    var isVentes = ctx.dataset.stack === 'Ventes';
+                                    var d = mergedData[ctx.dataIndex];
+                                    var bons = 0, val = 0;
+                                    if (targetRegion) {
+                                        val = isVentes ? (d.ventes_regions[targetRegion]||0) : (d.achats_regions[targetRegion]||0);
+                                        bons = isVentes ? (d.ventes_bons[targetRegion]||0) : (d.achats_bons[targetRegion]||0);
+                                    } else {
+                                        val = isVentes ? d.ventes : d.achats;
+                                        ['Ouest', 'Centre', 'Est', 'Sud', 'Vide'].forEach(function(r) { bons += isVentes ? (d.ventes_bons[r]||0) : (d.achats_bons[r]||0); });
+                                    }
+                                    if (val === 0) return 0;
+                                    var c = ctx.chart.ctx; c.font = 'bold 11px Arial';
+                                    return 5 + c.measureText(bons + ' Bons').width + 8;
+                                },
+                                formatter: function(v, ctx) {
+                                    if (v === 0 && ctx.chart.data.datasets[ctx.datasetIndex].data[ctx.dataIndex] === 0) return null;
+                                    var ds = ctx.chart.data.datasets;
+                                    for (var i = ctx.datasetIndex + 1; i < ds.length; i++) {
+                                        if (ds[i].stack === ctx.dataset.stack && ds[i].data[ctx.dataIndex] > 0) return null;
+                                    }
+                                    var isVentes = ctx.dataset.stack === 'Ventes';
+                                    var d = mergedData[ctx.dataIndex];
+                                    var unites = 0, val = 0;
+                                    if (targetRegion) {
+                                        val = isVentes ? (d.ventes_regions[targetRegion]||0) : (d.achats_regions[targetRegion]||0);
+                                        unites = isVentes ? (d.ventes_unites[targetRegion]||0) : (d.achats_unites[targetRegion]||0);
+                                    } else {
+                                        val = isVentes ? d.ventes : d.achats;
+                                        ['Ouest', 'Centre', 'Est', 'Sud', 'Vide'].forEach(function(r) {
+                                            unites += isVentes ? (d.ventes_unites[r]||0) : (d.achats_unites[r]||0);
+                                        });
+                                    }
+                                    if (val === 0) return null;
+                                    return '/ ' + Number(unites).toLocaleString('fr-FR') + ' Unités';
+                                }
+                            },
+                            daLabel: {
+                                align: 'right', anchor: 'end', color: '#2E7D32', font: { weight: 'bold', size: 11, family: 'Arial' },
+                                offset: function(ctx) {
+                                    var ds = ctx.chart.data.datasets;
+                                    for (var i = ctx.datasetIndex + 1; i < ds.length; i++) {
+                                        if (ds[i].stack === ctx.dataset.stack && ds[i].data[ctx.dataIndex] > 0) return 0;
+                                    }
+                                    var isVentes = ctx.dataset.stack === 'Ventes';
+                                    var d = mergedData[ctx.dataIndex];
+                                    var bons = 0, unites = 0, val = 0;
+                                    if (targetRegion) {
+                                        val = isVentes ? (d.ventes_regions[targetRegion]||0) : (d.achats_regions[targetRegion]||0);
+                                        bons = isVentes ? (d.ventes_bons[targetRegion]||0) : (d.achats_bons[targetRegion]||0);
+                                        unites = isVentes ? (d.ventes_unites[targetRegion]||0) : (d.achats_unites[targetRegion]||0);
+                                    } else {
+                                        val = isVentes ? d.ventes : d.achats;
+                                        ['Ouest', 'Centre', 'Est', 'Sud', 'Vide'].forEach(function(r) { 
+                                            bons += isVentes ? (d.ventes_bons[r]||0) : (d.achats_bons[r]||0); 
+                                            unites += isVentes ? (d.ventes_unites[r]||0) : (d.achats_unites[r]||0); 
+                                        });
+                                    }
+                                    if (val === 0) return 0;
+                                    var c = ctx.chart.ctx; c.font = 'bold 11px Arial';
+                                    var t1 = bons + ' Bons', t2 = '/ ' + Number(unites).toLocaleString('fr-FR') + ' Unités';
+                                    return 5 + c.measureText(t1).width + 8 + c.measureText(t2).width + 8;
+                                },
+                                formatter: function(v, ctx) {
+                                    if (v === 0 && ctx.chart.data.datasets[ctx.datasetIndex].data[ctx.dataIndex] === 0) return null;
+                                    var ds = ctx.chart.data.datasets;
+                                    for (var i = ctx.datasetIndex + 1; i < ds.length; i++) {
+                                        if (ds[i].stack === ctx.dataset.stack && ds[i].data[ctx.dataIndex] > 0) return null;
+                                    }
+                                    var isVentes = ctx.dataset.stack === 'Ventes';
+                                    var d = mergedData[ctx.dataIndex];
+                                    var val = 0;
+                                    if (targetRegion) {
+                                        val = isVentes ? (d.ventes_regions[targetRegion]||0) : (d.achats_regions[targetRegion]||0);
+                                    } else {
+                                        val = isVentes ? d.ventes : d.achats;
+                                    }
+                                    if (val === 0) return null;
+                                    return '/ ' + Number(val).toLocaleString('fr-FR', { maximumFractionDigits: 2 }) + ' DA';
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        chartInstances[canvasId]._rawMergedData = mergedData;
+        chartInstances[canvasId]._targetRegion = targetRegion;
+    }
+
+    // Bind Button Clicks for Sorting
+    $(document).on('click', '.btn-sort', function() {
+        var sortBy = $(this).data('sort');
+        var targetCanvas = $(this).data('target');
+        
+        var $card = $(this).closest('.card');
+        
+        // --- GESTION DES COULEURS DES BOUTONS ---
+        $card.find('.btn-sort').each(function() {
+            var activeClass = $(this).data('active-class');
+            $(this).removeClass(activeClass).addClass('btn-secondary'); // On grise tous les boutons
+        });
+        var myActiveClass = $(this).data('active-class');
+        $(this).removeClass('btn-secondary').addClass(myActiveClass); // On colore le bouton cliqué
+
+        // --- NEW TOGGLE LOGIC ---
+        if (sortBy === 'achats') {
+            $card.find('.zero-list-achats').fadeIn(200);
+            $card.find('.zero-list-ventes').hide();
+        } else {
+            $card.find('.zero-list-ventes').fadeIn(200);
+            $card.find('.zero-list-achats').hide();
+        }
+        // --- END NEW TOGGLE LOGIC ---
+
+        var chart = chartInstances[targetCanvas];
+        // ... leave the rest of the function untouched
+        if (!chart || !chart._rawMergedData) return;
+
+        var data = chart._rawMergedData;
+        var targetRegion = chart._targetRegion;
+        
+        if (sortBy === 'achats') {
+            data.sort(function(a, b) { 
+                var valA = targetRegion ? (a.achats_regions[targetRegion]||0) : a.achats;
+                var valB = targetRegion ? (b.achats_regions[targetRegion]||0) : b.achats;
+                return valB - valA; 
+            });
+        } else {
+            data.sort(function(a, b) { 
+                var valA = targetRegion ? (a.ventes_regions[targetRegion]||0) : a.ventes;
+                var valB = targetRegion ? (b.ventes_regions[targetRegion]||0) : b.ventes;
+                return valB - valA; 
+            });
+        }
+
+        chart.data.labels = data.map(function(d) { return d.name; });
+        
+        // On sépare intelligemment les jeux de données (Datasets) Achats et Ventes
+        var dsAchats = chart.data.datasets.filter(function(ds) { return ds.stack === 'Achats'; });
+        var dsVentes = chart.data.datasets.filter(function(ds) { return ds.stack === 'Ventes'; });
+
+        // On met à jour les données
+        if (targetRegion) {
+            dsAchats[0].data = data.map(function(d) { return d.achats_regions[targetRegion] || 0; });
+            dsVentes[0].data = data.map(function(d) { return d.ventes_regions[targetRegion] || 0; });
+        } else {
+            var regions = ['Ouest', 'Centre', 'Est', 'Sud', 'Vide'];
+            regions.forEach(function(reg, idx) { 
+                dsAchats[idx].data = data.map(function(d) { return d.achats_regions[reg] || 0; }); 
+                dsVentes[idx].data = data.map(function(d) { return d.ventes_regions[reg] || 0; }); 
+            });
+        }
+        
+        // --- INVERSION DES BARRES SELON LE BOUTON ACTIF ---
+        if (sortBy === 'achats') {
+            chart.data.datasets = dsAchats.concat(dsVentes); // Les Achats s'affichent en premier
+        } else {
+            chart.data.datasets = dsVentes.concat(dsAchats); // Le Déstockage s'affiche en premier
+        }
+        
+        chart.update();
+    });
 
     /* ════════════════ MASTER RENDER ════════════════ */
     function fetchDashboardData(params) {
@@ -843,28 +1271,114 @@
           $('#spinner-all-supergros, #spinner-all-grossistes').removeClass('active');
           if (!data) return;
 
+          // --- MOVE THIS FUNCTION HERE ---
+          function renderZeroList(dataObj, containerId, params) {
+              var zc = $('#' + containerId).empty();
+              if (!dataObj) return;
+
+              var regionColors = { 'Ouest': '#E53935', 'Centre': '#4CAF50', 'Est': '#03A9F4', 'Sud': '#FFEB3B', 'Vide / Autre': '#E0E0E0' };
+              var regions = ['Centre', 'Est', 'Ouest', 'Sud', 'Vide / Autre'];
+              
+              regions.forEach(function(r) {
+                  var targetRegion = params.region === 'Vide' ? 'Vide / Autre' : params.region;
+                  if (params.region && r !== targetRegion) return;
+
+                  var list = dataObj[r];
+                  if (list && list.length > 0) {
+                      var col = $('<div style="flex: 1; min-width: 250px; background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);"></div>');
+                      col.append('<h4 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; border-bottom: 2px solid ' + regionColors[r] + '; padding-bottom: 5px;">' + r + ' (' + list.length + ')</h4>');
+                      // Stack them vertically with gap
+                      var ul = $('<div style="display: flex; flex-direction: column; gap: 8px;"></div>');
+                      list.forEach(function(item) {
+                          // Build a mini-card for each client
+                          var cardHtml = 
+                            '<div style="background: #fafafa; border: 1px solid #e0e0e0; border-left: 4px solid ' + regionColors[r] + '; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; transition: 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">' +
+                               // Top Row: Name and ID
+                               '<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">' +
+                                 '<span style="font-weight: 800; color: #333; font-size: 13px; line-height: 1.3; word-break: break-word;">' + item.name + '</span>' +
+                                 '<span style="background: #e9ecef; color: #495057; font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 4px; white-space: nowrap;">#' + item.id + '</span>' +
+                               '</div>' +
+                               // Bottom Row: Wilaya and User
+                               '<div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; border-top: 1px dashed #ddd; padding-top: 6px;">' +
+                                 '<span style="color: #666; display: flex; align-items: center; gap: 4px;">' +
+                                    '<i class="bi bi-geo-alt-fill" style="color: #9e9e9e;"></i> ' + (item.wilaya || '-') + 
+                                 '</span>' +
+                                 '<span style="color: #0277BD; font-weight: 700; display: flex; align-items: center; gap: 4px;">' +
+                                    '<i class="bi bi-person-fill" style="color: #4FC3F7;"></i> ' + (item.user || '-') + 
+                                 '</span>' +
+                               '</div>' +
+                               (item.last_visit !== undefined ? 
+                                 '<div style="display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding-top: 6px; color: ' + (item.last_visit ? '#E65100' : '#d32f2f') + ';">' +
+                                   '<i class="bi ' + (item.last_visit ? 'bi-calendar-check-fill' : 'bi-calendar-x-fill') + '"></i>' +
+                                   'Dernière visite : ' + (item.last_visit ? item.last_visit + (item.last_visit_user ? ' (par ' + item.last_visit_user + ')' : '') : 'Jamais visité') +
+                                 '</div>' 
+                               : '') +
+                             '</div>';
+                          ul.append(cardHtml);
+                      });
+                      col.append(ul);
+                      zc.append(col);
+                  }
+              });
+          }
+          // --- END FUNCTION ---
+
           if (data.type === 'ALL_SUPERGROS') {
               $('#stat-subtitle, #card-org, #card-charts, #card-tables, #regional-breakdown-bar, #real-sales-banner, #card-all-grossistes').hide();
               $('#stat-subtitle').text('SuperGros – Tous les SuperGros').show();
               $('#secondary-filter-container').show();
               $('#card-all-supergros').show();
-              if (params.region) {
-                  drawAllRegionChart('chart-all-supergros', 'card-all-supergros', params.region, data.data, 'total-banner-supergros');
-              } else {
-                  drawAllSuperGrosChart(data.data);
-              }
+              
+              // --- REINITIALISER LES BOUTONS SUR "ACHAT" ---
+              var $sgCard = $('#card-all-supergros');
+              $sgCard.find('.btn-sort[data-sort="achats"]').removeClass('btn-secondary').addClass('btn-primary');
+              $sgCard.find('.btn-sort[data-sort="ventes"]').removeClass('btn-success').addClass('btn-secondary');
+              $sgCard.find('.zero-list-achats').show();
+              $sgCard.find('.zero-list-ventes').hide();
+
+              var targetRegion = params.region || null;
+              var mergedData = mergeChartData(data.data, data.data_achats);
+              drawCombinedChart('chart-all-supergros-combined', 'total-banner-supergros-combined', mergedData, targetRegion);
+              renderZeroList(data.zero_ventes, 'sg-zero-ventes-container', params);
+renderZeroList(data.zero_achats, 'sg-zero-achats-container', params);
               return;
           }
 
           if (data.type === 'ALL_GROSSISTES') {
               $('#stat-subtitle, #card-org, #card-charts, #card-tables, #regional-breakdown-bar, #real-sales-banner, #card-all-supergros').hide();
-              $('#stat-subtitle').text('Grossiste – Tous les Grossistes').show();
+              $('#stat-subtitle').text('Grossistes – Tous les Grossistes').show();
               $('#secondary-filter-container').show();
               $('#card-all-grossistes').show();
+              
+              // --- REINITIALISER LES BOUTONS SUR "ACHAT" ---
+              var $grCard = $('#card-all-grossistes');
+              $grCard.find('.btn-sort[data-sort="achats"]').removeClass('btn-secondary').addClass('btn-primary');
+              $grCard.find('.btn-sort[data-sort="ventes"]').removeClass('btn-success').addClass('btn-secondary');
+              $grCard.find('.zero-list-achats').show();
+              $grCard.find('.zero-list-ventes').hide();
+
+              var targetRegion = params.region || null;
+              var mergedData = mergeChartData(data.data, data.data_achats);
+              drawCombinedChart('chart-all-grossistes-combined', 'total-banner-grossistes-combined', mergedData, targetRegion);
+
+              
+              renderZeroList(data.zero_ventes, 'zero-ventes-container', params);
+              renderZeroList(data.zero_achats, 'zero-achats-container', params);
+
+              return;
+          }
+          
+          if (data.type === 'ALL_PHARMACIES') {
+              $('#stat-subtitle, #card-org, #card-charts, #card-tables, #regional-breakdown-bar, #real-sales-banner, #card-all-supergros, #card-all-grossistes').hide();
+              $('#stat-subtitle').text('Pharmacies – Toutes les Pharmacies').show();
+              $('#secondary-filter-container').show();
+              $('#card-all-pharmacies').show();
+              
               if (params.region) {
-                  drawAllRegionChart('chart-all-grossistes', 'card-all-grossistes', params.region, data.data, 'total-banner-grossistes');
+                  // Added 'acheteur' at the end of these 2 lines
+                  drawAllRegionChart('chart-all-pharmacies-achats', 'card-all-pharmacies', params.region, data.data_achats, 'total-banner-pharmacies-achats', 'acheteur');
               } else {
-                  drawAllGrossistesChart(data.data);
+                  drawAllGrossistesChart(data.data_achats, 'chart-all-pharmacies-achats', 'total-banner-pharmacies-achats', 'Valeur totale des Achats :', 'acheteur');
               }
               return;
           }
@@ -887,8 +1401,8 @@
 
               var regions = ['Centre', 'Est', 'Ouest', 'Sud', 'Vide'];
               regions.forEach(function(reg, index) {
-                  var stats = data.regional_stats[reg];
-                  // Only calculate percentage for the Value (DA) now
+                  var stats = data.regional_stats[reg] || {bons: 0, unites: 0, valeur: 0}; // <-- Add the || fallback here
+                  
                   var pctVal = totalVal > 0 ? ((stats.valeur / totalVal) * 100).toFixed(1) : 0;
 
                   var border = index < 3 ? 'border-right: 1px solid #C8E6C9;' : '';
@@ -937,11 +1451,15 @@
           if (data.root.type === 'SuperGros') {
               cw.append('<div class="chart-box"><canvas id="chart-ventes"></canvas></div>');
               drawUserChart('chart-ventes', 'Ventes par Utilisateur (Commandes du SuperGros) | المبيعات حسب المستخدم (طلبيات سوبر غرو)', data.user_stats_ventes, '#4CAF50');
-          } else {
+          } else if (data.root.type === 'Grossiste') {
               cw.append('<div class="chart-box"><canvas id="chart-achats"></canvas></div>');
               cw.append('<div class="chart-box"><canvas id="chart-ventes"></canvas></div>');
               drawUserChart('chart-achats', 'Achats par Utilisateur (Grossiste comme Client) | المشتريات حسب المستخدم (تاجر الجملة كعميل)', data.user_stats_achats, '#42A5F5');
               drawUserChart('chart-ventes', 'Ventes par Utilisateur (Grossiste comme Fournisseur) | المبيعات حسب المستخدم (تاجر الجملة كمورد)', data.user_stats_ventes, '#4CAF50');
+          } else if (data.root.type === 'Pharmacie') {
+              cw.append('<div class="chart-box"><canvas id="chart-achats"></canvas></div>');
+              // Using purple (#8B5CF6) to match the Pharmacie theme!
+              drawUserChart('chart-achats', 'Achats par Utilisateur (Commandes Pharmacie) | المشتريات حسب المستخدم (طلبيات صيدلية)', data.user_stats_achats, '#8B5CF6'); 
           }
           $('#card-charts').show();
 
@@ -959,7 +1477,7 @@
       var type = $('#filter-type').val(), id = $('#filter-entity').val();
       if (!type || !id) return;
       $('#filter-region').val('');
-      var params = { type: type, id: id, min_date: $('#filter-min-date').val(), max_date: $('#filter-max-date').val(), region: '' };
+      var params = { type: type, id: id, min_date: $('#filter-min-date').val(), max_date: $('#filter-max-date').val(), region: '', user: $('#filter-user').val() || '' };
       fetchDashboardData(params);
     }
 
@@ -979,6 +1497,11 @@
         { icon: 'bi-building', label: 'Entité', value: entityName },
         { icon: 'bi-calendar-range', label: 'Période', value: minDate + ' → ' + maxDate },
       ];
+
+      var userFilter = $('#filter-user').val();
+      if (userFilter) {
+          tags.push({ icon: 'bi-person-fill', label: 'Utilisateur', value: userFilter });
+      }
 
       var html = tags.map(function(t) {
         return '<span style="display:inline-flex; align-items:center; gap:6px; background:#e8f5e9; border:1px solid #c8e6c9; border-radius:20px; padding:4px 12px; font-size:13px; color:#1b5e20; font-weight:600;">' +
@@ -1008,6 +1531,7 @@
       var minDate = urlParams.get('min_date') || '';
       var maxDate = urlParams.get('max_date') || '';
       var region  = urlParams.get('region')   || '';
+      var user    = urlParams.get('user')     || '';
 
       if (!type || !id) return;
 
@@ -1016,14 +1540,94 @@
       $('#filter-min-date').val(minDate);
       $('#filter-max-date').val(maxDate);
       if (region) $('#filter-region').val(region);
+      $('#filter-user').val(user);
 
       showAppliedFilters(type, id, minDate, maxDate);
 
-      var params = { type: type, id: id, min_date: minDate, max_date: maxDate, region: region };
+      var params = { type: type, id: id, min_date: minDate, max_date: maxDate, region: region, user: user };
       fetchDashboardData(params);
     })();
 
+
+    function fetchDrillDownData(entityType, entityId, entityName, role) {
+        $('#drillDownTitle').text('Détails des commandes : ' + entityName);
+        $('#drillDownTable').hide();
+        $('#drillDownBody').empty();
+        $('#drillDownSpinner').show();
+
+        var drillModal = new bootstrap.Modal(document.getElementById('drillDownModal'));
+        drillModal.show();
+
+        var params = {
+        type: entityType,
+        id: entityId,
+        role: role, // Send the role to Django
+        min_date: $('#filter-min-date').val(),
+        max_date: $('#filter-max-date').val(),
+        region: $('#filter-region').val() || '',
+        user: $('#filter-user').val() || ''
+    };
+
+        $.get(CFG.DRILLDOWN_API, params).done(function(data) {
+            $('#drillDownSpinner').hide();
+            if (!data || data.length === 0) {
+                $('#drillDownBody').html('<tr><td colspan="7" class="text-center text-muted py-4">Aucune commande trouvée.</td></tr>');
+            } else {
+                var rows = data.map(function(row) {
+                    return '<tr>' +
+                        '<td class="text-center"><a href="/orders/' + row.id + '" target="_blank" style="font-weight:bold; color:#0D47A1; text-decoration:none;">#' + row.id + '</a></td>' +
+                        '<td class="text-center">' + row.date + '</td>' +
+                        '<td>' + row.user + '</td>' +
+                        '<td>' + (row.client || '-') + '</td>' +
+                        '<td>' + (row.fournisseur || '-') + '</td>' +
+                        '<td>' + (row.produits_str || '-') + '</td>' +
+                        '<td class="text-end fw-bold" style="color:#2E7D32;">' + fmt(row.valeur_brute) + ' DA</td>' +
+                    '</tr>';
+                });
+                $('#drillDownBody').html(rows.join(''));
+            }
+            $('#drillDownTable').fadeIn();
+        }).fail(function() {
+            $('#drillDownSpinner').hide();
+            $('#drillDownBody').html('<tr><td colspan="7" class="text-center text-danger fw-bold py-4">Erreur lors du chargement des données.</td></tr>');
+            $('#drillDownTable').show();
+        });
+    }
+
   }(jQuery));
   </script>
+
+<div class="modal fade" id="drillDownModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header" style="background-color: #f4f6f9; border-bottom: 2px solid #2E7D32;">
+        <h5 class="modal-title" id="drillDownTitle" style="color: #1B5E20; font-weight: bold;">Détails des commandes</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" style="background-color: #fafafa;">
+         <div id="drillDownSpinner" class="text-center my-5">
+             <div class="spinner-border text-success" style="width: 3rem; height: 3rem;" role="status"></div>
+             <div class="mt-2 text-muted fw-bold">Chargement des commandes...</div>
+         </div>
+         <table class="table table-bordered table-hover" id="drillDownTable" style="display:none; font-size: 14px; background: white;">
+            <thead style="background-color: #E8F5E9; color: #1B5E20;">
+               <tr>
+                  <th class="text-center">Bon N°</th>
+                  <th class="text-center">Date</th>
+                  <th>Utilisateur</th>
+                  <th>Client</th>
+                  <th>Fournisseur</th>
+                  <th>Produits</th>
+                  <th class="text-end">Valeur Brute</th>
+               </tr>
+            </thead>
+            <tbody id="drillDownBody"></tbody>
+         </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

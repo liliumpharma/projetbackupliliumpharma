@@ -1,4 +1,5 @@
 from .models import *
+import subprocess
 from .serializers import *
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -273,6 +274,7 @@ from clients.models import *
 #         return redirect(f"{reverse('MsOrders')}?ttl=1")
 #         #return render(request, "orders/addorder.html", {'pha':pha, 'gro':gro, 'sugro':sugro, 'pro':pro, "m":m})
 
+
 class addorder(TemplateView):
     @staticmethod
     def _grossistes_scoped_by_superviseur_or_self(user_obj, user_profile):
@@ -284,7 +286,11 @@ class addorder(TemplateView):
         """
         superviseur_profiles = UserProfile.objects.filter(
             usersunder=user_obj,
-            speciality_rolee__in=["Superviseur", "Superviseur_regional", "Superviseur_national"],
+            speciality_rolee__in=[
+                "Superviseur",
+                "Superviseur_regional",
+                "Superviseur_national",
+            ],
         ).distinct()
 
         sectors = set()
@@ -311,7 +317,11 @@ class addorder(TemplateView):
         base, ext = os.path.splitext(original_name or "")
 
         # Remove accents (é -> e), drop non-ascii
-        base = unicodedata.normalize("NFKD", base).encode("ascii", "ignore").decode("ascii")
+        base = (
+            unicodedata.normalize("NFKD", base)
+            .encode("ascii", "ignore")
+            .decode("ascii")
+        )
 
         # Django-safe filename + small hardening
         base = get_valid_filename(base).replace(" ", "_").strip("._")
@@ -343,7 +353,11 @@ class addorder(TemplateView):
             )
 
         # Superviseurs => keep your existing logic (grossistes by union of underusers sectors)
-        if u.speciality_rolee in ["Superviseur", "Superviseur_regional", "Superviseur_national"]:
+        if u.speciality_rolee in [
+            "Superviseur",
+            "Superviseur_regional",
+            "Superviseur_national",
+        ]:
             usr = User.objects.get(id=user_id)
             userpro = UserProfile.objects.get(user=usr)
             users_under = userpro.usersunder.all()
@@ -390,13 +404,17 @@ class addorder(TemplateView):
         u = UserProfile.objects.get(user=user_id)
 
         pharmacy_id = request.POST.get("phar")
-        pharmacyy = Medecin.objects.filter(id=pharmacy_id).first() if pharmacy_id else None
+        pharmacyy = (
+            Medecin.objects.filter(id=pharmacy_id).first() if pharmacy_id else None
+        )
 
         gros_id = request.POST.get("gros")
         groo = Medecin.objects.filter(id=gros_id).first() if gros_id else None
 
         super_gros_id = request.POST.get("sugros")
-        su_gro = Client.objects.filter(id=super_gros_id).first() if super_gros_id else None
+        su_gro = (
+            Client.objects.filter(id=super_gros_id).first() if super_gros_id else None
+        )
 
         # Helper to re-render the form with consistent scoping
         def _render_form_with_message(msg):
@@ -468,10 +486,14 @@ class addorder(TemplateView):
                 try:
                     qtt_int = int(qtt_value)
                 except ValueError:
-                    return _render_form_with_message(f"Quantité invalide pour {itempro.nom}")
+                    return _render_form_with_message(
+                        f"Quantité invalide pour {itempro.nom}"
+                    )
 
                 if qtt_int <= 0:
-                    return _render_form_with_message(f"Quantité invalide pour {itempro.nom}")
+                    return _render_form_with_message(
+                        f"Quantité invalide pour {itempro.nom}"
+                    )
 
                 selected_lines.append((itempro, qtt_int))
 
@@ -504,16 +526,30 @@ class addorder(TemplateView):
         # ==========================================
         # SMART WHATSAPP TRIGGER
         # ==========================================
-        print(f"[WhatsApp DEBUG] super_gros={order.super_gros}, gros={order.gros}, pharmacy={order.pharmacy}")
+        print(
+            f"[WhatsApp DEBUG] super_gros={order.super_gros}, gros={order.gros}, pharmacy={order.pharmacy}"
+        )
         if order.super_gros and (order.gros or order.pharmacy):
             responsible_profile = order.super_gros.user
-            print(f"[WhatsApp DEBUG] responsible_profile={responsible_profile}, telephone={getattr(responsible_profile, 'telephone', 'N/A')}")
+            print(
+                f"[WhatsApp DEBUG] responsible_profile={responsible_profile}, telephone={getattr(responsible_profile, 'telephone', 'N/A')}"
+            )
             if responsible_profile and responsible_profile.telephone:
-                send_pdf_whatsapp.thread(order.id, responsible_profile.telephone).run()
+                # REPLACE IT WITH EXACTLY THIS:
+                subprocess.Popen(
+                    ["python3", "/var/www/server/orders/send_pdf_whatsapp.py", str(order.id), str(responsible_profile.telephone)],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    stdin=subprocess.DEVNULL
+                )
             else:
-                print(f"[WhatsApp] Skipping: No phone number for {order.super_gros.name}'s responsible user.")
+                print(
+                    f"[WhatsApp] Skipping: No phone number for {order.super_gros.name}'s responsible user."
+                )
         else:
-            print(f"[WhatsApp DEBUG] Condition not met: super_gros={bool(order.super_gros)}, gros_or_pharmacy={bool(order.gros or order.pharmacy)}")
+            print(
+                f"[WhatsApp DEBUG] Condition not met: super_gros={bool(order.super_gros)}, gros_or_pharmacy={bool(order.gros or order.pharmacy)}"
+            )
         # ==========================================
 
         m = "Bon de Commande ajouter avec succes"
@@ -612,8 +648,10 @@ class OrderAPI(APIView):
 
             return Response(OrderSerializer(order).data, status=200)
 
+
 import json
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+
 
 class OrderAppAPI(APIView):
     authentication_classes = [TokenAuthentication]
@@ -724,23 +762,29 @@ class OrderAppAPI(APIView):
             gro = request.data.get("gros")
             supgro = request.data.get("super_gros")
             print(items_raw)
-            #print(date())
+            # print(date())
             print(date.today())
             try:
-                ord = Order.objects.get(added__date=date.today(),user=request.user, pharmacy=ph,gros=gro,super_gros=supgro)
+                ord = Order.objects.get(
+                    added__date=date.today(),
+                    user=request.user,
+                    pharmacy=ph,
+                    gros=gro,
+                    super_gros=supgro,
+                )
                 print("exist deja un bon de commande avec les meme ph, supgro, gro")
-                message = {"error": "Un bon de commande existe déjà pour cette pharmacie, ce grossiste et ce super grossiste aujourd’hui."}
-                return Response(
-                    message["error"],
-                    status=status.HTTP_400_BAD_REQUEST)
+                message = {
+                    "error": "Un bon de commande existe déjà pour cette pharmacie, ce grossiste et ce super grossiste aujourd’hui."
+                }
+                return Response(message["error"], status=status.HTTP_400_BAD_REQUEST)
             except ObjectDoesNotExist:
                 print("pas de bon de commande ")
             except MultipleObjectsReturned:
                 # Plusieurs bons trouvés → renvoyer un message clair
-                message = {"error": "Un bon de commande existe déjà pour cette pharmacie, ce grossiste et ce super grossiste aujourd’hui."}
-                return Response(
-                    message["error"],
-                    status=status.HTTP_400_BAD_REQUEST)
+                message = {
+                    "error": "Un bon de commande existe déjà pour cette pharmacie, ce grossiste et ce super grossiste aujourd’hui."
+                }
+                return Response(message["error"], status=status.HTTP_400_BAD_REQUEST)
             if not items_raw:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
             # Convertir la chaîne JSON en liste Python
@@ -764,16 +808,20 @@ class OrderAppAPI(APIView):
                 pserializer = OrderItemSerializer(data=produits_data, many=True)
                 if pserializer.is_valid():
                     pserializer.save()
-                    
+
                     # ==========================================
                     # SMART WHATSAPP TRIGGER
                     # ==========================================
                     if order.super_gros and (order.gros or order.pharmacy):
                         responsible_profile = order.super_gros.user
                         if responsible_profile and responsible_profile.telephone:
-                            send_pdf_whatsapp.thread(order.id, responsible_profile.telephone).run()
+                            send_pdf_whatsapp.thread(
+                                order.id, responsible_profile.telephone
+                            ).start()
                         else:
-                            print(f"[WhatsApp] Skipping: No phone number for {order.super_gros.name}'s responsible user.")
+                            print(
+                                f"[WhatsApp] Skipping: No phone number for {order.super_gros.name}'s responsible user."
+                            )
                     # ==========================================
 
                     return Response(
@@ -1458,7 +1506,7 @@ class ordersPerUserPerMonth(APIView):
             user = request.user
         # user=request.user
 
-        #year = date.today().year
+        # year = date.today().year
         year = int(request.GET.get("year"))
         month_param = request.GET.get("month")
         try:
@@ -1466,17 +1514,11 @@ class ordersPerUserPerMonth(APIView):
             tz = datetime.now().tzinfo  # Get the current time zone
 
             if 1 <= month <= 12:
-                date_debut_mois = datetime(
-                    year, month, 1, 0, 0, 0, 0, tzinfo=tz
-                )
+                date_debut_mois = datetime(year, month, 1, 0, 0, 0, 0, tzinfo=tz)
                 if month == 12:
-                    date_fin_mois = datetime(
-                        year + 1, 1, 1, 0, 0, 0, 0, tzinfo=tz
-                    )
+                    date_fin_mois = datetime(year + 1, 1, 1, 0, 0, 0, 0, tzinfo=tz)
                 else:
-                    date_fin_mois = datetime(
-                        year, month + 1, 1, 0, 0, 0, 0, tzinfo=tz
-                    )
+                    date_fin_mois = datetime(year, month + 1, 1, 0, 0, 0, 0, tzinfo=tz)
             else:
                 return Response(
                     {"error": "Mois invalide. Utilisez une valeur entre 1 et 12."},
@@ -1610,6 +1652,7 @@ from .models import User, Order, OrderItem
 from .serializers import OrderSerializer
 from datetime import datetime
 
+
 class OrdersByUserAndDateView(APIView):
 
     def get(self, request, username, order_date):
@@ -1625,9 +1668,11 @@ class OrdersByUserAndDateView(APIView):
 
             # Convertir la date fournie dans l'URL au format de date Python
             try:
-                order_date = datetime.strptime(order_date, '%Y-%m-%d').date()
+                order_date = datetime.strptime(order_date, "%Y-%m-%d").date()
             except ValueError:
-                return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
+                return Response(
+                    {"error": "Invalid date format. Use YYYY-MM-DD."}, status=400
+                )
 
             # Filtrer les commandes de cet utilisateur dans la plage de dates donnée
             orders = Order.objects.filter(user=user, added__date=order_date)
@@ -1636,7 +1681,9 @@ class OrdersByUserAndDateView(APIView):
             orders_data = OrderSerializer(orders, many=True).data
 
             # Comptage des commandes pour pharmacie et gros
-            orders_with_pharmacy_and_gros = orders.filter(pharmacy__isnull=False, gros__isnull=False)
+            orders_with_pharmacy_and_gros = orders.filter(
+                pharmacy__isnull=False, gros__isnull=False
+            )
             count_orders_with_pharmacy_and_gros = orders_with_pharmacy_and_gros.count()
 
             product_qty_pharmacy_and_gros = {}
@@ -1652,8 +1699,12 @@ class OrdersByUserAndDateView(APIView):
                         product_qty_pharmacy_and_gros[product_name] = qty
 
             # Comptage des commandes pour gros et super gros
-            orders_with_gros_and_super_gros = orders.filter(gros__isnull=False, super_gros__isnull=False)
-            count_orders_with_gros_and_super_gros = orders_with_gros_and_super_gros.count()
+            orders_with_gros_and_super_gros = orders.filter(
+                gros__isnull=False, super_gros__isnull=False
+            )
+            count_orders_with_gros_and_super_gros = (
+                orders_with_gros_and_super_gros.count()
+            )
 
             product_qty_gros_and_super_gros = {}
             for order in orders_with_gros_and_super_gros:
@@ -1668,7 +1719,9 @@ class OrdersByUserAndDateView(APIView):
                         product_qty_gros_and_super_gros[product_name] = qty
 
             # Création d'un ensemble de produits uniques
-            all_products = set(product_qty_pharmacy_and_gros.keys()).union(product_qty_gros_and_super_gros.keys())
+            all_products = set(product_qty_pharmacy_and_gros.keys()).union(
+                product_qty_gros_and_super_gros.keys()
+            )
             unique_products = list(all_products)
 
             # Préparation des données à envoyer dans la réponse
@@ -1687,6 +1740,7 @@ class OrdersByUserAndDateView(APIView):
 
         except User.DoesNotExist:
             return Response({"error": "User not found."}, status=404)
+
 
 from collections import defaultdict
 from datetime import datetime, date, timedelta
@@ -1798,22 +1852,368 @@ class TransactionTrackerAPI(APIView):
                 ).distinct()
         # ────────────────────────────────────────────────────────────────────────────
 
+        # NOUVEAU: Filtrage par l'utilisateur sélectionné depuis le frontend (Déplacé ici)
+        user_param = request.GET.get("user")
+        if user_param:
+            from django.contrib.auth.models import User
+            target_user = User.objects.filter(username=user_param).first()
+            if target_user:
+                try:
+                    target_role = target_user.userprofile.speciality_rolee
+                except Exception:
+                    target_role = ""
+
+                is_meriem = (target_user.first_name.lower() == "meriem" and target_user.last_name.lower() == "rimouche") or target_user.username == "MeriemDZ"
+
+                if target_role == "CountryManager" or is_meriem:
+                    pass
+                elif target_role in ["Commercial", "Medico_commercial"]:
+                    orders_qs = orders_qs.filter(Q(user=target_user) | Q(touser=target_user)).distinct()
+                elif target_role == "Superviseur_national":
+                    users_under = target_user.userprofile.usersunder.all()
+                    orders_qs = orders_qs.filter(
+                        Q(user=target_user) | Q(touser=target_user) |
+                        Q(user__in=users_under) | Q(touser__in=users_under)
+                    ).distinct()
+                else:
+                    orders_qs = orders_qs.filter(Q(user=target_user) | Q(touser=target_user)).distinct()
+
         # ── ALL SUPERGROS RANKING BLOCK (before region filter — sees all regions) ──
         if entity_type == "supergros" and entity_id == "ALL":
-            orders = orders_qs.filter(super_gros__isnull=False).filter(Q(gros__isnull=False) | Q(pharmacy__isnull=False)).select_related("super_gros", "user", "user__userprofile")
+            # 1. SuperGros as seller (Selling to Grossistes or Pharmacies)
+            orders_ventes = orders_qs.filter(
+                super_gros__isnull=False
+            ).filter(Q(gros__isnull=False) | Q(pharmacy__isnull=False)).select_related("super_gros", "user", "user__userprofile")
 
-            order_map = {o.id: o for o in orders}
+            # 2. SuperGros as buyer (Buying from Office/Company - gros and pharmacy are null)
+            orders_achats = orders_qs.filter(
+                super_gros__isnull=False, gros__isnull=True, pharmacy__isnull=True
+            ).select_related("super_gros", "user", "user__userprofile")
+
+            def aggregate_supergros(orders_subset):
+                order_map = {o.id: o for o in orders_subset}
+                order_ids = list(order_map.keys())
+                items = OrderItem.objects.filter(order_id__in=order_ids).select_related("produit")
+
+                sg_stats = {}
+                for it in items:
+                    o = order_map[it.order_id]
+                    sg_id = o.super_gros_id
+
+                    if sg_id not in sg_stats:
+                        sg_stats[sg_id] = {
+                            "id": sg_id,
+                            "name": o.super_gros.name if o.super_gros else "Inconnu",
+                            "total_val": 0.0,
+                            "regions": {
+                                "Ouest": 0.0, "Centre": 0.0, "Est": 0.0, "Sud": 0.0, "Vide": 0.0
+                            },
+                            "regions_bons": {
+                                "Ouest": set(), "Centre": set(), "Est": set(), "Sud": set(), "Vide": set()
+                            },
+                            "regions_unites": {
+                                "Ouest": 0, "Centre": 0, "Est": 0, "Sud": 0, "Vide": 0
+                            },
+                        }
+
+                    val = float(it.qtt or 0) * float(it.produit.price or 0)
+                    qtt = int(it.qtt or 0)
+
+                    try:
+                        reg = (
+                            o.user.userprofile.region
+                            if getattr(o, "user", None) and hasattr(o.user, "userprofile")
+                            else None
+                        )
+                    except Exception:
+                        reg = None
+
+                    reg_key = reg if reg in ["Ouest", "Centre", "Est", "Sud"] else "Vide"
+                    sg_stats[sg_id]["total_val"] += val
+                    sg_stats[sg_id]["regions"][reg_key] += val
+                    sg_stats[sg_id]["regions_bons"][reg_key].add(o.id)
+                    sg_stats[sg_id]["regions_unites"][reg_key] += qtt
+
+                for s in sg_stats.values():
+                    s["regions_bons"] = {k: len(v) for k, v in s["regions_bons"].items()}
+
+                if region:
+                    target_reg = region if region in ["Ouest", "Centre", "Est", "Sud"] else "Vide"
+                    sorted_sg = sorted(
+                        [s for s in sg_stats.values() if s["regions"].get(target_reg, 0) > 0],
+                        key=lambda x: x["regions"].get(target_reg, 0),
+                        reverse=True,
+                    )
+                else:
+                    sorted_sg = sorted(
+                        [s for s in sg_stats.values() if s["total_val"] > 0],
+                        key=lambda x: x["total_val"],
+                        reverse=True,
+                    )
+                return sorted_sg
+
+            # Compute both datasets
+            data_ventes = aggregate_supergros(orders_ventes)
+            data_achats = aggregate_supergros(orders_achats)
+
+            active_ventes_ids = set(orders_ventes.values_list('super_gros_id', flat=True))
+            active_achats_ids = set(orders_achats.values_list('super_gros_id', flat=True))
+            
+            # Note: Using select_related safely based on your Client model
+            all_supergros = Client.objects.filter(supergro=True).select_related('wilaya')
+
+            centre = ["alger", "blida", "boumerdes", "tipaza", "tizi ouzou", "bejaia", "bouira", "medea", "chlef", "ain defla"]
+            est = ["setif", "constantine", "batna", "annaba", "skikda", "jijel", "mila", "oum el bouaghi", "tebessa", "guelma", "khenchela", "souk ahras", "bordj bou arreridj", "el tarf", "msila", "m'sila"]
+            ouest = ["oran", "tlemcen", "sidi bel abbes", "mostaganem", "mascara", "relizane", "tiaret", "saida", "ain temouchent", "tissemsilt"]
+            sud = ["ouargla", "biskra", "el oued", "ghardaia", "laghouat", "djelfa", "bechar", "adrar", "tamanrasset", "illizi", "tindouf", "el bayadh", "naama", "touggourt", "el meniaa", "ouled djellal", "beni abbes", "in salah", "in guezzam", "djanet", "bordj badji mokhtar"]
+
+            zero_ventes_dict = {"Centre": [], "Est": [], "Ouest": [], "Sud": [], "Vide / Autre": []}
+            zero_achats_dict = {"Centre": [], "Est": [], "Ouest": [], "Sud": [], "Vide / Autre": []}
+
+            for sg in all_supergros:
+                w_nom = None
+                # Try to extract wilaya safely 
+                if getattr(sg, 'wilaya', None) and sg.wilaya.nom:
+                    w_nom = str(sg.wilaya.nom).lower().replace("-", " ").strip()
+                elif getattr(sg, 'commune', None) and sg.commune.wilaya and sg.commune.wilaya.nom:
+                    w_nom = str(sg.commune.wilaya.nom).lower().replace("-", " ").strip()
+                
+                if w_nom in centre: reg_key = "Centre"
+                elif w_nom in est: reg_key = "Est"
+                elif w_nom in ouest: reg_key = "Ouest"
+                elif w_nom in sud: reg_key = "Sud"
+                else: reg_key = "Vide / Autre"
+                
+                # Get Wilaya
+                w_str = sg.wilaya.nom if getattr(sg, 'wilaya', None) else "Inconnue"
+                
+                # Safely get the assigned User
+                u_str = "Aucun"
+                if hasattr(sg, 'user') and sg.user:
+                    u_str = getattr(sg.user, 'username', str(sg.user))
+                    if hasattr(sg.user, 'first_name') and getattr(sg.user, 'first_name'):
+                        u_str = f"{sg.user.first_name} {getattr(sg.user, 'last_name', '')}".strip()
+
+                # Create a structured dictionary instead of a string
+                display_data = {
+                    "id": sg.id,
+                    "name": sg.name,
+                    "wilaya": w_str,
+                    "user": u_str
+                }
+
+                if sg.id not in active_ventes_ids:
+                    zero_ventes_dict[reg_key].append(display_data)
+                
+                if sg.id not in active_achats_ids:
+                    zero_achats_dict[reg_key].append(display_data)
+
+            return Response({
+                "type": "ALL_SUPERGROS", 
+                "data": data_ventes,
+                "data_achats": data_achats,
+                "zero_ventes": zero_ventes_dict,
+                "zero_achats": zero_achats_dict
+            })
+        # ────────────────────────────────────────────────────────────────────────────
+        # ── ALL GROSSISTES RANKING BLOCK ──
+        elif entity_type == "grossiste" and entity_id == "ALL":
+            # 1. Grossiste as seller (PH_GROS) - Ventes (vers Pharmacies)
+            orders_ventes = orders_qs.filter(
+                gros__isnull=False, pharmacy__isnull=False
+            ).select_related("gros", "user", "user__userprofile")
+
+            # 2. Grossiste as buyer (GROS_SUPER) - Achats (depuis SuperGros)
+            orders_achats = orders_qs.filter(
+                gros__isnull=False, super_gros__isnull=False
+            ).select_related("gros", "user", "user__userprofile")
+
+            def aggregate_grossistes(orders_subset):
+                order_map = {o.id: o for o in orders_subset}
+                order_ids = list(order_map.keys())
+                items = OrderItem.objects.filter(order_id__in=order_ids).select_related("produit")
+
+                g_stats = {}
+                for it in items:
+                    o = order_map[it.order_id]
+                    g_id = o.gros_id
+
+                    if g_id not in g_stats:
+                        g_stats[g_id] = {
+                            "id": g_id,
+                            "name": o.gros.nom if o.gros else "Inconnu",
+                            "total_val": 0.0,
+                            "regions": {
+                                "Ouest": 0.0, "Centre": 0.0, "Est": 0.0, "Sud": 0.0, "Vide": 0.0
+                            },
+                            "regions_bons": {
+                                "Ouest": set(), "Centre": set(), "Est": set(), "Sud": set(), "Vide": set()
+                            },
+                            "regions_unites": {
+                                "Ouest": 0, "Centre": 0, "Est": 0, "Sud": 0, "Vide": 0
+                            },
+                        }
+
+                    val = float(it.qtt or 0) * float(it.produit.price or 0)
+                    qtt = int(it.qtt or 0)
+
+                    try:
+                        reg = (
+                            o.user.userprofile.region
+                            if getattr(o, "user", None) and hasattr(o.user, "userprofile")
+                            else None
+                        )
+                    except Exception:
+                        reg = None
+
+                    reg_key = reg if reg in ["Ouest", "Centre", "Est", "Sud"] else "Vide"
+                    g_stats[g_id]["total_val"] += val
+                    g_stats[g_id]["regions"][reg_key] += val
+                    g_stats[g_id]["regions_bons"][reg_key].add(o.id)
+                    g_stats[g_id]["regions_unites"][reg_key] += qtt
+
+                for s in g_stats.values():
+                    s["regions_bons"] = {k: len(v) for k, v in s["regions_bons"].items()}
+
+                if region:
+                    target_reg = region if region in ["Ouest", "Centre", "Est", "Sud"] else "Vide"
+                    sorted_g = sorted(
+                        [s for s in g_stats.values() if s["regions"].get(target_reg, 0) > 0],
+                        key=lambda x: x["regions"].get(target_reg, 0),
+                        reverse=True,
+                    )
+                else:
+                    sorted_g = sorted(
+                        [s for s in g_stats.values() if s["total_val"] > 0],
+                        key=lambda x: x["total_val"],
+                        reverse=True,
+                    )
+                return sorted_g
+
+            # Compute both datasets
+            data_ventes = aggregate_grossistes(orders_ventes)
+            data_achats = aggregate_grossistes(orders_achats)
+
+            active_ventes_ids = set(orders_ventes.values_list('gros_id', flat=True))
+            active_achats_ids = set(orders_achats.values_list('gros_id', flat=True))
+            
+            from django.db.models import Subquery, OuterRef
+            from rapports.models import Visite
+
+            all_grossistes_qs = Medecin.objects.filter(specialite="Grossiste").select_related('commune__wilaya').prefetch_related('users')
+
+            # --- Filtrage Portfolio pour les Zero Lists ---
+            user_param = request.GET.get("user")
+            target_users_for_visite = None
+
+            if user_param:
+                from django.contrib.auth.models import User
+                target_user = User.objects.filter(username=user_param).first()
+                if target_user:
+                    try:
+                        target_role = target_user.userprofile.speciality_rolee
+                    except Exception:
+                        target_role = ""
+
+                    is_meriem = (target_user.first_name.lower() == "meriem" and target_user.last_name.lower() == "rimouche") or target_user.username == "MeriemDZ"
+
+                    if target_role == "CountryManager" or is_meriem:
+                        pass
+                    elif target_role in ["Commercial", "Medico_commercial"]:
+                        target_users_for_visite = [target_user]
+                    elif target_role == "Superviseur_national":
+                        target_users_for_visite = [target_user] + list(target_user.userprofile.usersunder.all())
+                    else:
+                        target_users_for_visite = [target_user]
+
+            if target_users_for_visite is not None:
+                all_grossistes_qs = all_grossistes_qs.filter(users__in=target_users_for_visite).distinct()
+
+            # --- Requête pour récupérer la dernière visite ---
+            visites_sq = Visite.objects.filter(medecin=OuterRef('pk'))
+            if target_users_for_visite is not None:
+                visites_sq = visites_sq.filter(rapport__user__in=target_users_for_visite)
+                
+            visites_sq_base = visites_sq.order_by('-rapport__added')
+
+            all_grossistes_qs = all_grossistes_qs.annotate(
+                last_visite_date=Subquery(visites_sq_base.values('rapport__added')[:1]),
+                last_visite_user=Subquery(visites_sq_base.values('rapport__user__username')[:1])
+            )
+
+            centre = ["alger", "blida", "boumerdes", "tipaza", "tizi ouzou", "bejaia", "bouira", "medea", "chlef", "ain defla"]
+            est = ["setif", "constantine", "batna", "annaba", "skikda", "jijel", "mila", "oum el bouaghi", "tebessa", "guelma", "khenchela", "souk ahras", "bordj bou arreridj", "el tarf", "msila", "m'sila"]
+            ouest = ["oran", "tlemcen", "sidi bel abbes", "mostaganem", "mascara", "relizane", "tiaret", "saida", "ain temouchent", "tissemsilt"]
+            sud = ["ouargla", "biskra", "el oued", "ghardaia", "laghouat", "djelfa", "bechar", "adrar", "tamanrasset", "illizi", "tindouf", "el bayadh", "naama", "touggourt", "el meniaa", "ouled djellal", "beni abbes", "in salah", "in guezzam", "djanet", "bordj badji mokhtar"]
+
+            zero_ventes_dict = {"Centre": [], "Est": [], "Ouest": [], "Sud": [], "Vide / Autre": []}
+            zero_achats_dict = {"Centre": [], "Est": [], "Ouest": [], "Sud": [], "Vide / Autre": []}
+
+            for gros in all_grossistes_qs:
+                w_nom = None
+                if gros.commune and gros.commune.wilaya and gros.commune.wilaya.nom:
+                    w_nom = str(gros.commune.wilaya.nom).lower().replace("-", " ").strip()
+                
+                if w_nom in centre:
+                    reg_key = "Centre"
+                elif w_nom in est:
+                    reg_key = "Est"
+                elif w_nom in ouest:
+                    reg_key = "Ouest"
+                elif w_nom in sud:
+                    reg_key = "Sud"
+                else:
+                    reg_key = "Vide / Autre"
+                
+                w_str = gros.commune.wilaya.nom if gros.commune and gros.commune.wilaya else "Inconnue"
+                users_list = [f"{u.first_name} {u.last_name}".strip() or u.username for u in gros.users.all()]
+                u_str = " - ".join(users_list) if users_list else "Aucun"
+
+                # Récupération de la dernière visite
+                last_visit_str = gros.last_visite_date.strftime("%Y-%m-%d") if getattr(gros, 'last_visite_date', None) else None
+                last_visit_username = getattr(gros, 'last_visite_user', None)
+
+                display_data = {
+                    "id": gros.id,
+                    "name": gros.nom,
+                    "wilaya": w_str,
+                    "user": u_str,
+                    "last_visit": last_visit_str,
+                    "last_visit_user": last_visit_username
+                }
+
+                if gros.id not in active_ventes_ids:
+                    zero_ventes_dict[reg_key].append(display_data)
+                
+                if gros.id not in active_achats_ids:
+                    zero_achats_dict[reg_key].append(display_data)
+
+            return Response({
+                "type": "ALL_GROSSISTES", 
+                "data": data_ventes, 
+                "data_achats": data_achats,
+                "zero_ventes": zero_ventes_dict,
+                "zero_achats": zero_achats_dict
+            })
+        # ─────────────────────────────────────────────────────────
+        # ── ALL PHARMACIES RANKING BLOCK ──
+        elif entity_type == "pharmacie" and entity_id == "ALL":
+            # Pharmacies only buy. We rank them as buyers.
+            orders_achats = orders_qs.filter(pharmacy__isnull=False).select_related("pharmacy", "user", "user__userprofile")
+            
+            order_map = {o.id: o for o in orders_achats}
             order_ids = list(order_map.keys())
             items = OrderItem.objects.filter(order_id__in=order_ids).select_related("produit")
 
-            sg_stats = {}
+            p_stats = {}
             for it in items:
                 o = order_map[it.order_id]
-                sg_id = o.super_gros_id
+                p_id = o.pharmacy_id
 
-                if sg_id not in sg_stats:
-                    sg_stats[sg_id] = {
-                        "name": o.super_gros.name if o.super_gros else "Inconnu",
+                if p_id not in p_stats:
+                    p_stats[p_id] = {
+                        "id": p_id,
+                        "name": o.pharmacy.nom if o.pharmacy else "Inconnu",
                         "total_val": 0.0,
                         "regions": {"Ouest": 0.0, "Centre": 0.0, "Est": 0.0, "Sud": 0.0, "Vide": 0.0},
                         "regions_bons": {"Ouest": set(), "Centre": set(), "Est": set(), "Sud": set(), "Vide": set()},
@@ -1822,108 +2222,27 @@ class TransactionTrackerAPI(APIView):
 
                 val = float(it.qtt or 0) * float(it.produit.price or 0)
                 qtt = int(it.qtt or 0)
-
-                try:
-                    reg = o.user.userprofile.region if getattr(o, "user", None) and hasattr(o.user, "userprofile") else None
-                except Exception:
-                    reg = None
+                try: reg = o.user.userprofile.region if getattr(o, "user", None) and hasattr(o.user, "userprofile") else None
+                except Exception: reg = None
 
                 reg_key = reg if reg in ["Ouest", "Centre", "Est", "Sud"] else "Vide"
-                sg_stats[sg_id]["total_val"] += val
-                sg_stats[sg_id]["regions"][reg_key] += val
-                sg_stats[sg_id]["regions_bons"][reg_key].add(o.id)
-                sg_stats[sg_id]["regions_unites"][reg_key] += qtt
+                p_stats[p_id]["total_val"] += val
+                p_stats[p_id]["regions"][reg_key] += val
+                p_stats[p_id]["regions_bons"][reg_key].add(o.id)
+                p_stats[p_id]["regions_unites"][reg_key] += qtt
 
-            for s in sg_stats.values():
+            for s in p_stats.values():
                 s["regions_bons"] = {k: len(v) for k, v in s["regions_bons"].items()}
 
             if region:
                 target_reg = region if region in ["Ouest", "Centre", "Est", "Sud"] else "Vide"
-                sorted_sg = sorted(
-                    [s for s in sg_stats.values() if s["regions"].get(target_reg, 0) > 0],
-                    key=lambda x: x["regions"].get(target_reg, 0),
-                    reverse=True
-                )
+                sorted_p = sorted([s for s in p_stats.values() if s["regions"].get(target_reg, 0) > 0], key=lambda x: x["regions"].get(target_reg, 0), reverse=True)
             else:
-                sorted_sg = sorted(
-                    [s for s in sg_stats.values() if s["total_val"] > 0],
-                    key=lambda x: x["total_val"],
-                    reverse=True
-                )
+                sorted_p = sorted([s for s in p_stats.values() if s["total_val"] > 0], key=lambda x: x["total_val"], reverse=True)
 
-            return Response({"type": "ALL_SUPERGROS", "data": sorted_sg})
-        # ────────────────────────────────────────────────────────────────────────────
+            return Response({"type": "ALL_PHARMACIES", "data_achats": sorted_p})
+        # ___________________________________________________
 
-        # ── ALL GROSSISTES RANKING BLOCK ──
-        elif entity_type == "grossiste" and entity_id == "ALL":
-            # Grossiste is the fournisseur when there is a Pharmacy attached
-            orders = orders_qs.filter(
-                gros__isnull=False, pharmacy__isnull=False
-            ).select_related("gros", "user", "user__userprofile")
-
-            order_map = {o.id: o for o in orders}
-            order_ids = list(order_map.keys())
-            items = OrderItem.objects.filter(order_id__in=order_ids).select_related(
-                "produit"
-            )
-
-            g_stats = {}
-            for it in items:
-                o = order_map[it.order_id]
-                g_id = o.gros_id
-
-                if g_id not in g_stats:
-                    g_stats[g_id] = {
-                        "name": o.gros.nom if o.gros else "Inconnu",
-                        "total_val": 0.0,
-                        "regions": {"Ouest": 0.0, "Centre": 0.0, "Est": 0.0, "Sud": 0.0, "Vide": 0.0},
-                        "regions_bons": {"Ouest": set(), "Centre": set(), "Est": set(), "Sud": set(), "Vide": set()},
-                        "regions_unites": {"Ouest": 0, "Centre": 0, "Est": 0, "Sud": 0, "Vide": 0},
-                    }
-
-                val = float(it.qtt or 0) * float(it.produit.price or 0)
-                qtt = int(it.qtt or 0)
-
-                try:
-                    reg = (
-                        o.user.userprofile.region
-                        if getattr(o, "user", None) and hasattr(o.user, "userprofile")
-                        else None
-                    )
-                except Exception:
-                    reg = None
-
-                reg_key = reg if reg in ["Ouest", "Centre", "Est", "Sud"] else "Vide"
-                g_stats[g_id]["total_val"] += val
-                g_stats[g_id]["regions"][reg_key] += val
-                g_stats[g_id]["regions_bons"][reg_key].add(o.id)
-                g_stats[g_id]["regions_unites"][reg_key] += qtt
-
-            for s in g_stats.values():
-                s["regions_bons"] = {k: len(v) for k, v in s["regions_bons"].items()}
-
-            if region:
-                target_reg = (
-                    region if region in ["Ouest", "Centre", "Est", "Sud"] else "Vide"
-                )
-                sorted_g = sorted(
-                    [
-                        s
-                        for s in g_stats.values()
-                        if s["regions"].get(target_reg, 0) > 0
-                    ],
-                    key=lambda x: x["regions"].get(target_reg, 0),
-                    reverse=True,
-                )
-            else:
-                sorted_g = sorted(
-                    [s for s in g_stats.values() if s["total_val"] > 0],
-                    key=lambda x: x["total_val"],
-                    reverse=True,
-                )
-
-            return Response({"type": "ALL_GROSSISTES", "data": sorted_g})
-        # ─────────────────────────────────────────────────────────
 
         if region:
             orders_qs = orders_qs.filter(user__userprofile__region=region)
@@ -1933,6 +2252,7 @@ class TransactionTrackerAPI(APIView):
             "Est": {"bons": set(), "unites": 0, "valeur": 0.0},
             "Ouest": {"bons": set(), "unites": 0, "valeur": 0.0},
             "Sud": {"bons": set(), "unites": 0, "valeur": 0.0},
+            "Vide": {"bons": set(), "unites": 0, "valeur": 0.0},
         }
 
         if entity_type == "supergros":
@@ -1945,7 +2265,9 @@ class TransactionTrackerAPI(APIView):
             orders = (
                 orders_qs.filter(super_gros_id=entity_id)
                 .filter(Q(gros__isnull=False) | Q(pharmacy__isnull=False))
-                .select_related("pharmacy", "gros", "user", "super_gros", "user__userprofile")
+                .select_related(
+                    "pharmacy", "gros", "user", "super_gros", "user__userprofile"
+                )
             )
 
             order_map = {o.id: o for o in orders}
@@ -1979,7 +2301,11 @@ class TransactionTrackerAPI(APIView):
                 root_stats["valeur_brute"] += val_brute
 
                 try:
-                    reg = o.user.userprofile.region if getattr(o, "user", None) and hasattr(o.user, "userprofile") else None
+                    reg = (
+                        o.user.userprofile.region
+                        if getattr(o, "user", None) and hasattr(o.user, "userprofile")
+                        else None
+                    )
                 except Exception:
                     reg = None
 
@@ -2072,7 +2398,11 @@ class TransactionTrackerAPI(APIView):
                 root_stats["valeur"] += val
 
                 try:
-                    reg = o.user.userprofile.region if getattr(o, "user", None) and hasattr(o.user, "userprofile") else None
+                    reg = (
+                        o.user.userprofile.region
+                        if getattr(o, "user", None) and hasattr(o.user, "userprofile")
+                        else None
+                    )
                 except Exception:
                     reg = None
 
@@ -2157,6 +2487,78 @@ class TransactionTrackerAPI(APIView):
                         }
                     )
 
+        elif entity_type == "pharmacie":
+            try:
+                ph = Medecin.objects.get(id=entity_id, specialite="Pharmacie")
+                root_name = ph.nom
+            except Medecin.DoesNotExist:
+                return Response({"error": "Pharmacie introuvable."}, status=404)
+
+            orders = orders_qs.filter(pharmacy_id=entity_id).select_related("gros", "super_gros", "user", "pharmacy", "user__userprofile")
+            
+            order_map = {o.id: o for o in orders}
+            order_ids = list(order_map.keys())
+            items = OrderItem.objects.filter(order_id__in=order_ids).select_related("produit")
+
+            order_stats = defaultdict(lambda: {"qty": 0, "val": 0.0})
+            order_items_map = defaultdict(list)
+            order_brute_map = defaultdict(float)
+
+            for it in items:
+                it.order = order_map[it.order_id]
+                qty = it.qtt or 0
+                val = float(qty) * float(it.produit.price or 0)
+                order_stats[it.order_id]["qty"] += qty
+                order_stats[it.order_id]["val"] += val
+                order_items_map[it.order_id].append(it)
+                order_brute_map[it.order_id] += float(it.line_total_ttc)
+
+            for o in orders:
+                qty = order_stats[o.id]["qty"]
+                val = order_stats[o.id]["val"]
+                val_brute = order_brute_map[o.id]
+
+                root_stats["bons"].add(o.id)
+                root_stats["unites"] += qty
+                root_stats["valeur"] += val
+
+                try: reg = o.user.userprofile.region if getattr(o, "user", None) and hasattr(o.user, "userprofile") else None
+                except Exception: reg = None
+
+                reg_key = reg if reg in ["Ouest", "Centre", "Est", "Sud"] else "Vide"
+                regional_stats[reg_key]["bons"].add(o.id)
+                regional_stats[reg_key]["unites"] += qty
+                regional_stats[reg_key]["valeur"] += val
+
+                uname = getattr(o.user, "username", "Inconnu") if getattr(o, "user", None) else "Inconnu"
+                
+                # Pharmacie only buys
+                user_stats_achats[uname]["bons"].add(o.id)
+                user_stats_achats[uname]["unites"] += qty
+                user_stats_achats[uname]["valeur"] += val_brute
+
+                if o.gros_id and o.gros:
+                    key = (o.gros_id, "Grossiste", getattr(o.gros, "nom", "Inconnu"))
+                elif o.super_gros_id and o.super_gros:
+                    key = (o.super_gros_id, "SuperGros", getattr(o.super_gros, "name", "Inconnu"))
+                else:
+                    key = (0, "Office", "Siège Lilium")
+
+                fournisseurs_agg[key]["bons"].add(o.id)
+                fournisseurs_agg[key]["unites"] += qty
+                fournisseurs_agg[key]["valeur"] += val
+
+                o_prods = []
+                for it in order_items_map[o.id]:
+                    fournisseurs_agg[key]["produits"][it.produit.nom] += it.qtt or 0
+                    if it.qtt and it.qtt > 0:
+                        o_prods.append(f"{it.qtt} {it.produit.nom}")
+
+                fournisseurs_agg[key]["orders_details"].append({
+                    "id": o.id, "date": o.added.strftime("%Y-%m-%d"), "user": uname,
+                    "valeur_brute": round(val_brute, 2), "produits_str": " , ".join(o_prods) if o_prods else "-"
+                })
+
         else:
             return Response({"error": "Type invalide."}, status=400)
 
@@ -2232,8 +2634,9 @@ class TransactionTrackerAPI(APIView):
             r: {
                 "bons": len(d["bons"]),
                 "unites": d["unites"],
-                "valeur": round(d["valeur"], 2)
-            } for r, d in regional_stats.items()
+                "valeur": round(d["valeur"], 2),
+            }
+            for r, d in regional_stats.items()
         }
 
         if entity_type == "grossiste":
@@ -2463,12 +2866,14 @@ def transaction_tracker_front(request):
     # Normalise field name to "name" for the template
     grossiste_list = [{"id": g["id"], "name": g["nom"]} for g in grossiste_list]
 
+    # Add this query
+    pharmacies_list = [{"id": p["id"], "name": p["nom"]} for p in Medecin.objects.filter(specialite="Pharmacie").values("id", "nom").order_by("nom")]
+    
     return render(
-        request,
-        "orders/tracking.html",
-        {
+        request, "orders/tracking.html", {
             "super_gros_json": _json.dumps(super_gros_list),
             "grossistes_json": _json.dumps(grossiste_list),
+            "pharmacies_json": _json.dumps(pharmacies_list), # <--- ADD THIS
         },
     )
 
@@ -2488,45 +2893,101 @@ def orders_stats_view(request):
     _RESTRICTED = {"Commercial", "Medico_commercial"}
     _FULL_ACCESS = {"CountryManager", "Admin"}
 
-    _ALLOWED_ROLES = {"Commercial", "Medico_commercial", "Superviseur_national", "Superviseur", "Superviseur_regional", "CountryManager"}
+    _ALLOWED_ROLES = {
+        "Commercial",
+        "Medico_commercial",
+        "Superviseur_national",
+        "Superviseur",
+        "Superviseur_regional",
+        "CountryManager",
+    }
 
     if request.user.is_superuser or _spec in _FULL_ACCESS:
-        users = UserProfile.objects.filter(is_human=True, user__is_active=True, speciality_rolee__in=_ALLOWED_ROLES).select_related("user").order_by("user__username")
+        users = (
+            UserProfile.objects.filter(
+                is_human=True, user__is_active=True, speciality_rolee__in=_ALLOWED_ROLES
+            )
+            .select_related("user")
+            .order_by("user__username")
+        )
         is_restricted = False
     elif _spec == "Superviseur_national" and _up is not None:
-        users = UserProfile.objects.filter(
-            Q(user=request.user) | Q(user__in=_up.usersunder.all()),
-            is_human=True, user__is_active=True, speciality_rolee__in=_ALLOWED_ROLES,
-        ).select_related("user").order_by("user__username")
+        users = (
+            UserProfile.objects.filter(
+                Q(user=request.user) | Q(user__in=_up.usersunder.all()),
+                is_human=True,
+                user__is_active=True,
+                speciality_rolee__in=_ALLOWED_ROLES,
+            )
+            .select_related("user")
+            .order_by("user__username")
+        )
         is_restricted = False
     elif _spec in _RESTRICTED and _up is not None:
-        users = UserProfile.objects.filter(user=request.user, is_human=True, user__is_active=True, speciality_rolee__in=_ALLOWED_ROLES).select_related("user")
+        users = UserProfile.objects.filter(
+            user=request.user,
+            is_human=True,
+            user__is_active=True,
+            speciality_rolee__in=_ALLOWED_ROLES,
+        ).select_related("user")
         is_restricted = True
     else:
-        users = UserProfile.objects.filter(is_human=True, user__is_active=True, speciality_rolee__in=_ALLOWED_ROLES).select_related("user").order_by("user__username")
+        users = (
+            UserProfile.objects.filter(
+                is_human=True, user__is_active=True, speciality_rolee__in=_ALLOWED_ROLES
+            )
+            .select_related("user")
+            .order_by("user__username")
+        )
         is_restricted = False
 
     from medecins.models import Medecin as _Medecin
-    super_gros = list(_Client.objects.filter(supergro=True).values("id", "name").order_by("name"))
+
+    super_gros = list(
+        _Client.objects.filter(supergro=True).values("id", "name").order_by("name")
+    )
     grossistes = [
         {"id": g["id"], "name": g["nom"]}
-        for g in _Medecin.objects.filter(specialite="Grossiste").values("id", "nom").order_by("nom")
+        for g in _Medecin.objects.filter(specialite="Grossiste")
+        .values("id", "nom")
+        .order_by("nom")
     ]
-    users_list = [{"value": up.user.username, "label": up.user.username, "region": up.region or "", "role": up.speciality_rolee or ""} for up in users]
+    users_list = [
+        {
+            "value": up.user.username,
+            "label": up.user.username,
+            "region": up.region or "",
+            "role": up.speciality_rolee or "",
+        }
+        for up in users
+    ]
     restricted_user = users_list[0] if is_restricted and users_list else None
 
-    produits = list(Produit.objects.values('id', 'nom', 'line').order_by('nom'))
-    lignes = list(Produit.objects.exclude(line__isnull=True).exclude(line__exact='').values_list('line', flat=True).distinct().order_by('line'))
+    produits = list(Produit.objects.values("id", "nom", "line").order_by("nom"))
+    lignes = list(
+        Produit.objects.exclude(line__isnull=True)
+        .exclude(line__exact="")
+        .values_list("line", flat=True)
+        .distinct()
+        .order_by("line")
+    )
 
-    return render(request, "orders/stats_dashboard.html", {
-        "users_json": _json2.dumps(users_list),
-        "restricted_user": _json2.dumps(restricted_user),
-        "super_gros_json": _json2.dumps(super_gros),
-        "grossistes_json": _json2.dumps(grossistes),
-        "produits_json": _json2.dumps(produits),
-        "lignes_json": _json2.dumps(lignes),
-        "is_restricted": is_restricted,
-    })
+    pharmacies = [{"id": p["id"], "name": p["nom"]} for p in _Medecin.objects.filter(specialite="Pharmacie").values("id", "nom").order_by("nom")]
+    
+    return render(
+        request,
+        "orders/stats_dashboard.html",
+        {
+            "users_json": _json2.dumps(users_list),
+            "restricted_user": _json2.dumps(restricted_user),
+            "super_gros_json": _json2.dumps(super_gros),
+            "grossistes_json": _json2.dumps(grossistes),
+            "pharmacies_json": _json2.dumps(pharmacies),
+            "produits_json": _json2.dumps(produits),
+            "lignes_json": _json2.dumps(lignes),
+            "is_restricted": is_restricted,
+        },
+    )
 
 
 class ProductStatsView(TemplateView):
@@ -2534,31 +2995,32 @@ class ProductStatsView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['query_string'] = self.request.GET.urlencode()
+        context["query_string"] = self.request.GET.urlencode()
         return context
+
 
 class ProductStatsDataAPI(APIView):
     authentication_classes = [TokenAuthentication, SessionAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        min_date = request.GET.get('min_date')
-        max_date = request.GET.get('max_date')
-        produit_id = request.GET.get('produit')
-        ligne = request.GET.get('ligne')
-        region = request.GET.get('region')
+        min_date = request.GET.get("min_date")
+        max_date = request.GET.get("max_date")
+        produit_id = request.GET.get("produit")
+        ligne = request.GET.get("ligne")
+        region = request.GET.get("region")
 
         # select_related profond pour la Wilaya
-        # NOTE: The hardcoded order__status__in filter was removed to match the 
+        # NOTE: The hardcoded order__status__in filter was removed to match the
         # export_excel.py behavior which pulls all orders in the date range.
         items = OrderItem.objects.select_related(
-            'order',
-            'order__user',
-            'order__user__userprofile',
-            'produit',
-            'order__pharmacy__commune__wilaya',
-            'order__gros__commune__wilaya',
-            'order__super_gros'
+            "order",
+            "order__user",
+            "order__user__userprofile",
+            "produit",
+            "order__pharmacy__commune__wilaya",
+            "order__gros__commune__wilaya",
+            "order__super_gros",
         )
 
         if min_date:
@@ -2572,15 +3034,46 @@ class ProductStatsDataAPI(APIView):
         if region:
             items = items.filter(order__user__userprofile__region=region)
 
+        # NOUVEAU: Filtrage par l'utilisateur sélectionné depuis le frontend
+        user_param = request.GET.get("user")
+        target_users_for_visite = None # Par défaut, on ne filtre pas le portfolio
+
+        if user_param:
+            from django.contrib.auth.models import User
+            target_user = User.objects.filter(username=user_param).first()
+            if target_user:
+                try:
+                    target_role = target_user.userprofile.speciality_rolee
+                except Exception:
+                    target_role = ""
+
+                is_meriem = (target_user.first_name.lower() == "meriem" and target_user.last_name.lower() == "rimouche") or target_user.username == "MeriemDZ"
+
+                if target_role == "CountryManager" or is_meriem:
+                    pass
+                elif target_role in ["Commercial", "Medico_commercial"]:
+                    items = items.filter(Q(order__user=target_user) | Q(order__touser=target_user)).distinct()
+                    target_users_for_visite = [target_user] # On garde l'utilisateur ciblé
+                elif target_role == "Superviseur_national":
+                    users_under = target_user.userprofile.usersunder.all()
+                    items = items.filter(
+                        Q(order__user=target_user) | Q(order__touser=target_user) |
+                        Q(order__user__in=users_under) | Q(order__touser__in=users_under)
+                    ).distinct()
+                    target_users_for_visite = [target_user] + list(users_under) # On garde le Superviseur ET ses éléments
+                else:
+                    items = items.filter(Q(order__user=target_user) | Q(order__touser=target_user)).distinct()
+                    target_users_for_visite = [target_user]
+
         raw_data = []
         for item in items:
             o = item.order
             p = item.produit
 
             # 1. EXACT FIELD-BASED LOGIC FROM export_excel.py
-            ph  = o.pharmacy_id is not None
+            ph = o.pharmacy_id is not None
             gro = o.gros_id is not None
-            sg  = o.super_gros_id is not None
+            sg = o.super_gros_id is not None
 
             if ph and gro:
                 order_type = "PH_GROS"
@@ -2591,7 +3084,10 @@ class ProductStatsDataAPI(APIView):
                 continue
 
             # Mirror preview.html exclusion: skip LILIUM PHARMA ALG super-gros orders
-            if o.super_gros and getattr(o.super_gros, 'name', None) == "LILIUM PHARMA ALG":
+            if (
+                o.super_gros
+                and getattr(o.super_gros, "name", None) == "LILIUM PHARMA ALG"
+            ):
                 continue
 
             # 2. DETERMINER LA WILAYA (Via le client direct)
@@ -2612,30 +3108,38 @@ class ProductStatsDataAPI(APIView):
             qty = item.qtt or 0
             val = float(qty) * float(p.price or 0)
 
-            raw_data.append({
-                "order_id": o.id,
-                "month": "1", # Force single month for global period aggregation
-                "user_id": o.user.id,
-                "user_name": f"{o.user.first_name} {o.user.last_name}".strip() or o.user.username,
-                "role": role,
-                "region": user_region,
-                "wilaya": wilaya_nom,
-                "order_type": order_type,
-                "product_id": p.id,
-                "product_name": p.nom,
-                "qty": qty,
-                "value": val,
-                "gros_name": o.gros.nom if o.gros else None,
-                "gros_wilaya": (o.gros.commune.wilaya.nom if o.gros and o.gros.commune and o.gros.commune.wilaya else None),
-                "super_gros_name": o.super_gros.name if o.super_gros else None,
-                "from_company": o.from_company,
-            })
+            raw_data.append(
+                {
+                    "order_id": o.id,
+                    "month": "1",  # Force single month for global period aggregation
+                    "user_id": o.user.id,
+                    "user_name": f"{o.user.first_name} {o.user.last_name}".strip()
+                    or o.user.username,
+                    "role": role,
+                    "region": user_region,
+                    "wilaya": wilaya_nom,
+                    "order_type": order_type,
+                    "product_id": p.id,
+                    "product_name": p.nom,
+                    "qty": qty,
+                    "value": val,
+                    "gros_name": o.gros.nom if o.gros else None,
+                    "gros_wilaya": (
+                        o.gros.commune.wilaya.nom
+                        if o.gros and o.gros.commune and o.gros.commune.wilaya
+                        else None
+                    ),
+                    "super_gros_name": o.super_gros.name if o.super_gros else None,
+                    "from_company": o.from_company,
+                }
+            )
 
         # Determine the target line for zero-order user detection
         target_line = None
         if produit_id:
             try:
                 from produits.models import Produit as ProduitModel
+
                 target_line = ProduitModel.objects.get(id=produit_id).line
             except Exception:
                 pass
@@ -2644,17 +3148,256 @@ class ProductStatsDataAPI(APIView):
 
         all_line_users = []
         if target_line:
-            profiles = UserProfile.objects.select_related('user').filter(
-                speciality_rolee__in=['Medico_commercial', 'Commercial', 'Superviseur_national']
+            profiles = UserProfile.objects.select_related("user").filter(
+                speciality_rolee__in=[
+                    "Medico_commercial",
+                    "Commercial",
+                    "Superviseur_national",
+                ]
             )
             for profile in profiles:
-                user_lines = [l.strip() for l in (profile.lines or '').split(',') if l.strip()]
+                user_lines = [
+                    l.strip() for l in (profile.lines or "").split(",") if l.strip()
+                ]
                 if target_line in user_lines:
-                    full_name = f"{profile.user.first_name} {profile.user.last_name}".strip() or profile.user.username
-                    all_line_users.append({
-                        'user_id': profile.user.id,
-                        'user_name': full_name,
-                        'role': profile.speciality_rolee,
-                    })
+                    full_name = (
+                        f"{profile.user.first_name} {profile.user.last_name}".strip()
+                        or profile.user.username
+                    )
+                    all_line_users.append(
+                        {
+                            "user_id": profile.user.id,
+                            "user_name": full_name,
+                            "role": profile.speciality_rolee,
+                            "region": profile.region,
+                        }
+                    )
 
-        return JsonResponse({"raw_data": raw_data, "all_line_users": all_line_users})
+        # ── NEW LOGIC: Fetch all Grossistes with their Regions & Last Visite ──
+        from django.db.models import Subquery, OuterRef
+        from rapports.models import Visite
+
+        all_grossistes_qs = Medecin.objects.filter(specialite="Grossiste").select_related('commune__wilaya').prefetch_related('users')
+
+        # 1. Filtrer le portfolio si un utilisateur spécifique est sélectionné
+        if target_users_for_visite is not None:
+            all_grossistes_qs = all_grossistes_qs.filter(users__in=target_users_for_visite).distinct()
+
+        # 2. Préparer la sous-requête pour la dernière date de visite
+        visites_sq = Visite.objects.filter(medecin=OuterRef('pk'))
+        if target_users_for_visite is not None:
+            # S'il y a un utilisateur cible, on cherche SA dernière visite
+            visites_sq = visites_sq.filter(rapport__user__in=target_users_for_visite)
+            
+        visites_sq_base = visites_sq.order_by('-rapport__added')
+        
+        # 3. Annoter la requête avec la date ET le nom d'utilisateur
+        all_grossistes_qs = all_grossistes_qs.annotate(
+            last_visite_date=Subquery(visites_sq_base.values('rapport__added')[:1]),
+            last_visite_user=Subquery(visites_sq_base.values('rapport__user__username')[:1])
+        )
+
+        centre = ["alger", "blida", "boumerdes", "tipaza", "tizi ouzou", "bejaia", "bouira", "medea", "chlef", "ain defla"]
+        est = ["setif", "constantine", "batna", "annaba", "skikda", "jijel", "mila", "oum el bouaghi", "tebessa", "guelma", "khenchela", "souk ahras", "bordj bou arreridj", "el tarf", "msila", "m'sila"]
+        ouest = ["oran", "tlemcen", "sidi bel abbes", "mostaganem", "mascara", "relizane", "tiaret", "saida", "ain temouchent", "tissemsilt"]
+        sud = ["ouargla", "biskra", "el oued", "ghardaia", "laghouat", "djelfa", "bechar", "adrar", "tamanrasset", "illizi", "tindouf", "el bayadh", "naama", "touggourt", "el meniaa", "ouled djellal", "beni abbes", "in salah", "in guezzam", "djanet", "bordj badji mokhtar"]
+
+        all_grossistes_list = []
+        for g in all_grossistes_qs:
+            reg = "Vide / Autre"
+            w_str = "Inconnue"
+            if g.commune and g.commune.wilaya and g.commune.wilaya.nom:
+                w_str = g.commune.wilaya.nom
+                w_nom = str(g.commune.wilaya.nom).lower().replace("-", " ").strip()
+                if w_nom in centre: reg = "Centre"
+                elif w_nom in est: reg = "Est"
+                elif w_nom in ouest: reg = "Ouest"
+                elif w_nom in sud: reg = "Sud"
+                
+            users_list = [f"{u.first_name} {u.last_name}".strip() or u.username for u in g.users.all()]
+            u_str = " - ".join(users_list) if users_list else "Aucun"
+            
+            # Formatage de la date de la dernière visite
+            last_visit_str = g.last_visite_date.strftime("%Y-%m-%d") if g.last_visite_date else None
+            last_visit_username = g.last_visite_user if hasattr(g, 'last_visite_user') else None
+
+            all_grossistes_list.append({
+                "id": g.id,
+                "name": g.nom, 
+                "region": reg,
+                "wilaya": w_str,
+                "user": u_str,
+                "last_visit": last_visit_str,
+                "last_visit_user": last_visit_username
+            })
+
+        return JsonResponse({
+            "raw_data": raw_data, 
+            "all_line_users": all_line_users,
+            "all_grossistes": all_grossistes_list
+        })
+
+class OrderDrillDownAPI(APIView):
+    authentication_classes = [TokenAuthentication, SessionAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        entity_type = request.GET.get("type", "").lower()
+        entity_id   = request.GET.get("id")
+        min_date    = request.GET.get("min_date")
+        max_date    = request.GET.get("max_date")
+        region      = request.GET.get("region", "")
+        role        = request.GET.get("role", "vendeur") # NOUVEAU: acheteur ou vendeur
+
+        if not entity_type or not entity_id:
+            return Response({"error": "Paramètres 'type' et 'id' requis."}, status=400)
+
+        # ── Date parsing ──
+        def parse_date(d_str, default_date):
+            if d_str:
+                try:
+                    return datetime.strptime(d_str, "%Y-%m-%d").date()
+                except Exception:
+                    pass
+            return default_date
+
+        today = date.today()
+        d_max = parse_date(max_date, today)
+        d_min = parse_date(min_date, today - timedelta(days=30))
+        if d_min > d_max:
+            d_min, d_max = d_max, d_min
+
+        orders_qs = Order.objects.filter(added__date__gte=d_min, added__date__lte=d_max)
+
+        # ── User scoping ──
+        try:
+            _req_up   = request.user.userprofile
+            _req_spec = getattr(_req_up, "speciality_rolee", "")
+        except Exception:
+            _req_up   = None
+            _req_spec = ""
+
+        _TRACKER_RESTRICTED = {"Commercial", "Medico_commercial"}
+        _TRACKER_FULL       = {"CountryManager", "Admin"}
+
+        if not request.user.is_superuser and _req_spec not in _TRACKER_FULL:
+            if _req_spec in _TRACKER_RESTRICTED:
+                orders_qs = orders_qs.filter(
+                    Q(user=request.user) | Q(touser=request.user)
+                ).distinct()
+            elif _req_spec == "Superviseur_national" and _req_up is not None:
+                orders_qs = orders_qs.filter(
+                    Q(user=request.user)
+                    | Q(touser=request.user)
+                    | Q(user__in=_req_up.usersunder.all())
+                    | Q(touser__in=_req_up.usersunder.all())
+                ).distinct()
+
+        if region:
+            orders_qs = orders_qs.filter(user__userprofile__region=region)
+
+        # NOUVEAU: Filtrage par l'utilisateur sélectionné depuis le frontend
+        user_param = request.GET.get("user")
+        if user_param:
+            from django.contrib.auth.models import User
+            target_user = User.objects.filter(username=user_param).first()
+            if target_user:
+                try:
+                    target_role = target_user.userprofile.speciality_rolee
+                except Exception:
+                    target_role = ""
+
+                is_meriem = (target_user.first_name.lower() == "meriem" and target_user.last_name.lower() == "rimouche") or target_user.username == "MeriemDZ"
+
+                if target_role == "CountryManager" or is_meriem:
+                    pass
+                elif target_role in ["Commercial", "Medico_commercial"]:
+                    orders_qs = orders_qs.filter(Q(user=target_user) | Q(touser=target_user)).distinct()
+                elif target_role == "Superviseur_national":
+                    users_under = target_user.userprofile.usersunder.all()
+                    orders_qs = orders_qs.filter(
+                        Q(user=target_user) | Q(touser=target_user) |
+                        Q(user__in=users_under) | Q(touser__in=users_under)
+                    ).distinct()
+                else:
+                    orders_qs = orders_qs.filter(Q(user=target_user) | Q(touser=target_user)).distinct()
+
+        # ── Entity & Role filtering ──
+        if entity_type == "supergros":
+            if role == "acheteur":
+                # SuperGros achète chez Lilium (Pas de gros ni pharmacie)
+                orders_qs = orders_qs.filter(super_gros_id=entity_id, gros__isnull=True, pharmacy__isnull=True)
+            else:
+                # SuperGros vend (aux Grossistes ou Pharmacies)
+                orders_qs = orders_qs.filter(super_gros_id=entity_id).filter(Q(gros__isnull=False) | Q(pharmacy__isnull=False))
+                
+        elif entity_type == "grossiste":
+            if role == "acheteur":
+                # Grossiste achète chez SuperGros
+                orders_qs = orders_qs.filter(gros_id=entity_id, super_gros__isnull=False)
+            else:
+                # Grossiste vend aux Pharmacies
+                orders_qs = orders_qs.filter(gros_id=entity_id, pharmacy__isnull=False)
+                
+        elif entity_type == "pharmacie":
+            # Pharmacie ne fait qu'acheter
+            orders_qs = orders_qs.filter(pharmacy_id=entity_id)
+        else:
+            return Response({"error": "Type invalide."}, status=400)
+
+        orders_qs = orders_qs.select_related(
+            "user", "pharmacy", "gros", "super_gros"
+        ).prefetch_related("orderitem_set__produit")
+
+        # ── Build result rows ──
+        rows = []
+        for order in orders_qs:
+            valeur_brute = sum(
+                float(item.qtt or 0) * float(item.produit.price or 0)
+                for item in order.orderitem_set.all()
+            )
+
+            produit_counts = {}
+            for item in order.orderitem_set.all():
+                nom = item.produit.nom if item.produit else "?"
+                produit_counts[nom] = produit_counts.get(nom, 0) + int(item.qtt or 0)
+
+            produits_parts = sorted(
+                ["{} {}".format(qty, nom) for nom, qty in produit_counts.items()],
+                key=lambda s: -int(s.split(" ")[0])
+            )
+            produits_str = " , ".join(produits_parts) if produits_parts else "-"
+
+            # ── Dynamic Client/Fournisseur based on Role ──
+            if entity_type == "supergros":
+                if role == "acheteur":
+                    client = order.super_gros.name if order.super_gros else "-"
+                    fournisseur = "LILIUM PHARMA ALG"
+                else:
+                    client = order.gros.nom if order.gros else (order.pharmacy.nom if order.pharmacy else "-")
+                    fournisseur = order.super_gros.name if order.super_gros else "-"
+
+            elif entity_type == "grossiste":
+                if role == "acheteur":
+                    client = order.gros.nom if order.gros else "-"
+                    fournisseur = order.super_gros.name if order.super_gros else "-"
+                else:
+                    client = order.pharmacy.nom if order.pharmacy else "-"
+                    fournisseur = order.gros.nom if order.gros else "-"
+
+            else:  # pharmacie
+                client = order.pharmacy.nom if order.pharmacy else "-"
+                fournisseur = order.gros.nom if order.gros else (order.super_gros.name if order.super_gros else "-")
+
+            rows.append({
+                "id":           order.id,
+                "date":         order.added.strftime("%Y-%m-%d"),
+                "user":         order.user.username if order.user else "-",
+                "client":       client,
+                "fournisseur":  fournisseur,
+                "produits_str": produits_str,
+                "valeur_brute": round(valeur_brute, 2),
+            })
+
+        rows.sort(key=lambda r: r["valeur_brute"], reverse=True)
+        return Response(rows)

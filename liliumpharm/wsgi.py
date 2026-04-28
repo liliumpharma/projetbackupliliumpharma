@@ -1,4 +1,8 @@
 import os
+import sys
+print(sys.path)
+
+sys.path.append('/var/www/server')
 
 from django.core.wsgi import get_wsgi_application
 

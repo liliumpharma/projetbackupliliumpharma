@@ -173,39 +173,35 @@ class Medecin(models.Model):
 
     @property
     def medecin_commercial_lilium_1(self):
-        return "  -  ".join(
-            [
-                f"{usr.first_name} {usr.last_name}"
-                for usr in self.users.filter(userprofile__lines__contains="L1")
-            ]
-        )
+        return "  -  ".join([
+            f"{usr.first_name} {usr.last_name}"
+            for usr in self.users.all()
+            if hasattr(usr, 'userprofile') and usr.userprofile.lines and "L1" in usr.userprofile.lines
+        ])
 
     @property
     def medecin_commercial_lilium_2(self):
-        return "  -  ".join(
-            [
-                f"{usr.first_name} {usr.last_name}"
-                for usr in self.users.filter(userprofile__lines__contains="L2")
-            ]
-        )
+        return "  -  ".join([
+            f"{usr.first_name} {usr.last_name}"
+            for usr in self.users.all()
+            if hasattr(usr, 'userprofile') and usr.userprofile.lines and "L2" in usr.userprofile.lines
+        ])
 
     @property
     def medecin_commercial_l3(self):
-        return "  -  ".join(
-            [
-                f"{usr.first_name} {usr.last_name}"
-                for usr in self.users.filter(userprofile__lines__contains="L3")
-            ]
-        )
+        return "  -  ".join([
+            f"{usr.first_name} {usr.last_name}"
+            for usr in self.users.all()
+            if hasattr(usr, 'userprofile') and usr.userprofile.lines and "L3" in usr.userprofile.lines
+        ])
 
     @property
     def medecin_commercial_com(self):
-        return "  -  ".join(
-            [
-                f"{usr.first_name} {usr.last_name}"
-                for usr in self.users.filter(userprofile__lines__contains="COM")
-            ]
-        )
+        return "  -  ".join([
+            f"{usr.first_name} {usr.last_name}"
+            for usr in self.users.all()
+            if hasattr(usr, 'userprofile') and usr.userprofile.lines and "COM" in usr.userprofile.lines
+        ])
 
     @property
     def medecin_region(self):
@@ -223,7 +219,8 @@ class Medecin(models.Model):
 
     @property
     def has_deal(self):
-        return self.medecin.exists()
+        # Uses prefetch cache instead of executing a SQL EXISTS query
+        return len(self.medecin.all()) > 0
 
     @property
     def medecin_visites(self):
