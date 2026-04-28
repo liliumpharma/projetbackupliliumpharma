@@ -128,11 +128,10 @@ class ProductProductionFullProcessStepInline(admin.StackedInline):
     ordering = ['step_number']
 
 class ProduitAdmin(admin.ModelAdmin):
-    list_display = ('id','get_company_family', 'nom', 'line', "_print", "_print_datasheet","_print_productdata")
+    list_display = ('id','get_company_family', 'nom', 'line', 'En_stock', "_print", "_print_datasheet","_print_productdata")
     search_fields = ["nom"]
-    list_filter = ['productcompany__family', 'line']
+    list_filter = ['productcompany__family', 'line', 'En_stock']
     inlines = [ProductCompanyInline, ProductInformationsInline, ProductActiveIngredientsInline, ProductInactiveIngredientsInline, ProductNoteInline, ProductFileInline, ProductProductionInfosInline, ProductProductionPremixStepInline, ProductProductionFullProcessStepInline]
-
     def get_company_family(self, obj):
         # obj is an instance of Produit
         product_company = obj.productcompany_set.first()  # Assuming a reverse relation from Produit to ProductCompany

@@ -501,7 +501,7 @@ class addorder(TemplateView):
             return _render_form_with_message("Veuillez ajouter en moin un produit")
 
         # --- Create the Order + its OrderItems ---
-        observations = request.POST.get("observations")
+        observations = request.POST.get("observations") or ""
         image = request.FILES.get("image")
 
         # ✅ FIX: sanitize upload filename to prevent UnicodeEncodeError (é, à, …)
@@ -509,6 +509,19 @@ class addorder(TemplateView):
             image.name = self._safe_upload_name(image.name)
 
         us = User.objects.get(id=user_id)
+
+        is_from_company = su_gro and (su_gro.id == 149 or (not pharmacyy and not groo))
+        final_lines = []
+
+        for produit_obj, qtt_int in selected_lines:
+            if is_from_company and not getattr(produit_obj, 'En_stock', True):
+                msg = f"les {qtt_int}-{produit_obj.nom} ont été retirés du bon car ils sont en rupture de stock"
+                observations = f"{observations}\n{msg}" if observations else msg
+            else:
+                final_lines.append((produit_obj, qtt_int))
+
+        if not final_lines:
+             return _render_form_with_message("Tous les produits sélectionnés sont en rupture de stock.")
 
         order = Order.objects.create(
             pharmacy=pharmacyy,
@@ -520,7 +533,7 @@ class addorder(TemplateView):
             status="initial",
         )
 
-        for produit_obj, qtt_int in selected_lines:
+        for produit_obj, qtt_int in final_lines:
             OrderItem.objects.create(order=order, produit=produit_obj, qtt=qtt_int)
 
         # ==========================================
@@ -793,17 +806,38 @@ class OrderAppAPI(APIView):
             has_zero_qtt = any(str(item.get("qtt")) == "0" for item in items)
             if has_zero_qtt:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
+
+            is_from_company = supgro and (str(supgro) == "149" or (not ph and not gro))
+            observations = request.data.get("observation", "") or ""
+            final_items = []
+
+            if is_from_company:
+                for item in items:
+                    try:
+                        prod = Produit.objects.get(id=item.get("produit"))
+                        if not getattr(prod, 'En_stock', True):
+                            msg = f"{item.get('qtt')}-{prod.nom} ont été retirés du bon car ils sont en rupture de stock"
+                            observations = f"{observations}\n{msg}" if observations else msg
+                        else:
+                            final_items.append(item)
+                    except Produit.DoesNotExist:
+                        final_items.append(item)
+                
+                if not final_items:
+                    message = {"error": "Tous les produits sélectionnés sont en rupture de stock."}
+                    return Response(message["error"], status=status.HTTP_400_BAD_REQUEST)
+            else:
+                final_items = items
+
             serializer = OrderSerializer(
                 data=request.data, instance=Order(user=request.user), partial=True
             )
             if serializer.is_valid():
-                produits_data = json.loads(request.data.get("items"))
-                order = serializer.save()
-                # for p in produits_data:
-                #     p['order']=order.id
+                # On override l'observation au moment de la sauvegarde pour éviter de manipuler request.data qui est immutable
+                order = serializer.save(observation=observations)
 
                 produits_data = list(
-                    map(lambda p: {**p, "order": order.id}, produits_data)
+                    map(lambda p: {**p, "order": order.id}, final_items)
                 )
                 pserializer = OrderItemSerializer(data=produits_data, many=True)
                 if pserializer.is_valid():

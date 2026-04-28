@@ -103,6 +103,7 @@ class Produit(models.Model):
         verbose_name="Line",
     )
 
+    En_stock = models.BooleanField(default=True, verbose_name="En stock")
     
     class Meta:
         # Check in DB

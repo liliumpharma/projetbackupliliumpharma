@@ -13,6 +13,7 @@ from django.core.mail import send_mail
 from .models import family, Region
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.db.models import Q
 
 
 from django.contrib.auth import authenticate, login
@@ -257,177 +258,65 @@ def get_families(request):
     print(str(families))
     return JsonResponse({"families": families})
 
-
 class UsersByFamilyAPIView(APIView):
-
     def get(self, request):
-        # Getting the 'family' parameter from the request
         family = request.GET.get("family")
-        profile = UserProfile.objects.get(user=request.user.id)
-        if family=="1":
-            # Fetch users associated with the family
-            if request.user.is_superuser:
-                users = User.objects.filter(is_active=True, userprofile__hidden=False, userprofile__is_human=True, userprofile__speciality_rolee__in=["Medico_commercial","Commercial","Superviseur_regional","Superviseur_national","CountryManager"])
-                user_data = [
-                {
-                    "id": user.id,
-                    "username": user.username,
-                    # Add other fields as necessary
-                }
-                for user in users
-                ]
-                t={
-                    "id": request.user.id,
-                    "username": request.user.username,
-                }
-                user_data.insert(0,t)
-                t={
-                    "id": 1000000,
-                    "username": "TOUS",
-                }
-                user_data.insert(0,t)
-            elif profile.speciality_rolee == "Superviseur_regional":
-                users = profile.usersunder.all()
-                user_data = [
-                {
-                    "id": user.id,
-                    "username": user.username,
-                    # Add other fields as necessary
-                }
-                for user in users
-                ]
-                t={
-                    "id": request.user.id,
-                    "username": request.user.username,
-                }
-                user_data.insert(0,t)
-                t={
-                    "id": 1000000,
-                    "username": "TOUS",
-                }
-                user_data.insert(0,t)
-            elif profile.speciality_rolee == "Superviseur_national" or profile.speciality_rolee == "CountryManager":
-                users = User.objects.filter(
-                    userprofile__lines=family
-                )  # Adjust this if necessary based on your models
-                users = User.objects.filter(userprofile__lines__in=["lilium Pharma", "Lilium1", "Lilium2", "orient Bio", "Aniya_Pharm", "production", "Administration"])
-                user_data = [
-                {
-                    "id": user.id,
-                    "username": user.username,
-                    # Add other fields as necessary
-                }
-                for user in users
-                ]
-                t={
-                    "id": request.user.id,
-                    "username": request.user.username,
-                }
-                user_data.insert(0,t)
-                t={
-                    "id": 1000000,
-                    "username": "TOUS",
-                }
-                user_data.insert(0,t)
-            else:
-                users = request.user
+        profile = request.user.userprofile
+        role = profile.speciality_rolee
 
-                # Serialize the users - replace 'UserSerializer' with your actual serializer
-                user_data = [
-                    {
-                        "id": user.id,
-                        "username": user.username,
-                        # Add other fields as necessary
-                    }
-                    for user in users
-                ]
-            print(str(user_data))
+        # Initialize an empty QuerySet
+        users = User.objects.none()
 
-            return Response(user_data, status=200)
-        else:
-            if request.user.is_superuser:
-                users = User.objects.filter(userprofile__region=family, userprofile__lines__in=["lilium Pharma", "Lilium1", "Lilium2", "orient Bio", "Aniya_Pharm", "production", "Administration"])
-                user_data = [
-                {
-                    "id": user.id,
-                    "username": user.username,
-                    # Add other fields as necessary
-                }
-                for user in users
-                ]
-                t={
-                    "id": request.user.id,
-                    "username": request.user.username,
-                }
-                user_data.insert(0,t)
-                t={
-                    "id": 1000000,
-                    "username": "TOUS",
-                }
-                user_data.insert(0,t)
-            elif profile.speciality_rolee == "Superviseur_regional":
-                users = profile.usersunder.all()
-                users = users.filter(userprofile__region=family)
-                user_data = [
-                {
-                    "id": user.id,
-                    "username": user.username,
-                    # Add other fields as necessary
-                }
-                for user in users
-                ]
-                t={
-                    "id": request.user.id,
-                    "username": request.user.username,
-                }
-                user_data.insert(0,t)
-                t={
-                    "id": 1000000,
-                    "username": "TOUS",
-                }
-                user_data.insert(0,t)
-            elif profile.speciality_rolee == "Superviseur_national" or profile.speciality_rolee == "CountryManager":
-                users = User.objects.filter(
-                    userprofile__lines=family
-                )  # Adjust this if necessary based on your models
-                users = User.objects.filter(userprofile__region=family, userprofile__lines__in=["lilium Pharma", "Lilium1", "Lilium2", "orient Bio", "Aniya_Pharm", "production", "Administration"])
-                user_data = [
-                {
-                    "id": user.id,
-                    "username": user.username,
-                    # Add other fields as necessary
-                }
-                for user in users
-                ]
-                t={
-                    "id": request.user.id,
-                    "username": request.user.username,
-                }
-                user_data.insert(0,t)
-                t={
-                    "id": 1000000,
-                    "username": "TOUS",
-                }
-                user_data.insert(0,t)
-            else:
-                users = request.user
+        # RULE 1: Admin, CountryManager, or Superuser
+        if role in ["Admin", "CountryManager"] or request.user.is_superuser:
+            allowed_roles = [
+                "Commercial", 
+                "Medico_commercial", 
+                "Superviseur", 
+                "Superviseur_national", 
+                "Superviseur_regional", 
+                "CountryManager"
+            ]
+            users = User.objects.filter(
+                is_active=True,
+                is_staff=True,
+                userprofile__hidden=False,
+                userprofile__speciality_rolee__in=allowed_roles
+            )
 
-                # Serialize the users - replace 'UserSerializer' with your actual serializer
-                user_data = [
-                    {
-                        "id": user.id,
-                        "username": user.username,
-                        # Add other fields as necessary
-                    }
-                    for user in users
-                ]
-                t={
-                    "id": 1000000,
-                    "username": "TOUS",
-                }
-                user_data.insert(0,t)
-            print(str(user_data))
+        # RULE 2: Supervisors (National, Regional, Classic)
+        elif role in ["Superviseur_national", "Superviseur_regional", "Superviseur"]:
+            # See themselves + their direct team
+            usersunder_ids = profile.usersunder.values_list('id', flat=True)
+            users = User.objects.filter(
+                Q(id=request.user.id) | Q(id__in=usersunder_ids)
+            )
 
-            return Response(user_data, status=200)
-            return Response({"error": "Family parameter is required."}, status=400)
+        # RULE 3: Commercial / Medico_commercial
+        elif role in ["Commercial", "Medico_commercial"]:
+            # Can only see themselves
+            users = User.objects.filter(id=request.user.id)
 
+        # FINAL FILTER: Apply the region (family) filter if it's not "1" (ALL)
+        if family and str(family) != "1":
+            users = users.filter(userprofile__region=family)
+
+        # Serialize the users
+        user_data = [
+            {
+                "id": user.id,
+                "username": user.username,
+            }
+            for user in users.distinct()
+        ]
+
+        # Ensure the current user is always at the top of the actual user list (if they exist in the filtered list)
+        current_user_data = {"id": request.user.id, "username": request.user.username}
+        if current_user_data in user_data:
+            user_data.remove(current_user_data)
+        user_data.insert(0, current_user_data)
+
+        # Add "TOUS" option at the very top for the frontend
+        user_data.insert(0, {"id": 1000000, "username": "TOUS"})
+
+        return Response(user_data, status=200)
